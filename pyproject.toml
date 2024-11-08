@@ -1,0 +1,22 @@
+[project]
+name = "xlns"
+version = "1.0.0"
+authors = [
+  { name="Mark G Arnold", email="markgarnold@yahoo.com" },
+  { name="Ed Chester", email="ed.chester@systemlevel.co.uk"}
+]
+maintainers = [
+  {name = "Pradeeban Kathiravelu", email = "kk.pradeeban@gmail.com"}
+]
+description = "A configurable python package for Logarithmic Number System eXperimentation"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/xlnsresearch/xlns"
+Issues = "https://github.com/xlnsresearch/xlns/issues"
