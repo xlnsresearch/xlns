@@ -524,7 +524,7 @@ def XXXxlnsrcopy(x):
   r=[]
   for y in x:
    if isinstance(y,list) or isinstance(y,np.ndarray):
-    r+=[xlnsrcopy(y)]
+    r+=[XXXxlnsrcopy(y)]
    elif isinstance(y,int) or isinstance(y,float) or isinstance(y,np.float64) or isinstance(y,np.float32) or isinstance(y,xlns) or isinstance(y,xlnsr) or isinstance(y,xlnsnp) or isinstance(y,xlnsnpr) or isinstance(y,xlnsnpv) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
     r+=[xlnsr(y)]
    else:
@@ -535,7 +535,7 @@ def XXXxlnsudcopy(x):
   r=[]
   for y in x:
    if isinstance(y,list) or isinstance(y,np.ndarray):
-    r+=[xlnsudcopy(y)]
+    r+=[XXXxlnsudcopy(y)]
    elif isinstance(y,int) or isinstance(y,float) or isinstance(y,np.float64) or isinstance(y,np.float32) or isinstance(y,xlns) or isinstance(y,xlnsr) or isinstance(y,xlnsnp) or isinstance(y,xlnsnpr) or isinstance(y,xlnsnpv) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
     r+=[xlnsud(y)]
    else:
@@ -550,7 +550,7 @@ def XXXxlnsvcopy(x,setF=None):
   r=[]
   for y in x:
    if isinstance(y,list) or isinstance(y,np.ndarray):
-    r+=[xlnsvcopy(y,copyF)]
+    r+=[XXXxlnsvcopy(y,copyF)]
    elif isinstance(y,int) or isinstance(y,float) or isinstance(y,np.float64) or isinstance(y,np.float32) or isinstance(y,xlns) or isinstance(y,xlnsr) or isinstance(y,xlnsnp) or isinstance(y,xlnsnpr) or isinstance(y,xlnsnpv) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
     r+=[xlnsv(y,copyF)]
    else:
@@ -565,7 +565,7 @@ def XXXxlnsbcopy(x,setB=None):
   r=[]
   for y in x:
    if isinstance(y,list) or isinstance(y,np.ndarray):
-    r+=[xlnsbcopy(y,copyB)]
+    r+=[XXXxlnsbcopy(y,copyB)]
    elif isinstance(y,int) or isinstance(y,float) or isinstance(y,np.float64) or isinstance(y,np.float32) or isinstance(y,xlns) or isinstance(y,xlnsr) or isinstance(y,xlnsnp) or isinstance(y,xlnsnpr) or isinstance(y,xlnsnpv) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
     r+=[xlnsb(y,copyB)]
    else:
@@ -2631,7 +2631,7 @@ class xlnsnpb:
   if isinstance(v,xlnsnpb):
    return v**self  
   elif isinstance(v,float) or isinstance(v,int):
-   t.nd=(2-4*(self.nd&1))*np.int64(selfB**((self.nd//2))*math.log(v,self.B))
+   t.nd=(2-4*(self.nd&1))*np.int64(self.B**((self.nd//2))*math.log(v,self.B))
    return t
   else:
    return xlnsnpb(v,self.B)**self
