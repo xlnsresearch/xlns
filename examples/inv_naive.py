@@ -1,4 +1,5 @@
 import xlns as xl 
+import numpy as np
 
 def myinv(m):
     if isinstance(m, xl.xlnsnp):   #incl. xlnsnpv
