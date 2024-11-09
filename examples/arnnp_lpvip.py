@@ -13,11 +13,11 @@ import math
 import os
 import xlns as xl
 
-import lpvip_ufunc #uncomment for lpvip
+import conf.lpvip_ufunc #uncomment for lpvip
 
-xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddidealSub #uncomment for premit-add/above premit-sing-sub
-#xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddlpvipSub #uncomment for premit-add/above premit-sing-sub
-#xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddpremitSub #uncomment for premit-add/above premit-sing-sub
+xl.sbdb_ufunc = conf.lpvip_ufunc.sbdb_ufunc_premitAddidealSub #uncomment for premit-add/above premit-sing-sub
+#xl.sbdb_ufunc = conf.lpvip_ufunc.sbdb_ufunc_premitAddlpvipSub #uncomment for premit-add/above premit-sing-sub
+#xl.sbdb_ufunc = conf.lpvip_ufunc.sbdb_ufunc_premitAddpremitSub #uncomment for premit-add/above premit-sing-sub
 
 XlnsExactsb = True #False  #line A
 XlnsExactdb = True #False  #line B
