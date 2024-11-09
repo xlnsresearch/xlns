@@ -2242,15 +2242,15 @@ class xlnsb:
   return t
  def exp(x):
   if isinstance(x,float) or isinstance(x,int):
-   return xlnsb(math.exp(x),xlnsZ)
+   return xlnsb(math.exp(x),xlnsB)
   if not isinstance(x,xlnsb):
-   return xlnsb(math.exp(float(x)),xlnsZ)
+   return xlnsb(math.exp(float(x)),xlnsB)
   return xlnsb(math.exp(float(x)),x.B)
  def log(x):
   if isinstance(x,float) or isinstance(x,int):
-   return xlnsb(math.log(x),xlnsZ)
+   return xlnsb(math.log(x),xlnsB)
   if not isinstance(x,xlnsb):
-   return xlnsb(math.log(float(x)),xlnsZ)
+   return xlnsb(math.log(float(x)),xlnsB)
   return xlnsb(math.log(float(x)),x.B)
  def __mul__(self,v):
   t=xlnsb("",self.B)
