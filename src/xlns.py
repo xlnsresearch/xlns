@@ -246,6 +246,8 @@ class xlns:
   t=xlns("")
   if isinstance(v,int) or isinstance(v,float):
    return self*xlns(v)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v*self
   if not isinstance(v,xlns):
    return self*xlns(v)
   t.x = self.x + v.x
@@ -271,6 +273,8 @@ class xlns:
   t=xlns("")
   if isinstance(v,int) or isinstance(v,float):
    return self/xlns(v)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return (1/v)*self
   if not isinstance(v,xlns):
    return self/xlns(v)
   t.x = self.x - v.x
@@ -319,6 +323,8 @@ class xlns:
   t=xlns("")
   if isinstance(v,int) or isinstance(v,float):
    return xlns(v)+self
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v+self
   if not isinstance(v,xlns):
    return self+xlns(v)
   if v.x==-1e1000:  #-inf
@@ -1039,6 +1045,8 @@ class xlnsr:
   t.n = self.p
   return t
  def __add__(self,v):
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v+self
   t = xlnsr(v)
   t.p += self.p
   t.n += self.n
@@ -1046,6 +1054,8 @@ class xlnsr:
  def __radd__(self,v):
   return self.__add__(v)
  def __sub__(self,v):
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return (-v)+self
   t = xlnsr(v)
   t2 = self.p + t.n
   t.n = self.n + t.p
@@ -1067,6 +1077,8 @@ class xlnsr:
    t = xlnsr(float(self)*float(v))
    print("xlnsr*xlnsr: result computed in float")
    return t
+  elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v*self
   else:
    return self*xlnsr(v)
  def __rmul__(self,v):
@@ -1094,6 +1106,8 @@ class xlnsr:
    t = xlnsr(float(self)/float(v))
    print("xlnsr/xlnsr: result computed in float")
    return t
+  elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return (1/v)*self
   else:
    return self/xlnsr(v)
  def __rtruediv__(self,v):
@@ -1798,6 +1812,8 @@ class xlnsv:
   t=xlnsv("",self.F)
   if isinstance(v,int) or isinstance(v,float):
    return self*xlnsv(v,self.F)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v*self
   if not isinstance(v,xlnsv) or self.F != v.F:
    return self*xlnsv(v,self.F)
   t.x = self.x + v.x
@@ -1823,6 +1839,8 @@ class xlnsv:
   t=xlnsv("",self.F)
   if isinstance(v,int) or isinstance(v,float):
    return self/xlnsv(v,self.F)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return (1/v)*self
   if not isinstance(v,xlnsv) or self.F != v.F:
    return self/xlnsv(v,self.F)
   t.x = self.x - v.x
@@ -1853,7 +1871,9 @@ class xlnsv:
   t=xlnsv("",self.F)
   if isinstance(v,int) or isinstance(v,float):
    return self+xlnsv(v,self.F)
-  if not isinstance(v,xlnsv) or self.F != v.F:
+  elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v+self
+  elif not isinstance(v,xlnsv) or self.F != v.F:
    return self+xlnsv(v,self.F)
   if v.x==-1e1000:  #-inf
    return self
@@ -2256,6 +2276,8 @@ class xlnsb:
   t=xlnsb("",self.B)
   if isinstance(v,int) or isinstance(v,float):
    return self*xlnsb(v,self.B)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v*self
   if not isinstance(v,xlnsb) or self.B != v.B:
    return self*xlnsb(v,self.B)
   t.x = self.x + v.x
@@ -2281,6 +2303,8 @@ class xlnsb:
   t=xlnsb("",self.B)
   if isinstance(v,int) or isinstance(v,float):
    return self/xlnsb(v,self.B)
+  if isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return (1/v)*self
   if not isinstance(v,xlnsb) or self.B != v.B:
    return self/xlnsb(v,self.B)
   t.x = self.x - v.x
@@ -2316,7 +2340,9 @@ class xlnsb:
   t=xlnsb("",self.B)
   if isinstance(v,int) or isinstance(v,float):
    return self+xlnsb(v,self.B)
-  if not isinstance(v,xlnsb) or self.B != v.B:
+  elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v,xlnsnpb):
+   return v+self
+  elif not isinstance(v,xlnsb) or self.B != v.B:
    return self+xlnsb(v,self.B)
   if v.x==-1e1000:  #-inf
    return self
