@@ -24,8 +24,10 @@ classifiers = [
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q"
+pythonpath = "src"
 testpaths = [
-    "test"
+    "test",
+    "examples"
 ]
 
 [project.urls]
