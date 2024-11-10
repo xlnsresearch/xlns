@@ -21,6 +21,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "test"
+]
+
 [project.urls]
 Homepage = "https://github.com/xlnsresearch/xlns"
 Issues = "https://github.com/xlnsresearch/xlns/issues"
