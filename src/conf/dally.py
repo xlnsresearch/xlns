@@ -29,6 +29,9 @@
 import numpy as np
 import xlns as xl
 
+print("this code for academic non-commercial use only")
+print("may be covered by U.S. Patent Application Publication US20210056446A1")
+
 def sum_xlnsnp(self,axis=None):
   if axis == None:
     #print("case axis=None")
