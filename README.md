@@ -14,3 +14,8 @@ numpy
 ````
 pip3 install numpy
 ````
+
+For some examples, matplotlib is also needed:
+````
+pip3 install matplotlib
+````
