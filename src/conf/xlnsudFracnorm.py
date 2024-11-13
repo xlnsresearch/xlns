@@ -1,15 +1,18 @@
-#Example how to implement your favorite LNS add algorithm 
+"""
+user-defined LNS addition via Fractional Normalization
+
+importing this changes xlnsud ("user defined") class to implement 
+one of two versions of LNS Add by Fractional Normalization:
+   Original ("pal") by Tsiaras and Paliouras in ISCAS 2017 
+   Improved ("han") by Zhang, Han, et al. in GLSVLSI 2024
+Needed because above don't use Gaussian Logs (sb/db)
+other variations in Han (guards, approx fxpt +) not impl 
+"""
 
 import xlns as xl
 import numpy as np
 import math
 
-# uses xlnsud ("user defined") class to implement 
-# two versions of LNS Add by Fractional Normalization:
-#   Original ("pal") by Tsiaras and Paliouras in ISCAS 2017 
-#   Improved ("han") by Zhang, Han, et al. in GLSVLSI 2024
-# Needed because above don't use Gaussian Logs (sb/db)
-# other variations in Han (guards, approx fxpt +) not impl 
 
 def ihanlog2(x):
     if x < 23<<(xl.xlnsF-4):                     #1.4375:

@@ -1,3 +1,6 @@
+"""several versions LPVIP (Arnold, PATMOS 2004) using Mitchell's method as Gaussian Log"""
+
+
 import xlns as xl
 import numpy as np
 

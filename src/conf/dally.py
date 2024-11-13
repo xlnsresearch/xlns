@@ -1,29 +1,33 @@
-# this implements Dally et al. bin-based LNS addition
-# to use:
-#   import xlns as xl
-#   import dally
-#   xl.xlnsnp.sum = dally.sum_xlnsnp
-#   xl.xlnsnpv.sum = dally.sum_xlnsnpv
-# to restore default:
-#   xl.xlnsnp.sum = xl.xlnsnp.sum_default
-#   xl.xlnsnpv.sum = xl.xlnsnpv.sum_default
-#
-# an example:
-#>>> import xlns as xl
-#>>> import dally
-#>>> x=xl.xlnsnpv([1,2,3,4.],8)
-#>>> x.sum()
-#xlnsnpv(10.015890222930839 f=8)
-#>>> xl.xlnsnpv.sum =dally.sum_xlnsnpv
-#>>> x.sum()
-#xlnsnpv(9.988807817513946 f=8)
-#>>> x=xl.xlnsnpv([1,2,3,4.,5,6,7,11],8)
-#>>> x.sum()
-#xlnsnpv(38.99335135447898 f=8)
-#>>> xl.xlnsnpv.sum = xl.xlnsnpv.sum_default
-#>>> x.sum()
-#xlnsnpv(38.99335135447898 f=8)
-#
+""" 
+implements Dally et al. bin-based LNS summation 
+
+this code for academic non-commercial use only
+may be covered by U.S. Patent Application Publication US20210056446A1
+to use:
+   import xlns as xl
+   import xlnsconf.dally
+   xl.xlnsnp.sum = xlnsconf.dally.sum_xlnsnp
+   xl.xlnsnpv.sum = xlnsconf.dally.sum_xlnsnpv
+to restore default:
+   xl.xlnsnp.sum = xl.xlnsnp.sum_default
+   xl.xlnsnpv.sum = xl.xlnsnpv.sum_default
+
+an example:
+>>> import xlns as xl
+>>> import xlnsconf.dally
+>>> x=xl.xlnsnpv([1,2,3,4.],8)
+>>> x.sum()
+xlnsnpv(10.015890222930839 f=8)
+>>> xl.xlnsnpv.sum = xlnscoonf.dally.sum_xlnsnpv
+>>> x.sum()
+xlnsnpv(9.988807817513946 f=8)
+>>> x=xl.xlnsnpv([1,2,3,4.,5,6,7,11],8)
+>>> x.sum()
+xlnsnpv(38.99335135447898 f=8)
+>>> xl.xlnsnpv.sum = xl.xlnsnpv.sum_default
+>>> x.sum()
+xlnsnpv(38.99335135447898 f=8)
+"""
 
 
 import numpy as np

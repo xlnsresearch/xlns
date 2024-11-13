@@ -1,7 +1,20 @@
+"""
+ for eXperimentation with Logarithmic Number System  
+
+ classes offer:
+  scalar (xlns,xlnsr,xlnsv,xlnsb and xlnsud) 
+  array (xlnsnp, xlnsnpr, xlnsnpv and xlnsnpb)
+  non-redundant (xlns,xlnsv,xlnsb,xlnsud,xlnsnp,xlnsnpv and xlnsnpb)
+  redundant (xlnsr, xlnsnpr)
+  global precision with xlnssetF (xlns, xlnsr, xlnsud, xlnsnp, xlnsnpr)
+  per instance precision (xlnsv, xlnsb, xlnsnpv, xlnsnpb)
+  non-integer precision ignore xlnsF (xlnsb, xlnsnpb)  
+"""
 import math
 import numpy as np
 
 def xlnssetovf(mn,mx):
+  """set min and max overflow values"""
   global ovfmin,ovfmax
   ovfmin = mn
   ovfmax = mx  
@@ -11,6 +24,14 @@ def xlnscalcB():
   xlnsB = 2.0**(2**(-xlnsF))
 global xlns1stCons 
 def xlnssetF(newF):
+  """
+  set global xlnsF and corresponding xlnsB = 2**2**(-xlnsF)
+
+  all logarithms internally use the global base, xlnsB, or its local equivalent, B
+  this function calculates this given an integer F so that using the internal base
+  is isomorphic to a base-two logarithm with F bits of fractional precision
+  the default is F=23
+  """
   global xlnsF
   xlnsF = newF
   xlnscalcB()
@@ -23,6 +44,7 @@ xlnssetF(23)
 xlnssetovf(2.938735877055719e-39 ,3.402823669209385e+38)
 
 def sbdb_ufunc_ideal(z,s,B=None,F=None):
+  """default ufunc for ideal Gaussian log for all add,sub; may substitute user supplied sbdb_ufunc""" 
   global xlnsB
   #need to deal with z=0 s=1
   if B==None:
@@ -96,6 +118,7 @@ arctanh = lambda x: xlnsapplyfunc(x,np.arctanh)
 
 
 def float64(x):
+  """convert to floating point; like np.float64, but works with all classes"""
   if isinstance(x,xlnsnp) or isinstance(x,xlnsnpv) or isinstance(x,xlnsnpb) or isinstance(x,xlnsnpr):
    return np.float64(x.xlns())
   else:
@@ -171,6 +194,7 @@ max = lambda x: xlnsapplynpconstack(x,xlnsnp.max,xlnsnpv.max ,xlnsnpb.max ,xlnsn
 #zeros = lambda x: xlnsapplynpconstack(x,xlnsnp.zeros,xlnsnpv.zeros ,xlnsnpb.zeros ,xlnsnpr.zeros ,np.zeros )
  
 class xlns:
+ """simple scalar LNS using global base xlnsB"""
  def __init__(self,v):
   global xlns1stCons
   xlns1stCons = False
@@ -203,7 +227,7 @@ class xlns:
        print("cannot cast non-scalar xlnsnp[r] as xlns")
        return NotImplemented
   else:
-   #self.x = v
+ #self.x = v
    #self.s = False
    # new case that handles floatable types like xlnsv 9/20/24
    # elim xlnsr case above
@@ -495,6 +519,7 @@ class xlns:
 
 #generalizes all the xlns*copy routines
 def xlnscopy(x,xlnstype=xlns,setFB=None):
+  """deep copy of list converting to xlns (or type and precision specified by 2nd and 3rd args)"""
   r=[]
   for y in x:
    if isinstance(y,list) or isinstance(y,np.ndarray):
@@ -579,6 +604,7 @@ def XXXxlnsbcopy(x,setB=None):
   return r
 
 class xlnsnp:
+ """numpy-like array of non-redundant LNS using global base xlnsB"""
  def __init__(self,v):
   global xlns1stCons
   xlns1stCons = False
@@ -676,6 +702,7 @@ class xlnsnp:
   return bool(self.nd == 0)
  #following not found in numpy
  def xlns(self):
+  """convert xlnsnp to similar-shaped list of xlns"""
   t=[]
   for y in np.ravel(self.nd):
      txlns = xlns(0)
@@ -687,6 +714,7 @@ class xlnsnp:
      t += [txlns]
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
+  """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
   global ovfmin,ovfmax
   return xlnsnp.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, xlnsnp.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
@@ -825,6 +853,7 @@ class xlnsnp:
   t.nd = np.zeros(v,dtype="i8")+(-0x7fffffffffffffff-1)
   return t
  def sum(self,axis=None):
+  """divide and conquer summation that reorders operands to minimize __add__ calls"""
   #ac = xlnsnp.concatenate((self,xlnsnp.zeros(2**(math.ceil(math.log(len(self),2)))-len(self))))
   #while len(ac)>1:
   #  ac=ac[0:len(ac)//2]+ac[len(ac)//2:]
@@ -992,6 +1021,7 @@ class xlnsnp:
 
 
 class xlnsr:
+ """scalar redundant LNS using global base xlnsB"""
  def __init__(self,v):
   global xlns1stCons
   xlns1stCons = False
@@ -1170,6 +1200,7 @@ class xlnsr:
 
 
 class xlnsnpr:
+ """numpy-like array of redundant LNS using global base xlnsB"""
  def __init__(self,v):
   global xlns1stCons
   xlns1stCons = False
@@ -1310,6 +1341,7 @@ class xlnsnpr:
  # global ovfmin,ovfmax
  # return xlnsnpr.where((abs(x)>=ovfmin)*bool(abs(x)<ovfmax), x, xlnsnpr.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax)#*x.sign())
  def xlns(self):
+  """convert xlnsnpr to similar-shaped list of xlns"""
   t=[]
   yp = np.ravel(self.ndp)
   yn = np.ravel(self.ndn)
@@ -1638,6 +1670,7 @@ class xlnsnpr:
 xlnsud__add__ = lambda self,v: xlnsud(xlns.__add__(self,v)) #to be replaced
 
 class xlnsud(xlns):
+ """user-defined subclass of xlns; allows xlnsud__add__ to be changed from Gaussian log to frac norm"""
  def __repr__(self):
   return "xlnsud("+str(self)+")"
  def __abs__(self):
@@ -1691,6 +1724,7 @@ class xlnsud(xlns):
   return self
 
 class xlnsv:
+ """scalar non-redundant LNS using distinct int precision F (unrelated to xlnsF) on each instance"""
  def __init__(self,v,setF=None):
   #global xlns1stCons
   #xlns1stCons = False
@@ -1993,6 +2027,7 @@ class xlnsv:
 
 
 class xlnsnpv(xlnsnp):
+ """numpy-like array of non-redundant LNS using int precision f <= xlnsF on each instance"""
  def __init__(self,v,setF=None):
   global xlns1stCons
   xlns1stCons = False
@@ -2011,11 +2046,13 @@ class xlnsnpv(xlnsnp):
     self.nd = (v.nd+(1<<(xlnsF-self.f)))&((-1<<(xlnsF-self.f+1))|1) #rounding 
  #following not found in numpy
  def xlns(self):
+  """convert xlnsnpv to similar-shaped list of xlnsv"""
   t=[]
   for y in xlnsnp.xlns(self.ravel()):
      t += [xlnsv(y,self.f)]
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
+  """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
   global ovfmin,ovfmax
   return xlnsnpv.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, x*xlnsnpv.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
@@ -2196,6 +2233,7 @@ class xlnsnpv(xlnsnp):
 
 
 class xlnsb:
+ """scalar non-redundant LNS whose precision on each instance defined by arbitrary real B>1"""
  def __init__(self,v,setB):
   #later use of xlnsb does not depend on possibly changed xlnsF
   self.B = setB 
@@ -2461,6 +2499,7 @@ class xlnsb:
     return self.x >= v.x
 
 class xlnsnpb:
+ """numpy-like array of non-redundant LNS whose precision on each instance defined by real B>1"""
  def __init__(self,v,setB):
   #global xlns1stCons
   #xlns1stCons = False
@@ -2555,6 +2594,7 @@ class xlnsnpb:
   return bool(self.nd == 0)
  #following not found in numpy
  def xlns(self):
+  """convert xlnsnpb to similar-shaped list of xlnsb"""
   t=[]
   for y in np.ravel(self.nd):
      txlns = xlnsb(0,self.B)
@@ -2566,6 +2606,7 @@ class xlnsnpb:
      t += [txlns]
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
+  """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
   global ovfmin,ovfmax
   return xlnsnpb.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, x*xlnsnpb.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
