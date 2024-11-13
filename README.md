@@ -19,3 +19,8 @@ For some examples, matplotlib is also needed:
 ````
 pip3 install matplotlib
 ````
+
+You can grab all the dependencies in one go using the requirements file thus:
+````
+pip install -r requirements.txt
+````
