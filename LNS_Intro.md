@@ -44,9 +44,9 @@ and its sign s_A into sign bit s:
 ```
 s = (−1)^s_A
 ```
-The second issue that needs consideration is representation of zero, since the logarithm of 0 is undefined. A special representation must be chosen for this, and different LNS implementations and researchers have their own preferences. This is not unlike how floating point has reserved representations for NaN and infinity, etc. So, the exact value that U represents in LNS is:
+The second issue that needs consideration is representation of zero, since the logarithm of 0 is undefined. A special representation must be chosen for this, and different LNS implementations and researchers have their own preferences. This is not unlike how floating point has reserved representations for NaN and infinity, etc. So, the exact value that U represents in LNS is *(sticking with base-2 for now)*:
 ```
-U = (−1)^u_s * B^u_x
+A = (−1)^s * 2^a
 ```
 
 ### Exponentiation
