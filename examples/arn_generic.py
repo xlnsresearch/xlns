@@ -13,9 +13,9 @@ import xlns as xl
 import os
 import time
 
-import conf.xlnsudFracnorm  #uncomment for Zhang/Han or Paliouras fractional normalize
-conf.xlnsudFracnorm.ilog2 = conf.xlnsudFracnorm.ipallog2 #also uncomment only for Paliouras
-conf.xlnsudFracnorm.ipow2 = conf.xlnsudFracnorm.ipalpow2
+import xlnsconf.xlnsudFracnorm  #uncomment for Zhang/Han or Paliouras fractional normalize
+xlnsconf.xlnsudFracnorm.ilog2 = xlnsconf.xlnsudFracnorm.ipallog2 #also uncomment only for Paliouras
+xlnsconf.xlnsudFracnorm.ipow2 = xlnsconf.xlnsudFracnorm.ipalpow2
 
 #import lpvip_ufunc
 #xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_lpvip
