@@ -58,13 +58,47 @@ These are now the easist of all operations, rather than the hardest - since doub
 
 Yep.
 
-### Addition
-_to be written_
+### Addition and Subtraction
 
-### Subtraction
-_to be written__
+The mathemetically inclined, or those who are thinking ahead, have possibly realised that this happy land of easy arithmetic operations could not last long. Addition and substraction are significantly harder tasks in the LNS, and they have absorbed nearly all the research and development efforts of the LNS community for 50 years. It is sufficiently hard that some folks prefer to take the antilogarithm (i.e. convert back to a linear scale), perform the operation(s), and then take the logarithm of the result. This is expensive and tedious.
+
+Gauss (Johann Carl Friedrich, famous for many things) noticed a helpful relation to compute the sum of logarithms:
+```
+a + b = b * (a/b + 1)
+```
+wherein the multiply and divide are fast and cheap in the LNS. So, the sum (c) of a pair of logarithms (a, b) is given by
+```
+c ≈ b + g(z, zs)
+``` 
+for z = b - a, and zs is the sign bit formed by the XOR of the sign bits of a and b.
+
+Finding the difference between LNS values is very similar to addition, with the additional snag that for similar values (i.e. the difference between a and b approaches zero) the Gaussian log function g() enjoys an asymptote to negative infinity.
+
+Just how difficult it is to implement addition and subtraction is determined by how much accuracy you need to achieve, and what the hardware will support. For a dedicated hardware implementation, the popular approach is to perform some approximation for g(): as a quantised look up from a stored table, as a stepwise linear approximation, as a first order taylor expansion, or as a higher-order curve. The complexity of the approximation broadly trades off the achieved accuracy with time, power consumption and/or silicon area.
+
+So now you know enough to go and explore the published literature about alternative machine arithmetic using the Logarithmic Number System. The best collection of such material is given in the Resources section below.
+
+You are also ready to play with the xlns package. It overloads the normal arithmetic operators with their LNS equivalents, and makes the LNS operations available to numpy types including large vectors.
+
+### Beyond Base 2
+
+At the start of this introduction we limited consideration to base 2 logarithms, because it is easier to imagine how it works when compared with IEEE standard floating point. But since the base of the logarithm doesn't really affect the operations other than when converting to/from other representations, we are free to choose other values. There are some interesting choices to make here, and the merits of each are beyond the scope of this introduction.
+
+What you do need to know is that the xlns package supports other bases, and you should probably choose this before you try anything. *The default value is not 2!* This is achieved with the function that effectively sets the precision of the represention. For example,
+```
+import xlns as xl
+xl.xlnssetF(10)
+```
+
+Here, F is a value that represents the number of bits of precision in the representation. `F=23` approximately corresponds to single precision floating point. The default base of the logarithms is set to 
+```
+2 ^ (2 ^ -F)
+```
+
+which is approximately 1 (but crucially, not actually 1). 
 
 ## Resources
+
 The Logarithmic Number System offers a powerful way to simplify computations, especially where multiplication and division of large values are involved. It is most useful in specialized fields that require efficient handling of wide-ranging magnitudes and where performance gains from reducing computational complexity are important.
 
 For more information, a comprehensive bibliography of published research is available here:
