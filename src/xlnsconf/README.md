@@ -64,3 +64,15 @@ We actively encourage your open-source contribution to this folder. There are hu
 
 There is a catch, of course.  Here is the deal: your code must pass certain tests using the tools described in the previous section 
  _to be described later_ 
+
+ # References
+
+M. G. Arnold, et al. “Arithmetic cotransformations in the Real and
+Complex Logarithmic Number Systems,” _IEEE Trans. Comput._, vol. 47,
+no. 7, pp.777–786, July 1998
+
+G. Tsiaras and V. Paliouras, “Logarithmic Number System Addition and
+Subtraction Using Fractional Normalization,” 
+_IEEE Symp. on Circuits and Systems_, pp.1–4, 2017
+
+
