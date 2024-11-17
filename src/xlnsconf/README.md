@@ -54,4 +54,12 @@ Note: simply importing ``xlnsudFracnorm`` alters the behavior of ``xlnsud``, but
 
 In the ``xlns/examples`` folder is a program (``arn_generic.py``), which when run with the command line option ``--type xlnsud`` uses fractional normalization as the addition algorithm in back-propagation training of a neural network with the MNIST dataset.
 
+# Characterizing Numerical Behavior of User Configurations
 
+_to be implemented_
+
+# Submission Procedure for new User Configurations
+
+We actively encourage your open-source contribution to this folder. There are hundreds of techniques in the literature.  A great project for a student or new person to the LNS field would be to learn enough about one of them and implement it with compatible Python.  There are also researchers developing new LNS methods, and we welcome them to contribute here.
+
+There is a catch, of course.  Here is the deal _to be fleshed out involving passing certain tests_
