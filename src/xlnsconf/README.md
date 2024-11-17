@@ -49,7 +49,7 @@ In the ``xlns/examples`` folder there are programs (``arn_generic.py``,``arnnp_l
 
 # Other Configurations
 
-See the relevant help for more information about the other configurations.
+See the relevant ``help`` for more information about the other configurations.
 Note: simply importing ``xlnsudFracnorm`` alters the behavior of ``xlnsud``, but all other classes operate using whatever function ``xl.sbdb_ufunc`` is currently pointing to.
 
 In the ``xlns/examples`` folder is a program (``arn_generic.py``), which when run with the command line option ``--type xlnsud`` uses fractional normalization as the addition algorithm in back-propagation training of a neural network with the MNIST dataset.
