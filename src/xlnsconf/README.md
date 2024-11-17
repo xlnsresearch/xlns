@@ -4,13 +4,13 @@ This folder contains files that can be imported into a Python program using xlns
 
 There are several notations that have been used for the Gaussian Log.  The one that this package uses is __sbdb_ufunc(z,zs)__.  The reason for this is that the Gaussian Log is often thought of as two separate functions:  one for when (zs==0) the signs of the numbers added are the _same_:
 ```
-sb(z) = np.log(B**z+1)/np.log(B)
+sb(z) = np.log(xl.xlnsB**z+1)/np.log(xl.xlnsB)
 ```
 and the other for when (zs==1) the signs _differ_:
 ```
-db(z) = np.log(B**z+1)/np.log(B)
+db(z) = np.log(xl.xlnsB**z+1)/np.log(xl.xlnsB)
 ```
-Notice in this package these are always described in a way compatible with the NumPy concept of a _ufunc_, in other words z and anything done with z are compatible with element-by-element NumPy operations.  Note to implementators of __sbdb_ufunc__: this may require using np.where based on zs or other NumPy rank-polymorphic tricks.
+Notice in this package these are always described in a way compatible with the NumPy concept of a _ufunc_, in other words z and anything done with z are compatible with element-by-element NumPy operations.  Note to implementators of __sbdb_ufunc__: this may require using np.where based on zs or other NumPy rank-polymorphic tricks.  Also notice that the base of the logarithm is given (in most instances) by the global variable __xl.xlnsB__, which is automatically calculated by xl.xlnssetF().
 
 The recent interest in LNS is mostly because there are many approximations which greatly reduce the cost of the hardware (by not actually carrying out the logarithm and exponetial in floating point) at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  It is not possible in software to acheive the power and speed improvement that these techniques do in hardware.  The only goal of the code in this folder is to simulate the numerical characteristics of such hardware as accurately as possible.  We actively seek open-source contribution to this folder. (See below for details)
 
