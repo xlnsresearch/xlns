@@ -76,8 +76,8 @@ M. G. Arnold, "LPVIP: A Low-power ROM-Less ALU for Low-Precision LNS,"
 _14th International Workshop on Power and Timing Modeling, Optimization and Simulation_,
 LNCS 3254, pp.675-684, Santorini, Greece, Sept. 2004.
 
-W. J. Dally, et al., “Inference accelerator using logarithmic-based arith-
-metic,” U.S. Patent Application Publication US20210056446A1, 2021.
+W. J. Dally, et al., “Inference accelerator using logarithmic-based arithmetic,” 
+U.S. Patent Application Publication US20210056446A1, 2021.
 
 G. Tsiaras and V. Paliouras, “Logarithmic Number System Addition and
 Subtraction Using Fractional Normalization,” 
