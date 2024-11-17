@@ -62,4 +62,5 @@ _to be implemented_
 
 We actively encourage your open-source contribution to this folder. There are hundreds of techniques in the literature.  A great project for a student or new person to the LNS field would be to learn enough about one of them and implement it with compatible Python.  There are also researchers developing new LNS methods, and we welcome them to contribute here.
 
-There is a catch, of course.  Here is the deal _to be fleshed out involving passing certain tests_
+There is a catch, of course.  Here is the deal: your code must pass certain tests using the tools described in the previous section 
+ _to be described later_ 
