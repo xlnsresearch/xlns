@@ -10,7 +10,7 @@ and the other for when (zs==1) the signs _differ_:
 
 db(z) = np.log(B**z+1)/np.log(B)
 
-Notice in this package these are always described in a way compatible with the NumPy concept of a _ufunc_, in other words z and anything done with z are compatible with element-by-element NumPy operations.  In the implementation of __sbdb_ufunc__ this may require using np.where based on zs or other NumPy rank-polymorphic tricks.
+Notice in this package these are always described in a way compatible with the NumPy concept of a _ufunc_, in other words z and anything done with z are compatible with element-by-element NumPy operations.  Note to implementators of __sbdb_ufunc__: this may require using np.where based on zs or other NumPy rank-polymorphic tricks.
 
 The recent interest in LNS is mostly because there are many approximations which greatly reduce the cost of the hardware (by not actually carrying out the logarithm and exponetial in floating point) at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  It is not possible in software to acheive the power and speed improvement that these techniques do in hardware.  The only goal of the code in this folder is to simulate the numerical characteristics of such hardware as accurately as possible.  We actively seek open-source contribution to this folder. (See below for details)
 
