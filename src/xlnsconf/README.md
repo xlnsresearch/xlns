@@ -8,8 +8,8 @@ The recent interest in LNS is mostly because there are approximations which grea
 
 dally: summation technique disclosed in U.S. Patent Application Publication US20210056446A1 (academic, non-commercial use only)
 
-interp_cotran_ufunc
+interp_cotran_ufunc: linear Lagrange interpolation and/or Arnold cotransformation of Gaussian Log
 
-lpvip_ufunc
+lpvip_ufunc: Low Precision Very Insignificant Power by Mitchell's method to approximate Gaussian Log 
 
-xlnsudFracnorm
+xlnsudFracnorm: override \_\_add\_\_
