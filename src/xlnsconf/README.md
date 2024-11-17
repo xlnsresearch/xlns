@@ -10,7 +10,7 @@ and the other for when (zs==1) the signs _differ_.
 
 db(z) = np.log(B**z+1)/np.log(B)
 
-The recent interest in LNS is mostly because there are approximations which greatly reduce the cost of the hardware at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  We actively seek open-source contribution to this folder. (See below for details)
+The recent interest in LNS is mostly because there are many approximations which greatly reduce the cost of the hardware (by not actually carrying out the logarithm and exponetial in floating point) at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  We actively seek open-source contribution to this folder. (See below for details)
 
 # Available Configurations
 
