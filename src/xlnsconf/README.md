@@ -6,7 +6,7 @@ There are several notations that have been used for the Gaussian Log.  The one t
 
 sb(z) = np.log(B**z+1)/np.log(B)
 
-and the other for when (zs==1) the signs _differ_.
+and the other for when (zs==1) the signs _differ_:
 
 db(z) = np.log(B**z+1)/np.log(B)
 
