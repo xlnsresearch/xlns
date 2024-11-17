@@ -2,6 +2,8 @@
 
 This folder contains files that can be imported into a Python program using xlns to alter the way addition and/or summation is performed.  By default,  xlns uses 64-bit build-in floating point (FP) to calculate the Gaussian Log as accurately as is possible with such hardware.  We call this approach _ideal_, which is not quite the same as "round to nearest" or "exact" but very nearly so, especially for small values of F (which is set by xl.xlnssetF() and internally known as xl.xlnsF).  
 
+The recent interest in LNS is mostly because there are many approximations which greatly reduce the cost of the hardware (by not actually carrying out the logarithm and exponetial in floating point) at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  It is not possible in software to acheive the power and speed improvement that these techniques do in hardware.  The only goal of the code in this folder is to simulate the numerical characteristics of such hardware as accurately as possible.  We actively seek open-source contribution to this folder. (See below for details)
+
 There are several notations that have been used for the Gaussian Log.  The one that this package uses is __sbdb_ufunc(z,zs)__.  The reason for this is that the Gaussian Log is often thought of as two separate functions:  one for when (zs==0) the signs of the numbers added are the _same_:
 ```
 sb(z) = np.log(b**z+1)/np.log(b)
@@ -15,7 +17,6 @@ As given above, they are defined for both positive and negative z, but in this p
 
 _Note to implementators of __sbdb_ufunc___: this ufunc assumption may require using ``np.where`` based on zs or other NumPy rank-polymorphic tricks.  Also note: the constant b is the base of the logarithm, which is given (in most instances) by the global variable __xl.xlnsB__ that is automatically calculated by xl.xlnssetF().  (Another observation from the weeds of maths and programming:  the Python math library offers the base-b logarithm of x, math.log(x,b), but NumPy only has np.log(), which is limited to base e=2.71828...  One of the laws of logarithms is that the base-b logarithm of x is the base-e logarithm, np.log(x), divided by the base-e log of that constant, np.log(b). Since b is scalar but z is often a large array, the overhead of this conversion is insignificant for many simulations.) 
 
-The recent interest in LNS is mostly because there are many approximations which greatly reduce the cost of the hardware (by not actually carrying out the logarithm and exponetial in floating point) at the expense of added error.  The purpose of the code in this folder is to implement some of the hundreds approximations that have been published in the literature.  It is not possible in software to acheive the power and speed improvement that these techniques do in hardware.  The only goal of the code in this folder is to simulate the numerical characteristics of such hardware as accurately as possible.  We actively seek open-source contribution to this folder. (See below for details)
 
 # Available Configurations
 
