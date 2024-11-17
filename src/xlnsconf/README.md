@@ -23,7 +23,7 @@ _Note to implementators of __sbdb_ufunc___: this ufunc assumption may require us
 
 __dally__: summation technique disclosed in U.S. Patent Application Publication US20210056446A1 (academic, non-commercial use only)
 
-__interp_cotran_ufunc__: linear Lagrange interpolation and/or (Arnold,1998) cotransformation of Gaussian Log
+__interp_cotran_ufunc__: unpartitioned linear Lagrange interpolation and/or (Arnold,1998) cotransformation of Gaussian Log
 
 __lpvip_ufunc__: Low Precision Very Insignificant Power (Arnold,2004) with (Mitchell,1962) to approximate Gaussian Log 
 
