@@ -27,7 +27,7 @@ __interp_cotran_ufunc__: unpartitioned linear Lagrange interpolation and/or (Arn
 
 __lpvip_ufunc__: Low Precision Very Insignificant Power (Arnold,2004) with (Mitchell,1962) to approximate Gaussian Log 
 
-__xlnsudFracnorm__: override ``\_\_add\_\_`` of ``xlnsud`` for Fractional Normalization, (Tsiraras-Paliouras,2017) or (Zhang-Han,2024) 
+__xlnsudFracnorm__: override ``__add__`` of ``xlnsud`` for Fractional Normalization, (Tsiraras-Paliouras,2017) or (Zhang-Han,2024) 
 
 These can be classified as those that are ufunc configurations and those that are not.
 
