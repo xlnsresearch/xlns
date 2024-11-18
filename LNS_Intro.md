@@ -36,7 +36,7 @@ log(a / b) = log(a) - log(b)
 If you are happy with this so far, hopefully it is already apparent why LNS can be a powerful alternative to floating point -- and even to fixed point arithmetic. It is worth now introducing a couple of additional issues that need attention.
 Regardless of the overall sign of the real value, the logarithm itself is a signed quantity, since the real value may be larger or smaller than the base of the logarithm. So, the log values are signed - but we also need an overall sign flag for the complete representation.
 
-An LNS maps a real value A into its absolute logarithm a:
+An LNS maps a real value _A_ into its absolute logarithm a in some base _B_:
 ```
 a ≈ log_B |A|
 ```
@@ -44,10 +44,18 @@ and its sign s_A into sign bit s:
 ```
 s = (−1)^s_A
 ```
+Since this is a python package, the above may be easier to read as code:
+```
+# for A != 0:
+a = math.log(A, B)
+# python3 doesn't have a native sign() function, this is a handy alternative but there are other solutions:
+s = -1 ** numpy.sign(A)  
+```
 The second issue that needs consideration is representation of zero, since the logarithm of 0 is undefined. A special representation must be chosen for this, and different LNS implementations and researchers have their own preferences. This is not unlike how floating point has reserved representations for NaN and infinity, etc. So, the exact value that U represents in LNS is *(sticking with base-2 for now)*:
 ```
-A = (−1)^s * 2^a
+A = (−1 ** s) * (2 ** a)
 ```
+Remember that a itself is signed.
 
 ### Exponentiation
 Having reduced the order of operations, exponentiation (including root) now maps into multiplication. For the typical case of base-2 logarithms and integer powers of exponentiation, square and square root respectively correspond to doubling and halving the logarithmic value.
@@ -92,7 +100,7 @@ xl.xlnssetF(10)
 
 Here, F is a value that represents the number of bits of precision in the representation. `F=23` approximately corresponds to single precision floating point. The default base of the logarithms is set to 
 ```
-2 ^ (2 ^ -F)
+B = 2 ** (2 ** -F)
 ```
 
 which is approximately 1 (but crucially, not actually 1). 
