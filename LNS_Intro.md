@@ -64,8 +64,8 @@ def logn(value, base):
     '''
     a function to calculate the logarithm of value to some base
     '''
-    if (abs(a)>0):
-        return math.log(abs(a))/math.log(2)
+    if (abs(value)>0):
+        return math.log(abs(value))/math.log(base)
     else:
         return float('-inf')
 
@@ -76,13 +76,13 @@ b = 2
 a = -1 * math.pi
 
 # calculate the log part of the value
-la = logn(a, 2)
+la = logn(a, b)
 
 # calculate its sign bit
 sa = int (a<0)
 
 # combine them to restore the value
-A = np.float_power(-1, sa) * 2**la
+A = np.float_power(-1, sa) * b**la
 print(A)
 ```
 
