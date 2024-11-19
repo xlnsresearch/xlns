@@ -64,8 +64,8 @@ def logn(value, base):
     '''
     a function to calculate the logarithm of value to some base
     '''
-    if (abs(value)>0):
-        return math.log(abs(value))/math.log(base)
+    if (abs(a)>0):
+        return math.log(abs(a))/math.log(2)
     else:
         return float('-inf')
 
@@ -76,13 +76,13 @@ b = 2
 a = -1 * math.pi
 
 # calculate the log part of the value
-la = logn(a, b)
+la = logn(a, 2)
 
 # calculate its sign bit
 sa = int (a<0)
 
 # combine them to restore the value
-A = np.float_power(-1, sa) * b**la
+A = np.float_power(-1, sa) * 2**la
 print(A)
 ```
 
@@ -105,15 +105,15 @@ Gauss (Johann Carl Friedrich, famous for many things) noticed a helpful relation
 ```
 a + b = b * (a/b + 1)
 ```
-wherein the multiply and divide are fast and cheap in the LNS. So, the sum (c) of a pair of logarithms (a, b) is given by
+wherein the multiply and divide are fast and cheap in the LNS. So, the sum ``c`` of a pair of logarithms (``a``, ``b``) is given by
 ```
 c ≈ b + g(z, zs)
 ``` 
-for z = b - a, and zs is the sign bit formed by the XOR of the sign bits of a and b.
+for ``z = b - a``, and ``zs`` is the sign bit formed by the XOR of the sign bits of ``a`` and ``b``.
 
-Finding the difference between LNS values is very similar to addition, with the additional snag that for similar values (i.e. the difference between a and b approaches zero) the Gaussian log function g() enjoys an asymptote to negative infinity.
+Finding the difference between LNS values is very similar to addition, with the additional snag that for similar values (i.e. the difference between ``a`` and ``b`` approaches zero) the Gaussian log function ``g()`` enjoys an asymptote to negative infinity.
 
-Just how difficult it is to implement addition and subtraction is determined by how much accuracy you need to achieve, and what the hardware will support. For a dedicated hardware implementation, the popular approach is to perform some approximation for g(): as a quantised look up from a stored table, as a stepwise linear approximation, as a first order taylor expansion, or as a higher-order curve. The complexity of the approximation broadly trades off the achieved accuracy with time, power consumption and/or silicon area.
+Just how difficult it is to implement addition and subtraction is determined by how much accuracy you need to achieve, and what the hardware will support. For a dedicated hardware implementation, the popular approach is to perform some approximation for ``g()``: as a quantised look up from a stored table, as a stepwise linear approximation, as a first order taylor expansion, or as a higher-order curve. The complexity of the approximation broadly trades off the achieved accuracy with time, power consumption and/or silicon area.
 
 So now you know enough to go and explore the published literature about alternative machine arithmetic using the Logarithmic Number System. The best collection of such material is given in the Resources section below.
 
