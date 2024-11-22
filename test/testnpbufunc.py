@@ -1,7 +1,7 @@
 '''
 exhaustive test of user-configuration ufunc against 64-bit FP
 
-uses xlnsnp to trigger F-bit sbdb_ufunc calls to ufunc passed to it
+uses xlnsnpb to trigger F-bit sbdb_ufunc calls to ufunc passed to it
 '''
 
 import math
@@ -14,7 +14,7 @@ def testufunc(f, ufunc):
     xl.sbdb_ufunc =  ufunc
     xl.xlns1stCons = True # avoid warnings for each change to F which can be ignored
     xl.xlnssetF(f) 
-    x = xl.xlnsnp(np.multiply.accumulate(np.array((f*2**f)*[xl.xlns(2**2**-f)])))
+    x = xl.xlnsnpb(np.multiply.accumulate(np.array((f*2**f)*[xl.xlns(2**2**-f)])),2**2**-f)
     xf = np.multiply.accumulate(np.array(((f*2**f)*[2**2**-f])))
     relerr_sb = (((xf+1)-xl.float64(x+1))/(xf+1))
     relerr_db = (((xf-1)-xl.float64(x-1))/(xf-1))

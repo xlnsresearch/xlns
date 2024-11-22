@@ -1,11 +1,12 @@
 import xlns as xl
 import numpy as np
+import math
 
 def sbdb_ufunc_interpsb(z,s,B=None,F=None):
   if B == None:
     B = xl.xlnsB
   if F == None:
-    F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
   N = (F-5)//2
   J = F - N
   #print("N="+str(N))
@@ -32,7 +33,7 @@ def sbdb_ufunc_cotrdb(z,s,B=None,F=None):
   if B == None:
     B = xl.xlnsB
   if F == None:
-    F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
   N = (F-5)//2
   J = F - N
   zhmask = -(1<<J)
@@ -78,7 +79,9 @@ def sbdb_ufunc_interpsbcotrdb(z,s,B=None,F=None):
   if B == None:
     B = xl.xlnsB
   if F == None:
-    F = xl.xlnsF
+    #F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
+    
   N = (F-5)//2
   J = F - N
   zhmask = -(1<<J)
