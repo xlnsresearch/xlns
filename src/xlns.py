@@ -116,6 +116,16 @@ arcsinh = lambda x: xlnsapplyfunc(x,np.arcsinh)
 arccosh = lambda x: xlnsapplyfunc(x,np.arccosh)
 arctanh = lambda x: xlnsapplyfunc(x,np.arctanh)
 
+def sqrt(x):
+  """square root means x**.5"""
+  return x**.5
+
+def sum(x,axis=None):
+  """xl.sum(x) means x.sum()"""
+  if axis==None:
+   return x.sum()
+  else:
+   return x.sum(axis=axis)
 
 def float64(x):
   """convert to floating point; like np.float64, but works with all classes"""
