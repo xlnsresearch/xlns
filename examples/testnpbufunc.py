@@ -35,5 +35,11 @@ def testinterpcotran():
   print(str(res)+" cotran db only")
   res = testufunc(f,interp_cotran_ufunc.sbdb_ufunc_interpsbcotrdb)
   print(str(res)+" interp sb+cotran db")
+  res = testufunc(f,interp_cotran_ufunc.sbdb_ufunc_interpsbcotrdb_g2)
+  print(str(res)+" interp_g2 sb+cotran_g2 db")
+  res = testufunc(f,interp_cotran_ufunc.sbdb_ufunc_interpsbcotrdb_g4)
+  print(str(res)+" interp_g4 sb+cotran_g4 db")
+  res = testufunc(f,interp_cotran_ufunc.sbdb_ufunc_interpsbcotrdb_g6)
+  print(str(res)+" interp_g6 sb+cotran_g6 db")
 
 testinterpcotran()
