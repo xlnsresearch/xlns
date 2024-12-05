@@ -7,7 +7,7 @@ uses xlnsnp to trigger F-bit sbdb_ufunc calls to ufunc passed to it
 import math
 import xlns as xl
 import numpy as np
-import interp_cotran_ufunc
+import xlnsconf.interp_cotran_ufunc as interp_cotran_ufunc
 
 
 def testufunc(f, ufunc):
