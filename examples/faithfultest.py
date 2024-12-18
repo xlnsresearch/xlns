@@ -21,9 +21,9 @@ def faithful_sb_ufunc(f, ufunc):
             ((testufuncdb==truncdb).sum() + (testufuncdb==truncdb+1).sum())/len(x))
 
 def test_faithful_sb_interp():
-#for f in [7,9,11,13]:
+for f in [7,9,11,13]:
 #for f in [15]:
- for f in [17]:
+#for f in [17]:
   print("f="+str(f))
   res = faithful_sb_ufunc(f,xl.sbdb_ufunc_ideal)
   print(str(res)+" ideal sb db")
