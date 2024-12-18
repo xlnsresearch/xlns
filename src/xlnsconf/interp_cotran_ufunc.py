@@ -386,4 +386,172 @@ def sbdb_ufunc_interpsbcotrdb_g6(z,s,B=None,F=None):
                                               2*dz2 + sbdb_ufunc_interpsb_g6(-z2-dz2+dz1,0,B=B,F=F))), 
                      sbdb_ufunc_interpsb_g6(z,s,B=B,F=F)) 
  
+def sbdb_ufunc_interpsbcotrdb_g2_faith(z,s,B=None,F=None):
+  """interpolate faithfully sb with 2 guards, correct cotran db with same interpolate"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    #F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
+    
+  N = (F-5)//2 
+  J = F - N
+  zhmask = -(1<<J)  #masks arbitrary, similar to interp about balanced
+  zp = -z
+  z2 = zp & zhmask
+  z1 = zp - z2
+  #instead of 1, use s, which==1 only for cases dz1,dz2 needed
+  # won't blow up when s==0 and meaningless results discarded
+  dz1 = xl.sbdb_ufunc_ideal(-z1,s,B=B,F=F)//2
+  dz2 = xl.sbdb_ufunc_ideal(-z2,s,B=B,F=F)//2
+  return np.where(s, np.where(z2==0, 2*dz1, 
+                              np.where(z1==0, 2*dz2, 
+                                              2*dz2 + sbdb_ufunc_interpsb_g2_faith(-z2-dz2+dz1,0,B=B,F=F))), 
+                     sbdb_ufunc_interpsb_g2_faith(z,s,B=B,F=F)) 
+ 
 
+def sbdb_ufunc_interpsbcotrdb_g4_faith(z,s,B=None,F=None):
+  """interpolate faithfully sb with 4 guards, correct cotran db with same interpolate"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    #F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
+    
+  N = (F-5)//2 
+  J = F - N
+  zhmask = -(1<<J)  #masks arbitrary, similar to interp about balanced
+  zp = -z
+  z2 = zp & zhmask
+  z1 = zp - z2
+  #instead of 1, use s, which==1 only for cases dz1,dz2 needed
+  # won't blow up when s==0 and meaningless results discarded
+  dz1 = xl.sbdb_ufunc_ideal(-z1,s,B=B,F=F)//2
+  dz2 = xl.sbdb_ufunc_ideal(-z2,s,B=B,F=F)//2
+  return np.where(s, np.where(z2==0, 2*dz1, 
+                              np.where(z1==0, 2*dz2, 
+                                              2*dz2 + sbdb_ufunc_interpsb_g4_faith(-z2-dz2+dz1,0,B=B,F=F))), 
+                     sbdb_ufunc_interpsb_g4_faith(z,s,B=B,F=F)) 
+ 
+
+def sbdb_ufunc_interpsbcotrdb_g6_faith(z,s,B=None,F=None):
+  """interpolate sb fauthfully with 6 guards, correct cotran db with same interpolate"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    #F = xl.xlnsF
+    F = -math.floor(math.log(math.log(B,2),2))
+    
+  N = (F-5)//2 
+  J = F - N
+  zhmask = -(1<<J)  #masks arbitrary, similar to interp about balanced
+  zp = -z
+  z2 = zp & zhmask
+  z1 = zp - z2
+  #instead of 1, use s, which==1 only for cases dz1,dz2 needed
+  # won't blow up when s==0 and meaningless results discarded
+  dz1 = xl.sbdb_ufunc_ideal(-z1,s,B=B,F=F)//2
+  dz2 = xl.sbdb_ufunc_ideal(-z2,s,B=B,F=F)//2
+  return np.where(s, np.where(z2==0, 2*dz1, 
+                              np.where(z1==0, 2*dz2, 
+                                              2*dz2 + sbdb_ufunc_interpsb_g6_faith(-z2-dz2+dz1,0,B=B,F=F))), 
+                     sbdb_ufunc_interpsb_g6_faith(z,s,B=B,F=F)) 
+ 
+def sbdb_ufunc_interpsb_g4_faith(z,s,B=None,F=None):
+  """interpolate sb faithfully with 4 guards, ideal db"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    F = -math.floor(math.log(math.log(B,2),2))
+  N = (F-3)//2 #faith doub table
+  J = F - N
+  #print("guard N="+str(N))
+  #print("guard J="+str(J))
+  zhmask = -(1<<J)
+  zlmask = -1 - zhmask
+  #print("guard zhmask="+str(bin(zhmask)))
+  #print("guard zlmask="+str(bin(zlmask)))
+  zh = z & zhmask
+  zl = z & zlmask
+  #print("guard zh="+str(bin(zh)))
+  #print("guard zl="+str(bin(zl)))
+
+  B = B**.0625
+  F += 4
+  zh = zh << 4
+  zhmask = zhmask << 4
+
+  szh = xl.sbdb_ufunc_ideal(zh,0,B=B,F=F)//2
+  szhp1 = xl.sbdb_ufunc_ideal(zh-zhmask,0,B=B,F=F)//2
+  #print("guard szh="+str(bin(szh)))
+  #print("guard szhp1="+str(bin(szhp1)))
+  res = ((szhp1 - szh)* zl)>>J
+  #print("guard res="+str(bin(res)))
+  res += szh
+  return np.where(s,xl.sbdb_ufunc_ideal(z,s,B=B,F=F), ((res+8)&-16)//8)  #rounding add, mask guard, (shift right 4 guard, but shift left 1 for sign)=> /8
+
+def sbdb_ufunc_interpsb_g6_faith(z,s,B=None,F=None):
+  """interpolate sb faithfully with 6 guards, ideal db"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    F = -math.floor(math.log(math.log(B,2),2))
+  N = (F-3)//2 #faith doub table
+  J = F - N
+  #print("guard N="+str(N))
+  #print("guard J="+str(J))
+  zhmask = -(1<<J)
+  zlmask = -1 - zhmask
+  #print("guard zhmask="+str(bin(zhmask)))
+  #print("guard zlmask="+str(bin(zlmask)))
+  zh = z & zhmask
+  zl = z & zlmask
+
+  B = B**.015625
+  F += 6
+  zh = zh << 6
+  zhmask = zhmask << 6
+
+  #print("guard zh="+str(bin(zh)))
+  #print("guard zl="+str(bin(zl)))
+  szh = xl.sbdb_ufunc_ideal(zh,0,B=B,F=F)//2
+  szhp1 = xl.sbdb_ufunc_ideal(zh-zhmask,0,B=B,F=F)//2
+  #print("guard szh="+str(bin(szh)))
+  #print("guard szhp1="+str(bin(szhp1)))
+  res = ((szhp1 - szh)* zl)>>J
+  #print("guard res="+str(bin(res)))
+  res += szh
+  return np.where(s,xl.sbdb_ufunc_ideal(z,s,B=B,F=F), ((res+32)&-64)//32)  #rounding add, mask guard, (shift right 6 guard, but shift left 1 for sign)=> /32
+
+def sbdb_ufunc_interpsb_g2_faith(z,s,B=None,F=None):
+  """interpolate sb faithfully with 2 guards, ideal db"""
+  if B == None:
+    B = xl.xlnsB
+  if F == None:
+    F = -math.floor(math.log(math.log(B,2),2))
+  N = (F-3)//2 #faith doub table
+  J = F - N
+  #print("guard N="+str(N))
+  #print("guard J="+str(J))
+  zhmask = -(1<<J)
+  zlmask = -1 - zhmask
+  #print("guard zhmask="+str(bin(zhmask)))
+  #print("guard zlmask="+str(bin(zlmask)))
+  zh = z & zhmask
+  zl = z & zlmask
+
+  B = B**.25
+  F += 2
+  zh = zh << 2
+  zhmask = zhmask << 2
+
+  #print("guard zh="+str(bin(zh)))
+  #print("guard zl="+str(bin(zl)))
+  szh = xl.sbdb_ufunc_ideal(zh,0,B=B,F=F)//2
+  szhp1 = xl.sbdb_ufunc_ideal(zh-zhmask,0,B=B,F=F)//2
+  #print("guard szh="+str(bin(szh)))
+  #print("guard szhp1="+str(bin(szhp1)))
+  res = ((szhp1 - szh)* zl)>>J
+  #print("guard res="+str(bin(res)))
+  res += szh
+  return np.where(s,xl.sbdb_ufunc_ideal(z,s,B=B,F=F), ((res+2)&-4)//2)  #rounding add, mask guard, (shift right 2 guard, but shift left 1 for sign)=> /2
