@@ -52,6 +52,15 @@ def sbdb_ufunc_ideal(z,s,B=None,F=None):
   else:
     return 2*np.int64(np.round(np.log(np.abs(1.0 - 2.0*s + B**np.minimum(-s,z)))/math.log(B)))
    
+def sbdb_ufunc_trunc(z,s,B=None,F=None):
+  """ufunc for truncated Gaussian log"""
+  global xlnsB
+  #need to deal with z=0 s=1
+  if B==None:
+    return 2*np.int64(np.floor(np.log(np.abs(1.0 - 2.0*s + xlnsB**np.minimum(-s,z)))/math.log(xlnsB)))
+  else:
+    return 2*np.int64(np.floor(np.log(np.abs(1.0 - 2.0*s + B**np.minimum(-s,z)))/math.log(B)))
+   
 sbdb_ufunc = sbdb_ufunc_ideal
 
 def xlnsapplyfunc(x,func):
