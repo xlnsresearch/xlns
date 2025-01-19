@@ -146,4 +146,4 @@ The `xlns` package provides you with variables and arithmetic that are internall
 The Logarithmic Number System offers a powerful way to simplify computations, especially where multiplication and division of large values are involved. It is most useful in specialized fields that require efficient handling of wide-ranging magnitudes and where performance gains from reducing computational complexity are important.
 
 For more information, a comprehensive bibliography of published research is available here:
-- [XLNS Research](https://xlnxresearch.com/)
+- [XLNS Research](https://xlnsresearch.com/)
