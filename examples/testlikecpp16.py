@@ -52,7 +52,7 @@ def test5fp():
 		num = num + 2.0
 	print("test5fp num="+str(num)+" 4*sum="+str(4*sum))
 
-#Mandelbrot set fpI*/
+#Mandelbrot set fp versus xlns (much slower than compiled cpp due to Python class overhead)
 
 def test4fp(iter):
 	mone = -1.0
