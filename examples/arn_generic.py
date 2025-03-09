@@ -56,75 +56,76 @@ def main(main_params):
 		file.close()
 
 		split = int(main_params['split'])
-		x_val = x_train[split:]
+		val_split = int(main_params['val_split'])
+		x_val = x_test[:val_split]
 		print('#=',split,' xlns b=','two ',' F=',xl.xlnsF,' B=',xl.xlnsB, ' batch=',batchsize, ' lr=',lr)
-		y_val = y_train[split:]
+		y_val = y_test[:val_split]
 		y_train = y_train[:split]
 		x_train = x_train[:split]
 
 
 		if os.path.isfile("./weightin.npz"):
-		    print("using ./weightin.npz")
-		    randfile = np.load("./weightin.npz","r")
-		    W1 = randfile["W1"] 
-		    W2 = randfile["W2"]
-		    randfile.close()
+			print("using ./weightin.npz")
+			randfile = np.load("./weightin.npz","r")
+			W1 = randfile["W1"] 
+			W2 = randfile["W2"]
+			randfile.close()
 		else:
-		    print("using new random weights")
-		    W1 = np.array((list(np.random.normal(0, 0.1, (785, 100)))))
-		    W2 = np.array((list(np.random.normal(0, 0.1, (101, 10)))))
-		    np.savez_compressed("./weightout.npz",W1=W1,W2=W2)
+			print("using new random weights")
+			W1 = np.array((list(np.random.normal(0, 0.1, (785, 100)))))
+			W2 = np.array((list(np.random.normal(0, 0.1, (101, 10)))))
+			np.savez_compressed("./weightout.npz",W1=W1,W2=W2)
 		delta_W1 = np.array((list(np.zeros(W1.shape))))
 		delta_W2 = np.array((list(np.zeros(W2.shape))))
 
 		if main_params['type'] == 'xlnsnp': 
-		  lnsW1 = xl.xlnsnp(np.array(xl.xlnscopy(list(W1))))
-		  lnsW2 = xl.xlnsnp(np.array(xl.xlnscopy(list(W2))))
-		  lnsones = xl.xlnsnp(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
-		  lnsdelta_W1 = xl.xlnsnp(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
-		  lnsdelta_W2 = xl.xlnsnp(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
+			lnsW1 = xl.xlnsnp(np.array(xl.xlnscopy(list(W1))))
+			lnsW2 = xl.xlnsnp(np.array(xl.xlnscopy(list(W2))))
+			lnsones = xl.xlnsnp(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
+			lnsdelta_W1 = xl.xlnsnp(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
+			lnsdelta_W2 = xl.xlnsnp(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
 		if main_params['type'] == 'xlnsnpv': 
-		  lnsW1 = xl.xlnsnpv(np.array(xl.xlnscopy(list(W1))),6)
-		  lnsW2 = xl.xlnsnpv(np.array(xl.xlnscopy(list(W2))),6)
-		  lnsones = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
-		  lnsdelta_W1 = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
-		  lnsdelta_W2 = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
+			lnsW1 = xl.xlnsnpv(np.array(xl.xlnscopy(list(W1))),6)
+			lnsW2 = xl.xlnsnpv(np.array(xl.xlnscopy(list(W2))),6)
+			lnsones = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
+			lnsdelta_W1 = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
+			lnsdelta_W2 = xl.xlnsnpv(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
 		if main_params['type'] == 'xlnsnpb': 
-		  lnsW1 = xl.xlnsnpb(np.array(xl.xlnscopy(list(W1))),2**2**-6)
-		  lnsW2 = xl.xlnsnpb(np.array(xl.xlnscopy(list(W2))),2**2**-6)
-		  lnsones = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))),2**2**-xl.xlnsF)
-		  lnsdelta_W1 = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))),2**2**-xl.xlnsF)
-		  lnsdelta_W2 = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))),2**2**-xl.xlnsF)
+			lnsW1 = xl.xlnsnpb(np.array(xl.xlnscopy(list(W1))),2**2**-6)
+			lnsW2 = xl.xlnsnpb(np.array(xl.xlnscopy(list(W2))),2**2**-6)
+			lnsones = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))),2**2**-xl.xlnsF)
+			lnsdelta_W1 = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.zeros(W1.shape)))),2**2**-xl.xlnsF)
+			lnsdelta_W2 = xl.xlnsnpb(np.array(xl.xlnscopy(list(np.zeros(W2.shape)))),2**2**-xl.xlnsF)
 		if main_params['type'] == 'xlns': 
-		  lnsW1 = (np.array(xl.xlnscopy(list(W1))))
-		  lnsW2 = (np.array(xl.xlnscopy(list(W2))))
-		  lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
-		  lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
-		  lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
+			lnsW1 = (np.array(xl.xlnscopy(list(W1))))
+			lnsW2 = (np.array(xl.xlnscopy(list(W2))))
+			lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))))))
+			lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)))))
+			lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)))))
 		if main_params['type'] == 'xlnsud': 
-		  lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsud)))
-		  lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsud)))
-		  lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsud)))
-		  lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsud)))
-		  lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsud)))
+			lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsud)))
+			lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsud)))
+			lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsud)))
+			lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsud)))
+			lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsud)))
 		if main_params['type'] == 'xlnsv': 
-		  lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsv,6)))
-		  lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsv,6)))
-		  lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsv)))
-		  lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsv)))
-		  lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsv)))
+			lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsv,6)))
+			lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsv,6)))
+			lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsv)))
+			lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsv)))
+			lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsv)))
 		if main_params['type'] == 'xlnsb': 
-		  lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsb,2**2**-6)))
-		  lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsb,2**2**-6)))
-		  lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsb,2**2**-xl.xlnsF)))
-		  lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsb,2**2**-xl.xlnsF)))
-		  lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsb,2**2**-xl.xlnsF)))
+			lnsW1 = (np.array(xl.xlnscopy(list(W1),xl.xlnsb,2**2**-6)))
+			lnsW2 = (np.array(xl.xlnscopy(list(W2),xl.xlnsb,2**2**-6)))
+			lnsones = (np.array(xl.xlnscopy(list(np.ones((batchsize, 1))),xl.xlnsb,2**2**-xl.xlnsF)))
+			lnsdelta_W1 = (np.array(xl.xlnscopy(list(np.zeros(W1.shape)),xl.xlnsb,2**2**-xl.xlnsF)))
+			lnsdelta_W2 = (np.array(xl.xlnscopy(list(np.zeros(W2.shape)),xl.xlnsb,2**2**-xl.xlnsF)))
 		if main_params['type'] == 'float': 
-		  lnsW1 = (np.array((list(W1))))
-		  lnsW2 = (np.array((list(W2))))
-		  lnsones = (np.array((list(np.ones((batchsize, 1))))))
-		  lnsdelta_W1 = (np.array((list(np.zeros(W1.shape)))))
-		  lnsdelta_W2 = (np.array((list(np.zeros(W2.shape)))))
+			lnsW1 = (np.array((list(W1))))
+			lnsW2 = (np.array((list(W2))))
+			lnsones = (np.array((list(np.ones((batchsize, 1))))))
+			lnsdelta_W1 = (np.array((list(np.zeros(W1.shape)))))
+			lnsdelta_W2 = (np.array((list(np.zeros(W2.shape)))))
 
 
 		performance = {}
@@ -139,29 +140,29 @@ def main(main_params):
 				x = np.array((list(x_train[start:(start + batchsize)])))
 				y = np.array((list(y_train[start:(start + batchsize)])))
 				if main_params['type'] == 'xlnsnp':
-				  lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
-				  lnsy = xl.xlnsnp(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
+					lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsy = xl.xlnsnp(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpv':
-				  lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
-				  lnsy = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
+					lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsy = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpb':
-				  lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
-				  lnsy = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))),2**2**-xl.xlnsF)
+					lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
+					lnsy = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(y,dtype=np.float64))),2**2**-xl.xlnsF)
 				if main_params['type'] == 'xlns':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
-				  lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64))))
 				if main_params['type'] == 'xlnsud':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
-				  lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsud)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
+					lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsud)))
 				if main_params['type'] == 'xlnsv':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
-				  lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsv)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
+					lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsv)))
 				if main_params['type'] == 'xlnsb':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
-				  lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
+					lnsy = (np.array(xl.xlnscopy(np.array(y,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
 				if main_params['type'] == 'float':
-				  lnsx = (np.array((np.array(x,dtype=np.float64))))
-				  lnsy = (np.array((np.array(y,dtype=np.float64))))
+					lnsx = (np.array((np.array(x,dtype=np.float64))))
+					lnsy = (np.array((np.array(y,dtype=np.float64))))
 				lnss1 = xl.hstack((lnsones, lnsx)) @ lnsW1
 				lnsmask = (lnss1 > 0) + (leaking_coeff * (lnss1 < 0))
 				lnsa1 = lnss1 * lnsmask
@@ -169,12 +170,12 @@ def main(main_params):
 				lnsa2 = softmax(lnss2)
 				lnsgrad_s2 = (lnsa2 - lnsy) / batchsize
 				lnsgrad_a1 = lnsgrad_s2 @ xl.transpose(lnsW2[1:])
-				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) * lnsgrad_s2
+				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) @ lnsgrad_s2
 				lnsgrad_s1 = lnsmask * lnsgrad_a1
-				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) * lnsgrad_s1
+				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) @ lnsgrad_s1
 				lnsW2 -= (lr * (lnsdelta_W2 + (_lambda * lnsW2)))
 				lnsW1 -= (lr * (lnsdelta_W1 + (_lambda * lnsW1)))
-
+			
 			print('#=',split,' xlns b=','two ',' F=',xl.xlnsF,' B=',xl.xlnsB, ' batch=',batchsize, ' lr=',lr)
 			lnscorrect_count = 0
 			for mbatch in range(int(split / batchsize)):
@@ -182,21 +183,21 @@ def main(main_params):
 				x = x_train[start:(start + batchsize)]
 				y = y_train[start:(start + batchsize)]
 				if main_params['type'] == 'xlnsnp':
-				  lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpv':
-				  lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpb':
-				  lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
+					lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
 				if main_params['type'] == 'xlns':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsud':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
 				if main_params['type'] == 'xlnsv':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
 				if main_params['type'] == 'xlnsb':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
 				if main_params['type'] == 'float':
-				  lnsx = (np.array((np.array(x,dtype=np.float64))))
+					lnsx = (np.array((np.array(x,dtype=np.float64))))
 				lnss1 = xl.hstack((lnsones, lnsx)) @ lnsW1
 				lnsmask = (lnss1 > 0) + (leaking_coeff * (lnss1 < 0))
 				lnsa1 = lnss1 * lnsmask
@@ -206,36 +207,36 @@ def main(main_params):
 			print("train-set accuracy at epoch %d: %f" % ((1 + epoch), lnsaccuracy))
 			performance['lnsacc_train'][epoch] = 100 * lnsaccuracy
 			lnscorrect_count = 0  #do same # as in train set for val set
-			for mbatch in range(int(split / batchsize)):
+			for mbatch in range(int(val_split / batchsize)):
 				start = mbatch * batchsize
 				x = x_val[start:(start + batchsize)]
 				y = y_val[start:(start + batchsize)]
 				if main_params['type'] == 'xlnsnp':
-				  lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = xl.xlnsnp(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpv':
-				  lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = xl.xlnsnpv(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsnpb':
-				  lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
+					lnsx = xl.xlnsnpb(np.array(xl.xlnscopy(np.array(x,dtype=np.float64))),2**2**-xl.xlnsF)
 				if main_params['type'] == 'xlns':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64))))
 				if main_params['type'] == 'xlnsud':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsud)))
 				if main_params['type'] == 'xlnsv':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv)))
 				if main_params['type'] == 'xlnsb':
-				  lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
+					lnsx = (np.array(xl.xlnscopy(np.array(x,dtype=np.float64),xl.xlnsv,2**2**-xl.xlnsF)))
 				if main_params['type'] == 'float':
-				  lnsx = (np.array((np.array(x,dtype=np.float64))))
+					lnsx = (np.array((np.array(x,dtype=np.float64))))
 				lnss1 = xl.hstack((lnsones, lnsx)) @ lnsW1
 				lnsmask = (lnss1 > 0) + (leaking_coeff * (lnss1 < 0))
 				lnsa1 = lnss1 * lnsmask
 				lnss2 = xl.hstack((lnsones, lnsa1)) @ lnsW2
 				lnscorrect_count += np.sum(np.argmax(y, axis=1) == xl.argmax(lnss2, axis=1))
-			lnsaccuracy = lnscorrect_count / split
+			lnsaccuracy = lnscorrect_count / val_split
 			print("Val-set accuracy at epoch %d: %f" % ((1 + epoch), lnsaccuracy))
 			performance['lnsacc_val'][epoch] = 100 * lnsaccuracy
 		print("elasped time="+str(time.process_time()-start_time))
-		fig = plt.figure(figsize = (16, 9)) 
+		fig = plt.figure(figsize = (16, 9))
 		ax = fig.add_subplot(111)
 		x = range(1, 1 + performance['lnsacc_train'].size)
 		#ax.plot(x, performance['acc_train'], 'g')
@@ -256,6 +257,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--is_training', default = True)
 	parser.add_argument('--split', default = 50) #00)
+	parser.add_argument('--val_split', default=50)
 	parser.add_argument('--learning_rate', default = 0.01)
 	parser.add_argument('--lambda', default = 0.000)     #.001
 	parser.add_argument('--minibatch_size', default = 1) #5

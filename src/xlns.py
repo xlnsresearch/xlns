@@ -143,18 +143,18 @@ def float64(x):
   else:
    return np.float64(x)
 
-def xlnsapplynpfunc(x,xlnsnp_func,xlnsnpv_func,xlnsnpb_func,xlnsnpr_func,np_func):
+def xlnsapplynpfunc(x,xlnsnp_func,xlnsnpv_func,xlnsnpb_func,xlnsnpr_func,np_func, **kwargs):
   #print(type(x))
   if isinstance(x,xlnsnpv): 
-    return xlnsnpv_func(x)
+    return xlnsnpv_func(x, **kwargs)
   elif isinstance(x,xlnsnp): #incl xlnsnpv
-    return xlnsnp_func(x)
+    return xlnsnp_func(x, **kwargs)
   elif isinstance(x,xlnsnpb): 
-    return xlnsnpb_func(x)
+    return xlnsnpb_func(x, **kwargs)
   elif isinstance(x,xlnsnpr):
-    return xlnsnpr_func(x)
+    return xlnsnpr_func(x, **kwargs)
   else:
-    return np_func(x)
+    return np_func(x, **kwargs)
 
 
 transpose = lambda x: xlnsapplynpfunc(x,xlnsnp.transpose,xlnsnpv.transpose,xlnsnpb.transpose,xlnsnpr.transpose,np.transpose)
@@ -162,7 +162,7 @@ ravel = lambda x: xlnsapplynpfunc(x,xlnsnp.ravel,xlnsnpv.ravel,xlnsnpb.ravel,xln
 shape = lambda x: xlnsapplynpfunc(x,xlnsnp.shape,xlnsnpv.shape,xlnsnpb.shape,xlnsnpr.shape,lambda x:x.shape)
 size = lambda x: xlnsapplynpfunc(x,xlnsnp.size,xlnsnpv.size,xlnsnpb.size,xlnsnpr.size,lambda x:x.size)
 sign = lambda x: xlnsapplynpfunc(x,xlnsnp.sign,xlnsnpv.sign,xlnsnpb.sign,xlnsnpr.sign,np.sign)
-argmax = lambda x,axis=None: xlnsapplynpfunc(x,xlnsnp.argmax,xlnsnpv.argmax,xlnsnpb.argmax,xlnsnpr.argmax,np.argmax)
+argmax = lambda x,axis=None: xlnsapplynpfunc(x,xlnsnp.argmax,xlnsnpv.argmax,xlnsnpb.argmax,xlnsnpr.argmax,np.argmax, axis=axis)
 
 def xlnswhere(x,vt,vf):
   if isinstance(x,xlnsnpv): 
