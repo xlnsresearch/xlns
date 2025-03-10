@@ -169,9 +169,9 @@ def main(main_params):
 				lnsa2 = softmax(lnss2)
 				lnsgrad_s2 = (lnsa2 - lnsy) / batchsize
 				lnsgrad_a1 = lnsgrad_s2 @ xl.transpose(lnsW2[1:])
-				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) * lnsgrad_s2
+				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) @ lnsgrad_s2
 				lnsgrad_s1 = lnsmask * lnsgrad_a1
-				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) * lnsgrad_s1
+				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) @ lnsgrad_s1
 				lnsW2 -= (lr * (lnsdelta_W2 + (_lambda * lnsW2)))
 				lnsW1 -= (lr * (lnsdelta_W1 + (_lambda * lnsW1)))
 
