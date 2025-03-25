@@ -263,16 +263,20 @@ class xlns:
  def __int__(self):
   return int(float(self))
  def __str__(self):
+  
   if self.x == -1e1000:
-   return "0"
+   return ("-" if self.s else "")+"0" #signed zero like tensorflow
+  if math.isinf(self.x):
+    return ("-" if self.s else "")+"inf"
   log10 = self.x/(math.log(10)/math.log(xlnsB))
-  #print("log10=",log10)
-  if abs(log10)>10:
-   return ("-" if self.s else "")+str(10.0**(log10%1))+"E"+str(math.floor(log10))
+  
+  if abs(log10)>10:#use scientific notation
+   
+   return ("-" if self.s else "")+ str(10.0**(log10%1))+"E"+str(math.floor(log10))
   else: 
    return str(float(self))
  def __repr__(self):
-  return "xlns("+str(self)+")"
+  return "xlns("+str(float(self))+")" #using float gives infinity in xlnsnp objects instead of precise representation of long float strings
  def conjugate(self):  #needed for .var() and .std() in numpy
   return(self)
  def __abs__(self):
