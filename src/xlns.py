@@ -219,7 +219,10 @@ class xlns:
   xlns1stCons = False
   if isinstance(v,int) or isinstance(v,float):
    if abs(v)!=0: #handling of infinity is needed
-    self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
+    if math.isinf(abs(v)):
+      self.x=float('inf')
+    else:
+      self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
    else:
     self.x = -1e1000 #-inf
    self.s = False if v>=0.0 else True 
