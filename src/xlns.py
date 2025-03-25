@@ -323,8 +323,12 @@ class xlns:
    return (1/v)*self
   if not isinstance(v,xlns):
    return self/xlns(v)
-  t.x = self.x - v.x
-  t.s = self.s != v.s
+  if math.isinf(v.x): #infinity handling in denominator
+    t.x=-1e1000
+    t.s=False if v.s==self.s else True # assuming signed 0 as in tensorflow
+  else:
+    t.x = self.x - v.x
+    t.s = self.s != v.s
   return t
  def __add__(self,v):
   global xlnsB
