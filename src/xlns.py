@@ -776,11 +776,28 @@ class xlnsnp:
   if isinstance(v,int) or isinstance(v,float):
     return self/xlnsnp(v)
   if isinstance(v,xlnsnp):
-    t = xlnsnp("")
-    t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
-                  (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1) )
-    return t
+        t = xlnsnp("")
+        INT64_MIN = np.int64(-9223372036854775808) #special zero
+        INT64_MAX_POS = np.int64(9223372036854775806)  # Positive infinity
+        INT64_MAX_NEG = np.int64(9223372036854775807)  # Negative infinity
+        INT64_NAN = np.int64(9223372036854775805)  # NaN for 0/0
+
+        is_nan = np.logical_and(self.nd == INT64_MIN, v.nd == INT64_MIN)
+
+        is_inf = np.logical_and(self.nd != INT64_MIN, v.nd == INT64_MIN)
+
+        normal_div = (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1)
+
+
+        inf_result = np.where(self.nd & 1 == 1, INT64_MAX_NEG, INT64_MAX_POS)
+
+
+        t.nd = np.where(is_nan, INT64_NAN,
+                np.where(is_inf, inf_result,
+                np.where(self.nd == INT64_MIN, INT64_MIN, normal_div)))
+        
+
+        return t
   else:
     return self/xlnsnp(v)
  def __neg__(self):
