@@ -218,7 +218,7 @@ class xlns:
   global xlns1stCons
   xlns1stCons = False
   if isinstance(v,int) or isinstance(v,float):
-   if abs(v)!=0:
+   if abs(v)!=0: #handling of infinity is needed
     self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
    else:
     self.x = -1e1000 #-inf
