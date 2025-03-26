@@ -541,20 +541,20 @@ def xlnscopy(x,xlnstype=xlns,setFB=None):
   """deep copy of list converting to xlns (or type and precision specified by 2nd and 3rd args)"""
   r=[]
   for y in x:
-   if isinstance(y,list) or isinstance(y,np.ndarray):
+   if isinstance(y,(list,np.ndarray)):
     if setFB == None:
-      r+=[xlnscopy(y,xlnstype)]
+      r.append(xlnscopy(y,xlnstype))
     else:
       #print('recursive setFB='+str(setFB))
-      r+=[xlnscopy(y,xlnstype,setFB)]
-   elif isinstance(y,int) or isinstance(y,float) or isinstance(y,np.float64) or isinstance(y,np.float32) or isinstance(y,xlns) or isinstance(y,xlnsr) or isinstance(y,xlnsnp) or isinstance(y,xlnsnpr) or isinstance(y,xlnsnpv) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
+      r.append(xlnscopy(y,xlnstype,setFB))
+   elif isinstance(y,(int,float,np.float64,np.float32,xlns,xlnsr,xlnsnp,xlnsnpr,xlnsnpv,xlnsv,xlnsb)):
     if setFB == None:
-      r+=[xlnstype(y)]
+      r.append(xlnstype(y))
     else:
       #print('setFB='+str(setFB))
-      r+=[xlnstype(y,setFB)]
+      r.append(xlnstype(y,setFB))
    else:
-    r+=[y]
+    r.append(y)
   return r
 
 #def xlnscopy(x):
