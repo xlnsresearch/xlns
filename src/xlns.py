@@ -638,7 +638,7 @@ class xlnsnp:
      self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
      self.nd = np.array([2*v.x+v.s],dtype="i8")
-  elif isinstance(v,xlnsnp):    #copy constructor
+  elif isinstance(v,xlnsnp):    #copy constructor includes xlnsnpv
      self.nd = v.nd
   elif isinstance(v,xlnsr):
    if v.p==v.n:
@@ -654,7 +654,7 @@ class xlnsnp:
   #   temp = xlnsnp(v.xlns())
   #   #print("stop npr->np")
   #   self.nd = temp.nd
-  elif isinstance(v,xlnsnpb) or isinstance(v,xlnsnpv) or isinstance(v,xlnsnpr):
+  elif isinstance(v,xlnsnpb) or isinstance(v,xlnsnpr):
      self.nd = xlnsnp(np.float64(v.xlns())).nd
   elif isinstance(v,np.ndarray):
    #print("have ndarray: "+str(v))
