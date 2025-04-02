@@ -1,3 +1,4 @@
+"""Gaussian Log from lookup table in file (F<=20) to allows bit-for-bit emulation of hardware"""
 import xlns as xl
 import numpy as np
 import os
@@ -5,6 +6,7 @@ import os
 global tab_sbdb,tab_ez,tab_B,tab_mismatch
 
 def sbdb_ufunc_tab(z,s,B=None,F=None):
+    """use table if B matches tab_B, otherwise revert to ideal"""
     global tab_mismatch
     if B == None:
         B = xl.xlnsB
@@ -17,6 +19,7 @@ def sbdb_ufunc_tab(z,s,B=None,F=None):
         return xl.sbdb_ufunc_ideal(z,s,B,F)
 
 def get_table(filestem):
+    """Create/load file into table; file name user-supplied stem + frac digits of B"""
     global tab_sbdb,tab_ez,tab_B,tab_mismatch
     tab_mismatch = False
     tab_B = xl.xlnsB
