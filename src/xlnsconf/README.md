@@ -27,6 +27,8 @@ __interp_cotran_ufunc__: unpartitioned linear Lagrange interpolation and/or (Arn
 
 __lpvip_ufunc__: Low Precision Very Insignificant Power (Arnold,2004) with (Mitchell,1962) to approximate Gaussian Log 
 
+__tab_ufunc__: create/load Gaussian Log from a lookup table given in a file (F<=20 or equiv. B).  Allows bit-for-bit emulation of hardware ALU.  File name is user-supplied stem concatenated to fractional digits of B.  For example, F=5 uses "userstem_0218971486541166.npz".  If requested B does not match, reverts to ideal.
+
 __utah_tayco_ufunc__: unpartitioned linear Taylor interpolation and/or (Coleman, 2000) cotransformation of Gaussian Log contributed by the University of Utah (Thanh Son Nguyen and Alexey Solovyev), the accuracy of which has been proven using Lean4. 
 
 __xlnsudFracnorm__: override ``__add__`` of ``xlnsud`` for Fractional Normalization, (Tsiraras-Paliouras,2017) or (Zhang-Han,2024) 
