@@ -218,8 +218,11 @@ class xlns:
   global xlns1stCons
   xlns1stCons = False
   if isinstance(v,int) or isinstance(v,float):
-   if abs(v)!=0:
-    self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
+   if abs(v)!=0: #handling of infinity is needed
+    if math.isinf(abs(v)):
+      self.x=float('inf')
+    else:
+      self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
    else:
     self.x = -1e1000 #-inf
    self.s = False if v>=0.0 else True 
@@ -260,16 +263,20 @@ class xlns:
  def __int__(self):
   return int(float(self))
  def __str__(self):
+  
   if self.x == -1e1000:
-   return "0"
+   return ("-" if self.s else "")+"0" #signed zero like tensorflow
+  if math.isinf(self.x):
+    return ("-" if self.s else "")+"inf"
   log10 = self.x/(math.log(10)/math.log(xlnsB))
-  #print("log10=",log10)
-  if abs(log10)>10:
-   return ("-" if self.s else "")+str(10.0**(log10%1))+"E"+str(math.floor(log10))
+  
+  if abs(log10)>10:#use scientific notation
+   
+   return ("-" if self.s else "")+ str(10.0**(log10%1))+"E"+str(math.floor(log10))
   else: 
    return str(float(self))
  def __repr__(self):
-  return "xlns("+str(self)+")"
+  return "xlns("+str(float(self))+")" #using float gives infinity in xlnsnp objects instead of precise representation of long float strings
  def conjugate(self):  #needed for .var() and .std() in numpy
   return(self)
  def __abs__(self):
@@ -320,8 +327,12 @@ class xlns:
    return (1/v)*self
   if not isinstance(v,xlns):
    return self/xlns(v)
-  t.x = self.x - v.x
-  t.s = self.s != v.s
+  if math.isinf(v.x): #infinity handling in denominator
+    t.x=-1e1000
+    t.s=False if v.s==self.s else True # assuming signed 0 as in tensorflow
+  else:
+    t.x = self.x - v.x
+    t.s = self.s != v.s
   return t
  def __add__(self,v):
   global xlnsB
@@ -765,11 +776,28 @@ class xlnsnp:
   if isinstance(v,int) or isinstance(v,float):
     return self/xlnsnp(v)
   if isinstance(v,xlnsnp):
-    t = xlnsnp("")
-    t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
-                  (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1) )
-    return t
+        t = xlnsnp("")
+        INT64_MIN = np.int64(-9223372036854775808) #special zero
+        INT64_MAX_POS = np.int64(9223372036854775806)  # Positive infinity
+        INT64_MAX_NEG = np.int64(9223372036854775807)  # Negative infinity
+        INT64_NAN = np.int64(9223372036854775805)  # NaN for 0/0
+
+        is_nan = np.logical_and(self.nd == INT64_MIN, v.nd == INT64_MIN)
+
+        is_inf = np.logical_and(self.nd != INT64_MIN, v.nd == INT64_MIN)
+
+        normal_div = (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1)
+
+
+        inf_result = np.where(self.nd & 1 == 1, INT64_MAX_NEG, INT64_MAX_POS)
+
+
+        t.nd = np.where(is_nan, INT64_NAN,
+                np.where(is_inf, inf_result,
+                np.where(self.nd == INT64_MIN, INT64_MIN, normal_div)))
+        
+
+        return t
   else:
     return self/xlnsnp(v)
  def __neg__(self):
