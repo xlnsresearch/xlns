@@ -14,6 +14,8 @@ import math
 import numpy as np
 
 XLNS_MIN_INT = -0x7fffffffffffffff-1 #constant for minimum integer value (effectively 0x8000000000000000 avoiding int64 limit)
+global ovfmin,ovfmaxi #@PranshuLakhotia suggested to fix github build errors
+global xlnsB,xlnsF
 
 def xlnssetovf(mn,mx):
   """set min and max overflow values"""
