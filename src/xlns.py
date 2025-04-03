@@ -708,7 +708,7 @@ class xlnsnp:
      self.nd = xlnsnp(np.float64(v)).nd
    else:
      t=[]
-     for y in xlnscopy(v):
+     for y in np.ravel(xlnscopy(v)):
        #print(y)
        if y.x == -1e1000:
          #print("zero")
