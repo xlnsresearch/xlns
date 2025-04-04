@@ -774,10 +774,20 @@ class xlnsnp:
   if isinstance(v,int) or isinstance(v,float):
     return self/xlnsnp(v)
   if isinstance(v,xlnsnp):
-    t = xlnsnp("")
-    t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
-                  (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1) )
+    t = xl.xlnsnp("")
+    INT64_MIN = np.int64(-9223372036854775808)  # special zero
+    INT64_MAX_POS = np.int64(9223372036854775806)  # +inf
+    INT64_MAX_NEG = np.int64(9223372036854775807)  # -inf. INT64 max
+ 
+
+
+    is_inf = np.logical_and(self.nd != INT64_MIN, v.nd == INT64_MIN)
+
+    normal_div = (self.nd - v.nd + (v.nd & 1)) ^ (v.nd & 1)
+    inf_result = np.where(self.nd & 1 == 1, INT64_MAX_NEG, INT64_MAX_POS)
+
+    t.nd = np.where(is_inf, inf_result,
+             np.where(self.nd == INT64_MIN, INT64_MIN, normal_div))
     return t
   else:
     return self/xlnsnp(v)
