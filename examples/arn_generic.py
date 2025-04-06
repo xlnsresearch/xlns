@@ -56,11 +56,12 @@ def main(main_params):
 		file.close()
 
 		split = int(main_params['split'])
-		x_val = x_train[split:]
-		print('#=',split,' xlns b=','two ',' F=',xl.xlnsF,' B=',xl.xlnsB, ' batch=',batchsize, ' lr=',lr)
-		y_val = y_train[split:]
-		y_train = y_train[:split]
+		val_split = int(main_params['val_split'])
 		x_train = x_train[:split]
+		y_train = y_train[:split]
+		x_val = x_test[:val_split]
+		y_val = y_test[:val_split]
+		print('#=',split,' xlns b=','two ',' F=',xl.xlnsF,' B=',xl.xlnsB, ' batch=',batchsize, ' lr=',lr)
 
 
 		if os.path.isfile("./weightin.npz"):
@@ -169,9 +170,9 @@ def main(main_params):
 				lnsa2 = softmax(lnss2)
 				lnsgrad_s2 = (lnsa2 - lnsy) / batchsize
 				lnsgrad_a1 = lnsgrad_s2 @ xl.transpose(lnsW2[1:])
-				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) * lnsgrad_s2
+				lnsdelta_W2 = xl.transpose(xl.hstack((lnsones, lnsa1))) @ lnsgrad_s2
 				lnsgrad_s1 = lnsmask * lnsgrad_a1
-				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) * lnsgrad_s1
+				lnsdelta_W1 = xl.transpose(xl.hstack((lnsones, lnsx))) @ lnsgrad_s1
 				lnsW2 -= (lr * (lnsdelta_W2 + (_lambda * lnsW2)))
 				lnsW1 -= (lr * (lnsdelta_W1 + (_lambda * lnsW1)))
 
@@ -206,7 +207,7 @@ def main(main_params):
 			print("train-set accuracy at epoch %d: %f" % ((1 + epoch), lnsaccuracy))
 			performance['lnsacc_train'][epoch] = 100 * lnsaccuracy
 			lnscorrect_count = 0  #do same # as in train set for val set
-			for mbatch in range(int(split / batchsize)):
+			for mbatch in range(int(val_split / batchsize)):
 				start = mbatch * batchsize
 				x = x_val[start:(start + batchsize)]
 				y = y_val[start:(start + batchsize)]
@@ -231,7 +232,7 @@ def main(main_params):
 				lnsa1 = lnss1 * lnsmask
 				lnss2 = xl.hstack((lnsones, lnsa1)) @ lnsW2
 				lnscorrect_count += np.sum(np.argmax(y, axis=1) == xl.argmax(lnss2, axis=1))
-			lnsaccuracy = lnscorrect_count / split
+			lnsaccuracy = lnscorrect_count / val_split
 			print("Val-set accuracy at epoch %d: %f" % ((1 + epoch), lnsaccuracy))
 			performance['lnsacc_val'][epoch] = 100 * lnsaccuracy
 		print("elasped time="+str(time.process_time()-start_time))
@@ -256,6 +257,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--is_training', default = True)
 	parser.add_argument('--split', default = 50) #00)
+	parser.add_argument('--val_split', default = 50)
 	parser.add_argument('--learning_rate', default = 0.01)
 	parser.add_argument('--lambda', default = 0.000)     #.001
 	parser.add_argument('--minibatch_size', default = 1) #5

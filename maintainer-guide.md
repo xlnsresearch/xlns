@@ -6,7 +6,7 @@ More details can be found [here](https://packaging.python.org/en/latest/tutorial
 
 Increment the minor or major version appropriately from the line indicated below in pyproject.toml.
 ````
-version = "1.0.3"
+version = "1.0.5"
 ````
 
 ## Build

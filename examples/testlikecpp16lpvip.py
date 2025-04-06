@@ -1,9 +1,13 @@
 import xlns as xl
+import lpvip_ufunc #uncomment for lpvip
+#xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddidealSub #uncomment for premit-add/above premit-sing-sub
+#xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddlpvipSub #uncomment for premit-add/above premit-sing-sub
+xl.sbdb_ufunc = lpvip_ufunc.sbdb_ufunc_premitAddpremitSub #uncomment for premit-add/above premit-sing-sub
 
 def test1fp():
 	odd = 1
 	sum = 0
-	for i in range(1,101):
+	for i in range(1,101): #iter for xlns16
 		sum += odd
 		odd += 2.0
 	print("test1fp odd="+str(odd)+" sum="+str(sum))
@@ -33,9 +37,9 @@ def test3fp():
 # compute pi the hard way
 
 def test5xlns32_float():
-	num = xl.xlnsv(1.0, 7)
-	sum = xl.xlnsv(0.0, 7)
-	val = xl.xlnsv(num, 7)
+	num = xl.xlns(1.0)
+	sum = xl.xlns(0.0)
+	val = xl.xlns(num)
 	for i in range(1,11):
 		sum = sum + val/num
 		val = -val
@@ -46,7 +50,7 @@ def test5fp():
 	num = 1.0
 	sum = 0.0
 	val = num
-	for i in range(1,11):
+	for i in range(1,11): #iter for xlns16
 		sum = sum + val/num
 		val = -val
 		num = num + 2.0
@@ -80,11 +84,11 @@ def test4fp(iter):
 		print("")
 
 def test4xlns32_float(iter):
-	mone = xl.xlnsv(-1.0, 7)
-	two = xl.xlnsv(2.0, 7)
-	four = xl.xlnsv(4.0, 7)
-	yscale = xl.xlnsv(12.0, 7)
-	xscale = xl.xlnsv(24.0, 7)
+	mone = xl.xlns(-1.0)
+	two = xl.xlns(2.0)
+	four = xl.xlns(4.0)
+	yscale = xl.xlns(12.0)
+	xscale = xl.xlns(24.0)
 	for iy in range(11,-12,-1):
 		for ix in range(-40, 39):
 			y = iy/yscale
@@ -106,8 +110,8 @@ def test4xlns32_float(iter):
 
 
 def test1xlns32_float():
-	odd = xl.xlnsv(1, 7)
-	sum = xl.xlnsv(0, 7)
+	odd = xl.xlns(1)
+	sum = xl.xlns(0)
 	for i in range(1,101):
 		sum += odd
 		odd += 2.0
@@ -115,19 +119,20 @@ def test1xlns32_float():
 
 
 def test2xlns32_float():
-	num = xl.xlnsv(1.0, 7)
-	fact = xl.xlnsv(1.0, 7)
-	sum = xl.xlnsv(0.0, 7)
+	num = xl.xlns(1.0)
+	fact = xl.xlns(1.0)
+	sum = xl.xlns(0.0)
 	for i in range(1,9):
 		sum = sum + 1.0/fact
 		fact = fact * num
+		print("test2xlns_float num="+str(num)+" fact="+str(fact)+" sum="+str(sum))
 		num = num + 1.0
 	print("test2xlns_float num="+str(num)+" fact="+str(fact)+" sum="+str(sum))
 
 def test3xlns32_float():
-	num = xl.xlnsv(1.0, 7)
-	fact = xl.xlnsv(1.0, 7)
-	sum = xl.xlnsv(0.0, 7)
+	num = xl.xlns(1.0)
+	fact = xl.xlns(1.0)
+	sum = xl.xlns(0.0)
 	for i in range(1,11):
 		sum = sum + 1.0/fact
 		fact = -fact * num * (num + 1.0)
@@ -136,6 +141,7 @@ def test3xlns32_float():
 
 def main():
 	print("xlns16 Python doing same tests as the C++ version (16-bit like bfloat)");
+	xl.xlnssetF(7)
 
 	test5fp();
 	test5xlns32_float();

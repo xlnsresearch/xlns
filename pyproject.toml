@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xlns"
-version = "1.0.3"
+version = "1.0.5"
 authors = [
   { name="Mark G Arnold", email="markgarnold@yahoo.com" },
   { name="Ed Chester", email="ed.chester@systemlevel.co.uk"}

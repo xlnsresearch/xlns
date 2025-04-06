@@ -13,6 +13,15 @@
 import math
 import numpy as np
 
+XLNS_MIN_INT = -0x7fffffffffffffff-1 #constant for minimum integer value (effectively 0x8000000000000000 avoiding int64 limit)
+global ovfmin,ovfmax #@PranshuLakhotia suggested to fix github build errors
+global xlnsB,xlnsF
+xlnsF = 23  # default value
+xlnsB = None  # will be calculated
+ovfmin = 2.938735877055719e-39  # default value
+ovfmax = 3.402823669209385e+38  # default value
+
+
 def xlnssetovf(mn,mx):
   """set min and max overflow values"""
   global ovfmin,ovfmax
@@ -143,18 +152,18 @@ def float64(x):
   else:
    return np.float64(x)
 
-def xlnsapplynpfunc(x,xlnsnp_func,xlnsnpv_func,xlnsnpb_func,xlnsnpr_func,np_func):
+def xlnsapplynpfunc(x,xlnsnp_func,xlnsnpv_func,xlnsnpb_func,xlnsnpr_func,np_func,**kwargs):
   #print(type(x))
   if isinstance(x,xlnsnpv): 
-    return xlnsnpv_func(x)
+    return xlnsnpv_func(x, **kwargs)
   elif isinstance(x,xlnsnp): #incl xlnsnpv
-    return xlnsnp_func(x)
+    return xlnsnp_func(x, **kwargs)
   elif isinstance(x,xlnsnpb): 
-    return xlnsnpb_func(x)
+    return xlnsnpb_func(x, **kwargs)
   elif isinstance(x,xlnsnpr):
-    return xlnsnpr_func(x)
+    return xlnsnpr_func(x, **kwargs)
   else:
-    return np_func(x)
+    return np_func(x, **kwargs)
 
 
 transpose = lambda x: xlnsapplynpfunc(x,xlnsnp.transpose,xlnsnpv.transpose,xlnsnpb.transpose,xlnsnpr.transpose,np.transpose)
@@ -162,7 +171,7 @@ ravel = lambda x: xlnsapplynpfunc(x,xlnsnp.ravel,xlnsnpv.ravel,xlnsnpb.ravel,xln
 shape = lambda x: xlnsapplynpfunc(x,xlnsnp.shape,xlnsnpv.shape,xlnsnpb.shape,xlnsnpr.shape,lambda x:x.shape)
 size = lambda x: xlnsapplynpfunc(x,xlnsnp.size,xlnsnpv.size,xlnsnpb.size,xlnsnpr.size,lambda x:x.size)
 sign = lambda x: xlnsapplynpfunc(x,xlnsnp.sign,xlnsnpv.sign,xlnsnpb.sign,xlnsnpr.sign,np.sign)
-argmax = lambda x,axis=None: xlnsapplynpfunc(x,xlnsnp.argmax,xlnsnpv.argmax,xlnsnpb.argmax,xlnsnpr.argmax,np.argmax)
+argmax = lambda x,axis=None: xlnsapplynpfunc(x,xlnsnp.argmax,xlnsnpv.argmax,xlnsnpb.argmax,xlnsnpr.argmax,np.argmax,axis=axis)
 
 def xlnswhere(x,vt,vf):
   if isinstance(x,xlnsnpv): 
@@ -630,19 +639,19 @@ class xlnsnp:
   if isinstance(v,int) or isinstance(v,float):
    #print("have scalar: "+str(v))
    if v == 0:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
      self.nd = np.array([2*xlns(v).x+xlns(v).s],dtype="i8")
   elif isinstance(v,xlns):
    if v.x == -1e1000:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
      self.nd = np.array([2*v.x+v.s],dtype="i8")
-  elif isinstance(v,xlnsnp):    #copy constructor
+  elif isinstance(v,xlnsnp):    #copy constructor includes xlnsnpv
      self.nd = v.nd
   elif isinstance(v,xlnsr):
    if v.p==v.n:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    elif v.p>v.n:
      self.nd = np.array([2*(xlns(v).x)],dtype="i8")
    else:
@@ -654,7 +663,7 @@ class xlnsnp:
   #   temp = xlnsnp(v.xlns())
   #   #print("stop npr->np")
   #   self.nd = temp.nd
-  elif isinstance(v,xlnsnpb) or isinstance(v,xlnsnpv) or isinstance(v,xlnsnpr):
+  elif isinstance(v,xlnsnpb) or isinstance(v,xlnsnpr):
      self.nd = xlnsnp(np.float64(v.xlns())).nd
   elif isinstance(v,np.ndarray):
    #print("have ndarray: "+str(v))
@@ -666,7 +675,7 @@ class xlnsnp:
         #print(y)
         if y.x == -1e1000:
            #print("zero")
-           t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+           t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
         else:
            t += [2*y.x + y.s] 
      #print("t="+repr(t))
@@ -681,14 +690,14 @@ class xlnsnp:
         if isinstance(y,xlns):
            if y.x == -1e1000:
              #print("zero")
-             t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+             t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
            else:
              t += [2*y.x + y.s] 
            #print("t="+repr(t))
         else:
            if y == 0:
              #print("zero")
-             t += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+             t += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
            else:
              t += [2*xlns(y).x + xlns(y).s] 
            #print("t="+repr(t))
@@ -703,7 +712,7 @@ class xlnsnp:
        #print(y)
        if y.x == -1e1000:
          #print("zero")
-         t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+         t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
        else:
          t += [2*y.x + y.s] 
        #print("t="+repr(t))
@@ -756,7 +765,7 @@ class xlnsnp:
   if isinstance(v,xlnsnp):
     t = xlnsnp("")
     t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff)|((v.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd + v.nd - (v.nd&1)) ^ (v.nd&1) )
     return t
   else:
@@ -767,7 +776,7 @@ class xlnsnp:
   if isinstance(v,xlnsnp):
     t = xlnsnp("")
     t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1) )
     return t
   else:
@@ -869,7 +878,7 @@ class xlnsnp:
   return t 
  def zeros(v):
   t = xlnsnp("")
-  t.nd = np.zeros(v,dtype="i8")+(-0x7fffffffffffffff-1)
+  t.nd = np.zeros(v,dtype="i8")+(XLNS_MIN_INT)
   return t
  def sum(self,axis=None):
   """divide and conquer summation that reorders operands to minimize __add__ calls"""
@@ -963,13 +972,13 @@ class xlnsnp:
   t=xlnsnp("")
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
    if v==0:
-     t.nd=np.where(self.nd&1,0,-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,0,XLNS_MIN_INT)
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,0,np.where(self.nd<2*xlns(v).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where(self.nd<2*xlns(v).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd>(2*xlns(v).x|1),0,-0x7fffffffffffffff-1),-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,np.where(self.nd>(2*xlns(v).x|1),0,XLNS_MIN_INT),XLNS_MIN_INT)
      return t
   else:
    print("nonscalar comparison")
@@ -978,13 +987,13 @@ class xlnsnp:
   t=xlnsnp("")
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
    if v==0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where((self.nd|1)!=-0x7fffffffffffffff,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where((self.nd|1)!=-0x7fffffffffffffff,0,XLNS_MIN_INT))
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where(self.nd>2*xlns(v).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where(self.nd>2*xlns(v).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd<(2*xlns(v).x|1),0,-0x7fffffffffffffff-1),0)
+     t.nd=np.where(self.nd&1,np.where(self.nd<(2*xlns(v).x|1),0,XLNS_MIN_INT),0)
      return t
   else:
    print("nonscalar comparison")
@@ -993,13 +1002,13 @@ class xlnsnp:
   t=xlnsnp("")
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
    if v==0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,0)
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,0)
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where(self.nd>=2*xlns(v).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where(self.nd>=2*xlns(v).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd<=(2*xlns(v).x|1),0,-0x7fffffffffffffff-1),0)
+     t.nd=np.where(self.nd&1,np.where(self.nd<=(2*xlns(v).x|1),0,XLNS_MIN_INT),0)
      return t
   else:
    print("nonscalar comparison")
@@ -1008,13 +1017,13 @@ class xlnsnp:
   t=xlnsnp("")
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
    if v==0:
-     t.nd=np.where(self.nd&1,0,np.where((self.nd|1)!=-0x7fffffffffffffff,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where((self.nd|1)!=-0x7fffffffffffffff,0,XLNS_MIN_INT))
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,0,np.where(self.nd<=2*xlns(v).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where(self.nd<=2*xlns(v).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd>=(2*xlns(v).x|1),0,-0x7fffffffffffffff-1),-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,np.where(self.nd>=(2*xlns(v).x|1),0,XLNS_MIN_INT),XLNS_MIN_INT)
      return t
   else:
    print("nonscalar comparison")
@@ -1022,20 +1031,20 @@ class xlnsnp:
  def __eq__(self,v):
   t=xlnsnp("")
   #if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
-  # t.nd = np.where(self.nd == 2*xlns(v).x + xlns(v).s, 0, -0x7fffffffffffffff-1)
+  # t.nd = np.where(self.nd == 2*xlns(v).x + xlns(v).s, 0, XLNS_MIN_INT)
   if not isinstance(v,xlnsnp):
-   t.nd = np.where(self.nd == xlnsnp(v).nd, 0, -0x7fffffffffffffff-1)
+   t.nd = np.where(self.nd == xlnsnp(v).nd, 0, XLNS_MIN_INT)
   else:
-   t.nd = np.where(self.nd == v.nd, 0, -0x7fffffffffffffff-1)
+   t.nd = np.where(self.nd == v.nd, 0, XLNS_MIN_INT)
   return t
  def __ne__(self,v):
   t=xlnsnp("")
   #if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns):
-  # t.nd = np.where(self.nd == 2*xlns(v).x + xlns(v).s, -0x7fffffffffffffff-1, 0)
+  # t.nd = np.where(self.nd == 2*xlns(v).x + xlns(v).s, XLNS_MIN_INT, 0)
   if not isinstance(v,xlnsnp):
-   t.nd = np.where(self.nd == xlnsnp(v).nd, -0x7fffffffffffffff-1, 0)
+   t.nd = np.where(self.nd == xlnsnp(v).nd, XLNS_MIN_INT, 0)
   else:
-   t.nd = np.where(self.nd == v.nd, -0x7fffffffffffffff-1, 0)
+   t.nd = np.where(self.nd == v.nd, XLNS_MIN_INT, 0)
   return t
 
 
@@ -1230,9 +1239,9 @@ class xlnsnpr:
      self.ndn = np.array([0],dtype="i8")      
    elif v > 0:
      self.ndp = np.array([xlns(v).x],dtype="i8")
-     self.ndn = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.ndn = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
-     self.ndp = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.ndp = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
      self.ndn = np.array([xlns(v).x],dtype="i8")
   elif isinstance(v,xlns):
    if v == 0:
@@ -1240,9 +1249,9 @@ class xlnsnpr:
      self.ndn = np.array([0],dtype="i8")      
    elif v > 0:
      self.ndp = np.array([v.x],dtype="i8")
-     self.ndn = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.ndn = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
-     self.ndp = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.ndp = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
      self.ndn = np.array([v.x],dtype="i8")
   elif isinstance(v,xlnsr):
    if v.p==v.n:
@@ -1252,11 +1261,11 @@ class xlnsnpr:
      if v.p.x != -1e1000: #-inf
         self.ndp = np.array([v.p.x],dtype="i8")
      else:
-        self.ndp = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+        self.ndp = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
      if v.n.x != -1e1000: #-inf
         self.ndn = np.array([v.n.x],dtype="i8")      
      else:
-        self.ndn = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+        self.ndn = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
   elif isinstance(v,xlnsb) or isinstance(v,xlnsv):
      temp = xlnsnpr(float(v))
      self.ndp = temp.ndp
@@ -1289,9 +1298,9 @@ class xlnsnpr:
            tn += [ 0 ]
         elif y>0:
            tp += [y.x] 
-           tn += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+           tn += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
         else:
-           tp += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+           tp += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
            tn += [y.x] 
      #print("t="+repr(t))
      self.ndp = np.array(np.reshape(tp,np.shape(v)),dtype="i8")
@@ -1312,9 +1321,9 @@ class xlnsnpr:
            tn += [ 0 ] #0x000000000000000 avoiding int64 limit
         elif y>0:
            tp += [y.x] 
-           tn += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+           tn += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
         else:
-           tp += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+           tp += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
            tn += [y.x] 
      #print("t="+repr(t))
      self.ndp = np.array(np.reshape(tp,np.shape(v)),dtype="i8")
@@ -1336,9 +1345,9 @@ class xlnsnpr:
             tn += [ 0 ] #0x000000000000000 avoiding int64 limit
          elif y>0:
             tp += [y.x] 
-            tn += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+            tn += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
          else:
-            tp += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+            tp += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
             tn += [y.x] 
       #print("t="+repr(t))
       self.ndp = np.array(np.reshape(tp,np.shape(v)),dtype="i8")
@@ -1385,19 +1394,19 @@ class xlnsnpr:
               0,                                                           #any tp==tn
               np.where(v.nd&1, 
                        np.where((self.ndn|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndn + v.nd//2),
                        np.where((self.ndp|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndp + v.nd//2))) 
     t.ndn = np.where((self.ndp==self.ndn)|((v.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001
               0,                                                           #any tp==tn
               np.where(v.nd&1, 
                        np.where((self.ndp|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndp + v.nd//2),
                        np.where((self.ndn|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndn + v.nd//2))) 
     return t
   else:
@@ -1412,19 +1421,19 @@ class xlnsnpr:
     t = xlnsnpr("")
     t.ndp = np.where(v.nd&1, 
                        np.where((self.ndn|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndn - v.nd//2),
                        np.where((self.ndp|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndp - v.nd//2)) 
                   #(self.ndn - v.nd//2),
                   #(self.ndp - v.nd//2)) 
     t.ndn = np.where(v.nd&1, 
                        np.where((self.ndp|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndp - v.nd//2),
                        np.where((self.ndn|1)==-0x7fffffffffffffff,         #obscure way to say 0x8000000000000001
-                           -0x7fffffffffffffff-1,                          #0x8000000000000000 avoiding int64 limit
+                           XLNS_MIN_INT,                          #0x8000000000000000 avoiding int64 limit
                            self.ndn - v.nd//2)) 
                   #(self.ndp - v.nd//2),
                   #(self.ndn - v.nd//2)) 
@@ -1483,7 +1492,7 @@ class xlnsnpr:
   if isinstance(v,xlnsnpr):
    t = xlnsnp("")
    t.nd = np.where( v.ndp==v.ndn, 
-                    -0x7fffffffffffffff-1, #obscure way to say 0x8000000000000000 
+                    XLNS_MIN_INT, #obscure way to say 0x8000000000000000 
                     np.where( v.ndp > v.ndn, 0, 1))
    return t
   else:
@@ -2176,7 +2185,7 @@ class xlnsnpv(xlnsnp):
   return t 
  #def zeros(v):
  # t = xlnsnpv("")
- # t.nd = np.zeros(v,dtype="i8")+(-0x7fffffffffffffff-1)
+ # t.nd = np.zeros(v,dtype="i8")+(XLNS_MIN_INT)
  # return t
  def sum(self,axis=None):
   if axis == None:
@@ -2531,12 +2540,12 @@ class xlnsnpb:
   if isinstance(v,int) or isinstance(v,float):
    #print("have scalar: "+str(v))
    if v == 0:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
      self.nd = np.array([2*xlnsb(v,setB).x+xlnsb(v,setB).s],dtype="i8") 
   elif isinstance(v,xlns) or isinstance(v,xlnsv) or isinstance(v,xlnsb):
    if v.x == -1e1000:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    else:
      self.nd = np.array([2*int(cv*v.x+.5)+v.s],dtype="i8")       #convert with rounding
   elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpb):            #copy constructor includes xlnsnpv
@@ -2545,7 +2554,7 @@ class xlnsnpb:
                          np.int64(cv*(v.nd//2)+.5) )*2|(v.nd&1)  # else convert w/round mag !=0 mag, save sign
   elif isinstance(v,xlnsr):
    if v.p==v.n:
-     self.nd = np.array([-0x7fffffffffffffff-1],dtype="i8")      #0x8000000000000000 avoiding int64 limit
+     self.nd = np.array([XLNS_MIN_INT],dtype="i8")      #0x8000000000000000 avoiding int64 limit
    elif v.p>v.n:
      self.nd = np.array([2*int(cv*xlns(v).x+0.5)],dtype="i8")    #convert with round
    else:
@@ -2563,7 +2572,7 @@ class xlnsnpb:
         #print(y)
         if y.x == -1e1000:
            #print("zero")
-           t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+           t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
         else:
            t += [2*int(cv*y.x+.5) + y.s] 
      #print("t="+repr(t))
@@ -2577,14 +2586,14 @@ class xlnsnpb:
         if isinstance(y,xlns) or isinstance(y,xlnsv) or isinstance(y,xlnsb):
            if y.x == -1e1000:
              #print("zero")
-             t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+             t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
            else:
              t += [2*int(cv*y.x+.5) + y.s] 
            #print("t="+repr(t))
         else:
            if y == 0:
              #print("zero")
-             t += [ -0x7fffffffffffffff-1 ] #0x8000000000000000 avoiding int64 limit
+             t += [ XLNS_MIN_INT ] #0x8000000000000000 avoiding int64 limit
            else:
              t += [2*xlnsb(y,setB).x + xlnsb(y,setB).s] 
            #print("t="+repr(t))
@@ -2595,7 +2604,7 @@ class xlnsnpb:
        #print(y)
        if y.x == -1e1000:
          #print("zero")
-         t += [ -0x7fffffffffffffff-1 + y.s] #0x8000000000000000 avoiding int64 limit
+         t += [ XLNS_MIN_INT + y.s] #0x8000000000000000 avoiding int64 limit
        else:
          t += [2*int(cv*y.x+.5) + y.s] 
        #print("t="+repr(t))
@@ -2655,12 +2664,12 @@ class xlnsnpb:
     t = xlnsnpb("",self.B)
     if v.B == self.B:
         t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff)|((v.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd + (v.nd - (v.nd&1))) ^ (v.nd&1) )
     else:
         cv = np.log(v.B)/np.log(self.B)
         t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff)|((v.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd + np.int64(cv*(v.nd//2)+.5)*2) ^ (v.nd&1) )
     return t
   else:
@@ -2672,12 +2681,12 @@ class xlnsnpb:
     t = xlnsnpb("",self.B)
     if v.B == self.B:
         t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd - v.nd + (v.nd&1)) ^ (v.nd&1) )
     else:
         cv = np.log(v.B)/np.log(self.B)
         t.nd = np.where(((self.nd|1)==-0x7fffffffffffffff)|((v.nd|1)==-0x7fffffffffffffff), #obscure way to say 0x8000000000000001 and
-                  (-0x7fffffffffffffff-1) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
+                  (XLNS_MIN_INT) |((self.nd^v.nd)&1),                        #0x8000000000000000 avoiding int64 limit
                   (self.nd - np.int64(cv*(v.nd//2)+.5)*2) ^ (v.nd&1) )
     return t
   else:
@@ -2782,7 +2791,7 @@ class xlnsnpb:
   return t 
  def zeros(v):
   t = xlnsnpb("",xlnsB)  #arbitrary choice for precision
-  t.nd = np.zeros(v,dtype="i8")+(-0x7fffffffffffffff-1)
+  t.nd = np.zeros(v,dtype="i8")+(XLNS_MIN_INT)
   return t
  def sum(self,axis=None):
   if axis == None:
@@ -2878,13 +2887,13 @@ class xlnsnpb:
   t=xlnsnpb("",self.B)
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns) or isinstance(v,xlnsr) or isinstance(v,xlnsv) or isinstance(v,xlnsb):
    if v==0:
-     t.nd=np.where(self.nd&1,0,-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,0,XLNS_MIN_INT)
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,0,np.where(self.nd<2*xlnsb(v,self.B).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where(self.nd<2*xlnsb(v,self.B).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd>(2*xlnsb(v,self.B).x|1),0,-0x7fffffffffffffff-1),-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,np.where(self.nd>(2*xlnsb(v,self.B).x|1),0,XLNS_MIN_INT),XLNS_MIN_INT)
      return t
   else:
    print("nonscalar comparison")
@@ -2893,13 +2902,13 @@ class xlnsnpb:
   t=xlnsnpb("",self.B)
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns) or isinstance(v,xlnsr) or isinstance(v,xlnsv) or isinstance(v,xlnsb):
    if v==0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where((self.nd|1)!=-0x7fffffffffffffff,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where((self.nd|1)!=-0x7fffffffffffffff,0,XLNS_MIN_INT))
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where(self.nd>2*xlnsb(v,self.B).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where(self.nd>2*xlnsb(v,self.B).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd<(2*xlnsb(v,self.B).x|1),0,-0x7fffffffffffffff-1),0)
+     t.nd=np.where(self.nd&1,np.where(self.nd<(2*xlnsb(v,self.B).x|1),0,XLNS_MIN_INT),0)
      return t
   else:
    print("nonscalar comparison")
@@ -2908,13 +2917,13 @@ class xlnsnpb:
   t=xlnsnpb("",self.B)
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns) or isinstance(v,xlnsr) or isinstance(v,xlnsv) or isinstance(v,xlnsb):
    if v==0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,0)
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,0)
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,-0x7fffffffffffffff-1,np.where(self.nd>=2*xlnsb(v,self.B).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,XLNS_MIN_INT,np.where(self.nd>=2*xlnsb(v,self.B).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd<=(2*xlnsb(v,self.B).x|1),0,-0x7fffffffffffffff-1),0)
+     t.nd=np.where(self.nd&1,np.where(self.nd<=(2*xlnsb(v,self.B).x|1),0,XLNS_MIN_INT),0)
      return t
   else:
    print("nonscalar comparison")
@@ -2923,13 +2932,13 @@ class xlnsnpb:
   t=xlnsnpb("",self.B)
   if isinstance(v,int) or isinstance(v,float) or isinstance(v,xlns) or isinstance(v,xlnsr) or isinstance(v,xlnsv) or isinstance(v,xlnsb):
    if v==0:
-     t.nd=np.where(self.nd&1,0,np.where((self.nd|1)!=-0x7fffffffffffffff,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where((self.nd|1)!=-0x7fffffffffffffff,0,XLNS_MIN_INT))
      return t
    elif v>0:
-     t.nd=np.where(self.nd&1,0,np.where(self.nd<=2*xlnsb(v,self.B).x,0,-0x7fffffffffffffff-1))
+     t.nd=np.where(self.nd&1,0,np.where(self.nd<=2*xlnsb(v,self.B).x,0,XLNS_MIN_INT))
      return t
    else:
-     t.nd=np.where(self.nd&1,np.where(self.nd>=(2*xlnsb(v,self.B).x|1),0,-0x7fffffffffffffff-1),-0x7fffffffffffffff-1)
+     t.nd=np.where(self.nd&1,np.where(self.nd>=(2*xlnsb(v,self.B).x|1),0,XLNS_MIN_INT),XLNS_MIN_INT)
      return t
   else:
    print("nonscalar comparison")
@@ -2937,20 +2946,20 @@ class xlnsnpb:
  def __eq__(self,v):
   t=xlnsnpb("",self.B)
   if not isinstance(v,xlnsnpb):
-   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, 0, -0x7fffffffffffffff-1)
+   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, 0, XLNS_MIN_INT)
   elif self.B == v.B:
-   t.nd = np.where(self.nd == v.nd, 0, -0x7fffffffffffffff-1)
+   t.nd = np.where(self.nd == v.nd, 0, XLNS_MIN_INT)
   else:
-   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, 0, -0x7fffffffffffffff-1)
+   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, 0, XLNS_MIN_INT)
   return t
  def __ne__(self,v):
   t=xlnsnpb("",self.B)
   if not isinstance(v,xlnsnpb):
-   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, -0x7fffffffffffffff-1, 0)
+   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, XLNS_MIN_INT, 0)
   elif self.B == v.B:
-   t.nd = np.where(self.nd == v.nd, -0x7fffffffffffffff-1, 0)
+   t.nd = np.where(self.nd == v.nd, XLNS_MIN_INT, 0)
   else:
-   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, -0x7fffffffffffffff-1, 0)
+   t.nd = np.where(self.nd == xlnsnpb(v,self.B).nd, XLNS_MIN_INT, 0)
   return t
 xlnsnp.sum_default = xlnsnp.sum
 xlnsnpv.sum_default = xlnsnpv.sum
