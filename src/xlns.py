@@ -29,7 +29,7 @@ def xlnssetovf(mn,mx):
   ovfmax = mx  
 
 def xlnscalcB():
-  global xlnsB,xlnsF
+  global xlnsB
   xlnsB = 2.0**(2**(-xlnsF))
 global xlns1stCons 
 def xlnssetF(newF):
@@ -54,7 +54,6 @@ xlnssetovf(2.938735877055719e-39 ,3.402823669209385e+38)
 
 def sbdb_ufunc_ideal(z,s,B=None,F=None):
   """default ufunc for ideal Gaussian log for all add,sub; may substitute user supplied sbdb_ufunc""" 
-  global xlnsB
   #need to deal with z=0 s=1
   if B==None:
     return 2*np.int64(np.round(np.log(np.abs(1.0 - 2.0*s + xlnsB**np.minimum(-s,z)))/math.log(xlnsB)))
@@ -63,7 +62,6 @@ def sbdb_ufunc_ideal(z,s,B=None,F=None):
    
 def sbdb_ufunc_trunc(z,s,B=None,F=None):
   """ufunc for truncated Gaussian log"""
-  global xlnsB
   #need to deal with z=0 s=1
   if B==None:
     return 2*np.int64(np.floor(np.log(np.abs(1.0 - 2.0*s + xlnsB**np.minimum(-s,z)))/math.log(xlnsB)))
@@ -264,7 +262,6 @@ class xlns:
    self.x = temp.x
    self.s = temp.s
  def __float__(self):
-  global xlnsB
   return (-1 if self.s else 1) * float(xlnsB**self.x)
  def __int__(self):
   return int(float(self))
@@ -333,7 +330,6 @@ class xlns:
   t.s = self.s != v.s
   return t
  def __add__(self,v):
-  global xlnsB
   # tested F=23 using sbdb_ufunc (instead of orig sb() db()):
   #   >>> iota2=np.arange(1,100000.,2)
   #   >>> (1/((25000*[1,-1])*iota2)).sum()*4
@@ -743,7 +739,6 @@ class xlnsnp:
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
   """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
-  global ovfmin,ovfmax
   return xlnsnp.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, xlnsnp.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
  def conjugate(self):  #needed for .var() and .std() in numpy
@@ -2081,7 +2076,6 @@ class xlnsnpv(xlnsnp):
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
   """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
-  global ovfmin,ovfmax
   return xlnsnpv.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, x*xlnsnpv.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
  def __repr__(self):
@@ -2635,7 +2629,6 @@ class xlnsnpb:
   return np.reshape(t,np.shape(self.nd)) 
  def ovf(x):
   """return copy except for values that underflow/overflow, which are clipped according to xlnssetovf"""
-  global ovfmin,ovfmax
   return xlnsnpb.where((abs(x)>=ovfmin)*(abs(x)<ovfmax), x, x*xlnsnpb.zeros(x.shape())+(abs(x)>=ovfmax)*ovfmax*x.sign())
  #end of those not found in numpy
  def conjugate(self):  #needed for .var() and .std() in numpy
