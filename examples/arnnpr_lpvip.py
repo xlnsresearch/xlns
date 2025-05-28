@@ -28,7 +28,6 @@ xl.xlnssetF(7)
   #       print("sb_ufunc_ideal cannot do db")
   #return 2*np.int64(np.round(np.log(1.0 + xlnsB**z)/math.log(xlnsB)))
 def sb_ufunc_premit(zi,s):   #was called premitchnpi(zi):
-  global xlnsF
   #if s==1:
   #   print("sb_ufunc_ideal cannot do db")
   #if isinstance(s,np.ndarray):
