@@ -221,46 +221,74 @@ max = lambda x: xlnsapplynpconstack(x,xlnsnp.max,xlnsnpv.max ,xlnsnpb.max ,xlnsn
  
 class xlns:
  """simple scalar LNS using global base xlnsB"""
- def __init__(self,v):
+ def __init__(self, v):
   global xlns1stCons
   xlns1stCons = False
-  if isinstance(v,int) or isinstance(v,float):
-   if abs(v)!=0:
-    self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
-   else:
-    self.x = -1e1000 #-inf
-   self.s = False if v>=0.0 else True 
-  elif isinstance(v,xlns):  # 01/21/24 copy constructor!!!!
-   self.x = v.x
-   self.s = v.s
-  elif isinstance(v,str):
-   if v.replace(".","",1).replace("+","",2).replace("-","",2).replace("e","",1).isdigit():
-    self.x = xlns(float(v)).x
-    self.s = xlns(float(v)).s
-   else:
-    self.x = v #weird case for empty constructor
-    self.s = False
-  #elif isinstance(v,xlnsr):
-  #  temp = xlns(float(v))
-  #  self.x = temp.x
-  #  self.s = temp.s
-  elif isinstance(v,xlnsnp) or isinstance(v,xlnsnpr) or isinstance(v, xlnsnpv) or isinstance(v,xlnsnpb):
-    temp = v.xlns()
-    if v.size()==1:
-       self.x = temp[0].x
-       self.s = temp[0].s
+  # direct copy for xlns type (fast path)
+  if isinstance(v, xlns):
+    self.x = v.x
+    self.s = v.s
+    return
+  # handle numeric types (int, float)
+  if isinstance(v, (int, float)):
+    if v == 0:  # explicit zero check is faster than abs(v)!=0
+      self.x = -1e1000  # -inf
+      self.s = False
     else:
-       print("cannot cast non-scalar xlnsnp[r] as xlns")
-       return NotImplemented
+      self.x = int(round(math.log(abs(v))/math.log(xlnsB)))
+      self.s = v < 0
+    return
+  # handle array types with a single helper function
+  if isinstance(v, (xlnsnp, xlnsnpr, xlnsnpv, xlnsnpb)):
+    self._init_from_array(v)
+    return
+  # handle string type
+  if isinstance(v, str):
+    self._init_from_string(v)
+    return
+  # default case: try to convert to float
+  try:
+    float_v = float(v)
+    if float_v == 0:
+      self.x = -1e1000  # -inf
+      self.s = False
+    else:
+      self.x = int(round(math.log(abs(float_v))/math.log(xlnsB)))
+      self.s = float_v < 0
+  except (TypeError, ValueError):
+    # cannot convert to float, use as-is (for empty constructor case)
+    self.x = v
+    self.s = False
+    
+ def _init_from_array(self, v):
+  """Helper method to initialize from array types"""
+  temp = v.xlns()
+  if v.size() == 1:
+    self.x = temp[0].x
+    self.s = temp[0].s
   else:
- #self.x = v
-   #self.s = False
-   # new case that handles floatable types like xlnsv 9/20/24
-   # elim xlnsr case above
-   #print("new case that handles floatable types like xlnsv 9/20/24")
-   temp = xlns(float(v))
-   self.x = temp.x
-   self.s = temp.s
+    print("cannot cast non-scalar xlnsnp[r] as xlns")
+    raise TypeError("Cannot cast non-scalar array as xlns")
+    
+ def _init_from_string(self, v):
+  """Helper method to initialize from string"""
+  # Check if string represents a number
+  if v.replace(".", "", 1).replace("+", "", 2).replace("-", "", 2).replace("e", "", 1).isdigit():
+    try:
+      float_v = float(v)
+      if float_v == 0:
+        self.x = -1e1000  # -inf
+        self.s = False
+      else:
+        self.x = int(round(math.log(abs(float_v))/math.log(xlnsB)))
+        self.s = float_v < 0
+    except ValueError:
+      self.x = v
+      self.s = False
+  else:
+    # Non-numeric string
+    self.x = v
+    self.s = False
  def __float__(self):
   return (-1 if self.s else 1) * float(xlnsB**self.x)
  def __int__(self):
