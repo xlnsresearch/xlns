@@ -5,7 +5,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 
-class LNSTensor(object):
+class LNSTensor:
     r"""
     A logarithmic number system (LNS) wrapper for PyTorch tensors. 
 
@@ -13,34 +13,32 @@ class LNSTensor(object):
 
     .. math::
 
-        \text{sign\_bit} = \begin{cases}
-            0 & x \ge 0 \\
-            1 & x <  0
-        \end{cases}
+        \begin{align*}
+            \text{sign_bit} &= \begin{cases}
+                0 & x \ge 0 \\
+                1 & x <  0
+            \end{cases} \\
+            \text{exponent} &= \mathrm{round} \left(
+                \frac{\ln(|x|)}{\ln(\text{base})}
+            \right) \\
+            \text{packed} &= (\text{exponent} \ll 1) \mathbin{|} \text{sign_bit}
+        \end{align*}
 
-        \text{exponent} = \mathrm{round}\!\left(
-            \frac{\log(|x|)}{\log(\text{base})}
-        \right)
-
-        \text{packed}   = (\text{exponent} \ll 1)\;|\;\text{sign\_bit}
-
-    The packed integers live in :pyattr:`_lns` (stored as a ``torch.float64``
-    Tensor so that gradients can be stored for autograd).
+    The packed integers live in :attr:`_lns` (stored as a ``torch.float64``
+    Tensor so that gradients can be retained for autograd).
 
     Parameters
     ----------
-    :param data:
+    data : torch.Tensor
         *Real-valued* tensor to encode **or** a pre-packed LNS tensor when
-        ``from_lns`` is ``True``.
-    :type  data: ``torch.Tensor`` (dtype ``float64``)
-    :param base:
+        ``from_lns`` is ``True``. Must have dtype ``float64``.
+    base : torch.Tensor
         Scalar tensor that holds the logarithm base.
         Must be positive and **not** equal to 1.
-    :type  base: ``torch.Tensor`` (shape ``()``, dtype ``float64``)
-    :param bool from_lns:
+        Shape must be ``()`` and dtype must be ``float64``.
+    from_lns : bool, optional
         If ``True`` interpret *data* as already packed.
         Defaults to ``False``.
-    :raises ValueError: If *base* is 0 or 1.
 
     Notes
     -----
@@ -121,45 +119,44 @@ def lnstensor(
         ) -> LNSTensor:
     r"""
     Constructs an :class:`LNSTensor` from some array-like *data*.
-    in particular, it supports all ``xlns`` data types (except the
-    redundant types `xlnsr`, `xlnsnpr`).
+
+    The function accepts ordinary numeric data (tensors, NumPy arrays,
+    scalars) **and** every non-redundant *xlns* type.  Redundant formats
+    (``xlnsr`` and ``xlnsnpr``) are **not** supported.
 
     Base Selection
     --------------
+
     The LNSTensor ``base`` is chosen in the following order:
 
-    1. If ``f`` is given:      ``base`` = 2.0 ** 2 ** (-f)``.
-    2. Else if ``b is given``: use ``b`` (float *or* scalar tensor).
-    3. Else                    default ``xlns.xlnsB`` (global constant).
+    1. If ``f`` is given, ``base`` = 2.0 ** 2 ** (-f)``.
+    2. Else if ``b is given``, use ``b`` (float *or* scalar tensor).
+    3. Else, default to ``xlns.xlnsB`` (global constant).
 
     Parameters
     ----------
-    :param data:
+    data : torch.Tensor, numpy.ndarray, numbers, xlns types, LNSTensor
         - A real-valued tensor/array/scalar to *encode* **or**
         - A pre-packed representation (when ``from_lns`` is ``True``) **or**
-        - An existing :class:`LNSTensor` (will be copied or converted).
-    :type  data: ``torch.Tensor``, ``numpy.ndarray``, numbers, xlns types, :class:`LNSTensor`
-    :param bool from_lns:
-        If ``True``, interpret *data* as already packed.
-        Defaults to ``False``.
-    :param f:
+        - An existing :class:`LNSTensor` (which will be copied or converted base).
+    from_lns : bool, optional
+        If ``True``, treat *data* as already packed. Defaults to ``False``.
+    f : int, optional
         The number of fractional exponent bits. mutually exclusive with ``b``.
-    :type  f: ``int``, optional
-    :param b:
+    b : float, int, torch.Tensor, optional
         The explicit logarithm base; mutually exclusive with ``f``.
-    :type  b: ``float``, ``int``, ``torch.Tensor``, optional
 
     Returns
     -------
-    :rtype: :class:`LNSTensor`
+    LNSTensor
         The constructed LNSTensor.
 
     Raises
     ------
-    :class:`ValueError`:
+    ValueError
         If both ``f`` and ``b`` are provided, or if neither can be resolved
         to a valid base.
-    :class:`TypeError`:
+    TypeError
         If *data* is of an unsupported type (i.e. not array-like).
     """
     # 1. Determine the logarithm base
