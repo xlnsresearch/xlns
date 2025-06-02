@@ -42,4 +42,5 @@ jobs:
     - name: Run pytest on xlnstorch tests (dev branch only)
       if: github.ref == 'refs/heads/dev'
       run: |
+        pip install -e .
         pytest test/xlnstorch
