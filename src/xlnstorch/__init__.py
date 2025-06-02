@@ -7,3 +7,10 @@ except ModuleNotFoundError as e:
         "xlnstorch requires PyTorch but it is not installed.\n"
         "See https://pytorch.org/get-started/locally for instructions."
     ) from e
+
+from .tensor import LNSTensor, lnstensor
+
+__all__ = [
+    "LNSTensor",
+    "lnstensor"
+]
