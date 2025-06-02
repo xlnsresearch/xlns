@@ -69,3 +69,16 @@ jobs:
     - name: Run pytest on xlnstorch tests
       run: |
         pytest test/xlnstorch
+
+    - name: Build docs with Sphinx
+      working-directory: docs
+      run: |
+        python -m pip install -r docs/requirements.txt
+        make html
+
+    - name: Deploy docs to Github Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        publish_branch: gh_pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/_build/html
