@@ -1,9 +1,121 @@
-from typing import Any, Union
+from __future__ import annotations
+from typing import Any, Union, Callable, Generator
+import functools
+import contextlib
 
 import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
+
+# HANDLED_FUNCTIONS is a dictionary that maps torch functions to their
+# corresponding implementations for LNSTensor. Each key is a torch function
+# and the value is a dictionary mapping implementation keys to functions.
+HANDLED_FUNCTIONS = {}
+# DEFAULT_IMPLEMENTATIONS is a dictionary that maps torch functions to their
+# default implementation keys. This is used to determine which implementation
+# to use by default when a torch function is called on an LNSTensor.
+DEFAULT_IMPLEMENTATIONS = {}
+
+def implements(
+        torch_function: Callable,
+        key: str | None = None,
+        default: bool = False
+    ) -> Callable:
+    """
+    A decorator to register a custom implementation for a given torch function.
+
+    This allows functions to be mapped to specific handlers in the LNS context
+    and optionally set as the default implementation for that function.
+
+    Parameters
+    ----------
+    torch_function : Callable
+        The torch function to be overriden.
+    key : str, optional
+        A unique key to identify the implementation. If not provided, the 
+        function's name will be used by default.
+    default : bool, optional
+        If True, this implementation will be set as the default for the
+        specified torch function. Defaults to False.
+
+    Returns
+    -------
+    Callable
+        The decorator that registers the function as an implementation for
+        the specific torch function.
+    """
+    def decorator(func):
+        function_key = key or func.__name__
+        functools.update_wrapper(func, torch_function)
+
+        if torch_function not in HANDLED_FUNCTIONS:
+            HANDLED_FUNCTIONS[torch_function] = {}
+        HANDLED_FUNCTIONS[torch_function][function_key] = func
+
+        if default:
+            DEFAULT_IMPLEMENTATIONS[torch_function] = function_key
+
+        return func
+    return decorator
+
+def set_default(torch_function: Callable, impl_key: str) -> None:
+    """
+    Set the default implementation for a given torch function.
+
+    Parameters
+    ----------
+    torch_function : Callable
+        The torch function for which to set the default implementation.
+    impl_key : str
+        The key identifying the implementation to be set as default.
+
+    Raises
+    ------
+    ValueError
+        If no implementations are registered for the given torch function.
+        If the specified implementation key is not registered for the torch function.
+    """
+    if torch_function not in HANDLED_FUNCTIONS:
+        raise ValueError("No implementations registered for the given torch function.")
+
+    if impl_key not in HANDLED_FUNCTIONS[torch_function]:
+        raise ValueError(f"Implementation '{impl_key}' is not registered for {torch_function}.")
+
+    DEFAULT_IMPLEMENTATIONS[torch_function] = impl_key
+
+@contextlib.contextmanager
+def override_impl(torch_function: Callable, impl_key: str) -> Generator[None, None, None]:
+    """
+    Temporarily override the default implementation for a torch function within a context.
+    This allows for testing or using a different implementation without permanently changing
+    the default.
+
+    Parameters
+    ----------
+    torch_function : Callable
+        The torch function for which the implementation is to be temporarily overridden.
+    impl_key : str
+        The key identifying the new implementation to use as default.
+
+    Yields
+    ------
+    None
+        The function yields control back to the context block.
+
+    Examples
+    --------
+    >>> with override_impl(torch.add, 'custom_add_impl'):
+    >>>     # Inside this block, torch.add will use 'custom_add_impl'
+    >>>     pass
+    """
+    original_default = DEFAULT_IMPLEMENTATIONS.get(torch_function)
+    set_default(torch_function, impl_key)
+
+    try:
+        yield
+    finally:
+        set_default(torch_function, original_default)
 
 class LNSTensor:
     r"""
@@ -83,13 +195,84 @@ class LNSTensor:
         self._lns: Tensor = packed
         self._lns.requires_grad_(True)
 
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        """
+        Overrides default torch function behavior for LNSTensor objects.
+        This allows us to define custom LNS operators. See
+
+        https://docs.pytorch.org/docs/stable/notes/extending.html#extending-torch-python-api
+
+        for more details on how this works.
+        """
+        if kwargs is None:
+            kwargs = {}
+
+        if func not in HANDLED_FUNCTIONS or not all(issubclass(t, LNSTensor) for t in types):
+            return NotImplemented
+
+        chosen_impl = DEFAULT_IMPLEMENTATIONS.get(func)
+        if chosen_impl is None:
+            raise RuntimeError(f"No default implementation has been set for {func}.")
+
+        if chosen_impl not in HANDLED_FUNCTIONS[func]:
+            raise ValueError(f"Implementation key '{chosen_impl}' is not registered for {func}.")
+
+        return HANDLED_FUNCTIONS[func][chosen_impl](*args, **kwargs)
+
+    def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=None):
+        """
+        Computes the gradients of the current LNSTensor with respect to the graph leaves.
+        This method is analogous to the standard PyTorch `backward` method, but works with
+        LNSTensor objects. See
+
+        https://docs.pytorch.org/docs/stable/generated/torch.Tensor.backward.html
+
+        for more details on the parameters. Note that the `gradient` and `inputs` parameters
+        here are LNSTensor objects, not regular PyTorch tensors.
+
+        Parameters
+        ----------
+        gradient : LNSTensor, optional
+            Gradient of the function being differentiated w.r.t. `self`. This argument should
+            be omitted if `self` is a scalar. In this case, the gradient is set to 1.
+        retain_graph : bool, optional
+            If True, the graph used to compute the gradient will be retained, allowing for 
+            further backward passes, by default None.
+        create_graph : bool, optional
+            If True, the graph of the derivative will be constructed, allowing to compute higher 
+            order derivative products, by default False.
+        inputs : sequence of LNSTensor, optional
+            Inputs with respect to which the gradient will be accumulated into their `.grad` 
+            attributes, all other tensors will be ignored. If not provided, the gradient is 
+            accumulated into all the leaf Tensors that were used to compute the tensors.
+        """
+        if gradient is None:
+            tensor_gradient = torch.zeros_like(self._lns, dtype=torch.float64)
+        else:
+            tensor_gradient = gradient.lns
+
+        if inputs is None:
+            tensor_inputs = None
+        else:
+            tensor_inputs = [inp.lns for inp in inputs]
+
+        self._lns.backward(
+            tensor_gradient,
+            retain_graph=retain_graph,
+            create_graph=create_graph,
+            inputs=tensor_inputs
+        )
+
     @property
     def lns(self) -> Tensor:
         """
         The packed representation that **does** carry gradients.
 
-        :returns: Tensor of dtype ``float64`` holding the packed integers.
-        :rtype:   torch.Tensor
+        Returns
+        -------
+        torch.Tensor
+            Tensor of dtype ``float64`` holding the packed integers.
         """
         return self._lns
 
@@ -98,8 +281,10 @@ class LNSTensor:
         """
         Decode the packed integers back to ordinary floating-point numbers.
 
-        :returns: Real-valued tensor (dtype ``float64``).
-        :rtype:   torch.Tensor
+        Returns
+        -------
+        torch.Tensor
+            Real-valued tensor (dtype ``float64``).
         """
         packed_int = self._lns.to(torch.int64)
 
