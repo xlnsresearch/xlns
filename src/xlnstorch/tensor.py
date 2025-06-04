@@ -338,6 +338,21 @@ class LNSTensor:
 
         return sign * torch.pow(self.base, exponent)
 
+    @property
+    def grad(self) -> LNSTensor:
+        """
+        The gradient of the LNSTensor, if it has been computed.
+        
+        Returns
+        -------
+        LNSTensor or None
+            The gradient as an LNSTensor computed by PyTorch's autograd.
+        """
+        if self._lns.grad is None:
+            return None
+        
+        return lnstensor(self._lns.grad, from_lns=True, b=self.base)
+
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"
 

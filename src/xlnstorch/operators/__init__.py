@@ -1,1 +1,1 @@
-from . import multiply_operator
+from . import arithmetic_ops
