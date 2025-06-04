@@ -9,6 +9,7 @@ except ModuleNotFoundError as e:
     ) from e
 
 from .tensor import LNSTensor, lnstensor
+from . import operators
 
 __all__ = [
     "LNSTensor",
