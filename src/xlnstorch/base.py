@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Any
 
 import torch
 import xlns as xl
@@ -71,13 +71,49 @@ def align_lnstensor_bases(
     else:
         new_base = base.detach()
 
-    converted_tensors = []
+    aligned_tensors = []
     for tensor in tensors:
 
         if torch.eq(tensor.base, new_base):
-            converted_tensors.append(tensor)
+            aligned_tensors.append(tensor)
         else:
-            converted_tensor = LNSChangeBaseFunction.apply(tensor._lns, tensor.base, new_base)
-            converted_tensors.append(lnstensor(converted_tensor, from_lns=True, b=new_base))
+            aligned_tensor = LNSChangeBaseFunction.apply(tensor._lns, tensor.base, new_base)
+            aligned_tensors.append(lnstensor(aligned_tensor, from_lns=True, b=new_base))
 
-    return tuple(converted_tensors)
+    return tuple(aligned_tensors)
+
+def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
+    """
+    Converts a variable number of operands to LNSTensor objects, aligning
+    all operands to the base of the first operand that is an LNSTensor.
+
+    Parameters
+    ----------
+    operands : Any
+        Variable number of operands, which can be LNSTensor objects or
+        other array-like objects that can be converted to LNSTensor.
+
+    Returns
+    -------
+    Tuple[LNSTensor, ...]
+        A tuple of LNSTensor objects with their bases aligned to the base
+        of the first LNSTensor operand. If no LNSTensor is found, all
+        operands are converted to LNSTensors with the default base.
+    """
+    base = None
+
+    for operand in operands:
+        if isinstance(operand, LNSTensor):
+            base = operand.base
+            break
+    else:
+        base = torch.tensor(xl.xlnsB, dtype=torch.float64)
+
+    converted_operands = []
+    for operand in operands:
+        if isinstance(operand, LNSTensor):
+            converted_operands.append(operand)
+        else:
+            converted_operands.append(lnstensor(operand, b=base))
+
+    return align_lnstensor_bases(*converted_operands, base=base)

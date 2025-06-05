@@ -1,7 +1,7 @@
 import torch
 import xlns as xl
-from ..tensor import apply_lns_op, implements, lnstensor
-from ..base import align_lnstensor_bases
+from ..tensor import apply_lns_op, implements, lnstensor, LNSTensor
+from ..base import format_lnstensor_operands
 
 class LNSMulFunction(torch.autograd.Function):
     """
@@ -42,7 +42,7 @@ class LNSMulFunction(torch.autograd.Function):
 @implements(torch.mul, LNSMulFunction.forward, key='default', default=True)
 def mul(x, y, *, out=None):
 
-    x, y = align_lnstensor_bases(x, y, base=x.base)
+    x, y = format_lnstensor_operands(x, y)
     result = LNSMulFunction.apply(x._lns, y._lns)
 
     if out is not None:
@@ -171,7 +171,7 @@ class LNSDivFunction(torch.autograd.Function):
 @implements(torch.div, LNSDivFunction.forward, key='default', default=True)
 def div(x, y, *, out=None):
 
-    x, y = align_lnstensor_bases(x, y, base=x.base)
+    x, y = format_lnstensor_operands(x, y)
     result = LNSDivFunction.apply(x._lns, y._lns, x.base)
 
     if out is not None:
