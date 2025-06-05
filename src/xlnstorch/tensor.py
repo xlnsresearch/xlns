@@ -127,7 +127,7 @@ def apply_lns_op(torch_function: Callable, *args, **kwargs):
     """
     Performs the computation for the default LNS implementation of a given
     torch function in the logarithmic domain. This function is used to
-    apply the LNS internal operation defined in HANDLED_FUNCTIONS.
+    apply the LNS internal operation defined in ``HANDLED_FUNCTIONS``.
 
     Parameters
     ----------
@@ -369,18 +369,15 @@ def lnstensor(
     scalars) **and** every non-redundant *xlns* type.  Redundant formats
     (``xlnsr`` and ``xlnsnpr``) are **not** supported.
 
-    Base Selection
-    --------------
-
     The LNSTensor ``base`` is chosen in the following order:
 
-    1. If ``f`` is given, ``base`` = 2.0 ** 2 ** (-f)``.
+    1. If ``f`` is given, ``base`` = 2.0 ^ (2 ^ -f).
     2. Else if ``b is given``, use ``b`` (float *or* scalar tensor).
     3. Else, default to ``xlns.xlnsB`` (global constant).
 
     Parameters
     ----------
-    data : torch.Tensor, numpy.ndarray, numbers, xlns types, LNSTensor
+    data : LNSTensor, torch.Tensor, numpy.ndarray, numbers, xlns types
         - A real-valued tensor/array/scalar to *encode* **or**
         - A pre-packed representation (when ``from_lns`` is ``True``) **or**
         - An existing :class:`LNSTensor` (which will be copied or converted base).
