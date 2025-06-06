@@ -1,7 +1,6 @@
 import torch
 import xlns as xl
-from ..tensor import apply_lns_op, implements, lnstensor
-from ..base import format_lnstensor_operands
+from .. import lnstensor, format_lnstensor_operands, implements, apply_lns_op
 
 # SBDB_FUNCS is a dictionary that contains different implementations
 # of the sbdb (Gaussian logarithm) function. Each implementation is

@@ -1,11 +1,12 @@
 .. currentmodule:: xlnstorch
+.. automodule:: xlnstorch
 
 .. _lnstensor-doc:
 
 xlnstorch.LNSTensor
 ===================
 
-A :class:`xlnstorch.LNSTensor` is a wrapper for a :class:`torch.Tensor`
+An :class:`xlnstorch.LNSTensor` is a wrapper for a :class:`torch.Tensor`
 that stores an 'internal representation' Tensor object along with an
 LNS base.
 
@@ -22,6 +23,7 @@ LNSTensor class reference
     - If necessary, use the ``xlnstorch.LNSTensor()`` constructor directly, although
       the use of this is discouraged.
 
+
 .. autoattribute:: LNSTensor._lns
 .. autoattribute:: LNSTensor.base
 
@@ -29,7 +31,13 @@ LNSTensor class reference
     :toctree: generated
     :nosignatures:
 
-    LNSTensor.backward
     LNSTensor.lns
     LNSTensor.value
+    LNSTensor.backward
     LNSTensor.grad
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    lnstensor

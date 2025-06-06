@@ -2,7 +2,7 @@ from typing import Tuple, Any
 
 import torch
 import xlns as xl
-from .tensor import LNSTensor, lnstensor
+from . import LNSTensor, lnstensor
 
 class LNSChangeBaseFunction(torch.autograd.Function):
 

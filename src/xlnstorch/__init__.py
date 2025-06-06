@@ -1,5 +1,3 @@
-
-
 try:
     import torch
 except ModuleNotFoundError as e:
@@ -8,14 +6,33 @@ except ModuleNotFoundError as e:
         "See https://pytorch.org/get-started/locally for instructions."
     ) from e
 
-from .tensor import LNSTensor, lnstensor, implements, set_default_implementation, override_impl, apply_lns_op
+from .dispatch_table import (
+    implements,
+    get_implementation,
+    set_default_implementation,
+    get_default_implementation_key,
+    override_implementation,
+    apply_lns_op
+)
+from .tensor import (
+    LNSTensor,
+    lnstensor,
+)
+from .base import (
+    align_lnstensor_bases,
+    format_lnstensor_operands,
+)
 from . import operators
 
 __all__ = [
     "LNSTensor",
-    "lnstensor"
+    "lnstensor",
     "implements",
+    "get_implementation",
     "set_default_implementation",
-    "override_impl",
-    "apply_lns_op"
+    "get_default_implementation_key",
+    "override_implementation",
+    "apply_lns_op",
+    "align_lnstensor_bases",
+    "format_lnstensor_operands",
 ]
