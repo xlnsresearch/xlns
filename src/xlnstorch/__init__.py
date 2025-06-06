@@ -22,6 +22,20 @@ from .base import (
     align_lnstensor_bases,
     format_lnstensor_operands,
 )
+from .lns_ops import (
+    lns_add,
+    lns_sub,
+    lns_mul,
+    lns_div,
+    lns_neg,
+    lns_abs,
+    lns_sqrt,
+    lns_square,
+    lns_pow,
+    lns_reciprocal,
+    lns_sign,
+    lns_positive,
+)
 from . import operators
 
 __all__ = [
@@ -35,4 +49,17 @@ __all__ = [
     "apply_lns_op",
     "align_lnstensor_bases",
     "format_lnstensor_operands",
+    # LNS operation functions
+    "lns_add",
+    "lns_sub",
+    "lns_mul",
+    "lns_div",
+    "lns_neg",
+    "lns_abs",
+    "lns_sqrt",
+    "lns_square",
+    "lns_pow",
+    "lns_reciprocal",
+    "lns_sign",
+    "lns_positive",
 ]
