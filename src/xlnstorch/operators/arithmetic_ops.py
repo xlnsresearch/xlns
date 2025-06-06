@@ -142,6 +142,76 @@ def add(x, y, *, alpha=1, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSSubFunction(torch.autograd.Function):
+    """
+    See LNSAddFunction for details on the internal computations.
+
+    Gradients are computed as follows:
+    d/dx(x - y) = 1
+    d/dy(x - y) = -1
+    """
+
+    @staticmethod
+    def forward(x, y, base):
+        neg_y = apply_lns_op(torch.neg, y)
+        return apply_lns_op(torch.add, x, neg_y, base)
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        pass # no context needed for this operation
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_y = apply_lns_op(torch.neg, grad_output)
+        return grad_output, grad_y, None
+
+@implements(torch.sub, LNSSubFunction.forward, key="default", default=True)
+def sub(x, y, *, alpha=1, out=None):
+
+    x, y = format_lnstensor_operands(x, y)
+    if alpha != 1:
+        y = torch.mul(y, alpha)
+    result = LNSSubFunction.apply(x._lns, y._lns, x.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSNegFunction(torch.autograd.Function):
+    """
+    Negation becomes flipping the sign bit.
+
+    Gradients are computed as follows:
+    d/dx(-x) = -1
+    """
+
+    @staticmethod
+    def forward(x):
+
+        x_packed = x.to(torch.int64)
+        neg_x_packed = x_packed ^ 1
+
+        return neg_x_packed.to(torch.float64)
+    
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        pass # no context needed for this operation
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return apply_lns_op(torch.neg, grad_output)
+
+@implements(torch.neg, LNSNegFunction.forward, key="default", default=True)
+def neg(x, *, out=None):
+
+    result = LNSNegFunction.apply(x._lns)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSMulFunction(torch.autograd.Function):
     """
     Multiplication becomes addition in the logarithmic domain.
