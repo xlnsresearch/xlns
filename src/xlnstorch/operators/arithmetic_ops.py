@@ -295,6 +295,46 @@ def square(x, *, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSSqrtFunction(torch.autograd.Function):
+    """
+    Square rooting becomes halving in the logarithmic domain.
+
+    Gradients are computed as follows:
+    d/dx(sqrt(x)) = 1 / (2 * sqrt(x))
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_packed = x.to(torch.int64)
+        result = ((x_packed & (-2)) / 2).to(torch.int64) & (-2)
+
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        _, base = inputs
+        sqrt_x, = outputs
+        ctx.save_for_backward(sqrt_x, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        sqrt_x, base = ctx.saved_tensors
+
+        grad_x = apply_lns_op(torch.mul, sqrt_x, lnstensor(2.0, b=base)._lns)
+        grad_x = apply_lns_op(torch.div, grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.sqrt, LNSSqrtFunction.forward, key='default', default=True)
+def sqrt(x, *, out=None):
+
+    result = LNSSqrtFunction.apply(x._lns, x.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSPowFunction(torch.autograd.Function):
     """
     Exponentiation becomes multiplication in the logarithmic domain.
@@ -386,5 +426,152 @@ def div(x, y, *, out=None):
     if out is not None:
         out._lns = result
         out.base = x.base
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSReciprocalFunction(torch.autograd.Function):
+    """
+    See LNSDivFunction for details on the internal computation.
+
+    Gradients are calculated as follows:
+    d/dx(1 / x) = -1 / (x ^ 2)
+    """
+
+    @staticmethod
+    def forward(x, base):
+        return apply_lns_op(torch.div, lnstensor(1.0, b=base)._lns, x)
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        x, base = inputs
+        ctx.save_for_backward(x, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        grad_x = apply_lns_op(torch.square, x)
+        grad_x = apply_lns_op(torch.reciprocal, grad_x)
+        grad_x = apply_lns_op(torch.mul, grad_x, lnstensor(-1.0, b=base)._lns)
+        grad_x = apply_lns_op(torch.mul, grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.reciprocal, LNSReciprocalFunction.forward, key='default', default=True)
+def reciprocal(x, *, out=None):
+
+    result = LNSReciprocalFunction.apply(x._lns, x.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAbsFunction(torch.autograd.Function):
+    """
+    Absolute value becomes setting the sign bit off.
+
+    Gradients are computed as follows:
+    d/dx(|x|) = 1 if x > 0, -1 if x < 0 
+
+    Note that PyTorch defines the gradient to be 0
+    when x=0 despite it being undefined here.
+    """
+
+    @staticmethod
+    def forward(x):
+        x_packed = x.to(torch.int64)
+        x_packed_abs = x_packed & (~1)
+
+        return x_packed_abs.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        x, = inputs
+        ctx.save_for_backward(x)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_tensors
+        x_packed = x.to(torch.int64)
+        x_sign = x_packed & 1
+
+        if torch.eq(x_sign, 1):
+            return grad_output
+        else:
+            return apply_lns_op(torch.neg, grad_output)
+
+@implements(torch.abs, LNSAbsFunction.apply, "default", default=True)
+def abs(x, *, out=None):
+
+    result = LNSAbsFunction.apply(x._lns)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSPositiveFunction(torch.autograd.Function):
+    """
+    This is implemented solely for completeness, this
+    operation returns the input.
+
+    Gradients are calculated as follows:
+    d/dx(x) = 1
+    """
+
+    @staticmethod
+    def forward(x):
+        return x
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        pass # no context needed for this operation
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output
+
+@implements(torch.positive, LNSPositiveFunction.apply, "default", default=True)
+def positive(x):
+
+    result = LNSPositiveFunction.apply(x._lns)
+    return result
+
+class LNSSignFunction(torch.autograd.Function):
+    """
+    Sign becomes checking the sign bit (rightmost bit).
+
+    Gradients are computed as follows:
+    d/dx(sign(x)) = 0
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_packed = x.to(torch.int64)
+        x_packed_sign = x_packed & 1
+
+        # to check for zero case (return 0 lnstensor)
+
+        if torch.eq(x_packed_sign, 1):
+            return lnstensor(-1.0, from_lns=True, b=base)._lns
+        elif torch.eq(x_packed_sign, 0):
+            return lnstensor(1.0, from_lns=True, b=base)._lns
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        pass # no context needed for this operation
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        pass # todo when zero is implemented
+
+@implements(torch.sign, LNSSignFunction.forward, "default", default=True)
+def sign(x, *, out=None):
+
+    result = LNSSignFunction.apply(x, x.base)
+
+    if out is not None:
+        out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
