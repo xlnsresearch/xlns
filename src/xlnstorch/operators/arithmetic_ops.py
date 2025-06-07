@@ -1,5 +1,5 @@
 import torch
-from .. import lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
 from . import (
     lns_add,
     lns_neg,
@@ -140,7 +140,7 @@ class LNSAddFunction(torch.autograd.Function):
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
-    print('hiii2 alpha', alpha)
+
     if alpha != 1:
         y = torch.mul(y, alpha)
     result = LNSAddFunction.apply(x._lns, y._lns, x.base)

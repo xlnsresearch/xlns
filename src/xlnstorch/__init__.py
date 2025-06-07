@@ -6,6 +6,8 @@ except ModuleNotFoundError as e:
         "See https://pytorch.org/get-started/locally for instructions."
     ) from e
 
+LNS_ZERO = torch.tensor(-2**53, dtype=torch.float64)
+
 from .dispatch_table import (
     implements,
     get_implementation,
@@ -25,6 +27,7 @@ from .base import (
 from . import operators
 
 __all__ = [
+    "LNS_ZERO",
     "LNSTensor",
     "lnstensor",
     "implements",

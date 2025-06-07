@@ -1,11 +1,12 @@
 from __future__ import annotations
 from typing import Any, Union
 
+import math
 import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import get_default_implementation_key, get_implementation
+from . import LNS_ZERO, get_default_implementation_key, get_implementation
 
 class LNSTensor:
     r"""
@@ -81,6 +82,8 @@ class LNSTensor:
                 sign_bit = (data < 0).to(torch.int64)
                 packed_int = (exponent << 1) | sign_bit
                 packed = packed_int.to(torch.float64)
+
+            packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
 
         self._lns: Tensor = packed
         self._lns.requires_grad_(True)
@@ -261,10 +264,10 @@ def lnstensor(
 
     # xlnstorch.LNSTensor
     if isinstance(data, LNSTensor):
-        input_data = data.lns.clone()
+        input_data = data.lns
         from_lns = True
 
-        if not torch.equal(data.base, base_tensor):
+        if not (torch.eq(data.base, base_tensor) or torch.eq(input_data, LNS_ZERO)):
             with torch.no_grad():
                 packed_int = input_data.to(torch.int64)
                 sign_bit = packed_int & 1
@@ -284,15 +287,20 @@ def lnstensor(
 
     # xlns scalar objects
     elif isinstance(data, (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb)):
-        if isinstance(data, (xl.xlns, xl.xlnsud)):
-            log_part = data.x * np.log(xl.xlnsB) / np.log(base_val)
-        elif isinstance(data, (xl.xlnsb, xl.xlnsv)):
-            log_part = data.x * np.log(data.B) / np.log(base_val)
-        else:
-            log_part = data.x
+        if data.x == -math.inf:
+            input_data = LNS_ZERO
 
-        packed_int = (int(round(log_part)) << 1) | data.s
-        input_data = torch.tensor(packed_int, dtype=torch.float64)
+        else:
+            if isinstance(data, (xl.xlns, xl.xlnsud)) and not base_val == xl.xlnsB:
+                log_part = data.x * np.log(xl.xlnsB) / np.log(base_val)
+            elif isinstance(data, (xl.xlnsb, xl.xlnsv)) and not base_val == data.B:
+                log_part = data.x * np.log(data.B) / np.log(base_val)
+            else:
+                log_part = data.x
+
+            packed_int = (int(round(log_part)) << 1) | data.s
+            input_data = torch.tensor(packed_int, dtype=torch.float64)
+
         from_lns = True
 
     # xlns numpy-like arrays
@@ -308,7 +316,10 @@ def lnstensor(
             log_part = data_x
 
         packed_int = (np.int64(np.round(log_part)) << 1) | data_s
-        input_data = torch.tensor(packed_int, dtype=torch.float64)
+        input_data = torch.tensor(
+            np.where(data.nd == -2**53, LNS_ZERO, packed_int),
+            dtype=torch.float64
+        )
         from_lns = True
 
     # Everything else (scalars, lists, tuples, etc.)
