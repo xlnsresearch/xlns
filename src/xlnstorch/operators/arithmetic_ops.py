@@ -140,6 +140,7 @@ class LNSAddFunction(torch.autograd.Function):
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
+    print('hiii2 alpha', alpha)
     if alpha != 1:
         y = torch.mul(y, alpha)
     result = LNSAddFunction.apply(x._lns, y._lns, x.base)
@@ -501,12 +502,9 @@ class LNSAbsFunction(torch.autograd.Function):
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
         x_packed = x.to(torch.int64)
-        x_sign = x_packed & 1
+        x_packed_sign = x_packed & 1
 
-        if torch.eq(x_sign, 1):
-            return lns_neg(grad_output)
-        else:
-            return grad_output
+        return torch.where(x_packed_sign == 1, lns_neg(grad_output), grad_output)
 
 @implements(torch.abs, LNSAbsFunction.apply, "default", default=True)
 def abs(x, *, out=None):
@@ -559,10 +557,7 @@ class LNSSignFunction(torch.autograd.Function):
         x_packed_sign = x_packed & 1
 
         # to check for zero case (return 0 lnstensor)
-        if torch.eq(x_packed_sign, 1):
-            return lnstensor(-1.0, b=base)._lns
-        elif torch.eq(x_packed_sign, 0):
-            return lnstensor(1.0, b=base)._lns
+        return torch.where(x_packed_sign == 1, lnstensor(-1.0, b=base)._lns, lnstensor(1.0, b=base)._lns)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
