@@ -1,6 +1,6 @@
 import torch
 from .. import lnstensor, format_lnstensor_operands, implements
-from .. import (
+from . import (
     lns_add,
     lns_neg,
     lns_mul,

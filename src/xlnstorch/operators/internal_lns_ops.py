@@ -1,7 +1,7 @@
 from typing import Callable, Any
 
 import torch
-from . import LNSTensor, apply_lns_op
+from .. import LNSTensor, apply_lns_op
 
 def _create_lns_op_func(
     op_name: str,
