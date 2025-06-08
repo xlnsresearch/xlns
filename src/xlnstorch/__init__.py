@@ -6,7 +6,7 @@ except ModuleNotFoundError as e:
         "See https://pytorch.org/get-started/locally for instructions."
     ) from e
 
-LNS_ZERO = torch.tensor(-2**53, dtype=torch.float64)
+LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
 
 from .dispatch_table import (
     implements,

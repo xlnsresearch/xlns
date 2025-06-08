@@ -7,6 +7,7 @@ from . import (
     lns_div,
     lns_square,
     lns_reciprocal,
+    lns_pow,
 )
 
 # SBDB_FUNCS is a dictionary that contains different implementations
@@ -126,7 +127,9 @@ class LNSAddFunction(torch.autograd.Function):
         sign_diff = (x_packed ^ y_packed) & 1
 
         result = max_operand + sbdb(-abs_diff, sign_diff, base)
-        return result.to(torch.float64)
+        return torch.where(
+            torch.eq(x_packed | 1, LNS_ZERO), y, torch.where(
+                torch.eq(y_packed | 1, LNS_ZERO), x, result.to(torch.float64)))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -196,7 +199,6 @@ class LNSNegFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x):
-
         x_packed = x.to(torch.int64)
         neg_x_packed = x_packed ^ 1
 
@@ -231,16 +233,11 @@ class LNSMulFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x, y):
-
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-        x_sign, y_sign = x_packed & 1, y_packed & 1
-        x_log, y_log = x_packed >> 1, y_packed >> 1
+        result = (x_packed + y_packed - (y_packed & 1)) ^ (y_packed & 1)
 
-        result_log = x_log + y_log
-        result_sign = x_sign ^ y_sign
-        result = (result_log << 1) | result_sign
-
-        return result.to(torch.float64)
+        return torch.where(torch.eq(x_packed | 1, LNS_ZERO) | torch.eq(y_packed | 1, LNS_ZERO),
+                             LNS_ZERO, result.to(torch.float64))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -270,7 +267,7 @@ def mul(x, y, *, out=None):
 class LNSSquareFunction(torch.autograd.Function):
     """
     Squaring becomes doubling in the logarithmic domain.
-    
+
     Gradients are computed as follows:
     d/dx(x ^ 2) = 2 * x
     """
@@ -316,7 +313,7 @@ class LNSSqrtFunction(torch.autograd.Function):
         x_packed = x.to(torch.int64)
         result = ((x_packed & (-2)) / 2).to(torch.int64) & (-2)
 
-        return result.to(torch.float64)
+        return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, result.to(torch.float64))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -373,7 +370,13 @@ class LNSPowFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        pass # Placeholder until addition logic is implemented
+        x, n, base = ctx.saved_tensors
+
+        grad_x = lns_pow(x, n - 1, base)
+        grad_x = lns_mul(grad_x, lnstensor(n, b=base)._lns)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None, None
 
 @implements(torch.pow, LNSPowFunction.forward, key='default', default=True)
 def pow(x, n, *, out=None):
@@ -396,17 +399,10 @@ class LNSDivFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x, y, base):
-
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+        result = (x_packed - y_packed + (y_packed & 1)) ^ (y_packed & 1)
 
-        x_sign, y_sign = x_packed & 1, y_packed & 1
-        x_log, y_log = x_packed >> 1, y_packed >> 1
-
-        result_log = x_log - y_log
-        result_sign = x_sign ^ y_sign
-        result = (result_log << 1) | result_sign
-
-        return result.to(torch.float64)
+        return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, result.to(torch.float64))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -491,7 +487,7 @@ class LNSAbsFunction(torch.autograd.Function):
         x_packed = x.to(torch.int64)
         x_packed_abs = x_packed & (~1)
 
-        return x_packed_abs.to(torch.float64)
+        return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, x_packed_abs.to(torch.float64))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -504,7 +500,7 @@ class LNSAbsFunction(torch.autograd.Function):
         x_packed = x.to(torch.int64)
         x_packed_sign = x_packed & 1
 
-        return torch.where(x_packed_sign == 1, lns_neg(grad_output), grad_output)
+        return torch.where(torch.eq(x_packed_sign, 1), lns_neg(grad_output), grad_output)
 
 @implements(torch.abs, LNSAbsFunction.apply, "default", default=True)
 def abs(x, *, out=None):
@@ -556,8 +552,9 @@ class LNSSignFunction(torch.autograd.Function):
         x_packed = x.to(torch.int64)
         x_packed_sign = x_packed & 1
 
-        # to check for zero case (return 0 lnstensor)
-        return torch.where(x_packed_sign == 1, lnstensor(-1.0, b=base)._lns, lnstensor(1.0, b=base)._lns)
+        return torch.where(
+            torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO,
+            torch.where(x_packed_sign == 1, lnstensor(-1.0, b=base)._lns, lnstensor(1.0, b=base)._lns))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -565,7 +562,7 @@ class LNSSignFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        pass # todo when zero is implemented
+        return LNS_ZERO, None
 
 @implements(torch.sign, LNSSignFunction.forward, "default", default=True)
 def sign(x, *, out=None):

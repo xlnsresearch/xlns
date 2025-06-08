@@ -180,7 +180,7 @@ class LNSTensor:
         exponent = (packed_int >> 1).to(torch.float64)
         sign = torch.where((packed_int & 1).bool(), -1.0, 1.0)
 
-        return sign * torch.pow(self.base, exponent)
+        return torch.where(torch.eq(packed_int | 1, LNS_ZERO), 0.0, sign * torch.pow(self.base, exponent))
 
     @property
     def grad(self) -> LNSTensor:
