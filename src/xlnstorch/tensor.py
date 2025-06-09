@@ -8,6 +8,8 @@ from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
 
+_xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
+
 class LNSTensor:
     r"""
     A logarithmic number system (LNS) wrapper for PyTorch tensors. 
@@ -199,6 +201,64 @@ class LNSTensor:
 
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"
+
+    def __add__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.add(self, other)
+
+    def __sub__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.sub(self, other)
+
+    def __mul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.mul(self, other)
+
+    def __truediv__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.truediv(self, other)
+
+    def __pow__(self, other):
+        return torch.pow(self, other) # not implemented LNSTensor powers for now
+
+    def __neg__(self):
+        return torch.neg(self)
+
+    def __pos__(self):
+        return torch.pos(self)
+
+    def __eq__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.eq(self, other)
+
+    def __ne__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.ne(self, other)
+
+    def __ge__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.ge(self, other)
+
+    def __gt__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.gt(self, other)
+
+    def __le__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+
+    def __lt__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.lt(self, other)
 
 def lnstensor(
         data: Any,
