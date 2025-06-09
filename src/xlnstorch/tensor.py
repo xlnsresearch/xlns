@@ -155,6 +155,28 @@ class LNSTensor:
             inputs=tensor_inputs
         )
 
+    @staticmethod
+    def get_internal_tensor(fp_value: Any, base: Tensor) -> Tensor:
+        """
+        Converts an array-like floating point value to an LNSTensor and
+        returns the internal packed representation for a given base.
+
+        Parameters
+        ----------
+        fp_value : Any
+            Array-like floating point value to convert to an LNSTensor.
+            For possible types see the ``data`` parameter of :func:`lnstensor`
+        base : torch.Tensor
+            Scalar tensor that holds the desired logarithm base.
+
+        Returns
+        -------
+        torch.Tensor
+            The internal packed representation of the LNSTensor for a
+            requested floating point value and base.
+        """
+        return lnstensor(fp_value, b=base)._lns
+
     @property
     def lns(self) -> Tensor:
         """
@@ -198,6 +220,9 @@ class LNSTensor:
             return None
         
         return lnstensor(self._lns.grad, from_lns=True, b=self.base)
+
+    def broadcast_to(self, shape):
+        return lnstensor(self._lns.broadcast_to(shape), from_lns=True, b=self.base)
 
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"

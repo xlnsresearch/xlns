@@ -15,7 +15,7 @@ def _lns_eq(x, y):
 @implements(torch.eq, None, "default", default=True)
 def eq(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_eq(x._lns, y._lns)
 
     if out is not None:
@@ -29,7 +29,7 @@ def _lns_ne(x, y):
 @implements(torch.ne, _lns_ne, "default", default=True)
 def ne(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_ne(x._lns, y._lns)
 
     if out is not None:
@@ -61,7 +61,7 @@ def _lns_ge(x, y):
 @implements(torch.ge, _lns_ge, "default", default=True)
 def ge(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_ge(x._lns, y._lns)
 
     if out is not None:
@@ -93,7 +93,7 @@ def _lns_gt(x, y):
 @implements(torch.gt, _lns_gt, "default", default=True)
 def gt(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_gt(x._lns, y._lns)
 
     if out is not None:
@@ -125,7 +125,7 @@ def _lns_le(x, y):
 @implements(torch.le, _lns_le, "default", default=True)
 def le(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_le(x._lns, y._lns)
 
     if out is not None:
@@ -157,7 +157,7 @@ def _lns_lt(x, y):
 @implements(torch.lt, _lns_lt, "default", default=True)
 def lt(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y._lns = y._lns.broadcast_to(x.shape)
+    y = y.broadcast_to(x.shape)
     result = _lns_lt(x._lns, y._lns)
 
     if out is not None:

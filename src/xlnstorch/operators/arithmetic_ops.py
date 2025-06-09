@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
 from . import (
     lns_add,
     lns_neg,
@@ -285,7 +285,7 @@ class LNSSquareFunction(torch.autograd.Function):
     def backward(ctx, grad_output):
         x, base = ctx.saved_tensors
 
-        grad_x = lns_mul(x, lnstensor(2.0, b=base)._lns)
+        grad_x = lns_mul(x, LNSTensor.get_internal_tensor(2.0, base))
         grad_x = lns_mul(grad_output, grad_x)
 
         return grad_x, None
@@ -325,7 +325,7 @@ class LNSSqrtFunction(torch.autograd.Function):
     def backward(ctx, grad_output):
         sqrt_x, base = ctx.saved_tensors
 
-        grad_x = lns_mul(sqrt_x, lnstensor(2.0, b=base)._lns)
+        grad_x = lns_mul(sqrt_x, LNSTensor.get_internal_tensor(2.0, base))
         grad_x = lns_div(grad_output, grad_x, base)
 
         return grad_x, None
@@ -373,7 +373,7 @@ class LNSPowFunction(torch.autograd.Function):
         x, n, base = ctx.saved_tensors
 
         grad_x = lns_pow(x, n - 1, base)
-        grad_x = lns_mul(grad_x, lnstensor(n, b=base)._lns)
+        grad_x = lns_mul(grad_x, LNSTensor.get_internal_tensor(n, base))
         grad_x = lns_mul(grad_output, grad_x)
 
         return grad_x, None, None
@@ -416,7 +416,7 @@ class LNSDivFunction(torch.autograd.Function):
         grad_x = lns_div(grad_output, y, base)
         grad_y = lns_square(y, base)
         grad_y = lns_div(x, grad_y, base)
-        grad_y = lns_mul(grad_y, lnstensor(-1.0, b=base)._lns)
+        grad_y = lns_mul(grad_y, LNSTensor.get_internal_tensor(-1.0, base))
         grad_y = lns_mul(grad_output, grad_y)
 
         return grad_x, grad_y, None
@@ -443,7 +443,7 @@ class LNSReciprocalFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x, base):
-        return lns_div(lnstensor(1.0, b=base)._lns, x, base)
+        return lns_div(LNSTensor.get_internal_tensor(1.0, base), x, base)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -456,7 +456,7 @@ class LNSReciprocalFunction(torch.autograd.Function):
 
         grad_x = lns_square(x, base)
         grad_x = lns_reciprocal(grad_x, base)
-        grad_x = lns_mul(grad_x, lnstensor(-1.0, b=base)._lns)
+        grad_x = lns_mul(grad_x, LNSTensor.get_internal_tensor(-1.0, base))
         grad_x = lns_mul(grad_output, grad_x)
 
         return grad_x, None
@@ -554,7 +554,8 @@ class LNSSignFunction(torch.autograd.Function):
 
         return torch.where(
             torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO,
-            torch.where(x_packed_sign == 1, lnstensor(-1.0, b=base)._lns, lnstensor(1.0, b=base)._lns))
+            torch.where(x_packed_sign == 1,
+                        LNSTensor.get_internal_tensor(-1.0, base), LNSTensor.get_internal_tensor(1.0, base)))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
