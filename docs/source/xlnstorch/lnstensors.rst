@@ -1,5 +1,4 @@
 .. currentmodule:: xlnstorch
-.. automodule:: xlnstorch
 
 .. _lnstensor-doc:
 
@@ -15,7 +14,7 @@ Todo: Add more information/math.
 LNSTensor class reference
 -------------------------
 
-.. class:: LNSTensor()
+.. class:: LNSTensor
 
     There are two ways to create a tensor currently.
 

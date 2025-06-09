@@ -221,7 +221,21 @@ class LNSTensor:
         
         return lnstensor(self._lns.grad, from_lns=True, b=self.base)
 
-    def broadcast_to(self, shape):
+    def broadcast_to(self, shape) -> LNSTensor:
+        """
+        Broadcasts ``self`` to the shape ``shape``. Analogous to
+
+        https://docs.pytorch.org/docs/stable/generated/torch.broadcast_to.html
+
+        Parameters
+        ----------
+        shape : list, tuple, torch.Size
+            The new shape to broadcast to.
+
+        Returns
+        -------
+        An ```LNSTensor`` object broadcasted to the new shape ``shape``.
+        """
         return lnstensor(self._lns.broadcast_to(shape), from_lns=True, b=self.base)
 
     def __repr__(self) -> str:

@@ -11,6 +11,14 @@ from .internal_lns_ops import (
     lns_reciprocal,
     lns_sign,
     lns_positive,
+
+    lns_equal,
+    lns_eq,
+    lns_ne,
+    lns_ge,
+    lns_gt,
+    lns_le,
+    lns_lt,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -33,4 +41,12 @@ __all__ = [
     "lns_reciprocal",
     "lns_sign",
     "lns_positive",
+
+    "lns_equal",
+    "lns_eq",
+    "lns_ne",
+    "lns_ge",
+    "lns_gt",
+    "lns_le",
+    "lns_lt",
 ]
