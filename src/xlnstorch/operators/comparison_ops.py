@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, format_lnstensor_operands, implements
+from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
 from . import (
     lns_sub,
     lns_abs,
@@ -227,3 +227,110 @@ def isin(x, y, *, assume_unique=False, invert=False):
     result = torch.isin(x._lns, y._lns, assume_unique=assume_unique, invert=invert)
 
     return result
+
+class LNSSortFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, dim=-1, descending=False, stable=False):
+        x_packed = x.to(torch.int64)
+        x_packed_log = x_packed >> 1
+        x_packed_sign = x_packed & 1
+
+        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+        indices = torch.argsort(x_packed_logsign, dim=dim, descending=descending, stable=stable)
+
+        return torch.return_types.sort((torch.gather(x, dim, indices), indices))
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, indices = output
+        ctx.save_for_backward(indices)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        indices, = ctx.saved_tensors
+
+        grad_x = grad_output.clone()
+        grad_x[indices] = grad_output
+
+        return grad_x, None
+
+@implements(torch.sort, LNSSortFunction.forward, "default", default=True)
+def sort(x, dim=-1, descending=False, stable=False, *, out=None):
+    result = LNSSortFunction.apply(x._lns, dim, descending, stable)
+
+    if out is not None:
+        out.copy_(result)
+
+    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+
+def _lns_argsort(x, dim=-1, descending=False, stable=False):
+    x_packed = x.to(torch.int64)
+    x_packed_log = x_packed >> 1
+    x_packed_sign = x_packed & 1
+
+    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+    return torch.argsort(x_packed_logsign, dim=dim, descending=descending, stable=stable)
+
+@implements(torch.argsort, _lns_argsort, "default", default=True)
+def argsort(x, dim=-1, descending=False, stable=False, *, out=None):
+    result = _lns_argsort(x._lns, dim, descending, stable)
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+class LNSKthvalueFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, k, dim=-1, keepdim=False):
+        x_packed = x.to(torch.int64)
+        x_packed_log = x_packed >> 1
+        x_packed_sign = x_packed & 1
+
+        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+        _, indices = torch.kthvalue(x_packed_logsign, k, dim=dim, keepdim=keepdim)
+
+        if not keepdim:
+            indices = indices.unsqueeze(dim)
+        x = torch.take_along_dim(x, indices, dim)
+
+        if not keepdim:
+            x = x.squeeze(dim)
+            indices = indices.squeeze(dim)
+
+        return torch.return_types.kthvalue((x, indices))
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, _, dim, keepdim = inputs
+        _, indices = output
+        ctx.save_for_backward(x, indices)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output_values, grad_output_indices):
+        x, indices = ctx.saved_tensors
+
+        if not ctx.keepdim:
+            indices = indices.unsqueeze(ctx.dim)
+            grad_output_values = grad_output_values.unsqueeze(ctx.dim)
+
+        grad_x = torch.full_like(x, LNS_ZERO)
+        grad_x = grad_x.scatter_(ctx.dim, indices, grad_output_values)
+
+        return grad_x, None, None, None
+
+@implements(torch.kthvalue, LNSKthvalueFunction.forward, "default", default=True)
+def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
+    result = LNSKthvalueFunction.apply(x._lns, k, dim, keepdim)
+
+    if out is not None:
+        out.copy_(result)
+
+    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))

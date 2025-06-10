@@ -24,6 +24,9 @@ from .internal_lns_ops import (
     lns_any,
     lns_all,
     lns_isin,
+    lns_sort,
+    lns_argsort,
+    lns_kthvalue,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -60,4 +63,7 @@ __all__ = [
     "lns_any",
     "lns_all",
     "lns_isin",
+    "lns_sort",
+    "lns_argsort",
+    "lns_kthvalue",
 ]

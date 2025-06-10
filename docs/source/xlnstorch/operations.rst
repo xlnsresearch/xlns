@@ -90,3 +90,6 @@ Comparison Operations
     operators.lns_any
     operators.lns_all
     operators.lns_isin
+    operators.lns_sort
+    operators.lns_argsort
+    operators.lns_kthvalue
