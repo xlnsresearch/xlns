@@ -19,11 +19,17 @@ from .internal_lns_ops import (
     lns_gt,
     lns_le,
     lns_lt,
+    lns_isclose,
+    lns_allclose,
+    lns_any,
+    lns_all,
+    lns_isin,
 )
 from .arithmetic_ops import (
     implement_sbdb,
     sbdb,
 )
+from . import comparison_ops # needed to register comparison ops
 
 __all__ = [
     "implement_sbdb",
@@ -49,4 +55,9 @@ __all__ = [
     "lns_gt",
     "lns_le",
     "lns_lt",
+    "lns_isclose",
+    "lns_allclose",
+    "lns_any",
+    "lns_all",
+    "lns_isin",
 ]

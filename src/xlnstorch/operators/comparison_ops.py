@@ -1,5 +1,13 @@
 import torch
-from .. import LNSTensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, format_lnstensor_operands, implements
+from . import (
+    lns_sub,
+    lns_abs,
+    lns_add,
+    lns_mul,
+    lns_le,
+    lns_isclose,
+)
 
 def _lns_equal(x, y):
     return torch.equal(x, y)
@@ -38,7 +46,7 @@ def ne(x, y, *, out=None):
     return result
 
 def _lns_ge(x, y):
-    x_packed, y_packed = x._lns, y._lns
+    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
 
@@ -70,7 +78,7 @@ def ge(x, y, *, out=None):
     return result
 
 def _lns_gt(x, y):
-    x_packed, y_packed = x._lns, y._lns
+    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
 
@@ -102,7 +110,7 @@ def gt(x, y, *, out=None):
     return result
 
 def _lns_le(x, y):
-    x_packed, y_packed = x._lns, y._lns
+    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
 
@@ -134,7 +142,7 @@ def le(x, y, *, out=None):
     return result
 
 def _lns_lt(x, y):
-    x_packed, y_packed = x._lns, y._lns
+    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
 
@@ -162,5 +170,60 @@ def lt(x, y, *, out=None):
 
     if out is not None:
         out.copy_(result)
+
+    return result
+
+def _lns_isclose(x, y, atol, rtol, base):
+    abs_diff = lns_abs(lns_sub(x, y, base))
+    eps = lns_add(atol, lns_mul(rtol, lns_abs(y)), base)
+
+    return lns_le(abs_diff, eps)
+
+@implements(torch.isclose, _lns_isclose, "default", default=True)
+def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
+    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
+    return _lns_isclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+
+def _lns_allclose(x, y, atol, rtol, base):
+    return torch.all(lns_isclose(x, y, atol, rtol, base))
+
+@implements(torch.allclose, _lns_allclose, "default", default=True)
+def allclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
+    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
+    return _lns_allclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+
+def _lns_any(x, dim=None, keepdim=False):
+    x_packed = x.to(torch.int64)
+    return torch.any(torch.ne(x_packed | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+
+@implements(torch.any, _lns_any, "default", default=True)
+def any(x, dim=None, keepdim=False, *, out=None):
+    result = _lns_any(x._lns, dim, keepdim)
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def _lns_all(x, dim=None, keepdim=False):
+    x_packed = x.to(torch.int64)
+    return torch.all(torch.ne(x_packed | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+
+@implements(torch.all, _lns_all, "default", default=True)
+def all(x, dim=None, keepdim=False, *, out=None):
+    result = _lns_all(x._lns, dim, keepdim)
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def _lns_isin(x, y, assume_unique=False, invert=False):
+    return torch.isin(x, y, assume_unique=assume_unique, invert=invert)
+
+@implements(torch.isin, _lns_isin, "default", default=True)
+def isin(x, y, *, assume_unique=False, invert=False):
+    x, y = format_lnstensor_operands(x, y)
+    result = torch.isin(x._lns, y._lns, assume_unique=assume_unique, invert=invert)
 
     return result

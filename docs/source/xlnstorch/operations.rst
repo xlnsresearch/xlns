@@ -85,3 +85,8 @@ Comparison Operations
     operators.lns_gt
     operators.lns_le
     operators.lns_lt
+    operators.lns_isclose
+    operators.lns_allclose
+    operators.lns_any
+    operators.lns_all
+    operators.lns_isin

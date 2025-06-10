@@ -221,6 +221,18 @@ class LNSTensor:
         
         return lnstensor(self._lns.grad, from_lns=True, b=self.base)
 
+    @property
+    def shape(self) -> torch.Size:
+        """
+        Returns the shape of the LNSTensor.
+
+        Returns
+        -------
+        torch.Size
+            The shape of the LNSTensor.
+        """
+        return self._lns.shape
+
     def broadcast_to(self, shape) -> LNSTensor:
         """
         Broadcasts ``self`` to the shape ``shape``. Analogous to
