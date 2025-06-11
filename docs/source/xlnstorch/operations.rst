@@ -93,3 +93,5 @@ Comparison Operations
     operators.lns_sort
     operators.lns_argsort
     operators.lns_kthvalue
+    operators.lns_maximum
+    operators.lns_minimum

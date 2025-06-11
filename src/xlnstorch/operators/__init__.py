@@ -27,6 +27,8 @@ from .internal_lns_ops import (
     lns_sort,
     lns_argsort,
     lns_kthvalue,
+    lns_maximum,
+    lns_minimum,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -66,4 +68,6 @@ __all__ = [
     "lns_sort",
     "lns_argsort",
     "lns_kthvalue",
+    "lns_maximum",
+    "lns_minimum",
 ]

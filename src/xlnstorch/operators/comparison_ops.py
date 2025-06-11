@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
 from . import (
     lns_sub,
     lns_abs,
@@ -7,6 +7,9 @@ from . import (
     lns_mul,
     lns_le,
     lns_isclose,
+    lns_gt,
+    lns_lt,
+    lns_eq,
 )
 
 def _lns_equal(x, y):
@@ -20,7 +23,7 @@ def equal(x, y):
 def _lns_eq(x, y):
     return torch.eq(x, y)
 
-@implements(torch.eq, None, "default", default=True)
+@implements(torch.eq, _lns_eq, "default", default=True)
 def eq(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
     y = y.broadcast_to(x.shape)
@@ -334,3 +337,85 @@ def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
         out.copy_(result)
 
     return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+
+class LNSMaximumFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, base):
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+        x_packed_larger = lns_gt(x_packed, y_packed)
+
+        return torch.where(x_packed_larger, x, y)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, base = ctx.saved_tensors
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+        x_y_equal = lns_eq(x_packed, y_packed)
+        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base))
+
+        grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
+            lns_gt(x_packed, y_packed), grad_output, LNS_ZERO
+        ))
+        grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
+            lns_gt(y_packed, x_packed), grad_output, LNS_ZERO
+        ))
+
+        return grad_x, grad_y, None
+
+@implements(torch.maximum, LNSMaximumFunction.forward, "default", default=True)
+def maximum(x, y, *, out=None):
+    x, y = format_lnstensor_operands(x, y)
+    result = LNSMaximumFunction.apply(x._lns, y._lns, x.base)
+
+    if out is not None:
+        out.copy_(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMinimumFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, base):
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+        x_packed_smaller = lns_lt(x_packed, y_packed)
+
+        return torch.where(x_packed_smaller, x, y)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, base = ctx.saved_tensors
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+        x_y_equal = lns_eq(x_packed, y_packed)
+        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base))
+
+        grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
+            lns_lt(x_packed, y_packed), grad_output, LNS_ZERO
+        ))
+        grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
+            lns_lt(y_packed, x_packed), grad_output, LNS_ZERO
+        ))
+
+        return grad_x, grad_y, None
+
+@implements(torch.minimum, LNSMinimumFunction.forward, "default", default=True)
+def minimum(x, y, *, out=None):
+    x, y = format_lnstensor_operands(x, y)
+    result = LNSMinimumFunction.apply(x._lns, y._lns, x.base)
+
+    if out is not None:
+        out.copy_(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
