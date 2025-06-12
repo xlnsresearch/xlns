@@ -381,7 +381,9 @@ class LNSPowFunction(torch.autograd.Function):
 @implements(torch.pow, LNSPowFunction.forward, key='default', default=True)
 def pow(x, n, *, out=None):
     # todo: implement support for LNSTensor exponentiation
-    result = LNSPowFunction.apply(x._lns, torch.tensor(n), x.base)
+    if not isinstance(n, torch.Tensor):
+        n = torch.tensor(n, dtype=torch.float64)
+    result = LNSPowFunction.apply(x._lns, n, x.base)
 
     if out is not None:
         out._lns = result

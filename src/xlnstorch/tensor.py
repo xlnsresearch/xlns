@@ -331,6 +331,34 @@ class LNSTensor:
             other = lnstensor(other, b=self.base)
         return torch.lt(self, other)
 
+    def add(self, other, *, alpha=1):
+        return torch.add(self, other, alpha=alpha)
+
+    def add_(self, other, *, alpha=1):
+        self._lns = torch.add(self, other, alpha=alpha)._lns
+        return self
+
+    def sub(self, other, *, alpha=1):
+        return torch.sub(self, other, alpha=1)
+
+    def sub_(self, other, *, alpha=1):
+        self._lns = torch.sub(self, other, alpha=alpha)._lns
+        return self
+
+    def mul(self, other):
+        return torch.mul(self, other)
+
+    def mul_(self, other):
+        self._lns = torch.mul(self, other)._lns
+        return self
+
+    def div(self, other):
+        return torch.div(self, other)
+
+    def div_(self, other):
+        self._lns = torch.div(self, other)._lns
+        return self
+
 def lnstensor(
         data: Any,
         from_lns: bool = False,
