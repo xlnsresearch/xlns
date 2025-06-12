@@ -574,3 +574,62 @@ def sign(x, *, out=None):
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSSumFunction(torch.autograd.Function):
+    """
+    We use the addition operation to compute the sum.
+
+    Gradients are computed as follows:
+    d/dx(sum(x)) = 1
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        if dim is None:
+            flat = x.reshape(-1)
+            out = flat[0]
+            for i in range(1, flat.numel()):
+                out = lns_add(out, flat[i], base)
+            if keepdim:
+                out = out.reshape([1] * x.dim())
+            return out
+
+        red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
+        red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+        permute_order = [d for d in range(x.dim()) if d not in red_dims] + list(red_dims)
+        transposed = x.permute(*permute_order)
+
+        outer_shape = transposed.shape[:-len(red_dims)]
+        transposed = transposed.reshape(*outer_shape, -1)
+
+        out = transposed[..., 0]
+        for i in range(1, transposed.shape[-1]):
+            out = lns_add(out, transposed[..., i], base)
+
+        if keepdim:
+            for d in red_dims:
+                out = out.unsqueeze(d)
+
+        return out
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, _, _ = inputs
+        ctx.save_for_backward(x)
+        ctx.base = base
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_tensors
+        return torch.full_like(x, LNSTensor.get_internal_tensor(1.0, ctx.base).item()), None, None, None
+
+@implements(torch.sum, LNSSumFunction.forward, "default", default=True)
+def sum(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSSumFunction.apply(x._lns, x.base, dim, keepdim)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)

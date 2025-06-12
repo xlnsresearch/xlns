@@ -30,10 +30,17 @@ LNSTensor class reference
     :toctree: generated
     :nosignatures:
 
+    LNSTensor.get_internal_tensor
+
     LNSTensor.lns
     LNSTensor.value
-    LNSTensor.backward
     LNSTensor.grad
+    LNSTensor.shape
+    LNSTensor.ndim
+
+    LNSTensor.backward
+    LNSTensor.broadcast_to
+    LNSTensor.dim
 
 .. autosummary::
     :toctree: generated

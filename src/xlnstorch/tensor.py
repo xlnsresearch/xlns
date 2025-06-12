@@ -139,7 +139,10 @@ class LNSTensor:
             accumulated into all the leaf Tensors that were used to compute the tensors.
         """
         if gradient is None:
-            tensor_gradient = torch.zeros_like(self._lns, dtype=torch.float64)
+            if self._lns.numel() == 1:
+                tensor_gradient = torch.zeros_like(self._lns, dtype=torch.float64)
+            else:
+                raise RuntimeError("grad can be implicitly created only for scalar outputs")
         else:
             tensor_gradient = gradient.lns
 
@@ -232,6 +235,24 @@ class LNSTensor:
             The shape of the LNSTensor.
         """
         return self._lns.shape
+
+    @property
+    def ndim(self) -> int:
+        """
+        Alias for :meth:`dim`.
+        """
+        return self.dim()
+
+    def dim(self) -> int:
+        """
+        Returns the number of dimensions of the LNSTensor.
+
+        Returns
+        -------
+        int
+            The number of dimensions of the LNSTensor.
+        """
+        return self._lns.dim()
 
     def broadcast_to(self, shape) -> LNSTensor:
         """
