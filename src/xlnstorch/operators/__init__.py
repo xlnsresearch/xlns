@@ -11,6 +11,7 @@ from .internal_lns_ops import (
     lns_reciprocal,
     lns_sign,
     lns_positive,
+    lns_sum,
 
     lns_equal,
     lns_eq,
@@ -52,6 +53,7 @@ __all__ = [
     "lns_reciprocal",
     "lns_sign",
     "lns_positive",
+    "lns_sum",
 
     "lns_equal",
     "lns_eq",

@@ -270,6 +270,13 @@ class LNSTensor:
         """
         return lnstensor(self._lns.broadcast_to(shape), from_lns=True, b=self.base)
 
+    def clone(self, *, memory_format=torch.preserve_format) -> LNSTensor:
+        """
+        Returns a copy of the LNSTensor with the same data and base.
+        """
+        cloned_lns = self._lns.clone(memory_format=memory_format)
+        return lnstensor(cloned_lns, from_lns=True, b=self.base)
+
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"
 
@@ -358,6 +365,109 @@ class LNSTensor:
     def div_(self, other):
         self._lns = torch.div(self, other)._lns
         return self
+
+    def pow(self, other):
+        return torch.pow(self, other)
+
+    def pow_(self, other):
+        self._lns = torch.pow(self, other)._lns
+        return self
+
+    def neg(self):
+        return torch.neg(self)
+
+    def neg_(self):
+        self._lns = torch.neg(self)._lns
+        return self
+
+    def abs(self):
+        return torch.abs(self)
+
+    def abs_(self):
+        self._lns = torch.abs(self)._lns
+        return self
+
+    def sqrt(self):
+        return torch.sqrt(self)
+
+    def sqrt_(self):
+        self._lns = torch.sqrt(self)._lns
+        return self
+
+    def square(self):
+        return torch.square(self)
+
+    def square_(self):
+        self._lns = torch.square(self)._lns
+        return self
+
+    def reciprocal(self):
+        return torch.reciprocal(self)
+
+    def reciprocal_(self):
+        self._lns = torch.reciprocal(self)._lns
+        return self
+
+    def sign(self):
+        return torch.sign(self)
+
+    def sign_(self):
+        self._lns = torch.sign(self)._lns
+        return self
+
+    def positive(self):
+        return torch.pos(self)
+
+    def sum(self, dim=None, keepdim=False):
+        return torch.sum(self, dim=dim, keepdim=keepdim)
+
+    def equal(self, other):
+        return torch.equal(self, other)
+
+    def eq(self, other):
+        return torch.eq(self, other)
+
+    def ne(self, other):
+        return torch.ne(self, other)
+
+    def ge(self, other):
+        return torch.ge(self, other)
+
+    def gt(self, other):
+        return torch.gt(self, other)
+
+    def le(self, other):
+        return torch.le(self, other)
+
+    def lt(self, other):
+        return torch.lt(self, other)
+
+    def isclose(self, other, rtol=1e-05, atol=1e-08):
+        return torch.isclose(self, other, rtol=rtol, atol=atol)
+
+    def allclose(self, other, rtol=1e-05, atol=1e-08):
+        return torch.allclose(self, other, rtol=rtol, atol=atol)
+
+    def any(self, dim=None, keepdim=False):
+        return torch.any(self, dim=dim, keepdim=keepdim)
+
+    def all(self, dim=None, keepdim=False):
+        return torch.all(self, dim=dim, keepdim=keepdim)
+
+    def sort(self, dim=-1, descending=False, stable=False):
+        return torch.sort(self, dim=dim, descending=descending, stable=stable)
+
+    def argsort(self, dim=-1, descending=False, stable=False):
+        return torch.argsort(self, dim=dim, descending=descending, stable=stable)
+
+    def kthvalue(self, k, dim=None, keepdim=False):
+        return torch.kthvalue(self, k, dim=dim, keepdim=keepdim)
+
+    def maximum(self, other):
+        return torch.maximum(self, other)
+
+    def minimum(self, other):
+        return torch.minimum(self, other)
 
 def lnstensor(
         data: Any,

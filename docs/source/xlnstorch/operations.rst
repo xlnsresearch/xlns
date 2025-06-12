@@ -70,6 +70,7 @@ Arithmetic Operations
     operators.lns_reciprocal
     operators.lns_sign
     operators.lns_positive
+    operators.lns_sum
 
 Comparison Operations
 ~~~~~~~~~~~~~~~~~~~~~
