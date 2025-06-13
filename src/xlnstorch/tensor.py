@@ -646,3 +646,251 @@ def lnstensor(
             raise TypeError(f"Unsupported data type for LNSTensor: {type(data).__name__}") from e
 
     return LNSTensor(input_data, base_tensor, from_lns=from_lns)
+
+def zeros(
+        *size,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        f=None,
+        b=None
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with zeros, with the specified shape and
+    properties. See `torch.zeros` for more details on the parameters.
+    """
+    result = lnstensor(
+        torch.zeros(*size, dtype=torch.float64, layout=layout, device=device),
+        from_lns=False, f=f, b=b
+    )
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def zeros_like(
+        input,
+        *,
+        layout=None,
+        device=None,
+        memory_format=torch.preserve_format,
+        f=None,
+        b=None,
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with zeros, with the same shape and
+    properties as the input tensor. See `torch.zeros_like` for more
+    details on the parameters.
+    """
+    if isinstance(input, LNSTensor):
+        input = input._lns
+        if f is None and b is None:
+            b = input.base
+
+    return lnstensor(
+        torch.zeros_like(input, dtype=torch.float64, device=device,
+                         layout=layout, memory_format=memory_format),
+        from_lns=False, f=f, b=b
+    )
+
+def ones(
+        *size,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        f=None,
+        b=None
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with ones, with the specified shape and
+    properties. See `torch.ones` for more details on the parameters.
+    """
+    result = lnstensor(
+        torch.ones(*size, dtype=torch.float64, layout=layout, device=device),
+        from_lns=False, f=f, b=b
+    )
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def ones_like(
+        input,
+        *,
+        layout=None,
+        device=None,
+        memory_format=torch.preserve_format,
+        f=None,
+        b=None,
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with ones, with the same shape and
+    properties as the input tensor. See `torch.ones_like` for more
+    details on the parameters.
+    """
+    if isinstance(input, LNSTensor):
+        input = input._lns
+        if f is None and b is None:
+            b = input.base
+
+    return lnstensor(
+        torch.ones_like(input, dtype=torch.float64, device=device,
+                        layout=layout, memory_format=memory_format),
+        from_lns=False, f=f, b=b
+    )
+
+def full(
+        size,
+        fill_value,
+        *,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        f=None,
+        b=None
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with `fill_value`, with the specified shape
+    and properties. See `torch.full` for more details on the parameters.
+    """
+    result = lnstensor(
+        torch.full(size, fill_value, dtype=torch.float64, layout=layout, device=device),
+        from_lns=False, f=f, b=b
+    )
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def full_like(
+        input,
+        fill_value,
+        *,
+        layout=None,
+        device=None,
+        memory_format=torch.preserve_format,
+        f=None,
+        b=None,
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with `fill_value`, with the same shape
+    and properties as the input tensor. See `torch.full_like` for more
+    details on the parameters.
+    """
+    if isinstance(input, LNSTensor):
+        input = input._lns
+        if f is None and b is None:
+            b = input.base
+
+    return lnstensor(
+        torch.full_like(input, fill_value, dtype=torch.float64, device=device,
+                        layout=layout, memory_format=memory_format),
+        from_lns=False, f=f, b=b
+    )
+
+def rand(
+        *size,
+        generator=None,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        pin_memory=False,
+        f=None,
+        b=None
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with random numbers from a uniform
+    distribution on the interval [0, 1], with the specified shape and
+    properties. See `torch.rand` for more details on the parameters.
+    """
+    result = lnstensor(
+        torch.rand(size, generator=generator, dtype=torch.float64, layout=layout,
+                   device=device, pin_memory=pin_memory),
+        from_lns=False, f=f, b=b
+    )
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def rand_like(
+        input,
+        *,
+        layout=None,
+        device=None,
+        memory_format=torch.preserve_format,
+        f=None,
+        b=None,
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with random numbers from a uniform
+    distribution on the interval [0, 1], with the same shape and
+    properties as the input tensor. See `torch.rand_like` for more
+    details on the parameters.
+    """
+    if isinstance(input, LNSTensor):
+        input = input._lns
+        if f is None and b is None:
+            b = input.base
+
+    return lnstensor(
+        torch.rand_like(input, dtype=torch.float64, device=device,
+                        layout=layout, memory_format=memory_format),
+        from_lns=False, f=f, b=b
+    )
+
+def randn(
+        *size,
+        generator=None,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        pin_memory=False,
+        f=None,
+        b=None
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with random numbers from a normal
+    distribution with mean 0 and variance 1, with the specified shape
+    and properties. See `torch.rand` for more details on the parameters.
+    """
+    result = lnstensor(
+        torch.randn(size, generator=generator, dtype=torch.float64, layout=layout,
+                    device=device, pin_memory=pin_memory),
+        from_lns=False, f=f, b=b
+    )
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+def randn_like(
+        input,
+        *,
+        layout=None,
+        device=None,
+        memory_format=torch.preserve_format,
+        f=None,
+        b=None,
+        ) -> LNSTensor:
+    """
+    Returns an LNSTensor filled with random numbers from a normal
+    distribution with mean 0 and variance 1, with the same shape and
+    properties as the input tensor. See `torch.rand_like` for more
+    details on the parameters.
+    """
+    if isinstance(input, LNSTensor):
+        input = input._lns
+        if f is None and b is None:
+            b = input.base
+
+    return lnstensor(
+        torch.randn_like(input, dtype=torch.float64, device=device,
+                         layout=layout, memory_format=memory_format),
+        from_lns=False, f=f, b=b
+    )

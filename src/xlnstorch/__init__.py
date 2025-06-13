@@ -19,6 +19,16 @@ from .dispatch_table import (
 from .tensor import (
     LNSTensor,
     lnstensor,
+    zeros,
+    zeros_like,
+    ones,
+    ones_like,
+    full,
+    full_like,
+    rand,
+    rand_like,
+    randn,
+    randn_like,
 )
 from .base import (
     align_lnstensor_bases,
@@ -28,14 +38,27 @@ from . import operators
 
 __all__ = [
     "LNS_ZERO",
+
     "LNSTensor",
     "lnstensor",
+    "zeros",
+    "zeros_like",
+    "ones",
+    "ones_like",
+    "full",
+    "full_like",
+    "rand",
+    "rand_like",
+    "randn",
+    "randn_like",
+
     "implements",
     "get_implementation",
     "set_default_implementation",
     "get_default_implementation_key",
     "override_implementation",
     "apply_lns_op",
+
     "align_lnstensor_bases",
     "format_lnstensor_operands",
 ]
