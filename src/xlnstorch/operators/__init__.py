@@ -12,6 +12,7 @@ from .internal_lns_ops import (
     lns_sign,
     lns_positive,
     lns_sum,
+    lns_matmul,
 
     lns_equal,
     lns_eq,
@@ -54,6 +55,7 @@ __all__ = [
     "lns_sign",
     "lns_positive",
     "lns_sum",
+    "lns_matmul",
 
     "lns_equal",
     "lns_eq",

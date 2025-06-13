@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union
+from typing import Any, Union, List
 
 import math
 import numpy as np
@@ -276,6 +276,53 @@ class LNSTensor:
         """
         cloned_lns = self._lns.clone(memory_format=memory_format)
         return lnstensor(cloned_lns, from_lns=True, b=self.base)
+
+    def squeeze(self, dim: Union[int, List[int]] | None = None) -> LNSTensor:
+        """
+        Returns a new LNSTensor with all specified dimensions of size
+        1 removed. If no dimensions are specified, all dimensions of
+        size 1 are removed.
+
+        Parameters
+        ----------
+        dim : int, list of int, optional
+            The dimension(s) to remove. If ``None``, all dimensions of size 1
+            are removed. Defaults to ``None``.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor with the specified dimensions removed.
+        """
+        return lnstensor(self._lns.squeeze(dim), from_lns=True, b=self.base)
+
+    def unsqueeze(self, dim: int) -> LNSTensor:
+        """
+        Returns a new LNSTensor with a dimension of size one inserted at the specified position.
+
+        Parameters
+        ----------
+        dim : int
+            The dimension index at which to insert the new dimension.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor with the specified dimension added.
+        """
+        return lnstensor(self._lns.unsqueeze(dim), from_lns=True, b=self.base)
+
+    def detach(self) -> LNSTensor:
+        """
+        Returns a new LNSTensor that is detached from the current computation graph.
+        The returned tensor will **not** require gradients.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor that is detached from the current computation graph.
+        """
+        return lnstensor(self._lns.detach(), from_lns=True, b=self.base)
 
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"

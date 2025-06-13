@@ -71,6 +71,7 @@ Arithmetic Operations
     operators.lns_sign
     operators.lns_positive
     operators.lns_sum
+    operators.lns_matmul
 
 Comparison Operations
 ~~~~~~~~~~~~~~~~~~~~~

@@ -8,6 +8,7 @@ from . import (
     lns_square,
     lns_reciprocal,
     lns_pow,
+    lns_matmul,
 )
 
 # SBDB_FUNCS is a dictionary that contains different implementations
@@ -635,3 +636,52 @@ def sum(x, dim=None, keepdim=False, *, out=None):
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMatmulFunction(torch.autograd.Function):
+    """
+    Matrix multiplication uses the lns addition and
+    multiplication functions to compute the result.
+
+    Gradients are computed as follows:
+    d/dA(A @ B) = B^T
+    d/dB(A @ B) = A^T
+    """
+
+    @staticmethod
+    def forward(A, B, base):
+        M, K = A.shape[-2:]
+        N = B.shape[-1]
+
+        result = torch.full((*A.shape[:-2], M, N), fill_value=LNS_ZERO,
+                            dtype=torch.float64, device=A.device)
+
+        for k in range(K):
+            term = lns_mul(A[..., :, k].unsqueeze(-1), B[..., k, :].unsqueeze(-2))
+            result = lns_add(result, term, base)
+
+        return result
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        A, B, base = inputs
+        ctx.save_for_backward(A, B, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        A, B, base = ctx.saved_tensors
+
+        grad_A = lns_matmul(grad_output, B.transpose(-1, -2), base)
+        grad_B = lns_matmul(A.transpose(-1, -2), grad_output, base)
+
+        return grad_A, grad_B, None
+
+@implements(torch.matmul, LNSMatmulFunction.forward, "default", default=True)
+def matmul(A, B, *, out=None):
+
+    A, B = format_lnstensor_operands(A, B)
+    result = LNSMatmulFunction.apply(A._lns, B._lns, A.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=A.base)

@@ -192,3 +192,140 @@ class TestLNSPower:
         result = torch.pow(lns1, exponents)
         expected = lns1.value ** exponents
         verify_lns_result(result, expected, "Power operation with tensor exponent failed")
+
+class TestLNSSum:
+    """Tests for LNS sum operation."""
+
+    def test_basic_sum(self, sample_tensors):
+        """Test basic sum over all elements."""
+        lns1, _ = sample_tensors
+        result = torch.sum(lns1)
+        expected = torch.sum(lns1.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Basic sum failed"
+
+    def test_dim_sum(self):
+        """Test sum along specific dimensions."""
+        lns = xltorch.lnstensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], f=23)
+
+        # Sum along dimension 0
+        result = torch.sum(lns, dim=0)
+        expected = torch.sum(lns.value, dim=0)
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum along dimension 0 failed"
+        assert result.shape == expected.shape, "Sum shape mismatch"
+
+        # Sum along dimension 1
+        result = torch.sum(lns, dim=1)
+        expected = torch.sum(lns.value, dim=1)
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum along dimension 1 failed"
+        assert result.shape == expected.shape, "Sum shape mismatch"
+
+    def test_keepdim_sum(self):
+        """Test sum with keepdim=True."""
+        lns = xltorch.lnstensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], f=23)
+
+        # Sum along dimension 0 with keepdim=True
+        result = torch.sum(lns, dim=0, keepdim=True)
+        expected = torch.sum(lns.value, dim=0, keepdim=True)
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum with keepdim failed"
+        assert result.shape == expected.shape, "Sum with keepdim shape mismatch"
+
+    def test_multi_dim_sum(self):
+        """Test sum over multi-dimensional tensors."""
+        lns = xltorch.lnstensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]], f=23)
+
+        # Sum along multiple dimensions
+        result = torch.sum(lns, dim=(0, 2))
+        expected = torch.sum(lns.value, dim=(0, 2))
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum along multiple dimensions failed"
+        assert result.shape == expected.shape, "Sum along multiple dimensions shape mismatch"
+
+        # Sum along negative dimension
+        result = torch.sum(lns, dim=-1)
+        expected = torch.sum(lns.value, dim=-1)
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum along negative dimension failed"
+        assert result.shape == expected.shape, "Sum along negative dimension shape mismatch"
+
+    def test_edge_cases_sum(self, edge_case_tensors):
+        """Test sum with edge case values."""
+        lns, _ = edge_case_tensors
+        result = torch.sum(lns)
+        expected = torch.sum(lns.value)
+        assert isinstance(result, xltorch.LNSTensor), "Sum result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Sum with edge cases failed"
+
+class TestLNSMatmul:
+    """Tests for LNS matrix multiplication operation."""
+
+    def test_matrix_multiplication(self):
+        """Test basic matrix multiplication."""
+        A = xltorch.lnstensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], f=23)
+        B = xltorch.lnstensor([[7.0, 8.0], [9.0, 10.0], [11.0, 12.0]], f=23)
+
+        result = torch.matmul(A, B)
+        expected = torch.matmul(A.value, B.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Matrix multiplication failed"
+        assert result.shape == (2, 2), "Matrix multiplication shape mismatch"
+
+    def test_batched_matrix_multiplication(self):
+        """Test batched matrix multiplication."""
+        batch_A = xltorch.lnstensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]], f=23)
+        batch_B = xltorch.lnstensor([[[9.0, 10.0], [11.0, 12.0]], [[13.0, 14.0], [15.0, 16.0]]], f=23)
+
+        result = torch.matmul(batch_A, batch_B)
+        expected = torch.matmul(batch_A.value, batch_B.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Batched matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Batched matrix multiplication failed"
+        assert result.shape == (2, 2, 2), "Batched matrix multiplication shape mismatch"
+
+    def test_broadcast_matrix_multiplication(self):
+        """Test broadcast matrix multiplication."""
+        A = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
+        batch_B = xltorch.lnstensor([[[5.0, 6.0], [7.0, 8.0]], [[9.0, 10.0], [11.0, 12.0]]], f=23)
+
+        result = torch.matmul(A, batch_B)
+        expected = torch.matmul(A.value, batch_B.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Broadcast matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Broadcast matrix multiplication failed"
+        assert result.shape == (2, 2, 2), "Broadcast matrix multiplication shape mismatch"
+
+    def test_different_base_parameters(self):
+        """Test matrix multiplication with different base parameters."""
+        A = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
+        B = xltorch.lnstensor([[5.0, 6.0], [7.0, 8.0]], f=28)
+
+        result = torch.matmul(A, B)
+        expected = torch.matmul(A.value, B.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected, rtol=1e-5), "Matrix multiplication with different bases failed"
+        assert result.base == A.base, "Result base should match first tensor"
+
+    def test_mixed_tensor_types(self):
+        """Test matrix multiplication with one regular tensor."""
+        A = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
+        B = torch.tensor([[5.0, 6.0], [7.0, 8.0]], dtype=torch.float64)
+
+        # LNS @ regular
+        result = torch.matmul(A, B)
+        expected = torch.matmul(A.value, B)
+
+        assert isinstance(result, xltorch.LNSTensor), "Mixed matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "LNS @ regular matrix multiplication failed"
+
+        # regular @ LNS
+        result = torch.matmul(B, A)
+        expected = torch.matmul(B, A.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Mixed matmul result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "regular @ LNS matrix multiplication failed"

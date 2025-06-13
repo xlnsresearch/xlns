@@ -50,6 +50,7 @@ lns_reciprocal = _create_lns_op_func('reciprocal', torch.reciprocal)
 lns_sign = _create_lns_op_func('sign', torch.sign)
 lns_positive = _create_lns_op_func('positive', torch.positive)
 lns_sum = _create_lns_op_func('sum', torch.sum)
+lns_matmul = _create_lns_op_func('matmul', torch.matmul)
 
 lns_equal = _create_lns_op_func('equal', torch.equal)
 lns_eq = _create_lns_op_func('eq', torch.eq)

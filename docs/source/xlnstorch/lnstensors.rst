@@ -41,6 +41,10 @@ LNSTensor class reference
     LNSTensor.backward
     LNSTensor.broadcast_to
     LNSTensor.dim
+    LNSTensor.clone
+    LNSTensor.squeeze
+    LNSTensor.unsqueeze
+    LNSTensor.detach
 
 .. autosummary::
     :toctree: generated
