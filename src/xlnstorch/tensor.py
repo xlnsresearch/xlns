@@ -87,8 +87,7 @@ class LNSTensor:
                 sign_bit = (data < 0).to(torch.int64)
                 packed_int = (exponent << 1) | sign_bit
                 packed = packed_int.to(torch.float64)
-
-            packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
+                packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
 
         self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
@@ -377,7 +376,7 @@ class LNSTensor:
     def __truediv__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
-        return torch.truediv(self, other)
+        return torch.div(self, other)
 
     def __pow__(self, other):
         return torch.pow(self, other) # not implemented LNSTensor powers for now
@@ -411,6 +410,7 @@ class LNSTensor:
     def __le__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
+        return torch.le(self, other)
 
     def __lt__(self, other):
         if isinstance(other, _xlns_types):
@@ -624,7 +624,7 @@ def lnstensor(
         from_lns = True
         requires_grad = data.lns.requires_grad
 
-        if not (torch.eq(data.base, base_tensor) or torch.eq(input_data, LNS_ZERO)):
+        if not torch.eq(data.base, base_tensor):
             with torch.no_grad():
                 packed_int = input_data.to(torch.int64)
                 sign_bit = packed_int & 1
@@ -633,6 +633,7 @@ def lnstensor(
                 exponent_new = exponent * torch.log(data.base) / torch.log(base_tensor)
                 new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
                 input_data = new_packed_int.to(torch.float64)
+                input_data = torch.where(torch.eq(data, LNS_ZERO), LNS_ZERO, input_data)
 
     # torch.Tensor
     elif isinstance(data, torch.Tensor):
@@ -728,9 +729,9 @@ def zeros_like(
     details on the parameters.
     """
     if isinstance(input, LNSTensor):
-        input = input._lns
         if f is None and b is None:
             b = input.base
+        input = input._lns
 
     return lnstensor(
         torch.zeros_like(input, dtype=torch.float64, device=device,
@@ -777,9 +778,9 @@ def ones_like(
     details on the parameters.
     """
     if isinstance(input, LNSTensor):
-        input = input._lns
         if f is None and b is None:
             b = input.base
+        input = input._lns
 
     return lnstensor(
         torch.ones_like(input, dtype=torch.float64, device=device,
@@ -829,9 +830,9 @@ def full_like(
     details on the parameters.
     """
     if isinstance(input, LNSTensor):
-        input = input._lns
         if f is None and b is None:
             b = input.base
+        input = input._lns
 
     return lnstensor(
         torch.full_like(input, fill_value, dtype=torch.float64, device=device,
@@ -883,9 +884,9 @@ def rand_like(
     details on the parameters.
     """
     if isinstance(input, LNSTensor):
-        input = input._lns
         if f is None and b is None:
             b = input.base
+        input = input._lns
 
     return lnstensor(
         torch.rand_like(input, dtype=torch.float64, device=device,
@@ -937,9 +938,9 @@ def randn_like(
     details on the parameters.
     """
     if isinstance(input, LNSTensor):
-        input = input._lns
         if f is None and b is None:
             b = input.base
+        input = input._lns
 
     return lnstensor(
         torch.randn_like(input, dtype=torch.float64, device=device,
