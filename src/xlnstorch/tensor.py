@@ -500,6 +500,9 @@ class LNSTensor:
     def sum(self, dim=None, keepdim=False):
         return torch.sum(self, dim=dim, keepdim=keepdim)
 
+    def transpose(self, dim0, dim1):
+        return torch.transpose(self, dim0, dim1)
+
     def equal(self, other):
         return torch.equal(self, other)
 

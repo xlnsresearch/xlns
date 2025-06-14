@@ -685,3 +685,33 @@ def matmul(A, B, *, out=None):
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=A.base)
+
+class LNSTransposeFunction(torch.autograd.Function):
+    """
+    Transpose operation simply rearranges the dimensions
+    of the input tensor. It doesn't change the underlying
+    representations, so the forward pass isn't special.
+
+    Gradients are computed as follows:
+    d/dx(A.T) = 1
+    """
+
+    @staticmethod
+    def forward(A, dim0, dim1):
+        return torch.transpose(A, dim0, dim1)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        A, _, _ = inputs
+        ctx.save_for_backward(A)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        A, = ctx.saved_tensors
+        return torch.full_like(A, LNSTensor.get_internal_tensor(1.0, ctx.base).item()), None, None
+
+@implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
+def transpose(A, dim0, dim1):
+
+    result = LNSTransposeFunction.apply(A._lns, dim0, dim1)
+    return lnstensor(result, from_lns=True, b=A.base)
