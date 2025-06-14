@@ -37,6 +37,7 @@ LNSTensor class reference
     LNSTensor.grad
     LNSTensor.shape
     LNSTensor.ndim
+    LNSTensor.requires_grad
 
     LNSTensor.backward
     LNSTensor.broadcast_to
@@ -45,6 +46,7 @@ LNSTensor class reference
     LNSTensor.squeeze
     LNSTensor.unsqueeze
     LNSTensor.detach
+    LNSTensor.requires_grad_
 
 Creation Operations
 ~~~~~~~~~~~~~~~~~~~

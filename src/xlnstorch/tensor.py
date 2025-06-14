@@ -44,6 +44,8 @@ class LNSTensor:
     from_lns : bool, optional
         If ``True`` interpret *data* as already packed.
         Defaults to ``False``.
+    requires_grad : bool, optional
+        If ``True``, the LNSTensor will track gradients.
 
     Notes
     -----
@@ -55,7 +57,8 @@ class LNSTensor:
             self,
             data: Tensor,
             base: Tensor,
-            from_lns: bool = False
+            from_lns: bool = False,
+            requires_grad: bool = False,
             ):
 
         if not torch.is_tensor(data) or data.dtype != torch.float64:
@@ -74,7 +77,7 @@ class LNSTensor:
         self.base: Tensor = base.clone()
 
         if from_lns:
-            packed = data.clone()
+            packed = data.clone().to(torch.float64)
         else:
             with torch.no_grad():
                 log_base = torch.log(self.base)
@@ -88,7 +91,7 @@ class LNSTensor:
             packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
 
         self._lns: Tensor = packed
-        self._lns.requires_grad_(True)
+        self._lns.requires_grad_(requires_grad)
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
@@ -212,7 +215,7 @@ class LNSTensor:
     def grad(self) -> LNSTensor:
         """
         The gradient of the LNSTensor, if it has been computed.
-        
+
         Returns
         -------
         LNSTensor or None
@@ -220,7 +223,7 @@ class LNSTensor:
         """
         if self._lns.grad is None:
             return None
-        
+
         return lnstensor(self._lns.grad, from_lns=True, b=self.base)
 
     @property
@@ -241,6 +244,18 @@ class LNSTensor:
         Alias for :meth:`dim`.
         """
         return self.dim()
+
+    @property
+    def requires_grad(self) -> bool:
+        """
+        Returns whether the LNSTensor requires gradients.
+
+        Returns
+        -------
+        bool
+            True if the LNSTensor requires gradients, False otherwise.
+        """
+        return self._lns.requires_grad
 
     def dim(self) -> int:
         """
@@ -323,6 +338,23 @@ class LNSTensor:
             A new LNSTensor that is detached from the current computation graph.
         """
         return lnstensor(self._lns.detach(), from_lns=True, b=self.base)
+
+    def requires_grad_(self, requires_grad: bool = True) -> LNSTensor:
+        """
+        Sets the requires_grad flag for the LNSTensor in-place.
+
+        Parameters
+        ----------
+        requires_grad : bool, optional
+            If ``True``, the LNSTensor will track gradients. Defaults to ``True``.
+
+        Returns
+        -------
+        LNSTensor
+            The LNSTensor with the updated requires_grad flag.
+        """
+        self._lns.requires_grad_(requires_grad)
+        return self
 
     def __repr__(self) -> str:
         return f"LNSTensor(value={self.value}, base={self.base.item()})"
@@ -519,6 +551,7 @@ class LNSTensor:
 def lnstensor(
         data: Any,
         from_lns: bool = False,
+        requires_grad: bool = False,
         f: int | None = None,
         b: Union[float, int, Tensor, None] = None
         ) -> LNSTensor:
@@ -543,6 +576,10 @@ def lnstensor(
         - An existing :class:`LNSTensor` (which will be copied or converted base).
     from_lns : bool, optional
         If ``True``, treat *data* as already packed. Defaults to ``False``.
+    requires_grad : bool, optional
+        If ``True``, the LNSTensor will track gradients. Defaults to ``False``.
+        If a pre-packed LNSTensor or a torch.Tensor is provided, this parameter
+        is ignored.
     f : int, optional
         The number of fractional exponent bits. mutually exclusive with ``b``.
     b : float, int, torch.Tensor, optional
@@ -582,6 +619,7 @@ def lnstensor(
     if isinstance(data, LNSTensor):
         input_data = data.lns
         from_lns = True
+        requires_grad = data.lns.requires_grad
 
         if not (torch.eq(data.base, base_tensor) or torch.eq(input_data, LNS_ZERO)):
             with torch.no_grad():
@@ -596,6 +634,7 @@ def lnstensor(
     # torch.Tensor
     elif isinstance(data, torch.Tensor):
         input_data = data.to(torch.float64)
+        requires_grad = input_data.requires_grad
 
     # numpy.ndarray
     elif isinstance(data, np.ndarray):
@@ -645,13 +684,14 @@ def lnstensor(
         except Exception as e:
             raise TypeError(f"Unsupported data type for LNSTensor: {type(data).__name__}") from e
 
-    return LNSTensor(input_data, base_tensor, from_lns=from_lns)
+    return LNSTensor(input_data, base_tensor, from_lns=from_lns, requires_grad=requires_grad)
 
 def zeros(
         *size,
         out=None,
         layout=torch.strided,
         device=None,
+        requires_grad=False,
         f=None,
         b=None
         ) -> LNSTensor:
@@ -661,7 +701,7 @@ def zeros(
     """
     result = lnstensor(
         torch.zeros(*size, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
     if out is not None:
@@ -674,6 +714,7 @@ def zeros_like(
         *,
         layout=None,
         device=None,
+        requires_grad=False,
         memory_format=torch.preserve_format,
         f=None,
         b=None,
@@ -691,7 +732,7 @@ def zeros_like(
     return lnstensor(
         torch.zeros_like(input, dtype=torch.float64, device=device,
                          layout=layout, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
 def ones(
@@ -699,6 +740,7 @@ def ones(
         out=None,
         layout=torch.strided,
         device=None,
+        requires_grad=False,
         f=None,
         b=None
         ) -> LNSTensor:
@@ -708,7 +750,7 @@ def ones(
     """
     result = lnstensor(
         torch.ones(*size, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
     if out is not None:
@@ -721,6 +763,7 @@ def ones_like(
         *,
         layout=None,
         device=None,
+        requires_grad=False,
         memory_format=torch.preserve_format,
         f=None,
         b=None,
@@ -738,7 +781,7 @@ def ones_like(
     return lnstensor(
         torch.ones_like(input, dtype=torch.float64, device=device,
                         layout=layout, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
 def full(
@@ -748,6 +791,7 @@ def full(
         out=None,
         layout=torch.strided,
         device=None,
+        requires_grad=False,
         f=None,
         b=None
         ) -> LNSTensor:
@@ -757,7 +801,7 @@ def full(
     """
     result = lnstensor(
         torch.full(size, fill_value, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
     if out is not None:
@@ -771,6 +815,7 @@ def full_like(
         *,
         layout=None,
         device=None,
+        requires_grad=False,
         memory_format=torch.preserve_format,
         f=None,
         b=None,
@@ -788,7 +833,7 @@ def full_like(
     return lnstensor(
         torch.full_like(input, fill_value, dtype=torch.float64, device=device,
                         layout=layout, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
 def rand(
@@ -797,6 +842,7 @@ def rand(
         out=None,
         layout=torch.strided,
         device=None,
+        requires_grad=False,
         pin_memory=False,
         f=None,
         b=None
@@ -809,7 +855,7 @@ def rand(
     result = lnstensor(
         torch.rand(size, generator=generator, dtype=torch.float64, layout=layout,
                    device=device, pin_memory=pin_memory),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
     if out is not None:
@@ -822,6 +868,7 @@ def rand_like(
         *,
         layout=None,
         device=None,
+        requires_grad=False,
         memory_format=torch.preserve_format,
         f=None,
         b=None,
@@ -840,7 +887,7 @@ def rand_like(
     return lnstensor(
         torch.rand_like(input, dtype=torch.float64, device=device,
                         layout=layout, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
 def randn(
@@ -849,6 +896,7 @@ def randn(
         out=None,
         layout=torch.strided,
         device=None,
+        requires_grad=False,
         pin_memory=False,
         f=None,
         b=None
@@ -861,7 +909,7 @@ def randn(
     result = lnstensor(
         torch.randn(size, generator=generator, dtype=torch.float64, layout=layout,
                     device=device, pin_memory=pin_memory),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
 
     if out is not None:
@@ -874,6 +922,7 @@ def randn_like(
         *,
         layout=None,
         device=None,
+        requires_grad=False,
         memory_format=torch.preserve_format,
         f=None,
         b=None,
@@ -892,5 +941,5 @@ def randn_like(
     return lnstensor(
         torch.randn_like(input, dtype=torch.float64, device=device,
                          layout=layout, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        from_lns=False, requires_grad=requires_grad, f=f, b=b
     )
