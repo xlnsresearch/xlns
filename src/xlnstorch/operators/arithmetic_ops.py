@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
 from . import (
     lns_add,
     lns_neg,
@@ -343,7 +343,9 @@ def sqrt(x, *, out=None):
 
 class LNSPowFunction(torch.autograd.Function):
     """
-    Exponentiation becomes multiplication in the logarithmic domain.
+    Raising to a power becomes multiplication in the logarithmic domain.
+    This function relies on the fact that the exponent is a floating
+    point or integer which allows us to compute the power directly.
 
     Gradients are computed as follows:
     d/dx(x ^ n) = n * x ^ (n - 1)
@@ -357,10 +359,8 @@ class LNSPowFunction(torch.autograd.Function):
             result = ((x_packed & (-2)) * n).to(torch.int64) & (-2)
 
         else:
-            if n & 1 == 0:
-                result = ((x_packed & (-2)) * n) & (-2)
-            else:
-                result = (((x_packed & (-2)) * n) & (-2)) | (x_packed & 1)
+            abs_result = ((x_packed & (-2)) * n) & (-2)
+            result = torch.where(n & 1 == 0, abs_result, abs_result | (x_packed & 1))
 
         return result.to(torch.float64)
 
@@ -381,10 +381,17 @@ class LNSPowFunction(torch.autograd.Function):
 
 @implements(torch.pow, LNSPowFunction.forward, key='default', default=True)
 def pow(x, n, *, out=None):
-    # todo: implement support for LNSTensor exponentiation
-    if not isinstance(n, torch.Tensor):
-        n = torch.tensor(n, dtype=torch.float64)
-    result = LNSPowFunction.apply(x._lns, n, x.base)
+
+    if isinstance(x, LNSTensor) and not isinstance(n, LNSTensor):
+        if not isinstance(n, torch.Tensor):
+            n = torch.tensor(n, dtype=torch.int64 if n.is_integer() else torch.float64)
+        x._lns, n = torch.broadcast_tensors(x._lns, n)
+        result = LNSPowFunction.apply(x._lns, n, x.base)
+
+    else:
+        x, n = format_lnstensor_operands(x, n)
+        x._lns, n._lns = torch.broadcast_tensors(x._lns, n._lns)
+        result = LNSPowFunction.apply(x._lns, n.value, x.base)
 
     if out is not None:
         out._lns = result
@@ -468,6 +475,77 @@ class LNSReciprocalFunction(torch.autograd.Function):
 def reciprocal(x, *, out=None):
 
     result = LNSReciprocalFunction.apply(x._lns, x.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSExpFunction(torch.autograd.Function):
+    """
+    Exponentiation in the logarithmic domain requires us to
+    convert the input to its floating point representation
+    and then compute raising to the power of e.
+
+    Gradients are computed as follows:
+    d/dx(e ^ x) = e ^ x
+    """
+
+    @staticmethod
+    def forward(x, base):
+        e = full_like(x, torch.exp(torch.tensor(1.0)), b=base)
+        return lns_pow(e._lns, lnstensor(x, from_lns=True, b=base).value, base)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        ctx.save_for_backward(output)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        exp_x, = ctx.saved_tensors
+        return lns_mul(grad_output, exp_x), None
+
+@implements(torch.exp, LNSExpFunction.forward, key='default', default=True)
+def exp(x, *, out=None):
+
+    result = LNSExpFunction.apply(x._lns, x.base)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSLogFunction(torch.autograd.Function):
+    """
+    Taking the logarithm in the logarithmic domain requires us to
+    convert the input to its floating point representation and then
+    compute the logarithm with respect to the base.
+
+    Gradients are computed as follows:
+    d/dx(log(x)) = 1 / x
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_log = torch.log(lnstensor(x, from_lns=True, b=base).value)
+        return lnstensor(x_log, b=base)._lns
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base = inputs
+        ctx.save_for_backward(x, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        grad_x = lns_div(grad_output, x, base)
+        return grad_x, None
+
+@implements(torch.log, LNSLogFunction.forward, key='default', default=True)
+def log(x, *, out=None):
+
+    result = LNSLogFunction.apply(x._lns, x.base)
 
     if out is not None:
         out._lns = result
