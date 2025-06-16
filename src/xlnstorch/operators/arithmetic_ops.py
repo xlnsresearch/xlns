@@ -384,7 +384,8 @@ def pow(x, n, *, out=None):
 
     if isinstance(x, LNSTensor) and not isinstance(n, LNSTensor):
         if not isinstance(n, torch.Tensor):
-            n = torch.tensor(n, dtype=torch.int64 if n.is_integer() else torch.float64)
+            dtype = torch.int64 if (isinstance(n, int) or isinstance(n, float) and n.is_integer()) else torch.float64
+            n = torch.tensor(n, dtype=dtype)
         x._lns, n = torch.broadcast_tensors(x._lns, n)
         result = LNSPowFunction.apply(x._lns, n, x.base)
 
