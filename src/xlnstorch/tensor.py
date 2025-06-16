@@ -77,7 +77,7 @@ class LNSTensor:
         self.base: Tensor = base.clone()
 
         if from_lns:
-            packed = data.clone().to(torch.float64)
+            packed = data.to(torch.float64)
         else:
             with torch.no_grad():
                 log_base = torch.log(self.base)

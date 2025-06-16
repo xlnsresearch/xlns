@@ -32,12 +32,15 @@ from .internal_lns_ops import (
     lns_kthvalue,
     lns_maximum,
     lns_minimum,
+
+    lns_mse_loss,
 )
 from .arithmetic_ops import (
     implement_sbdb,
     sbdb,
 )
 from . import comparison_ops # needed to register comparison ops
+from . import loss_ops # needed to register loss ops
 
 __all__ = [
     "implement_sbdb",
@@ -76,4 +79,6 @@ __all__ = [
     "lns_kthvalue",
     "lns_maximum",
     "lns_minimum",
+
+    "lns_mse_loss",
 ]

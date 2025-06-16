@@ -98,3 +98,19 @@ Comparison Operations
     operators.lns_kthvalue
     operators.lns_maximum
     operators.lns_minimum
+
+Loss Operations
+~~~~~~~~~~~~~~~~~~~~~
+
+Note that in practice, you should use the standard PyTorch
+loss classes, such as ``torch.nn.MSELoss``, which are already
+implemented to work with ``LNSTensor`` objects. However, if you
+want to implement your own custom loss functions, or want more
+control over the loss computation, you can use the following
+functions.
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_mse_loss

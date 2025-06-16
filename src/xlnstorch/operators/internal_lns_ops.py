@@ -70,3 +70,5 @@ lns_argsort = _create_lns_op_func('argsort', torch.argsort)
 lns_kthvalue = _create_lns_op_func('kthvalue', torch.kthvalue)
 lns_maximum = _create_lns_op_func('maximum', torch.maximum)
 lns_minimum = _create_lns_op_func('minimum', torch.minimum)
+
+lns_mse_loss = _create_lns_op_func('mse_loss', torch.nn.functional.mse_loss)
