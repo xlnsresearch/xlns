@@ -1,7 +1,7 @@
 from typing import Callable, Any
 
 import torch
-from .. import LNSTensor, apply_lns_op
+from .. import apply_lns_op
 
 def _create_lns_op_func(
     op_name: str,
@@ -27,11 +27,15 @@ def _create_lns_op_func(
     Callable
         The created LNS operation function
     """
-    def func(*args: Any, **kwargs: Any) -> LNSTensor:
+    def func(*args: Any, **kwargs: Any):
         return apply_lns_op(torch_op, *args, **kwargs)
 
     func.__name__ = f"lns_{op_name}"
-    func.__doc__ = f"See docs for `{torch_op.__module__}.{torch_op.__name__}` for more details."
+    func.__doc__ = (
+        f"See docs for :py:func:`{torch_op.__module__}.{torch_op.__name__}` for "
+        f"parameter/return details. Typically, torch.Tensor arguments are the "
+        f"equivalent internal representations of LNStensors."
+    )
     if docstring:
         func.__doc__ = f"{docstring}\n\n{func.__doc__}"
 
