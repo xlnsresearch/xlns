@@ -8,6 +8,8 @@ from .internal_lns_ops import (
     lns_sqrt,
     lns_square,
     lns_pow,
+    lns_exp,
+    lns_log,
     lns_reciprocal,
     lns_sign,
     lns_positive,
@@ -34,6 +36,8 @@ from .internal_lns_ops import (
     lns_minimum,
 
     lns_mse_loss,
+    lns_l1_loss,
+    lns_binary_cross_entropy,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -55,6 +59,8 @@ __all__ = [
     "lns_sqrt",
     "lns_square",
     "lns_pow",
+    "lns_exp",
+    "lns_log",
     "lns_reciprocal",
     "lns_sign",
     "lns_positive",
@@ -81,4 +87,6 @@ __all__ = [
     "lns_minimum",
 
     "lns_mse_loss",
+    "lns_l1_loss",
+    "lns_binary_cross_entropy",
 ]

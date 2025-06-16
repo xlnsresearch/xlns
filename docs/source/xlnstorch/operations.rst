@@ -67,6 +67,8 @@ Arithmetic Operations
     operators.lns_sqrt
     operators.lns_square
     operators.lns_pow
+    operators.lns_exp
+    operators.lns_log
     operators.lns_reciprocal
     operators.lns_sign
     operators.lns_positive
@@ -114,3 +116,5 @@ functions.
     :nosignatures:
 
     operators.lns_mse_loss
+    operators.lns_l1_loss
+    operators.lns_binary_cross_entropy
