@@ -80,6 +80,7 @@ lns_minimum = _create_lns_op_func('minimum', torch.minimum)
 lns_mse_loss = _create_lns_op_func('mse_loss', torch.nn.functional.mse_loss)
 lns_l1_loss = _create_lns_op_func('l1_loss', torch.nn.functional.l1_loss)
 lns_binary_cross_entropy = _create_lns_op_func('binary_cross_entropy', torch.nn.functional.binary_cross_entropy)
+lns_nll_loss = _create_lns_op_func('nll_loss', torch.nn.functional.nll_loss)
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu)
 lns_relu_ = _create_lns_op_func('relu_', torch.nn.functional.relu_)

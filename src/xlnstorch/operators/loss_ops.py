@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros_like
 from . import(
     lns_sub,
     lns_mul,
@@ -253,5 +253,118 @@ def binary_cross_entropy(x, y, weight=None, size_average=None, reduce=None, redu
         weight_lns = weight._lns
 
     result = LNSBCELossFunction.apply(x._lns, y._lns, x.base, weight_lns, size_average, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+# currently doesn't support ignore_index
+class LNSNLLLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, base, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
+        x_packed = x.to(torch.int64)
+
+        if x_packed.dim() == 1:
+            nll = x_packed[y]
+        else:
+            nll = x_packed.gather(1, y.view(-1, 1)).squeeze(1)
+
+        if weight is not None:
+            weight = weight.to(torch.int64)
+            sample_weights = weight[y]
+            nll = lns_mul(nll, sample_weights)
+
+        loss = lns_neg(nll)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+        
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+        
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+
+            if weight is not None:
+                weight_sum = lns_sum(sample_weights, base)
+                weighted_mean = lns_div(loss_sum, weight_sum, base)
+                return weighted_mean.to(torch.float64)
+
+            else:
+                batch_size = LNSTensor.get_internal_tensor(y.size(0), base)
+                mean = lns_div(loss_sum, batch_size, base)
+                return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base, weight, _, _, _, reduction = inputs
+        ctx.reduction = reduction
+        ctx.weighted = True if weight is not None else False
+        if ctx.weighted:
+            ctx.save_for_backward(x, y, base, weight)
+        else:
+            ctx.save_for_backward(x, y, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.weighted:
+            x, y, base, weight = ctx.saved_tensors
+
+            grad_x = zeros_like(x)._lns
+            if grad_x.dim() == 1:
+                grad_x[y] = lns_neg(weight[y])
+            
+            else:
+                batch_size = y.size(0)
+                indices = torch.arange(batch_size)
+                grad_x[indices, y] = lns_neg(weight[y])
+
+            if ctx.reduction == 'mean':
+                weight_sum = lns_sum(weight, base)
+                grad_x = lns_div(grad_x, weight_sum, base)
+
+        else:
+            x, y, base = ctx.saved_tensors
+
+            grad_x = zeros_like(x)._lns
+            if grad_x.dim() == 1:
+                grad_x[y] = LNSTensor.get_internal_tensor(-1.0, base)
+            
+            else:
+                batch_size = y.size(0)
+                indices = torch.arange(batch_size)
+                grad_x[indices, y] = LNSTensor.get_internal_tensor(-1.0, base)
+
+            if ctx.reduction == 'mean':
+                batch_size = LNSTensor.get_internal_tensor(y.size(0), base)
+                grad_x = lns_div(grad_x, batch_size, base)
+
+        if ctx.reduction == 'none':
+            if grad_x.dim() == 1:
+                grad_x = lns_mul(grad_x, grad_output)
+
+            else:
+                batch_size = y.size(0)
+                indices = torch.arange(batch_size)
+                grad_x[indices, y] = lns_mul(grad_x[indices, y], grad_output)
+
+        else:
+            grad_x = lns_mul(grad_x, grad_output)
+
+        return grad_x, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.nll_loss, LNSNLLLossFunction.forward, key="default", default=True)
+def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
+
+    if not torch.is_tensor(y) or torch.is_floating_point(y) or torch.is_complex(y):
+        raise TypeError("Expected target to be a tensor of type LongTensor, but got: {}".format(type(y)))
+
+    if weight is None:
+        weight_lns = None
+    else:
+        x, weight = format_lnstensor_operands(x, y, weight)
+        weight_lns = weight._lns
+
+    result = LNSNLLLossFunction.apply(x._lns, y, x.base, weight_lns, size_average, ignore_index, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)

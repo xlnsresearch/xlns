@@ -105,7 +105,7 @@ class LNSTensor:
         if kwargs is None:
             kwargs = {}
 
-        if not all(issubclass(t, LNSTensor) for t in types):
+        if not all(issubclass(t, LNSTensor) or issubclass(t, Tensor) for t in types):
             return NotImplemented
 
         impl_key = get_default_implementation_key(func)

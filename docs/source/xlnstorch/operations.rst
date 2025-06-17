@@ -118,6 +118,7 @@ functions.
     operators.lns_mse_loss
     operators.lns_l1_loss
     operators.lns_binary_cross_entropy
+    operators.lns_nll_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -136,3 +137,6 @@ already implemented to work with ``LNSTensor`` objects.
     operators.lns_leaky_relu_
     operators.lns_threshold
     operators.lns_threshold_
+    operators.lns_tanh
+    operators.lns_sigmoid
+    operators.lns_logsigmoid
