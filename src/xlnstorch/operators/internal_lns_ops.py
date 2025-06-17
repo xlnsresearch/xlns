@@ -87,3 +87,6 @@ lns_leaky_relu = _create_lns_op_func('leaky_relu', torch.nn.functional.leaky_rel
 lns_leaky_relu_ = _create_lns_op_func('leaky_relu_', torch.nn.functional.leaky_relu_)
 lns_threshold = _create_lns_op_func('threshold', torch.nn.functional.threshold)
 lns_threshold_ = _create_lns_op_func('threshold_', torch.nn.functional.threshold_)
+lns_tanh = _create_lns_op_func('tanh', torch.nn.functional.tanh)
+lns_sigmoid = _create_lns_op_func('sigmoid', torch.nn.functional.sigmoid)
+lns_logsigmoid = _create_lns_op_func('logsigmoid', torch.nn.functional.logsigmoid)

@@ -4,6 +4,9 @@ from . import (
     lns_mul,
     lns_add,
     lns_gt,
+    lns_square,
+    lns_sub,
+    lns_exp,
 )
 
 class LNSReLUFunction(torch.autograd.Function):
@@ -159,3 +162,118 @@ def threshold_(x, threshold, value):
 
     x._lns = result._lns
     return x
+
+class LNSTanhFunction(torch.autograd.Function):
+    """
+    For now, we will implement the tanh function by converting
+    the input back to its floating-point representation.
+
+    Gradients are computed as follows:
+    d/dx(tanh(x)) = 1 - tanh(x) ^ 2
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_fp = lnstensor(x, from_lns=True, b=base).value
+
+        result = torch.tanh(x_fp)
+        return lnstensor(result, b=base)._lns
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base = inputs
+        ctx.save_for_backward(output, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output, base = ctx.saved_tensors
+        output_packed = output.to(torch.int64)
+
+        grad_x = lns_square(output_packed, base)
+        grad_x = lns_sub(LNSTensor.get_internal_tensor(1.0, base), grad_x, base)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.tanh, LNSTanhFunction.forward, "default", default=True)
+@implements(torch.nn.functional.tanh, LNSTanhFunction.forward, "default", default=True)
+def tanh(x):
+    result = LNSTanhFunction.apply(x._lns, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSSigmoidFunction(torch.autograd.Function):
+    """
+    For now, we will implement the sigmoid function by
+    converting the input back to its floating-point
+    representation.
+
+    Gradients are computed as follows:
+    d/dx(sigmoid(x)) = sigmoid(x) * (1 - sigmoid(x))
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_fp = lnstensor(x, from_lns=True, b=base).value
+
+        result = torch.sigmoid(x_fp)
+        return lnstensor(result, b=base)._lns
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base = inputs
+        ctx.save_for_backward(output, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output, base = ctx.saved_tensors
+        output_packed = output.to(torch.int64)
+
+        grad_x = lns_sub(LNSTensor.get_internal_tensor(1.0, base), output_packed, base)
+        grad_x = lns_mul(output_packed, grad_x)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
+@implements(torch.nn.functional.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
+def sigmoid(x):
+    result = LNSSigmoidFunction.apply(x._lns, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSLogSigmoidFunction(torch.autograd.Function):
+    """
+    For now, we will implement the log sigmoid function by
+    converting the input back to its floating-point
+    representation.
+
+    Gradients are computed as follows:
+    d/dx(log_sigmoid(x)) =  e ^ (log_sigmoid(x) - x)
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_fp = lnstensor(x, from_lns=True, b=base).value
+
+        result = torch.nn.functional.logsigmoid(x_fp)
+        return lnstensor(result, b=base)._lns
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base = inputs
+        ctx.save_for_backward(x, output, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, output, base = ctx.saved_tensors
+        output_packed = output.to(torch.int64)
+
+        grad_x = lns_sub(output, x, base)
+        grad_x = lns_exp(grad_x, base)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.nn.functional.logsigmoid, LNSLogSigmoidFunction.forward, "default", default=True)
+def logsigmoid(x):
+    result = LNSLogSigmoidFunction.apply(x._lns, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)

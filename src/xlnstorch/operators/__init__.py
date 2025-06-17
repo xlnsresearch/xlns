@@ -45,6 +45,9 @@ from .internal_lns_ops import (
     lns_leaky_relu_,
     lns_threshold,
     lns_threshold_,
+    lns_tanh,
+    lns_sigmoid,
+    lns_logsigmoid,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -105,4 +108,7 @@ __all__ = [
     "lns_leaky_relu_",
     "lns_threshold",
     "lns_threshold_",
+    "lns_tanh",
+    "lns_sigmoid",
+    "lns_logsigmoid",
 ]
