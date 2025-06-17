@@ -102,7 +102,7 @@ Comparison Operations
     operators.lns_minimum
 
 Loss Operations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Note that in practice, you should use the standard PyTorch
 loss classes, such as ``torch.nn.MSELoss``, which are already
@@ -118,3 +118,21 @@ functions.
     operators.lns_mse_loss
     operators.lns_l1_loss
     operators.lns_binary_cross_entropy
+
+Activation Operations
+~~~~~~~~~~~~~~~~~~~~~
+
+Again, in practice, you should use the standard PyTorch
+activation classes, such as ``torch.nn.ReLU``, which are
+already implemented to work with ``LNSTensor`` objects.
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_relu
+    operators.lns_relu_
+    operators.lns_leaky_relu
+    operators.lns_leaky_relu_
+    operators.lns_threshold
+    operators.lns_threshold_

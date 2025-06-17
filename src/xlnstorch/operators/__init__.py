@@ -38,6 +38,13 @@ from .internal_lns_ops import (
     lns_mse_loss,
     lns_l1_loss,
     lns_binary_cross_entropy,
+
+    lns_relu,
+    lns_relu_,
+    lns_leaky_relu,
+    lns_leaky_relu_,
+    lns_threshold,
+    lns_threshold_,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -45,10 +52,12 @@ from .arithmetic_ops import (
 )
 from . import comparison_ops # needed to register comparison ops
 from . import loss_ops # needed to register loss ops
+from . import activation_ops # needed to register activation ops
 
 __all__ = [
     "implement_sbdb",
     "sbdb",
+
     #  internal LNS operation functions
     "lns_add",
     "lns_sub",
@@ -89,4 +98,11 @@ __all__ = [
     "lns_mse_loss",
     "lns_l1_loss",
     "lns_binary_cross_entropy",
+
+    "lns_relu",
+    "lns_relu_",
+    "lns_leaky_relu",
+    "lns_leaky_relu_",
+    "lns_threshold",
+    "lns_threshold_",
 ]
