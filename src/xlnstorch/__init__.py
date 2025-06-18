@@ -35,6 +35,7 @@ from .base import (
     format_lnstensor_operands,
 )
 from . import operators
+from . import layers
 
 __all__ = [
     "LNS_ZERO",

@@ -914,7 +914,7 @@ def linear(x, weight, bias=None):
     else:
         x, weight = format_lnstensor_operands(x, weight)
 
-    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias)
+    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias._lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -974,6 +974,6 @@ def bilinear(x, y, weight, bias=None):
     else:
         x, y, weight = format_lnstensor_operands(x, y, weight)
 
-    result = LNSBilinearFunction.apply(x._lns, weight._lns, y._lns, x.base, bias)
+    result = LNSBilinearFunction.apply(x._lns, weight._lns, y._lns, x.base, bias._lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
