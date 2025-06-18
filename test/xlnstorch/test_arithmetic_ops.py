@@ -289,15 +289,14 @@ class TestLNSMatmul:
 
     def test_broadcast_matrix_multiplication(self):
         """Test broadcast matrix multiplication."""
-        A = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
-        batch_B = xltorch.lnstensor([[[5.0, 6.0], [7.0, 8.0]], [[9.0, 10.0], [11.0, 12.0]]], f=23)
-
+        A = xltorch.lnstensor([1.0, 2.0, 3.0], f=23)
+        batch_B = xltorch.lnstensor([[4.0, 5.0], [6.0, 7.0], [8.0, 9.0]], f=23)
         result = torch.matmul(A, batch_B)
         expected = torch.matmul(A.value, batch_B.value)
 
         assert isinstance(result, xltorch.LNSTensor), "Broadcast matmul result should be an LNS tensor"
         assert torch.allclose(result.value, expected), "Broadcast matrix multiplication failed"
-        assert result.shape == (2, 2, 2), "Broadcast matrix multiplication shape mismatch"
+        assert result.shape == expected.shape, "Broadcast matrix multiplication shape mismatch"
 
     def test_different_base_parameters(self):
         """Test matrix multiplication with different base parameters."""

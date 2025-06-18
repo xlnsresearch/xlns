@@ -91,3 +91,5 @@ lns_threshold_ = _create_lns_op_func('threshold_', torch.nn.functional.threshold
 lns_tanh = _create_lns_op_func('tanh', torch.nn.functional.tanh)
 lns_sigmoid = _create_lns_op_func('sigmoid', torch.nn.functional.sigmoid)
 lns_logsigmoid = _create_lns_op_func('logsigmoid', torch.nn.functional.logsigmoid)
+lns_linear = _create_lns_op_func('linear', torch.nn.functional.linear)
+lns_bilinear = _create_lns_op_func('bilinear', torch.nn.functional.bilinear)

@@ -728,6 +728,25 @@ class LNSMatmulFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(A, B, base):
+        # Make operands at least 2D tensors, and remember for backward pass.
+        # 1. (..., M, K)  @  (..., K, N)  -> (..., M, N)          (regular case)
+        # 2. (..., M, K)  @  (..., K)     -> (..., M)             (rhs vector)
+        # 3. (..., K)     @  (..., K, N)  -> (..., N)             (lhs vector)
+        # 4. (..., K)     @  (..., K)     -> (...)                (dot product)
+        orig_A_vector = A.dim() == 1
+        orig_B_vector = B.dim() == 1
+
+        if orig_A_vector:
+            A = A.unsqueeze(0)  # (K,) → (1, K)
+        if orig_B_vector:
+            B = B.unsqueeze(-1) # (K,) → (K, 1)
+
+        if A.dim() == B.dim() + 1:
+            B = B.unsqueeze(-2) # (..., K) → (..., 1, K)
+        elif B.dim() == A.dim() + 1:
+            A = A.unsqueeze(-2) # (..., K) → (..., 1, K)
+
+        # Regular (batched) matrix multiply in log-space
         M, K = A.shape[-2:]
         N = B.shape[-1]
 
@@ -735,22 +754,72 @@ class LNSMatmulFunction(torch.autograd.Function):
                             dtype=torch.float64, device=A.device)
 
         for k in range(K):
-            term = lns_mul(A[..., :, k].unsqueeze(-1), B[..., k, :].unsqueeze(-2))
+            term = lns_mul(
+                A[..., :, k].unsqueeze(-1), # (..., M, 1)
+                B[..., k, :].unsqueeze(-2)) # (..., 1, N)
             result = lns_add(result, term, base)
+
+        # Remove the unsqueezed dimensions if they were added
+        if orig_A_vector and not orig_B_vector: # case 2 (..., 1, N) → (..., N)
+            result = result.squeeze(-2)
+        elif orig_B_vector and not orig_A_vector: # case 3 (..., M, 1) → (..., M)
+            result = result.squeeze(-1)
+        elif orig_A_vector and orig_B_vector: # case 4 (..., 1, 1) → (...)
+            result = result.squeeze(-1).squeeze(-1)
 
         return result
 
     @staticmethod
     def setup_context(ctx, inputs, output):
+        # Here we must repeat the unsqueezing logic from forward
+        # to ensure that we can correctly compute the gradients.
+        # todo: This is a bit of a hack, we should ideally handle
+        # the unsqueezing in a more elegant way. 
         A, B, base = inputs
+
+        ctx.orig_A_vector = A.dim() == 1
+        ctx.orig_B_vector = B.dim() == 1
+        ctx.unsqueezed_A = False
+        ctx.unsqueezed_B = False
+
+        if ctx.orig_A_vector:
+            A = A.unsqueeze(0)
+        if ctx.orig_B_vector:
+            B = B.unsqueeze(-1)
+
+        if A.dim() == B.dim() + 1:
+            B = B.unsqueeze(-2)
+            ctx.unsqueezed_B = True
+        elif B.dim() == A.dim() + 1:
+            A = A.unsqueeze(-2)
+            ctx.unsqueezed_A = True
+
         ctx.save_for_backward(A, B, base)
 
     @staticmethod
     def backward(ctx, grad_output):
         A, B, base = ctx.saved_tensors
 
+        # Re-introduce the singleton dims that were squeezed on the forward output
+        if ctx.orig_A_vector and not ctx.orig_B_vector:           # grad_output shape (..., N)
+            grad_output = grad_output.unsqueeze(-2)               # (..., 1, N)
+        elif ctx.orig_B_vector and not ctx.orig_A_vector:         # grad_output shape (..., M)
+            grad_output = grad_output.unsqueeze(-1)               # (..., M, 1)
+        elif ctx.orig_A_vector and ctx.orig_B_vector:             # grad_output shape (...)
+            grad_output = grad_output.unsqueeze(-1).unsqueeze(-1) # (..., 1, 1)
+
         grad_A = lns_matmul(grad_output, B.transpose(-1, -2), base)
         grad_B = lns_matmul(A.transpose(-1, -2), grad_output, base)
+
+        # Remove any dimensions we had inserted in forward
+        if ctx.unsqueezed_A:
+            grad_A = grad_A.squeeze(-2)
+        if ctx.unsqueezed_B:
+            grad_B = grad_B.squeeze(-2)
+        if ctx.orig_A_vec:
+            grad_A = grad_A.squeeze(0)  # (1, K) → (K,)
+        if ctx.orig_B_vec:
+            grad_B = grad_B.squeeze(-1) # (K, 1) → (K,)
 
         return grad_A, grad_B, None
 
@@ -794,3 +863,117 @@ def transpose(A, dim0, dim1):
 
     result = LNSTransposeFunction.apply(A._lns, dim0, dim1)
     return lnstensor(result, from_lns=True, b=A.base)
+
+class LNSLinearFunction(torch.autograd.Function):
+    """
+    Linear transformation is implemented using matrix
+    multiplication followed by addition of a bias term.
+
+    Gradients are computed as follows:
+    d/dx(x @ A^T + b) = A
+    d/dA(x @ A^T + b) = x^T
+    d/db(x @ A^T + b) = 1
+    """
+
+    @staticmethod
+    def forward(x, A, base, bias=None):
+        x_packed, A_packed = x.to(torch.int64), A.to(torch.int64)
+
+        output = lns_matmul(x_packed, A_packed.transpose(-2, -1), base)
+        if bias is not None:
+            output = lns_add(output, bias, base)
+
+        return output
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, A, base, bias = inputs
+        ctx.biased = True if bias is not None else False
+        ctx.save_for_backward(x, A, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, A, base = ctx.saved_tensors
+
+        grad_x = lns_matmul(grad_output, A, base)
+        grad_A = lns_matmul(x.transpose(-1, -2), grad_output, base)
+
+        if ctx.biased:
+            grad_bias = torch.sum(grad_output, dim=0)
+
+        else:
+            grad_bias = None
+
+        return grad_x, grad_A, None, grad_bias
+
+@implements(torch.nn.functional.linear, LNSLinearFunction.forward, key='default', default=True)
+def linear(x, weight, bias=None):
+
+    if bias is not None:
+        x, weight, bias = format_lnstensor_operands(x, weight, bias)
+    else:
+        x, weight = format_lnstensor_operands(x, weight)
+
+    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSBilinearFunction(torch.autograd.Function):
+    """
+    Linear transformation is implemented using matrix
+    multiplication followed by addition of a bias term.
+
+    Gradients are computed as follows:
+    d/dx(x^T @ A @ y + b) = A @ y
+    d/dA(x^T @ A @ y + b) = x @ y^T
+    d/dy(x^T @ A @ y + b) = A^T @ x
+    d/db(x^T @ A @ y + b) = 1
+    """
+
+    @staticmethod
+    def forward(x, y, A, base, bias=None):
+        x_packed, y_packed, A_packed = x.to(torch.int64), y.to(torch.int64), A.to(torch.int64)
+
+        tmp = lns_matmul(A_packed, y_packed.unsqueeze(-1), base).squeeze(-1)
+        output = lns_matmul(x_packed.unsqueeze(-2), tmp.transpose(-2, -1), base).squeeze(-2)
+
+        if bias is not None:
+            output = lns_add(output, bias, base)
+
+        return output
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, A, base, bias = inputs
+        ctx.biased = True if bias is not None else False
+        ctx.save_for_backward(x, y, A, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, A, base = ctx.saved_tensors
+
+        Ay = lns_matmul(A, y.unsqueeze(-1), base).squeeze(-1)
+        grad_x = lns_matmul(grad_output.unsqueeze(-2), Ay.transpose(-2, -1), base).squeeze(-2)
+
+        ATx = lns_matmul(A.transpose(-2, -1), x.unsqueeze(-1), base).squeeze(-1)
+        grad_y = lns_matmul(grad_output.unsqueeze(-2), ATx.transpose(-2, -1), base).squeeze(-2)
+
+        if ctx.biased:
+            grad_bias = torch.sum(grad_output, dim=tuple(range(grad_output.ndim - 1)))
+
+        else:
+            grad_bias = None
+
+        return grad_x, grad_y, None, None, grad_bias # todo: grad_A requires einsum
+
+@implements(torch.nn.functional.bilinear, LNSBilinearFunction.forward, key='default', default=True)
+def bilinear(x, y, weight, bias=None):
+
+    if bias is not None:
+        x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
+    else:
+        x, y, weight = format_lnstensor_operands(x, y, weight)
+
+    result = LNSBilinearFunction.apply(x._lns, weight._lns, y._lns, x.base, bias)
+
+    return lnstensor(result, from_lns=True, b=x.base)
