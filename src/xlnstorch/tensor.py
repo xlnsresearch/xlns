@@ -704,8 +704,9 @@ def zeros(
     properties. See `torch.zeros` for more details on the parameters.
     """
     result = lnstensor(
-        torch.zeros(*size, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.zeros(*size, dtype=torch.float64, layout=layout,
+                    device=device, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
     if out is not None:
@@ -734,9 +735,9 @@ def zeros_like(
         input = input._lns
 
     return lnstensor(
-        torch.zeros_like(input, dtype=torch.float64, device=device,
-                         layout=layout, memory_format=memory_format),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.zeros_like(input, dtype=torch.float64, device=device, layout=layout,
+                         requires_grad=requires_grad, memory_format=memory_format),
+        from_lns=False, f=f, b=b
     )
 
 def ones(
@@ -753,8 +754,9 @@ def ones(
     properties. See `torch.ones` for more details on the parameters.
     """
     result = lnstensor(
-        torch.ones(*size, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.ones(*size, dtype=torch.float64, layout=layout,
+                   device=device, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
     if out is not None:
@@ -783,9 +785,9 @@ def ones_like(
         input = input._lns
 
     return lnstensor(
-        torch.ones_like(input, dtype=torch.float64, device=device,
-                        layout=layout, memory_format=memory_format),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.ones_like(input, dtype=torch.float64, device=device, layout=layout,
+                        memory_format=memory_format, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
 def full(
@@ -804,8 +806,9 @@ def full(
     and properties. See `torch.full` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, fill_value, dtype=torch.float64, layout=layout, device=device),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.full(size, fill_value, dtype=torch.float64, layout=layout,
+                   device=device, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
     if out is not None:
@@ -835,9 +838,9 @@ def full_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, fill_value, dtype=torch.float64, device=device,
-                        layout=layout, memory_format=memory_format),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.full_like(input, fill_value, dtype=torch.float64, device=device, layout=layout,
+                        memory_format=memory_format, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
 def rand(
@@ -858,8 +861,8 @@ def rand(
     """
     result = lnstensor(
         torch.rand(size, generator=generator, dtype=torch.float64, layout=layout,
-                   device=device, pin_memory=pin_memory),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+                   device=device, pin_memory=pin_memory, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
     if out is not None:
@@ -889,9 +892,9 @@ def rand_like(
         input = input._lns
 
     return lnstensor(
-        torch.rand_like(input, dtype=torch.float64, device=device,
-                        layout=layout, memory_format=memory_format),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.rand_like(input, dtype=torch.float64, device=device, layout=layout,
+                        memory_format=memory_format, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
 def randn(
@@ -912,8 +915,8 @@ def randn(
     """
     result = lnstensor(
         torch.randn(size, generator=generator, dtype=torch.float64, layout=layout,
-                    device=device, pin_memory=pin_memory),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+                    device=device, pin_memory=pin_memory, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
 
     if out is not None:
@@ -943,7 +946,7 @@ def randn_like(
         input = input._lns
 
     return lnstensor(
-        torch.randn_like(input, dtype=torch.float64, device=device,
-                         layout=layout, memory_format=memory_format),
-        from_lns=False, requires_grad=requires_grad, f=f, b=b
+        torch.randn_like(input, dtype=torch.float64, device=device, layout=layout,
+                         memory_format=memory_format, requires_grad=requires_grad),
+        from_lns=False, f=f, b=b
     )
