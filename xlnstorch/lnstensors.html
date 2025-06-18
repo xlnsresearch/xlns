@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xlnstorch.LNSTensor &mdash; xlns 1.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d55fa986"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="xlnstorch.LNSTensor.get_internal_tensor" href="generated/xlnstorch.LNSTensor.get_internal_tensor.html" />
+    <link rel="prev" title="xlnstorch" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            xlns
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Packages</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">xlnstorch</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">LNS Tensors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lnstensor-class-reference">LNSTensor class reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor"><code class="docutils literal notranslate"><span class="pre">LNSTensor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor._lns"><code class="docutils literal notranslate"><span class="pre">LNSTensor._lns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor.base"><code class="docutils literal notranslate"><span class="pre">LNSTensor.base</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.get_internal_tensor.html">xlnstorch.LNSTensor.get_internal_tensor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.lns.html">xlnstorch.LNSTensor.lns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.value.html">xlnstorch.LNSTensor.value</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.grad.html">xlnstorch.LNSTensor.grad</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.shape.html">xlnstorch.LNSTensor.shape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.ndim.html">xlnstorch.LNSTensor.ndim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad.html">xlnstorch.LNSTensor.requires_grad</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.backward.html">xlnstorch.LNSTensor.backward</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.broadcast_to.html">xlnstorch.LNSTensor.broadcast_to</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.dim.html">xlnstorch.LNSTensor.dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.clone.html">xlnstorch.LNSTensor.clone</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.squeeze.html">xlnstorch.LNSTensor.squeeze</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.unsqueeze.html">xlnstorch.LNSTensor.unsqueeze</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.detach.html">xlnstorch.LNSTensor.detach</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad_.html">xlnstorch.LNSTensor.requires_grad_</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#creation-operations">Creation Operations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="operations.html">Operations</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">xlns</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">xlnstorch</a></li>
+      <li class="breadcrumb-item active">xlnstorch.LNSTensor</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/xlnstorch/lnstensors.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="xlnstorch-lnstensor">
+<span id="lnstensor-doc"></span><h1>xlnstorch.LNSTensor<a class="headerlink" href="#xlnstorch-lnstensor" title="Link to this heading"></a></h1>
+<p>An <a class="reference internal" href="#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">xlnstorch.LNSTensor</span></code></a> is a wrapper for a <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a>
+that stores an ‘internal representation’ Tensor object along with an
+LNS base.</p>
+<p>Todo: Add more information/math.</p>
+<section id="lnstensor-class-reference">
+<h2>LNSTensor class reference<a class="headerlink" href="#lnstensor-class-reference" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="xlnstorch.LNSTensor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNSTensor</span></span><a class="headerlink" href="#xlnstorch.LNSTensor" title="Link to this definition"></a></dt>
+<dd><p>There are two ways to create a tensor currently.</p>
+<ul class="simple">
+<li><p>To create a tensor with pre-existing data, use <a class="reference internal" href="generated/xlnstorch.lnstensor.html#xlnstorch.lnstensor" title="xlnstorch.lnstensor"><code class="xref py py-func docutils literal notranslate"><span class="pre">xlnstorch.lnstensor()</span></code></a>.</p></li>
+<li><p>If necessary, use the <code class="docutils literal notranslate"><span class="pre">xlnstorch.LNSTensor()</span></code> constructor directly, although
+the use of this is discouraged.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.LNSTensor._lns">
+<span class="sig-prename descclassname"><span class="pre">LNSTensor.</span></span><span class="sig-name descname"><span class="pre">_lns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></em><a class="headerlink" href="#xlnstorch.LNSTensor._lns" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.LNSTensor.base">
+<span class="sig-prename descclassname"><span class="pre">LNSTensor.</span></span><span class="sig-name descname"><span class="pre">base</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></em><a class="headerlink" href="#xlnstorch.LNSTensor.base" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.get_internal_tensor.html#xlnstorch.LNSTensor.get_internal_tensor" title="xlnstorch.LNSTensor.get_internal_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.get_internal_tensor</span></code></a></p></td>
+<td><p>Converts an array-like floating point value to an LNSTensor and returns the internal packed representation for a given base.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.lns.html#xlnstorch.LNSTensor.lns" title="xlnstorch.LNSTensor.lns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.lns</span></code></a></p></td>
+<td><p>The packed representation that <strong>does</strong> carry gradients.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.value.html#xlnstorch.LNSTensor.value" title="xlnstorch.LNSTensor.value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.value</span></code></a></p></td>
+<td><p>Decode the packed integers back to ordinary floating-point numbers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.grad.html#xlnstorch.LNSTensor.grad" title="xlnstorch.LNSTensor.grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.grad</span></code></a></p></td>
+<td><p>The gradient of the LNSTensor, if it has been computed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.shape.html#xlnstorch.LNSTensor.shape" title="xlnstorch.LNSTensor.shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.shape</span></code></a></p></td>
+<td><p>Returns the shape of the LNSTensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.ndim.html#xlnstorch.LNSTensor.ndim" title="xlnstorch.LNSTensor.ndim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.ndim</span></code></a></p></td>
+<td><p>Alias for <code class="xref py py-meth docutils literal notranslate"><span class="pre">dim()</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad.html#xlnstorch.LNSTensor.requires_grad" title="xlnstorch.LNSTensor.requires_grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.requires_grad</span></code></a></p></td>
+<td><p>Returns whether the LNSTensor requires gradients.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.backward.html#xlnstorch.LNSTensor.backward" title="xlnstorch.LNSTensor.backward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.backward</span></code></a></p></td>
+<td><p>Computes the gradients of the current LNSTensor with respect to the graph leaves.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.broadcast_to.html#xlnstorch.LNSTensor.broadcast_to" title="xlnstorch.LNSTensor.broadcast_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.broadcast_to</span></code></a></p></td>
+<td><p>Broadcasts <code class="docutils literal notranslate"><span class="pre">self</span></code> to the shape <code class="docutils literal notranslate"><span class="pre">shape</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.dim.html#xlnstorch.LNSTensor.dim" title="xlnstorch.LNSTensor.dim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.dim</span></code></a></p></td>
+<td><p>Returns the number of dimensions of the LNSTensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.clone.html#xlnstorch.LNSTensor.clone" title="xlnstorch.LNSTensor.clone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.clone</span></code></a></p></td>
+<td><p>Returns a copy of the LNSTensor with the same data and base.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.squeeze.html#xlnstorch.LNSTensor.squeeze" title="xlnstorch.LNSTensor.squeeze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.squeeze</span></code></a></p></td>
+<td><p>Returns a new LNSTensor with all specified dimensions of size 1 removed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.unsqueeze.html#xlnstorch.LNSTensor.unsqueeze" title="xlnstorch.LNSTensor.unsqueeze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.unsqueeze</span></code></a></p></td>
+<td><p>Returns a new LNSTensor with a dimension of size one inserted at the specified position.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.detach.html#xlnstorch.LNSTensor.detach" title="xlnstorch.LNSTensor.detach"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.detach</span></code></a></p></td>
+<td><p>Returns a new LNSTensor that is detached from the current computation graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad_.html#xlnstorch.LNSTensor.requires_grad_" title="xlnstorch.LNSTensor.requires_grad_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.requires_grad_</span></code></a></p></td>
+<td><p>Sets the requires_grad flag for the LNSTensor in-place.</p></td>
+</tr>
+</tbody>
+</table>
+<section id="creation-operations">
+<h3>Creation Operations<a class="headerlink" href="#creation-operations" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.lnstensor.html#xlnstorch.lnstensor" title="xlnstorch.lnstensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lnstensor</span></code></a></p></td>
+<td><p>Constructs an <a class="reference internal" href="#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSTensor</span></code></a> from some array-like <em>data</em>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.zeros.html#xlnstorch.zeros" title="xlnstorch.zeros"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zeros</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with zeros, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.zeros_like.html#xlnstorch.zeros_like" title="xlnstorch.zeros_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zeros_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with zeros, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.ones.html#xlnstorch.ones" title="xlnstorch.ones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ones</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with ones, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.ones_like.html#xlnstorch.ones_like" title="xlnstorch.ones_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ones_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with ones, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.full.html#xlnstorch.full" title="xlnstorch.full"><code class="xref py py-obj docutils literal notranslate"><span class="pre">full</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with <cite>fill_value</cite>, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.full_like.html#xlnstorch.full_like" title="xlnstorch.full_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">full_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with <cite>fill_value</cite>, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.rand.html#xlnstorch.rand" title="xlnstorch.rand"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rand</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a uniform distribution on the interval [0, 1], with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.rand_like.html#xlnstorch.rand_like" title="xlnstorch.rand_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rand_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a uniform distribution on the interval [0, 1], with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.randn.html#xlnstorch.randn" title="xlnstorch.randn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">randn</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a normal distribution with mean 0 and variance 1, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.randn_like.html#xlnstorch.randn_like" title="xlnstorch.randn_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">randn_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a normal distribution with mean 0 and variance 1, with the same shape and properties as the input tensor.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="xlnstorch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/xlnstorch.LNSTensor.get_internal_tensor.html" class="btn btn-neutral float-right" title="xlnstorch.LNSTensor.get_internal_tensor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, xlnsresearch.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

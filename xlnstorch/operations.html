@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operations &mdash; xlns 1.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d55fa986"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="xlnstorch.implements" href="generated/xlnstorch.implements.html" />
+    <link rel="prev" title="xlnstorch.randn_like" href="generated/xlnstorch.randn_like.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            xlns
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Packages</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">xlnstorch</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lnstensors.html">LNS Tensors</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom-operations">Custom Operations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.implements.html">xlnstorch.implements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.get_implementation.html">xlnstorch.get_implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.set_default_implementation.html">xlnstorch.set_default_implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.get_default_implementation_key.html">xlnstorch.get_default_implementation_key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.override_implementation.html">xlnstorch.override_implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.align_lnstensor_bases.html">xlnstorch.align_lnstensor_bases</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.format_lnstensor_operands.html">xlnstorch.format_lnstensor_operands</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.implement_sbdb.html">xlnstorch.operators.implement_sbdb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.sbdb.html">xlnstorch.operators.sbdb</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#internal-operations">Internal Operations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arithmetic-operations">Arithmetic Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#comparison-operations">Comparison Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loss-operations">Loss Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#activation-operations">Activation Operations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">xlns</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">xlnstorch</a></li>
+      <li class="breadcrumb-item active">Operations</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/xlnstorch/operations.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="operations">
+<span id="operations-doc"></span><h1>Operations<a class="headerlink" href="#operations" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch</span></code> package provides a set of analogous operations to
+PyTorch’s built-in operations. These operations are registered with
+PyTorch’s internal dispatch mechanism, so that they can be used in
+the same way as PyTorch’s built-in operations. For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">xlnstorch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xltorch</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">([</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">])</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="c1"># LNSTensor(value=tensor([4.0000, 6.0000], dtype=torch.float64), base=1.0000000826295863)</span>
+</pre></div>
+</div>
+<section id="custom-operations">
+<h2>Custom Operations<a class="headerlink" href="#custom-operations" title="Link to this heading"></a></h2>
+<p>If you want to implement your own custom implementation of an operation,
+or define a new operation, you can use the following functions.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.implements.html#xlnstorch.implements" title="xlnstorch.implements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implements</span></code></a></p></td>
+<td><p>A decorator to register a custom implementation for a given torch function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.get_implementation.html#xlnstorch.get_implementation" title="xlnstorch.get_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_implementation</span></code></a></p></td>
+<td><p>Get the implementation tuple for a given torch function and implementation key.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.set_default_implementation.html#xlnstorch.set_default_implementation" title="xlnstorch.set_default_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_implementation</span></code></a></p></td>
+<td><p>Set the default implementation for a given torch function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.get_default_implementation_key.html#xlnstorch.get_default_implementation_key" title="xlnstorch.get_default_implementation_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_implementation_key</span></code></a></p></td>
+<td><p>Get the default implementation key for a given torch function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.override_implementation.html#xlnstorch.override_implementation" title="xlnstorch.override_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">override_implementation</span></code></a></p></td>
+<td><p>Temporarily override the default implementation for a torch function within a context.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.align_lnstensor_bases.html#xlnstorch.align_lnstensor_bases" title="xlnstorch.align_lnstensor_bases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_lnstensor_bases</span></code></a></p></td>
+<td><p>Aligns the bases of a sequence of LNSTensors to a common base.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.format_lnstensor_operands.html#xlnstorch.format_lnstensor_operands" title="xlnstorch.format_lnstensor_operands"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_lnstensor_operands</span></code></a></p></td>
+<td><p>Converts a variable number of operands to LNSTensor objects, aligning all operands to the base of the first operand that is an LNSTensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.implement_sbdb.html#xlnstorch.operators.implement_sbdb" title="xlnstorch.operators.implement_sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.implement_sbdb</span></code></a></p></td>
+<td><p>A decorator to register a custom sbdb implementation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.sbdb.html#xlnstorch.operators.sbdb" title="xlnstorch.operators.sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.sbdb</span></code></a></p></td>
+<td><p>Computes the Gaussian logarithm for the given inputs z and s.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="internal-operations">
+<h2>Internal Operations<a class="headerlink" href="#internal-operations" title="Link to this heading"></a></h2>
+<p>These are the internal operations performed on <code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code> internal
+representations of <code class="docutils literal notranslate"><span class="pre">LNSTensor</span></code> objects related to arithmetic operations.
+These operations are useful if you want to implement your own custom
+operations. For the most part, these internal operator functions wrap the
+<code class="docutils literal notranslate"><span class="pre">apply_lns_op()</span></code> function.</p>
+<section id="arithmetic-operations">
+<h3>Arithmetic Operations<a class="headerlink" href="#arithmetic-operations" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_add.html#xlnstorch.operators.lns_add" title="xlnstorch.operators.lns_add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_add</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.add.html#torch.add" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.add()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sub.html#xlnstorch.operators.lns_sub" title="xlnstorch.operators.lns_sub"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sub</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sub.html#torch.sub" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sub()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_mul.html#xlnstorch.operators.lns_mul" title="xlnstorch.operators.lns_mul"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_mul</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.mul.html#torch.mul" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.mul()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_div.html#xlnstorch.operators.lns_div" title="xlnstorch.operators.lns_div"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_div</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.div.html#torch.div" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.div()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_neg.html#xlnstorch.operators.lns_neg" title="xlnstorch.operators.lns_neg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_neg</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.neg.html#torch.neg" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.neg()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_abs.html#xlnstorch.operators.lns_abs" title="xlnstorch.operators.lns_abs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_abs</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.abs.html#torch.abs" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.abs()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sqrt.html#xlnstorch.operators.lns_sqrt" title="xlnstorch.operators.lns_sqrt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sqrt</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sqrt.html#torch.sqrt" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sqrt()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_square.html#xlnstorch.operators.lns_square" title="xlnstorch.operators.lns_square"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_square</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.square.html#torch.square" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.square()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_pow.html#xlnstorch.operators.lns_pow" title="xlnstorch.operators.lns_pow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_pow</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.pow.html#torch.pow" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.pow()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_exp.html#xlnstorch.operators.lns_exp" title="xlnstorch.operators.lns_exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_exp</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.exp.html#torch.exp" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.exp()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_log.html#xlnstorch.operators.lns_log" title="xlnstorch.operators.lns_log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_log</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.log.html#torch.log" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.log()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_reciprocal.html#xlnstorch.operators.lns_reciprocal" title="xlnstorch.operators.lns_reciprocal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_reciprocal</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.reciprocal.html#torch.reciprocal" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.reciprocal()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sign.html#xlnstorch.operators.lns_sign" title="xlnstorch.operators.lns_sign"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sign</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sign.html#torch.sign" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sign()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_positive.html#xlnstorch.operators.lns_positive" title="xlnstorch.operators.lns_positive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_positive</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.positive.html#torch.positive" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.positive()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sum.html#xlnstorch.operators.lns_sum" title="xlnstorch.operators.lns_sum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sum</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sum.html#torch.sum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sum()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_matmul.html#xlnstorch.operators.lns_matmul" title="xlnstorch.operators.lns_matmul"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_matmul</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.matmul.html#torch.matmul" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.matmul()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_transpose.html#xlnstorch.operators.lns_transpose" title="xlnstorch.operators.lns_transpose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_transpose</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.transpose.html#torch.transpose" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.transpose()</span></code></a> for parameter/return details.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="comparison-operations">
+<h3>Comparison Operations<a class="headerlink" href="#comparison-operations" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_equal.html#xlnstorch.operators.lns_equal" title="xlnstorch.operators.lns_equal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_equal</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.equal.html#torch.equal" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.equal()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_eq.html#xlnstorch.operators.lns_eq" title="xlnstorch.operators.lns_eq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_eq</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.eq.html#torch.eq" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.eq()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_ne.html#xlnstorch.operators.lns_ne" title="xlnstorch.operators.lns_ne"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_ne</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.ne.html#torch.ne" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.ne()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_ge.html#xlnstorch.operators.lns_ge" title="xlnstorch.operators.lns_ge"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_ge</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.ge.html#torch.ge" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.ge()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_gt.html#xlnstorch.operators.lns_gt" title="xlnstorch.operators.lns_gt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_gt</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.gt.html#torch.gt" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.gt()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_le.html#xlnstorch.operators.lns_le" title="xlnstorch.operators.lns_le"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_le</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.le.html#torch.le" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.le()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_lt.html#xlnstorch.operators.lns_lt" title="xlnstorch.operators.lns_lt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_lt</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.lt.html#torch.lt" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.lt()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_isclose.html#xlnstorch.operators.lns_isclose" title="xlnstorch.operators.lns_isclose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_isclose</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.isclose.html#torch.isclose" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.isclose()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_allclose.html#xlnstorch.operators.lns_allclose" title="xlnstorch.operators.lns_allclose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_allclose</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.allclose.html#torch.allclose" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.allclose()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_any.html#xlnstorch.operators.lns_any" title="xlnstorch.operators.lns_any"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_any</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.any.html#torch.any" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.any()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_all.html#xlnstorch.operators.lns_all" title="xlnstorch.operators.lns_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_all</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.all.html#torch.all" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.all()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_isin.html#xlnstorch.operators.lns_isin" title="xlnstorch.operators.lns_isin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_isin</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.isin.html#torch.isin" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.isin()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sort.html#xlnstorch.operators.lns_sort" title="xlnstorch.operators.lns_sort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sort</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sort.html#torch.sort" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sort()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_argsort.html#xlnstorch.operators.lns_argsort" title="xlnstorch.operators.lns_argsort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_argsort</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.argsort.html#torch.argsort" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.argsort()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_kthvalue.html#xlnstorch.operators.lns_kthvalue" title="xlnstorch.operators.lns_kthvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_kthvalue</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.kthvalue.html#torch.kthvalue" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.kthvalue()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_maximum.html#xlnstorch.operators.lns_maximum" title="xlnstorch.operators.lns_maximum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_maximum</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.maximum.html#torch.maximum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.maximum()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_minimum.html#xlnstorch.operators.lns_minimum" title="xlnstorch.operators.lns_minimum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_minimum</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.minimum.html#torch.minimum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.minimum()</span></code></a> for parameter/return details.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="loss-operations">
+<h3>Loss Operations<a class="headerlink" href="#loss-operations" title="Link to this heading"></a></h3>
+<p>Note that in practice, you should use the standard PyTorch
+loss classes, such as <code class="docutils literal notranslate"><span class="pre">torch.nn.MSELoss</span></code>, which are already
+implemented to work with <code class="docutils literal notranslate"><span class="pre">LNSTensor</span></code> objects. However, if you
+want to implement your own custom loss functions, or want more
+control over the loss computation, you can use the following
+functions.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_mse_loss.html#xlnstorch.operators.lns_mse_loss" title="xlnstorch.operators.lns_mse_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_mse_loss</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.mse_loss.html#torch.nn.functional.mse_loss" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.mse_loss()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_l1_loss.html#xlnstorch.operators.lns_l1_loss" title="xlnstorch.operators.lns_l1_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_l1_loss</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.l1_loss.html#torch.nn.functional.l1_loss" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.l1_loss()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_binary_cross_entropy.html#xlnstorch.operators.lns_binary_cross_entropy" title="xlnstorch.operators.lns_binary_cross_entropy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_binary_cross_entropy</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.binary_cross_entropy.html#torch.nn.functional.binary_cross_entropy" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.binary_cross_entropy()</span></code></a> for parameter/return details.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="activation-operations">
+<h3>Activation Operations<a class="headerlink" href="#activation-operations" title="Link to this heading"></a></h3>
+<p>Again, in practice, you should use the standard PyTorch
+activation classes, such as <code class="docutils literal notranslate"><span class="pre">torch.nn.ReLU</span></code>, which are
+already implemented to work with <code class="docutils literal notranslate"><span class="pre">LNSTensor</span></code> objects.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_relu.html#xlnstorch.operators.lns_relu" title="xlnstorch.operators.lns_relu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_relu</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.relu.html#torch.nn.functional.relu" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.relu()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_relu_.html#xlnstorch.operators.lns_relu_" title="xlnstorch.operators.lns_relu_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_relu_</span></code></a></p></td>
+<td><p>See docs for <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.relu_()</span></code> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_leaky_relu.html#xlnstorch.operators.lns_leaky_relu" title="xlnstorch.operators.lns_leaky_relu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_leaky_relu</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.leaky_relu.html#torch.nn.functional.leaky_relu" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.leaky_relu()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_leaky_relu_.html#xlnstorch.operators.lns_leaky_relu_" title="xlnstorch.operators.lns_leaky_relu_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_leaky_relu_</span></code></a></p></td>
+<td><p>See docs for <code class="xref py py-func docutils literal notranslate"><span class="pre">torch._C._nn.leaky_relu_()</span></code> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_threshold.html#xlnstorch.operators.lns_threshold" title="xlnstorch.operators.lns_threshold"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_threshold</span></code></a></p></td>
+<td><p>See docs for <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional._threshold()</span></code> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_threshold_.html#xlnstorch.operators.lns_threshold_" title="xlnstorch.operators.lns_threshold_"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_threshold_</span></code></a></p></td>
+<td><p>See docs for <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.threshold_()</span></code> for parameter/return details.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generated/xlnstorch.randn_like.html" class="btn btn-neutral float-left" title="xlnstorch.randn_like" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/xlnstorch.implements.html" class="btn btn-neutral float-right" title="xlnstorch.implements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, xlnsresearch.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
