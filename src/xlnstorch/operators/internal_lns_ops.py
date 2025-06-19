@@ -93,3 +93,5 @@ lns_sigmoid = _create_lns_op_func('sigmoid', torch.nn.functional.sigmoid)
 lns_logsigmoid = _create_lns_op_func('logsigmoid', torch.nn.functional.logsigmoid)
 lns_linear = _create_lns_op_func('linear', torch.nn.functional.linear)
 lns_bilinear = _create_lns_op_func('bilinear', torch.nn.functional.bilinear)
+
+lns_dropout = _create_lns_op_func('dropout', torch.nn.functional.dropout)

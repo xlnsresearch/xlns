@@ -51,6 +51,8 @@ from .internal_lns_ops import (
     lns_tanh,
     lns_sigmoid,
     lns_logsigmoid,
+
+    lns_dropout,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -59,6 +61,7 @@ from .arithmetic_ops import (
 from . import comparison_ops # needed to register comparison ops
 from . import loss_ops # needed to register loss ops
 from . import activation_ops # needed to register activation ops
+from . import layer_ops # needed to register layer ops
 
 __all__ = [
     "implement_sbdb",
@@ -117,4 +120,6 @@ __all__ = [
     "lns_tanh",
     "lns_sigmoid",
     "lns_logsigmoid",
+
+    "lns_dropout",
 ]

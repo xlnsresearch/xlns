@@ -4,7 +4,9 @@ from .. import rand
 
 class LNSIdentity(LNSModule):
     """
-    An LNS identity layer that does not change the input.
+    An LNS identity layer that does not change the input. This is not strictly
+    necessary, since there are no trainable parameters, but it is included for
+    completeness.
 
     See also: `torch.nn.Identity`
     """
