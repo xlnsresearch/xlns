@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, full
 from . import (
     lns_add,
     lns_neg,
@@ -9,6 +9,7 @@ from . import (
     lns_reciprocal,
     lns_pow,
     lns_matmul,
+    lns_sum,
 )
 
 # SBDB_FUNCS is a dictionary that contains different implementations
@@ -728,44 +729,59 @@ class LNSMatmulFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(A, B, base):
-        # Make operands at least 2D tensors, and remember for backward pass.
         # 1. (..., M, K)  @  (..., K, N)  -> (..., M, N)          (regular case)
         # 2. (..., M, K)  @  (..., K)     -> (..., M)             (rhs vector)
         # 3. (..., K)     @  (..., K, N)  -> (..., N)             (lhs vector)
-        # 4. (..., K)     @  (..., K)     -> (...)                (dot product)
-        orig_A_vector = A.dim() == 1
-        orig_B_vector = B.dim() == 1
+        # 4. (..., K)     @  (..., K)     -> (..., K)             (dot product)
+        orig_A_dim = A.dim()
+        orig_B_dim = B.dim()
 
-        if orig_A_vector:
-            A = A.unsqueeze(0)  # (K,) → (1, K)
-        if orig_B_vector:
-            B = B.unsqueeze(-1) # (K,) → (K, 1)
+        prepended_A = False
+        appended_B = False
 
-        if A.dim() == B.dim() + 1:
-            B = B.unsqueeze(-2) # (..., K) → (..., 1, K)
-        elif B.dim() == A.dim() + 1:
-            A = A.unsqueeze(-2) # (..., K) → (..., 1, K)
+        if orig_A_dim == 1:
+            A = A.unsqueeze(0) # (K,) -> (1, K)
+            prepended_A = True
 
-        # Regular (batched) matrix multiply in log-space
-        M, K = A.shape[-2:]
-        N = B.shape[-1]
+        if orig_B_dim == 1:
+            B = B.unsqueeze(-1) # (K,) -> (K, 1)
+            appended_B = True
 
-        result = torch.full((*A.shape[:-2], M, N), fill_value=LNS_ZERO,
+        # Now perform the actual matrix multiplication
+        # A has shape (..., M, K) and B has shape (..., K, N)
+        # For broadcasting, align batch dimensions
+        M, K_A = A.shape[-2:]
+        K_B, N = B.shape[-2:]
+
+        assert K_A == K_B, "Inner dimensions of A and B must match for matrix multiplication: {K_A} vs {K_B}"
+
+        # Handle broadcasting of batch dimensions - get batch shapes (everything except last 2 dims)
+        A_batch_shape = A.shape[:-2]
+        B_batch_shape = B.shape[:-2]
+
+        try:
+            output_batch_shape = torch.broadcast_shapes(A_batch_shape, B_batch_shape)
+        except RuntimeError as e:
+            raise RuntimeError(f"Batch dimensions are not broadcastable: {A_batch_shape} vs {B_batch_shape}") from e
+
+        # Expand A and B to have the same batch dimensions
+        A = A.expand(*output_batch_shape, M, K_A)
+        B = B.expand(*output_batch_shape, K_B, N)
+
+        result = torch.full((*output_batch_shape, M, N), fill_value=LNS_ZERO,
                             dtype=torch.float64, device=A.device)
 
-        for k in range(K):
+        # Perform matrix multiplication in log space
+        for k in range(K_A):
             term = lns_mul(
                 A[..., :, k].unsqueeze(-1), # (..., M, 1)
                 B[..., k, :].unsqueeze(-2)) # (..., 1, N)
             result = lns_add(result, term, base)
 
-        # Remove the unsqueezed dimensions if they were added
-        if orig_A_vector and not orig_B_vector: # case 2 (..., 1, N) → (..., N)
-            result = result.squeeze(-2)
-        elif orig_B_vector and not orig_A_vector: # case 3 (..., M, 1) → (..., M)
-            result = result.squeeze(-1)
-        elif orig_A_vector and orig_B_vector: # case 4 (..., 1, 1) → (...)
-            result = result.squeeze(-1).squeeze(-1)
+        if prepended_A:
+            result = result.squeeze(-2) # Remove extra M dimension
+        if appended_B:
+            result = result.squeeze(-1) # Remove extra N dimension
 
         return result
 
@@ -777,22 +793,26 @@ class LNSMatmulFunction(torch.autograd.Function):
         # the unsqueezing in a more elegant way. 
         A, B, base = inputs
 
-        ctx.orig_A_vector = A.dim() == 1
-        ctx.orig_B_vector = B.dim() == 1
-        ctx.unsqueezed_A = False
-        ctx.unsqueezed_B = False
+        ctx.prepended_A = False
+        ctx.appended_B = False
 
-        if ctx.orig_A_vector:
+        if A.dim() == 1:
             A = A.unsqueeze(0)
-        if ctx.orig_B_vector:
-            B = B.unsqueeze(-1)
+            ctx.prepended_A = True
 
-        if A.dim() == B.dim() + 1:
-            B = B.unsqueeze(-2)
-            ctx.unsqueezed_B = True
-        elif B.dim() == A.dim() + 1:
-            A = A.unsqueeze(-2)
-            ctx.unsqueezed_A = True
+        if B.dim() == 1:
+            B = B.unsqueeze(-1)
+            ctx.appended_B = True
+
+        ctx.A_shape_before_broadcast = A.shape
+        ctx.B_shape_before_broadcast = B.shape
+
+        A_batch_shape = A.shape[:-2]
+        B_batch_shape = B.shape[:-2]
+        output_batch_shape = torch.broadcast_shapes(A_batch_shape, B_batch_shape)
+
+        A = A.expand(*output_batch_shape, *A.shape[-2:])
+        B = B.expand(*output_batch_shape, *B.shape[-2:])
 
         ctx.save_for_backward(A, B, base)
 
@@ -800,26 +820,45 @@ class LNSMatmulFunction(torch.autograd.Function):
     def backward(ctx, grad_output):
         A, B, base = ctx.saved_tensors
 
-        # Re-introduce the singleton dims that were squeezed on the forward output
-        if ctx.orig_A_vector and not ctx.orig_B_vector:           # grad_output shape (..., N)
-            grad_output = grad_output.unsqueeze(-2)               # (..., 1, N)
-        elif ctx.orig_B_vector and not ctx.orig_A_vector:         # grad_output shape (..., M)
-            grad_output = grad_output.unsqueeze(-1)               # (..., M, 1)
-        elif ctx.orig_A_vector and ctx.orig_B_vector:             # grad_output shape (...)
-            grad_output = grad_output.unsqueeze(-1).unsqueeze(-1) # (..., 1, 1)
+        #  Re-introduce squeezed dimensions
+        if ctx.prepended_A and not ctx.appended_B:
+            grad_output = grad_output.unsqueeze(-2)
+        elif ctx.appended_B and not ctx.prepended_A:
+            grad_output = grad_output.unsqueeze(-1)
+        elif ctx.prepended_A and ctx.appended_B:
+            grad_output = grad_output.unsqueeze(-1).unsqueeze(-1)
 
+        # Compute gradients w.r.t A and B after broadcasting
         grad_A = lns_matmul(grad_output, B.transpose(-1, -2), base)
         grad_B = lns_matmul(A.transpose(-1, -2), grad_output, base)
 
-        # Remove any dimensions we had inserted in forward
-        if ctx.unsqueezed_A:
-            grad_A = grad_A.squeeze(-2)
-        if ctx.unsqueezed_B:
-            grad_B = grad_B.squeeze(-2)
-        if ctx.orig_A_vec:
-            grad_A = grad_A.squeeze(0)  # (1, K) → (K,)
-        if ctx.orig_B_vec:
-            grad_B = grad_B.squeeze(-1) # (K, 1) → (K,)
+        # Reduce gradients to match original shapes before broadcasting
+        # We need to sum over dimensions that were broadcasted
+
+        # For grad_A: reduce to shape before broadcasting
+        A_shape_before_broadcast = ctx.A_shape_before_broadcast
+        while grad_A.dim() > len(A_shape_before_broadcast):
+            grad_A = lns_sum(grad_A, base, dim=0)
+
+        # Sum over any dimensions that were size 1 and got broadcasted
+        for i in range(len(A_shape_before_broadcast) - 2):  # Don't touch matrix dims
+            if A_shape_before_broadcast[i] == 1 and grad_A.shape[i] > 1:
+                grad_A = lns_sum(grad_A, base, dim=i, keepdim=True)
+
+        # For grad_B: reduce to shape before broadcasting
+        B_shape_before_broadcast = ctx.B_shape_before_broadcast
+        while grad_B.dim() > len(B_shape_before_broadcast):
+            grad_B = lns_sum(grad_B, base, dim=0)
+
+        # Sum over any dimensions that were size 1 and got broadcasted
+        for i in range(len(B_shape_before_broadcast) - 2):  # Don't touch matrix dims
+            if B_shape_before_broadcast[i] == 1 and grad_B.shape[i] > 1:
+                grad_B = lns_sum(grad_B, base, dim=i, keepdim=True)
+
+        if ctx.prepended_A:
+            grad_A = grad_A.squeeze(0) # Remove extra M dimension
+        if ctx.appended_B:
+            grad_B = grad_B.squeeze(-1) # Remove extra N dimension
 
         return grad_A, grad_B, None
 
