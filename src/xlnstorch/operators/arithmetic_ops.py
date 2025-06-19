@@ -935,11 +935,17 @@ class LNSLinearFunction(torch.autograd.Function):
         x, A, base = ctx.saved_tensors
 
         grad_x = lns_matmul(grad_output, A, base)
-        grad_A = lns_matmul(x.transpose(-1, -2), grad_output, base)
+        if x.dim() == 1:
+            x_transpose = x.unsqueeze(0).transpose(-1, -2)
+            grad_A = lns_matmul(x_transpose, grad_output.unsqueeze(0), base)
+        else:
+            grad_A = lns_matmul(x.transpose(-1, -2), grad_output, base)
 
         if ctx.biased:
-            grad_bias = torch.sum(grad_output, dim=0)
-
+            if grad_output.dim() == 1:
+                grad_bias = grad_output
+            else:
+                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1)))
         else:
             grad_bias = None
 
@@ -950,10 +956,12 @@ def linear(x, weight, bias=None):
 
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
+        bias_lns = bias._lns
     else:
         x, weight = format_lnstensor_operands(x, weight)
+        bias_lns = None
 
-    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias._lns)
+    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias_lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -992,14 +1000,16 @@ class LNSBilinearFunction(torch.autograd.Function):
         x, y, A, base = ctx.saved_tensors
 
         Ay = lns_matmul(A, y.unsqueeze(-1), base).squeeze(-1)
-        grad_x = lns_matmul(grad_output.unsqueeze(-2), Ay.transpose(-2, -1), base).squeeze(-2)
+        grad_x = lns_matmul(grad_output.unsqueeze(-2), Ay, base).squeeze(-2)
 
         ATx = lns_matmul(A.transpose(-2, -1), x.unsqueeze(-1), base).squeeze(-1)
-        grad_y = lns_matmul(grad_output.unsqueeze(-2), ATx.transpose(-2, -1), base).squeeze(-2)
+        grad_y = lns_matmul(grad_output.unsqueeze(-2), ATx, base).squeeze(-2)
 
         if ctx.biased:
-            grad_bias = torch.sum(grad_output, dim=tuple(range(grad_output.ndim - 1)))
-
+            if grad_output.dim() == 1:
+                grad_bias = grad_output
+            else:
+                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1)))
         else:
             grad_bias = None
 
@@ -1010,9 +1020,11 @@ def bilinear(x, y, weight, bias=None):
 
     if bias is not None:
         x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
+        bias_lns = bias._lns
     else:
         x, y, weight = format_lnstensor_operands(x, y, weight)
+        bias_lns = None
 
-    result = LNSBilinearFunction.apply(x._lns, weight._lns, y._lns, x.base, bias._lns)
+    result = LNSBilinearFunction.apply(x._lns, y._lns, weight._lns, x.base, bias_lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
