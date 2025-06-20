@@ -7,6 +7,9 @@ from .linear_layers import (
 )
 from .dropout_layers import (
     LNSDropout,
+    LNSDropout1d,
+    LNSDropout2d,
+    LNSDropout3d,
 )
 
 __all__ = [
@@ -16,4 +19,7 @@ __all__ = [
     "LNSLinear",
 
     "LNSDropout",
+    "LNSDropout1d",
+    "LNSDropout2d",
+    "LNSDropout3d",
 ]

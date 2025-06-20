@@ -53,6 +53,9 @@ from .internal_lns_ops import (
     lns_logsigmoid,
 
     lns_dropout,
+    lns_dropout1d,
+    lns_dropout2d,
+    lns_dropout3d,
 )
 from .arithmetic_ops import (
     implement_sbdb,
@@ -122,4 +125,7 @@ __all__ = [
     "lns_logsigmoid",
 
     "lns_dropout",
+    "lns_dropout1d",
+    "lns_dropout2d",
+    "lns_dropout3d",
 ]

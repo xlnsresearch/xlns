@@ -95,3 +95,6 @@ lns_linear = _create_lns_op_func('linear', torch.nn.functional.linear)
 lns_bilinear = _create_lns_op_func('bilinear', torch.nn.functional.bilinear)
 
 lns_dropout = _create_lns_op_func('dropout', torch.nn.functional.dropout)
+lns_dropout1d = _create_lns_op_func('dropout1d', torch.nn.functional.dropout1d)
+lns_dropout2d = _create_lns_op_func('dropout2d', torch.nn.functional.dropout2d)
+lns_dropout3d = _create_lns_op_func('dropout3d', torch.nn.functional.dropout3d)
