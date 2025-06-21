@@ -142,3 +142,6 @@ already implemented to work with ``LNSTensor`` objects.
     operators.lns_tanh
     operators.lns_sigmoid
     operators.lns_logsigmoid
+    operators.lns_softmin
+    operators.lns_softmax
+    operators.lns_log_softmax

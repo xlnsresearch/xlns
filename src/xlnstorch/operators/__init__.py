@@ -51,6 +51,9 @@ from .internal_lns_ops import (
     lns_tanh,
     lns_sigmoid,
     lns_logsigmoid,
+    lns_softmin,
+    lns_softmax,
+    lns_log_softmax,
 
     lns_dropout,
     lns_dropout1d,
@@ -123,6 +126,9 @@ __all__ = [
     "lns_tanh",
     "lns_sigmoid",
     "lns_logsigmoid",
+    "lns_softmin",
+    "lns_softmax",
+    "lns_log_softmax",
 
     "lns_dropout",
     "lns_dropout1d",

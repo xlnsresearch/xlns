@@ -131,7 +131,8 @@ class LNSAddFunction(torch.autograd.Function):
         result = max_operand + sbdb(-abs_diff, sign_diff, base)
         return torch.where(
             torch.eq(x_packed | 1, LNS_ZERO), y, torch.where(
-                torch.eq(y_packed | 1, LNS_ZERO), x, result.to(torch.float64)))
+                torch.eq(y_packed | 1, LNS_ZERO), x, torch.where(
+                    x_packed ^ 1 == y_packed, LNS_ZERO, result.to(torch.float64))))
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -205,7 +206,7 @@ class LNSNegFunction(torch.autograd.Function):
         neg_x_packed = x_packed ^ 1
 
         return neg_x_packed.to(torch.float64)
-    
+
     @staticmethod
     def setup_context(ctx, inputs, output):
         pass # no context needed for this operation

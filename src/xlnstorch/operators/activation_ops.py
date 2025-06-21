@@ -7,6 +7,10 @@ from . import (
     lns_square,
     lns_sub,
     lns_exp,
+    lns_sum,
+    lns_div,
+    lns_neg,
+    lns_log,
 )
 
 class LNSReLUFunction(torch.autograd.Function):
@@ -276,4 +280,128 @@ class LNSLogSigmoidFunction(torch.autograd.Function):
 @implements(torch.nn.functional.logsigmoid, LNSLogSigmoidFunction.forward, "default", default=True)
 def logsigmoid(x):
     result = LNSLogSigmoidFunction.apply(x._lns, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSSoftminFunction(torch.autograd.Function):
+    """
+    The softmin function in LNS involves exponentiation,
+    which currently requires converting to floating-point
+    and back.
+
+    Gradients are computed as follows:
+    d/dx(softmin(x)) = -softmin(x) * (1 - softmin(x))
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None):
+        x_packed = x.to(torch.int64)
+
+        neg_x = lns_neg(x_packed)
+        exp_x = lns_exp(neg_x, base)
+        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
+
+        result = lns_div(exp_x, sum_exp_x, base)
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base, dim = inputs
+        ctx.save_for_backward(output, base)
+        ctx.dim = dim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output, base = ctx.saved_tensors
+
+        dot_product = lns_sum(lns_mul(grad_output, output), base, dim=ctx.dim, keepdim=True)
+        grad_x = lns_mul(output, lns_sub(grad_output, dot_product, base))
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.softmin, LNSSoftminFunction.forward, "default", default=True)
+def softmin(x, dim=None, _stacklevel=3, dtype=None):
+    result = LNSSoftminFunction.apply(x._lns, x.base, dim)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSSoftmaxFunction(torch.autograd.Function):
+    """
+    The softmax function in LNS involves exponentiation,
+    which currently requires converting to floating-point
+    and back.
+
+    Gradients are computed as follows:
+    d/dx(softmax(x)) = softmax(x) * (1 - softmax(x))
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None):
+        x_packed = x.to(torch.int64)
+
+        exp_x = lns_exp(x_packed, base)
+        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
+
+        result = lns_div(exp_x, sum_exp_x, base)
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base, dim = inputs
+        ctx.save_for_backward(output, base)
+        ctx.dim = dim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output, base = ctx.saved_tensors
+
+        dot_product = lns_sum(lns_mul(grad_output, output), base, dim=ctx.dim, keepdim=True)
+        grad_x = lns_mul(output, lns_sub(grad_output, dot_product, base))
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.softmax, LNSSoftmaxFunction.forward, "default", default=True)
+def softmax(x, dim=None, _stacklevel=3, dtype=None):
+    result = LNSSoftmaxFunction.apply(x._lns, x.base, dim)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSLogSoftmaxFunction(torch.autograd.Function):
+    """
+    The log softmax function in LNS involves exponentiation,
+    which currently requires converting to floating-point
+    and back.
+
+    Gradients are computed as follows:
+    d/dx(log_softmax(x)) = 1 - softmax(x)
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None):
+        x_packed = x.to(torch.int64)
+
+        exp_x = lns_exp(x_packed, base)
+        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
+        log_sum_exp_x = lns_log(sum_exp_x, base)
+
+        result = lns_sub(x_packed, log_sum_exp_x, base)
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base, dim = inputs
+        ctx.save_for_backward(output, base)
+        ctx.dim = dim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        output, base = ctx.saved_tensors
+
+        softmax = lns_exp(output, base)
+        sum_grad = lns_sum(grad_output, base, dim=ctx.dim, keepdim=True)
+        product = lns_mul(softmax, sum_grad)
+        grad_x = lns_sub(grad_output, product, base)
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.log_softmax, LNSLogSoftmaxFunction.forward, "default", default=True)
+def log_softmax(x, dim=None, _stacklevel=3, dtype=None):
+    result = LNSLogSoftmaxFunction.apply(x._lns, x.base, dim)
     return lnstensor(result, from_lns=True, b=x.base)
