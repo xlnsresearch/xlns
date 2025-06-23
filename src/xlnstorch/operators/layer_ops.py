@@ -1,9 +1,11 @@
 import warnings
 
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros_like
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from . import (
-    lns_mul
+    lns_mul,
+    lns_sum,
+    lns_add,
 )
 
 class LNSDropoutFunction(torch.autograd.Function):
@@ -216,5 +218,170 @@ def dropout3d(x, p=0.5, training=True, inplace=False):
     if inplace:
         x._lns = result
         return x
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSConv1dFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+        x_packed, weight_packed = x.to(torch.int64), weight.to(torch.int64)
+
+        # add batch dimension if needed
+        squeeze_batch = False
+        if x.dim() == 2:
+            squeeze_batch = True
+            x_packed = x_packed.unsqueeze(0)
+
+        N, C_in, L_in = x_packed.shape # Batch size, input channels, input length
+        C_out, C_w, K = weight.shape   # Output channels, weight channels per group, kernel size
+
+        # Basic checks for grouped conv: channels must be divisible by groups
+        assert C_in % groups == 0, f"C_in must be divisible by groups ({C_in} % {groups})"
+        assert C_out % groups == 0, f"C_out must be divisible by groups ({C_out} % {groups})"
+        assert C_w == C_in // groups, f"Weight shape mismatch: {C_w} vs {C_in // groups}"
+
+        g_Cin = C_in // groups
+        g_Cout = C_out // groups
+
+        if padding > 0:
+            x_padded = torch.nn.functional.pad(x, (padding, padding), value=LNS_ZERO.item())
+        else:
+            x_padded = x_packed
+
+        # Output length calculation based on kernel parameters (same as PyTorch)
+        L_out = (L_in + 2 * padding - dilation * (K - 1) - 1) // stride + 1
+        out = zeros(N, C_out, L_out, device=x.device, b=base)._lns
+
+        for n in range(N):
+            for g in range(groups):
+                # Select this group's input channels
+                inp_group = x_padded[n, g * g_Cin : (g+1) * g_Cin]
+                #  Iterate over this group's output channels
+                for c_out in range(g * g_Cout, (g + 1) * g_Cout):
+                    for l in range(L_out):
+                        start = l * stride
+                        end = start + K * dilation
+                        inp_slice = inp_group[:, start:end:dilation]
+                        # Element-wise multiply and sum across in_channels and kernel size
+                        out[n, c_out, l] = lns_sum(lns_mul(inp_slice, weight_packed[c_out]), base)
+                        if bias is not None:
+                            out[n, c_out, l] = lns_add(out[n, c_out, l], bias[c_out], base)
+
+        # If batch dimension was added, remove before returning
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, weight, bias, base, stride, padding, dilation, groups = inputs
+        ctx.save_for_backward(x, weight, bias, base)
+        ctx.stride = stride
+        ctx.padding = padding
+        ctx.dilation = dilation
+        ctx.groups = groups
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, weight, bias, base = ctx.saved_tensors
+
+        # Add batch dimension to grad_output if not present
+        squeeze_batch = False
+        if grad_output.dim() == 2:
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+
+        N, C_out, L_out = grad_output.shape
+        C_in = weight.shape[1] * ctx.groups
+        K = weight.shape[2]
+        g_Cin = C_in // ctx.groups
+        g_Cout = C_out // ctx.groups
+
+        # Pad input as in forward for correct alignment
+        if ctx.padding > 0:
+            x_padded = torch.nn.functional.pad(x, (ctx.padding, ctx.padding))
+        else:
+            x_padded = x
+
+        grad_x_padded = zeros(N, C_in, x.shape[-1] + 2 * ctx.padding, device=grad_output.device, b=base)._lns
+        grad_weight = zeros_like(weight, b=base)._lns
+
+        # Compute input gradient: for each padded input element, sum contributions from output grads via chain rule
+        for n in range(N):
+            for g in range(ctx.groups):
+                in_start = g * g_Cin
+                in_end = (g + 1) * g_Cin
+                out_start = g * g_Cout
+                out_end = (g + 1) * g_Cout
+
+                for c_in in range(g_Cin):
+                    for l_in in range(x.shape[-1] + 2*ctx.padding):
+                        grad = LNSTensor.get_internal_tensor(0, base)
+                        # Accumulate gradient over all relevant output channels and positions
+                        for c_out in range(out_start, out_end):
+                            w = weight[c_out, c_in, :]
+                            for k in range(K):
+                                # Compute if this input position is in the receptive field of this output
+                                l_out_nom = l_in - k * ctx.dilation
+                                if l_out_nom % ctx.stride == 0:
+                                    l_out = l_out_nom // ctx.stride
+                                    if l_out >= 0 and l_out < L_out:
+                                        # Chain rule for gradients through conv
+                                        grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], w[k]), base)
+                        grad_x_padded[n, in_start + c_in, l_in] = grad
+
+        # Remove padding to match input shape, as in forward
+        if ctx.padding > 0:
+            grad_x = grad_x_padded[:, :, ctx.padding:-ctx.padding]
+        else:
+            grad_x = grad_x_padded
+
+        # Compute weight gradients: correlate grad_output with input windows
+        # note: weight gradients are broken for groups > 1 right now
+        for g in range(ctx.groups):
+            in_start = g * g_Cin
+            in_end = (g + 1) * g_Cin
+            out_start = g * g_Cout
+            out_end = (g + 1) * g_Cout
+
+            for c_out in range(out_start, out_end):
+                for c_in in range(g_Cin):
+                    for k in range(K):
+                        grad = LNSTensor.get_internal_tensor(0, base)
+                        # Sum over all samples and locations
+                        for n in range(N):
+                            for l_out in range(L_out):
+                                l_in = l_out * ctx.stride + k * ctx.dilation
+                                inp_padded = x_padded[n, in_start + c_in, :]
+                                if l_in >= 0 and l_in < inp_padded.size(0):
+                                    grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], inp_padded[l_in]), base)
+                        grad_weight[c_out, c_in, k] = grad
+
+        # Compute bias gradient by summing grad_output along batch and time (output length)
+        if bias is not None:
+            grad_bias = lns_sum(grad_output, base, dim=[0, 2])
+        else:
+            grad_bias = None
+
+        # Remove batch dim if input originally had none
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, grad_weight, grad_bias, None, None, None, None, None
+
+@implements(torch.nn.functional.conv1d, LNSConv1dFunction.forward, "default", default=True)
+def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
+
+    if bias is not None:
+        x, weight, bias = format_lnstensor_operands(x, weight, bias)
+        bias_lns = bias._lns
+    else:
+        x, weight = format_lnstensor_operands(x, weight)
+        bias_lns = None
+
+    result = LNSConv1dFunction.apply(x._lns, weight._lns, bias_lns, x.base,
+                                     stride, padding, dilation, groups)
 
     return lnstensor(result, from_lns=True, b=x.base)
