@@ -145,3 +145,22 @@ already implemented to work with ``LNSTensor`` objects.
     operators.lns_softmin
     operators.lns_softmax
     operators.lns_log_softmax
+
+Layer Operations
+~~~~~~~~~~~~~~~~
+
+As per usual, you should use the standard PyTorch
+layer classes, such as ``torch.nn.Linear``, which
+support ``LNSTensor`` objects.
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_linear
+    operators.lns_bilinear
+    operators.lns_dropout
+    operators.lns_dropout1d
+    operators.lns_dropout2d
+    operators.lns_dropout3d
+    operators.lns_conv1d

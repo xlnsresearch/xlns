@@ -26,6 +26,11 @@ class LNSConv1d(LNSModule):
         Number of blocked connections from input channels to output channels. Default is 1.
     bias : bool, optional
         If True, adds a learnable bias to the output. Default is True.
+    padding_mode : str, optional
+        Type of padding to use. Can be 'zeros', 'reflect', 'replicate',
+        or 'circular'. Default is 'zeros'.
+    device : torch.device, optional
+        The device on which to create the layer's parameters. If None, uses the default device.
     """
 
     def __init__(
