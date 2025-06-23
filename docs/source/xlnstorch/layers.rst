@@ -17,18 +17,26 @@ implemented for completeness. Any layers that do not have parameters will be
 denoted in the documentation.
 
 ===============================    =====================
-Layer                              Note
+Linear Layers                      Note
 ===============================    =====================
 :class:`layers.LNSIdentity`        No parameters
 :class:`layers.LNSLinear`
 :class:`layers.LNSBilinear`
 :class:`layers.LNSLazyLinear`
+===============================    =====================
 
+===============================    =====================
+Dropout Layers                     Note
+===============================    =====================
 :class:`layers.LNSDropout`         No parameters
 :class:`layers.LNSDropout1d`       No parameters
 :class:`layers.LNSDropout2d`       No parameters
 :class:`layers.LNSDropout3d`       No parameters
+===============================    =====================
 
+===============================    =====================
+Convolutional Layers               Note
+===============================    =====================
 :class:`layers.LNSConv1d`
 ===============================    =====================
 
@@ -42,6 +50,8 @@ Layer                              Note
 .. autosummary::
     :toctree: generated
     :nosignatures:
+
+    layers.LNSModule
 
     layers.LNSIdentity
     layers.LNSLinear
@@ -58,3 +68,13 @@ Layer                              Note
 .. raw:: html
 
    </div>
+
+Custom Layers
+-------------
+
+To implement your own custom layers that support ``LNSTensor`` parameters,
+you can subclass the base layer class provided in this module :class:`layers.LNSModule`.
+
+This base class is a subclass of the standard PyTorch ``torch.nn.Module`` and
+provides the method :func:`layers.LNSModule.register_parameter` which is equivalent
+to PyTorch's method of registering parameters.

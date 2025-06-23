@@ -7,7 +7,7 @@ class LNSDropout(LNSModule):
     with a probability :math:`p` during training. This is not strictly necessary, since
     there are no trainable parameters, but it is included for completeness.
 
-    See also: `torch.nn.Dropout`
+    See also: :py:class:`torch.nn.Dropout`
 
     Parameters
     ----------
@@ -26,7 +26,7 @@ class LNSDropout(LNSModule):
         return torch.nn.functional.dropout(x, self.p, self.training, self.inplace)
 
 class LNSDropout1d(LNSModule):
-    """
+    r"""
     An LNS dropout layer that randomly zeroes out entire channels of the input tensor
     with a probability :math:`p` during training. This is not strictly necessary, since
     there are no trainable parameters, but it is included for completeness.
@@ -34,7 +34,7 @@ class LNSDropout1d(LNSModule):
     A channel is a 1D feature map, e.g., the :math:`j`-th channel of the :math:`i`-th
     sample in the batched input is a 1D tensor :math:`\text{input}[i, j]`.
 
-    See also: `torch.nn.Dropout1d`
+    See also: :py:class:`torch.nn.Dropout1d`
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class LNSDropout1d(LNSModule):
         return torch.nn.functional.dropout1d(x, self.p, self.training, self.inplace)
 
 class LNSDropout2d(LNSModule):
-    """
+    r"""
     An LNS dropout layer that randomly zeroes out entire channels of the input tensor
     with a probability :math:`p` during training. This is not strictly necessary, since
     there are no trainable parameters, but it is included for completeness.
@@ -64,7 +64,7 @@ class LNSDropout2d(LNSModule):
     Note: Following PyTorch's convention, this class will perform 1D channel-wise dropout
     for 3D inputs.
 
-    See also: `torch.nn.Dropout2d`
+    See also: :py:class:`torch.nn.Dropout2d`
 
     Parameters
     ----------
@@ -83,7 +83,7 @@ class LNSDropout2d(LNSModule):
         return torch.nn.functional.dropout2d(x, self.p, self.training, self.inplace)
 
 class LNSDropout3d(LNSModule):
-    """
+    r"""
     An LNS dropout layer that randomly zeroes out entire channels of the input tensor
     with a probability :math:`p` during training. This is not strictly necessary, since
     there are no trainable parameters, but it is included for completeness.
@@ -91,7 +91,7 @@ class LNSDropout3d(LNSModule):
     A channel is a 3D feature map, e.g., the :math:`j`-th channel of the :math:`i`-th
     sample in the batched input is a 3D tensor :math:`\text{input}[i, j]`.
 
-    See also: `torch.nn.Dropout3d`
+    See also: :py:class:`torch.nn.Dropout3d`
 
     Parameters
     ----------

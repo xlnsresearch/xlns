@@ -3,10 +3,10 @@ from . import LNSModule
 from .. import rand
 
 class LNSConv1d(LNSModule):
-    """
+    r"""
     An LNS 1D convolutional layer that applies a 1D convolution over the input tensor.
 
-    See also: `torch.nn.Conv1d`
+    See also: :py:class:`torch.nn.Conv1d`
 
     Parameters
     ----------
@@ -31,6 +31,21 @@ class LNSConv1d(LNSModule):
         or 'circular'. Default is 'zeros'.
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, uses the default device.
+
+    Attributes
+    ----------
+    weight : LNSTensor
+        The weight tensor of shape
+        :math:`(\text{out_channels}, \frac{\text{in_channels}}{\text{groups}}, \text{kernel_size})`,
+        initialized with random values uniformly distributed between
+        :math:`-\sqrt{k}` and :math:`\sqrt{k}`,
+        where :math:`k = \frac{\text{groups}}{\text{in_channels} \times \text{kernel_size}}`.
+    bias : LNSTensor or None
+        The bias vector of shape :math:`(\text{out_channels},)`,
+        initialized with random values uniformly distributed between
+        :math:`-\sqrt{k}` and :math:`\sqrt{k}`,
+        where :math:`k = \frac{\text{groups}}{\text{in_channels} \times \text{kernel_size}}`.
+        This is only created if `bias` is set to True.
     """
 
     def __init__(
