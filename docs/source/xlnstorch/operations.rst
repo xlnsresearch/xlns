@@ -75,8 +75,6 @@ Arithmetic Operations
     operators.lns_sum
     operators.lns_matmul
     operators.lns_transpose
-    operators.lns_linear
-    operators.lns_bilinear
 
 Comparison Operations
 ~~~~~~~~~~~~~~~~~~~~~

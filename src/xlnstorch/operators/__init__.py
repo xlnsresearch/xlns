@@ -16,8 +16,6 @@ from .internal_lns_ops import (
     lns_sum,
     lns_matmul,
     lns_transpose,
-    lns_linear,
-    lns_bilinear,
 
     lns_equal,
     lns_eq,
@@ -55,6 +53,8 @@ from .internal_lns_ops import (
     lns_softmax,
     lns_log_softmax,
 
+    lns_linear,
+    lns_bilinear,
     lns_dropout,
     lns_dropout1d,
     lns_dropout2d,
@@ -92,8 +92,6 @@ __all__ = [
     "lns_sum",
     "lns_matmul",
     "lns_transpose",
-    "lns_linear",
-    "lns_bilinear",
 
     "lns_equal",
     "lns_eq",
@@ -131,6 +129,8 @@ __all__ = [
     "lns_softmax",
     "lns_log_softmax",
 
+    "lns_linear",
+    "lns_bilinear",
     "lns_dropout",
     "lns_dropout1d",
     "lns_dropout2d",

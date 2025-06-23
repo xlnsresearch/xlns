@@ -6,7 +6,134 @@ from . import (
     lns_mul,
     lns_sum,
     lns_add,
+    lns_matmul,
 )
+
+class LNSLinearFunction(torch.autograd.Function):
+    """
+    Linear transformation is implemented using matrix
+    multiplication followed by addition of a bias term.
+
+    Gradients are computed as follows:
+    d/dx(x @ A^T + b) = A
+    d/dA(x @ A^T + b) = x^T
+    d/db(x @ A^T + b) = 1
+    """
+
+    @staticmethod
+    def forward(x, A, base, bias=None):
+        x_packed, A_packed = x.to(torch.int64), A.to(torch.int64)
+
+        output = lns_matmul(x_packed, A_packed.transpose(-2, -1), base)
+        if bias is not None:
+            output = lns_add(output, bias, base)
+
+        return output
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, A, base, bias = inputs
+        ctx.biased = True if bias is not None else False
+        ctx.save_for_backward(x, A, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, A, base = ctx.saved_tensors
+
+        grad_x = lns_matmul(grad_output, A, base)
+        if x.dim() == 1:
+            x_transpose = x.unsqueeze(0).transpose(-1, -2)
+            grad_A = lns_matmul(x_transpose, grad_output.unsqueeze(0), base)
+        else:
+            grad_A = lns_matmul(x.transpose(-1, -2), grad_output, base)
+
+        if ctx.biased:
+            if grad_output.dim() == 1:
+                grad_bias = grad_output
+            else:
+                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1)))
+        else:
+            grad_bias = None
+
+        return grad_x, grad_A, None, grad_bias
+
+@implements(torch.nn.functional.linear, LNSLinearFunction.forward, key='default', default=True)
+def linear(x, weight, bias=None):
+
+    if bias is not None:
+        x, weight, bias = format_lnstensor_operands(x, weight, bias)
+        bias_lns = bias._lns
+    else:
+        x, weight = format_lnstensor_operands(x, weight)
+        bias_lns = None
+
+    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias_lns)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSBilinearFunction(torch.autograd.Function):
+    """
+    Linear transformation is implemented using matrix
+    multiplication followed by addition of a bias term.
+
+    Gradients are computed as follows:
+    d/dx(x^T @ A @ y + b) = A @ y
+    d/dA(x^T @ A @ y + b) = x @ y^T
+    d/dy(x^T @ A @ y + b) = A^T @ x
+    d/db(x^T @ A @ y + b) = 1
+    """
+
+    @staticmethod
+    def forward(x, y, A, base, bias=None):
+        x_packed, y_packed, A_packed = x.to(torch.int64), y.to(torch.int64), A.to(torch.int64)
+
+        tmp = lns_matmul(A_packed, y_packed.unsqueeze(-1), base).squeeze(-1)
+        output = lns_matmul(x_packed.unsqueeze(-2), tmp.transpose(-2, -1), base).squeeze(-2)
+
+        if bias is not None:
+            output = lns_add(output, bias, base)
+
+        return output
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, A, base, bias = inputs
+        ctx.biased = True if bias is not None else False
+        ctx.save_for_backward(x, y, A, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, A, base = ctx.saved_tensors
+
+        Ay = lns_matmul(A, y.unsqueeze(-1), base).squeeze(-1)
+        grad_x = lns_matmul(grad_output.unsqueeze(-2), Ay, base).squeeze(-2)
+
+        ATx = lns_matmul(A.transpose(-2, -1), x.unsqueeze(-1), base).squeeze(-1)
+        grad_y = lns_matmul(grad_output.unsqueeze(-2), ATx, base).squeeze(-2)
+
+        if ctx.biased:
+            if grad_output.dim() == 1:
+                grad_bias = grad_output
+            else:
+                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1)))
+        else:
+            grad_bias = None
+
+        return grad_x, grad_y, None, None, grad_bias # todo: grad_A requires einsum
+
+@implements(torch.nn.functional.bilinear, LNSBilinearFunction.forward, key='default', default=True)
+def bilinear(x, y, weight, bias=None):
+
+    if bias is not None:
+        x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
+        bias_lns = bias._lns
+    else:
+        x, y, weight = format_lnstensor_operands(x, y, weight)
+        bias_lns = None
+
+    result = LNSBilinearFunction.apply(x._lns, y._lns, weight._lns, x.base, bias_lns)
+
+    return lnstensor(result, from_lns=True, b=x.base)
 
 class LNSDropoutFunction(torch.autograd.Function):
 
