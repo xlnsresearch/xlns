@@ -256,7 +256,34 @@ class LNSTensor:
         """
         return self._lns.requires_grad
 
+    def size(self, dim: int | None = None) -> torch.Size | int:
+        """
+        Returns the size of the LNSTensor along a specified dimension or all dimensions.
+
+        Parameters
+        ----------
+        dim : int, optional
+            If specified, returns the size of the given dimension; otherwise,
+        returns the size of all dimensions.
+
+        Returns
+        -------
+        torch.Size or int
+            The size of the LNSTensor. The returned value is a ``torch.Size`` if
+            `dim` is ``None``, otherwise it returns an integer representing the
+            size of the specified dimension.
+        """
+        return self._lns.size(dim=dim)
+
     def numel(self) -> int:
+        """
+        Returns the total number of elements in the LNSTensor.
+
+        Returns
+        -------
+        int
+            The total number of elements in the LNSTensor.
+        """
         return self._lns.numel()
 
     def dim(self) -> int:
