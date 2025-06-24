@@ -25,6 +25,35 @@ class LNSModule(torch.nn.Module):
         super().__init__(*args, **kwargs)
 
     def register_parameter(self, name, param, requires_grad=True):
+        """
+        Registers a parameter in the module.
+
+        This method overrides the default `register_parameter` method to handle
+        LNSTensor parameters specifically. It converts the `_lns` attribute of the
+        LNSTensor into a `torch.nn.Parameter` and registers it with the name
+        `name + "_lns"`. The base value of the LNSTensor is registered as a buffer
+        with the name `name + "_base"`.
+        """
         setattr(self, name, param)
         param._lns = torch.nn.Parameter(param._lns, requires_grad=requires_grad)
         super().register_parameter(name + "_lns", param._lns)
+        super().register_buffer(name + "_base", param.base)
+
+    def parameter_groups(self):
+        """
+        Returns a list of parameter groups for the module.
+        Each group contains parameters and their corresponding base values.
+        """
+        for name, param in self.named_parameters():
+
+            if name.endswith("_lns") and hasattr(self, name[:-4]):
+                base_name = name[:-4] + "_base"
+                yield {
+                    "params": param,
+                    "base": getattr(self, base_name)
+                }
+
+            else:
+                yield {
+                    "params": param,
+                }

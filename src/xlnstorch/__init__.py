@@ -36,6 +36,7 @@ from .base import (
 )
 from . import operators
 from . import layers
+from . import optimizers
 
 __all__ = [
     "LNS_ZERO",

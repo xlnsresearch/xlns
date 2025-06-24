@@ -41,11 +41,15 @@ class LNSLinearFunction(torch.autograd.Function):
         x, A, base = ctx.saved_tensors
 
         grad_x = lns_matmul(grad_output, A, base)
-        if x.dim() == 1:
-            x_transpose = x.unsqueeze(0).transpose(-1, -2)
-            grad_A = lns_matmul(x_transpose, grad_output.unsqueeze(0), base)
-        else:
-            grad_A = lns_matmul(x.transpose(-1, -2), grad_output, base)
+
+        out_features = A.shape[0]
+        in_features = A.shape[1]
+        *batch_dims, _ = grad_output.shape
+
+        grad_output_2d = grad_output.reshape(-1, out_features)
+        x_2d = x.reshape(-1, in_features)
+        grad_output_T = grad_output_2d.transpose(0, 1)
+        grad_A = lns_matmul(grad_output_T, x_2d, base)
 
         if ctx.biased:
             if grad_output.dim() == 1:
