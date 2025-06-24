@@ -1,5 +1,5 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO
+from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases
 from ..operators import (
     lns_equal,
     lns_sub,
@@ -7,11 +7,11 @@ from ..operators import (
     lns_add,
 )
 
-def _as_internal_tensor(x):
+def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
-        return x._lns
+        return x
     else:
-        return lnstensor(x)._lns
+        return lnstensor(x)
 
 class LNSSGD(torch.optim.Optimizer):
     """
@@ -48,10 +48,10 @@ class LNSSGD(torch.optim.Optimizer):
             raise ValueError("Nesterov momentum requires a momentum and zero dampening")
 
         defaults = dict(
-            lr=_as_internal_tensor(lr),
-            momentum=_as_internal_tensor(momentum),
-            dampening=_as_internal_tensor(dampening),
-            weight_decay=_as_internal_tensor(weight_decay),
+            lr=_as_lnstensor(lr),
+            momentum=_as_lnstensor(momentum),
+            dampening=_as_lnstensor(dampening),
+            weight_decay=_as_lnstensor(weight_decay),
             nesterov=nesterov,
             maximize=maximize
         )
@@ -73,6 +73,10 @@ class LNSSGD(torch.optim.Optimizer):
             maximize = group["maximize"]
             base = group["base"]
 
+            # Align the parameters to the base of the group.
+            lr, momentum, dampening, weight_decay = align_lnstensor_bases(
+                lr, momentum, dampening, weight_decay, base=base)
+
             for p in group["params"]:
 
                 if p.grad is None:
@@ -82,11 +86,11 @@ class LNSSGD(torch.optim.Optimizer):
                 state = self.state[p]
 
                 # 1. weight_decay: g ← g + λθ
-                if not lns_equal(weight_decay, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay), base)
+                if not lns_equal(weight_decay._lns, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
 
                 # 2. momentum buffering: b ← μb + (1 - τ)g
-                if not lns_equal(momentum, LNS_ZERO):
+                if not lns_equal(momentum._lns, LNS_ZERO):
                     buf = state.get("momentum_buffer", None)
 
                     if buf is None:
@@ -94,9 +98,9 @@ class LNSSGD(torch.optim.Optimizer):
                         state["momentum_buffer"] = buf
 
                     else:
-                        one_minus_tau = lns_sub(LNSTensor.get_internal_tensor(1.0, base), dampening, base)
+                        one_minus_tau = lns_sub(LNSTensor.get_internal_tensor(1.0, base), dampening._lns, base)
                         buf = lns_add(
-                            lns_mul(buf, momentum),
+                            lns_mul(buf, momentum._lns),
                             lns_mul(grad, one_minus_tau),
                             base
                         )
@@ -104,13 +108,13 @@ class LNSSGD(torch.optim.Optimizer):
 
                     # 3a. nesterov momentum: g ← g + μb
                     if nesterov:
-                        grad = lns_add(grad, lns_mul(buf, momentum), base)
+                        grad = lns_add(grad, lns_mul(buf, momentum._lns), base)
                     # 3b. classical momentum: g ← b 
                     else:
                         grad = buf
 
                 # 4. parameter update: θ ← θ ± γg
-                delta = lns_mul(grad, lr)
+                delta = lns_mul(grad, lr._lns)
                 if maximize:
                     p.data = lns_add(p.data, delta, base)
                 else:
