@@ -256,6 +256,13 @@ class LNSTensor:
         """
         return self._lns.requires_grad
 
+    def item(self) -> float:
+        """
+        Returns the value of the LNSTensor as a Python number. This method
+        is only valid for LNSTensors that contain a single element.
+        """
+        return self.value.item()
+
     def size(self, dim: int | None = None) -> torch.Size | int:
         """
         Returns the size of the LNSTensor along a specified dimension or all dimensions.

@@ -83,6 +83,7 @@ LNSTensor class reference
     LNSTensor.ndim
     LNSTensor.requires_grad
 
+    LNSTensor.item
     LNSTensor.size
     LNSTensor.numel
     LNSTensor.backward
