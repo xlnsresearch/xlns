@@ -256,6 +256,9 @@ class LNSTensor:
         """
         return self._lns.requires_grad
 
+    def numel(self) -> int:
+        return self._lns.numel()
+
     def dim(self) -> int:
         """
         Returns the number of dimensions of the LNSTensor.
@@ -550,6 +553,12 @@ class LNSTensor:
 
     def minimum(self, other):
         return torch.minimum(self, other)
+
+    def tanh(self):
+        return torch.tanh(self)
+
+    def sigmoid(self):
+        return torch.sigmoid(self)
 
 def lnstensor(
         data: Any,

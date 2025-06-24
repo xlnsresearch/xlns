@@ -50,7 +50,7 @@ def relu(x, inplace=False):
     result = LNSReLUFunction.apply(x._lns, x.base)
 
     if inplace:
-        x._lns = result._lns
+        x._lns = result
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)
@@ -108,7 +108,7 @@ def leaky_relu(x, negative_slope=0.01, inplace=False):
     result = LNSLeakyReLUFunction.apply(x._lns, negative_slope, x.base)
 
     if inplace:
-        x._lns = result._lns
+        x._lns = result
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)
@@ -154,7 +154,7 @@ def threshold(x, threshold, value, inplace=False):
     result = LNSThresholdFunction.apply(x._lns, threshold, value, x.base)
 
     if inplace:
-        x._lns = result._lns
+        x._lns = result
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)

@@ -88,6 +88,8 @@ class LNSBilinearFunction(torch.autograd.Function):
         x_packed, y_packed, A_packed = x.to(torch.int64), y.to(torch.int64), A.to(torch.int64)
 
         tmp = lns_matmul(A_packed, y_packed.unsqueeze(-1), base).squeeze(-1)
+        if tmp.dim() == 1:
+            tmp = tmp.unsqueeze(-2)
         output = lns_matmul(x_packed.unsqueeze(-2), tmp.transpose(-2, -1), base).squeeze(-2)
 
         if bias is not None:

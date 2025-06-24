@@ -328,3 +328,112 @@ class TestLNSMatmul:
 
         assert isinstance(result, xltorch.LNSTensor), "Mixed matmul result should be an LNS tensor"
         assert torch.allclose(result.value, expected), "regular @ LNS matrix multiplication failed"
+
+class TestLNSTranspose:
+    """Tests for LNS transpose operation."""
+
+    def test_basic_transpose(self):
+        """Test basic transpose of a 2D LNS tensor."""
+        lns = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
+        result = torch.transpose(lns, 0, 1)
+        expected = torch.transpose(lns.value, 0, 1)
+
+        assert isinstance(result, xltorch.LNSTensor), "Transpose result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "Basic transpose failed"
+        assert result.shape == expected.shape, "Transpose shape mismatch"
+
+    def test_transpose_keepdim(self):
+        """Test transpose does not change number of elements."""
+        lns = xltorch.lnstensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], f=23)
+        result = torch.transpose(lns, 0, 1)
+        expected = torch.transpose(lns.value, 0, 1)
+
+        assert result.numel() == expected.numel(), "Transpose should not change number of elements"
+
+    def test_transpose_high_dim(self):
+        """Test transpose on a 3D LNS tensor."""
+        lns = xltorch.lnstensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]], f=23)
+        result = torch.transpose(lns, 0, 2)
+        expected = torch.transpose(lns.value, 0, 2)
+
+        assert isinstance(result, xltorch.LNSTensor), "Transpose result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "High-dim transpose failed"
+        assert result.shape == expected.shape, "High-dim transpose shape mismatch"
+
+    def test_mixed_tensor_types(self):
+        """Test transpose with one regular tensor and one LNS tensor."""
+        lns = xltorch.lnstensor([[1.0, 2.0], [3.0, 4.0]], f=23)
+        regular = torch.tensor([[5.0, 6.0], [7.0, 8.0]], dtype=torch.float64)
+
+        # LNS transpose
+        result = torch.transpose(lns, 0, 1)
+        expected = torch.transpose(lns.value, 0, 1)
+
+        assert isinstance(result, xltorch.LNSTensor), "LNS transpose result should be an LNS tensor"
+        assert torch.allclose(result.value, expected), "LNS transpose failed"
+
+        # Regular transpose
+        result = torch.transpose(regular, 0, 1)
+        expected = torch.transpose(regular, 0, 1)
+
+        assert torch.allclose(result, expected), "Regular transpose failed"
+
+class TestLNSLogExp:
+    """Tests for LNS log and exp operations."""
+
+    def test_log_basic(self, sample_tensors):
+        """Test log of positive LNS tensor."""
+        lns1, _ = sample_tensors
+
+        # Avoid log(0) and negatives
+        lns_pos = xltorch.lnstensor([1.0, 2.0, 3.0], f=23)
+        result = torch.log(lns_pos)
+        expected = torch.log(lns_pos.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Log result should be an LNS tensor"
+        assert torch.allclose(result.value, expected, rtol=1e-5), "Log operation failed"
+        assert result.shape == expected.shape, "Log shape mismatch"
+
+    def test_log_edge_cases(self):
+        """Test log with edge case values (positive only)."""
+        lns = xltorch.lnstensor([1e-10, 1.0, 1e10], f=23)
+        result = torch.log(lns)
+        expected = torch.log(lns.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Log result should be an LNS tensor"
+        assert torch.allclose(result.value, expected, rtol=1e-5), "Log edge cases failed"
+
+    def test_exp_basic(self, sample_tensors):
+        """Test exp of LNS tensor."""
+        lns1, _ = sample_tensors
+        result = torch.exp(lns1)
+        expected = torch.exp(lns1.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Exp result should be an LNS tensor"
+        assert torch.allclose(result.value, expected, rtol=1e-5), "Exp operation failed"
+        assert result.shape == expected.shape, "Exp shape mismatch"
+
+    def test_exp_edge_cases(self):
+        """Test exp with edge case values."""
+        lns = xltorch.lnstensor([-10.0, 0.0, 1.0, 2.0], f=23)
+        result = torch.exp(lns)
+        expected = torch.exp(lns.value)
+
+        assert isinstance(result, xltorch.LNSTensor), "Exp result should be an LNS tensor"
+        assert torch.allclose(result.value, expected, rtol=1e-5), "Exp edge cases failed"
+
+    def test_log_exp_inverse(self):
+        """Test that exp(log(x)) ≈ x for positive x."""
+        lns = xltorch.lnstensor([0.5, 1.0, 2.0, 10.0], f=23)
+        log_result = torch.log(lns)
+        exp_result = torch.exp(log_result)
+
+        assert torch.allclose(exp_result.value, lns.value, rtol=1e-5), "exp(log(x)) should be close to x"
+
+    def test_exp_log_inverse(self):
+        """Test that log(exp(x)) ≈ x for a range of x."""
+        lns = xltorch.lnstensor([-2.0, 0.0, 1.0, 3.0], f=23)
+        exp_result = torch.exp(lns)
+        log_result = torch.log(exp_result)
+
+        assert torch.allclose(log_result.value, lns.value, rtol=1e-5), "log(exp(x)) should be close to x"
