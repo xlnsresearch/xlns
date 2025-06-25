@@ -83,6 +83,7 @@ class LNSSGD(torch.optim.Optimizer):
         )
         super(LNSSGD, self).__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
         """Performs a single optimization step."""
 

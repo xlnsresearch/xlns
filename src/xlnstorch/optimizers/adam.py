@@ -88,6 +88,7 @@ class LNSAdam(torch.optim.Optimizer):
         )
         super().__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
 
         loss = None
@@ -255,6 +256,7 @@ class LNSAdamW(torch.optim.Optimizer):
         )
         super().__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
 
         loss = None
@@ -415,6 +417,7 @@ class LNSAdamax(torch.optim.Optimizer):
         )
         super().__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
     
         loss = None

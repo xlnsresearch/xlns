@@ -85,6 +85,7 @@ class LNSAdagrad(torch.optim.Optimizer):
         )
         super(LNSAdagrad, self).__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
 
         loss = None
