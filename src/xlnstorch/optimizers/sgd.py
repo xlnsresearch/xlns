@@ -19,14 +19,39 @@ class LNSSGD(torch.optim.Optimizer):
     dampening, weight decay, and nesterov momentum.
 
     This optimizer is analogous to PyTorch's :py:class:`torch.optim.SGD`, but
-    is designed to work with LNSTensor objects.
+    is designed to work with LNSTensor objects. See the PyTorch documentation
+    for more details on the SGD algorithm.
 
+    Parameters:
+    -----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `parameter_groups()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.
+    momentum : LNSTensor, float, optional
+        Momentum factor (default: 0.0). Must be a non-negative LNSTensor or float.
+    dampening : LNSTensor, float, optional
+        Dampening for momentum (default: 0.0). Must be a non-negative LNSTensor or float.
+    weight_decay : LNSTensor, float, optional
+        Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
+    nesterov : bool, optional
+        Enables Nesterov momentum if set to True (default: False).
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
+
+    Examples
+    --------
+    >>> optimizer = xlnstorch.optimizers.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
+    >>> optimizer.zero_grad() # Clear gradients before the step
+    >>> loss_fn(model(input), target).backward() # Compute gradients
+    >>> optimizer.step() # Update parameters based on gradients
     """
 
     def __init__(
             self,
             params,
-            lr=0.1,
+            lr=0.001,
             momentum=0.0,
             dampening=0.0,
             weight_decay=0.0,
