@@ -5,6 +5,7 @@ from ..operators import (
     lns_sub,
     lns_mul,
     lns_add,
+    lns_neg,
 )
 
 def _as_lnstensor(x):
@@ -110,6 +111,9 @@ class LNSSGD(torch.optim.Optimizer):
                 grad = p.grad # g_t
                 state = self.state[p]
 
+                if maximize:
+                    grad = lns_neg(grad)
+
                 # 1. weight_decay: g ← g + λθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
                     grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
@@ -140,9 +144,6 @@ class LNSSGD(torch.optim.Optimizer):
 
                 # 4. parameter update: θ ← θ ± γg
                 delta = lns_mul(grad, lr._lns)
-                if maximize:
-                    p.data = lns_add(p.data, delta, base)
-                else:
-                    p.data = lns_sub(p.data, delta, base)
+                p.data = lns_sub(p.data, delta, base)
 
         return loss
