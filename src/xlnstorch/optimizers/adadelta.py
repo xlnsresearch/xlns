@@ -18,6 +18,30 @@ def _as_lnstensor(x):
 
 class LNSAdadelta(torch.optim.Optimizer):
     """
+    Implements the LNSAdadelta algorithm for LNSTensor parameters,
+    supporting weight decay and a "maximize" mode.
+
+    This optimizer is analogous to PyTorch's :py:class:`torch.optim.Adamax`,
+    but is designed to work with LNSTensor objects. See the PyTorch
+    documentation for more details on the Adamax algorithm.
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `parameter_groups()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.
+    rho : LNSTensor, float, optional
+        Coefficient used for computing running averages of gradient (default: 0.9).
+        Must be a non-negative LNSTensor or float in the range (0.0, 1.0).
+    eps : LNSTensor, float, optional
+        Term added to the denominator for numerical stability (default: 1e-6).
+        Must be a non-negative LNSTensor or float.
+    weight_decay : LNSTensor or float, optional
+        Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
 
     def __init__(

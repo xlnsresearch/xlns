@@ -1,14 +1,14 @@
 import torch
 from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
 from ..operators import (
-    lns_equal,
     lns_sub,
+    lns_equal,
     lns_mul,
     lns_add,
-    lns_pow,
     lns_div,
+    lns_pow,
     lns_maximum,
-    lns_sqrt,
+    lns_abs,
 )
 
 def _as_lnstensor(x):
@@ -17,15 +17,14 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdam(torch.optim.Optimizer):
+class LNSAdamax(torch.optim.Optimizer):
     """
-    Implements the Adam optimization algorithm for LNSTensor parameters,
-    including optional weight–decay regularisation, the AMSGrad variant,
-    and a “maximize” mode.
+    Implements the Adamax optimization algorithm for LNSTensor parameters,
+    including optional weight–decay regularisation, and a “maximize” mode.
 
-    This optimizer is analogous to PyTorch's :py:class:`torch.optim.Adam`,
+    This optimizer is analogous to PyTorch's :py:class:`torch.optim.Adamax`,
     but is designed to work with LNSTensor objects. See the PyTorch
-    documentation for more details on the Adam algorithm.
+    documentation for more details on the Adamax algorithm.
 
     Parameters
     ----------
@@ -33,7 +32,7 @@ class LNSAdam(torch.optim.Optimizer):
         An iterable of parameters to optimize or dicts defining parameter groups.
         This should be obtained from a model's `parameter_groups()` method.
     lr : LNSTensor, float, optional
-        Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.
+        Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.
     betas : Tuple[float, float] or Tuple[LNSTensor, LNSTensor], optional
         Coefficients used for computing running averages of gradient and its square
         (default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
@@ -42,21 +41,16 @@ class LNSAdam(torch.optim.Optimizer):
         Term added to the denominator for numerical stability (default: 1e-8).
     weight_decay : LNSTensor or float
         Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
-    amsgrad : bool, optional
-        Uses the AMSGrad variant that maintains the maximum of past squared gradients
-        (default: False).
     maximize : bool, optional
         If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
-
     def __init__(
             self,
             params,
-            lr=0.001,
+            lr=0.002,
             betas=(0.9, 0.999),
             eps=1e-8,
             weight_decay=0.0,
-            amsgrad=False,
             *,
             maximize=False
         ):
@@ -82,14 +76,13 @@ class LNSAdam(torch.optim.Optimizer):
             beta2=_as_lnstensor(betas[1]),
             eps=_as_lnstensor(eps),
             weight_decay=_as_lnstensor(weight_decay),
-            amsgrad=amsgrad,
             maximize=maximize,
         )
         super().__init__(params, defaults)
 
     @torch.no_grad()
     def step(self, closure=None):
-
+    
         loss = None
         if closure is not None:
             loss = closure()
@@ -100,7 +93,6 @@ class LNSAdam(torch.optim.Optimizer):
             beta2 = group["beta2"]
             eps = group["eps"]
             weight_decay = group["weight_decay"]
-            amsgrad = group["amsgrad"]
             maximize = group["maximize"]
             base = group["base"]
 
@@ -110,7 +102,6 @@ class LNSAdam(torch.optim.Optimizer):
 
             one = LNSTensor.get_internal_tensor(1.0, base)
             one_minus_beta1 = lns_sub(one, beta1._lns, base)
-            one_minus_beta2 = lns_sub(one, beta2._lns, base)
 
             for p in group["params"]:
 
@@ -132,13 +123,11 @@ class LNSAdam(torch.optim.Optimizer):
                     # First time we see this parameter
                     state["step"] = 0
                     state["exp_avg"] = zeros_like(p.data, b=base)._lns # m_0
-                    state["exp_avg_sq"] = zeros_like(p.data, b=base)._lns # v_0
-                    if amsgrad:
-                        state["max_exp_avg_sq"] = zeros_like(p.data, b=base)._lns # v_max_0
+                    state["inf_norm"] = zeros_like(p.data, b=base)._lns # u_0
 
                 # Retrieve running stats
                 exp_avg = state["exp_avg"] # m_{t-1}
-                exp_avg_sq = state["exp_avg_sq"] # v_{t-1}
+                inf_norm = state["inf_norm"] # u_{t-1}
                 state["step"] += 1
                 t = state["step"]
 
@@ -149,38 +138,21 @@ class LNSAdam(torch.optim.Optimizer):
                     base
                 )
 
-                # 4. v_t ← β_2*v_{t-1} + (1 − β_2)*g^2
-                grad_squared = lns_mul(grad, grad)
-                exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns),
-                    lns_mul(grad_squared, one_minus_beta2),
+                # 4. u_t ← max(β_2*u_{t-1}, |g_t| + ε)
+                inf_norm = lns_maximum(
+                    lns_mul(inf_norm, beta2._lns),
+                    lns_add(lns_abs(grad), eps._lns, base),
                     base
                 )
 
-                # 5. bias correction:
-                # m'_t = m_t / (1 − β_1^t)
-                # v'_t = v_t / (1 − β_2^t)
+                # 5. θ ← θ − γ*m / (sqrt(1 - b_1^t) * u)
                 t_tensor = torch.tensor(t, dtype=torch.int64)
-                beta1_t = lns_pow(beta1._lns, t_tensor, base)
-                beta2_t = lns_pow(beta2._lns, t_tensor, base)
-                bias_corr1 = lns_sub(one, beta1_t, base)
-                bias_corr2 = lns_sub(one, beta2_t, base)
-
-                exp_avg_hat = lns_div(exp_avg, bias_corr1, base)
-                if amsgrad:
-                    max_exp_avg_sq = state["max_exp_avg_sq"]
-                    max_exp_avg_sq = lns_maximum(max_exp_avg_sq, exp_avg_sq, base)
-                    state["max_exp_avg_sq"] = max_exp_avg_sq
-                    denom_sq = lns_div(max_exp_avg_sq, bias_corr2, base)
-                else:
-                    denom_sq = lns_div(exp_avg_sq, bias_corr2, base)
-
-                # 6. θ ← θ − γ*m' / (sqrt(v') + ε)
-                denom = lns_add(lns_sqrt(denom_sq, base), eps._lns, base)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base))
+                one_minus_beta1_t = lns_sub(one, lns_pow(beta1._lns, t_tensor, base), base)
+                denom = lns_mul(one_minus_beta1_t, inf_norm)
+                step_size = lns_mul(lr._lns, lns_div(exp_avg, denom, base))
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["exp_avg"] = exp_avg
-                state["exp_avg_sq"] = exp_avg_sq
+                state["inf_norm"] = inf_norm
 
         return loss

@@ -1,14 +1,14 @@
 import torch
 from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
 from ..operators import (
-    lns_equal,
     lns_sub,
+    lns_equal,
     lns_mul,
     lns_add,
-    lns_pow,
     lns_div,
-    lns_maximum,
     lns_sqrt,
+    lns_pow,
+    lns_maximum,
 )
 
 def _as_lnstensor(x):
@@ -17,15 +17,15 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdam(torch.optim.Optimizer):
+class LNSAdamW(torch.optim.Optimizer):
     """
-    Implements the Adam optimization algorithm for LNSTensor parameters,
+    Implements the AdamW optimization algorithm for LNSTensor parameters,
     including optional weight–decay regularisation, the AMSGrad variant,
     and a “maximize” mode.
 
-    This optimizer is analogous to PyTorch's :py:class:`torch.optim.Adam`,
+    This optimizer is analogous to PyTorch's :py:class:`torch.optim.AdamW`,
     but is designed to work with LNSTensor objects. See the PyTorch
-    documentation for more details on the Adam algorithm.
+    documentation for more details on the AdamW algorithm.
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ class LNSAdam(torch.optim.Optimizer):
     eps : LNSTensor, float, optional
         Term added to the denominator for numerical stability (default: 1e-8).
     weight_decay : LNSTensor or float
-        Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
+        Weight decay (L2 penalty) (default: 0.01). Must be a non-negative LNSTensor or float.
     amsgrad : bool, optional
         Uses the AMSGrad variant that maintains the maximum of past squared gradients
         (default: False).
@@ -55,7 +55,7 @@ class LNSAdam(torch.optim.Optimizer):
             lr=0.001,
             betas=(0.9, 0.999),
             eps=1e-8,
-            weight_decay=0.0,
+            weight_decay=0.01,
             amsgrad=False,
             *,
             maximize=False
@@ -123,9 +123,9 @@ class LNSAdam(torch.optim.Optimizer):
                 if maximize:
                     grad = lns_sub(LNS_ZERO, grad, base) # −∇f
 
-                # 2. weight decay: g ← g + λθ
+                # 2. weight decay: θ ← θ - γλθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    p.data = lns_sub(p.data, lns_mul(lns_mul(lr._lns, weight_decay._lns), p.data), base)
 
                 state = self.state[p]
                 if len(state) == 0:
