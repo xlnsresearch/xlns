@@ -9,6 +9,7 @@ from ..operators import (
     lns_div,
     lns_maximum,
     lns_sqrt,
+    lns_neg,
 )
 
 def _as_lnstensor(x):
@@ -121,7 +122,7 @@ class LNSAdam(torch.optim.Optimizer):
 
                 # 1. flip sign if we want to maximise
                 if maximize:
-                    grad = lns_sub(LNS_ZERO, grad, base) # −∇f
+                    grad = lns_neg(grad) # −∇f
 
                 # 2. weight decay: g ← g + λθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):

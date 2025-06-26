@@ -2,6 +2,7 @@ import torch
 from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
 from ..operators import (
     lns_sub,
+    lns_neg,
     lns_equal,
     lns_mul,
     lns_add,
@@ -121,7 +122,7 @@ class LNSAdamW(torch.optim.Optimizer):
 
                 # 1. flip sign if we want to maximise
                 if maximize:
-                    grad = lns_sub(LNS_ZERO, grad, base) # −∇f
+                    grad = lns_neg(grad) # −∇f
 
                 # 2. weight decay: θ ← θ - γλθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):

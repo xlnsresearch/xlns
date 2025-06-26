@@ -52,7 +52,7 @@ class LNSRprop(torch.optim.Optimizer):
         ):
 
         if lr <= 0.0:
-            raise ValueError("Invalid learning rate: {}".format(lr))
+            raise ValueError(f"Invalid learning rate: {lr}")
 
         if (etas[0] <= 0 or etas[0] >= 1 or etas[1] <= 1):
             raise ValueError(

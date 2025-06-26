@@ -62,19 +62,19 @@ class LNSRMSprop(torch.optim.Optimizer):
         ):
 
         if lr < 0.0:
-            raise ValueError("Invalid learning rate: {}".format(lr))
+            raise ValueError(f"Invalid learning rate: {lr}")
 
         if not (0.0 <= alpha < 1.0):
-            raise ValueError("Invalid alpha value: {}".format(alpha))
+            raise ValueError(f"Invalid alpha value: {alpha}")
 
         if eps < 0.0:
-            raise ValueError("Invalid epsilon value: {}".format(eps))
+            raise ValueError(f"Invalid epsilon value: {eps}")
 
         if weight_decay < 0.0:
-            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
+            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
         if momentum < 0.0:
-            raise ValueError("Invalid momentum value: {}".format(momentum))
+            raise ValueError(f"Invalid momentum value: {momentum}")
 
         defaults = dict(
             lr=_as_lnstensor(lr),

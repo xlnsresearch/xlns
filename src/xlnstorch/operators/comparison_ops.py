@@ -113,7 +113,7 @@ def gt(x, y, *, out=None):
     return result
 
 def _lns_le(x, y):
-    print()
+
     x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
