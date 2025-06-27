@@ -177,24 +177,23 @@ def lt(x, y, *, out=None):
 
     return result
 
-def _lns_isclose(x, y, atol, rtol, base):
+def _lns_isclose(x, y, base, rtol, atol):
     abs_diff = lns_abs(lns_sub(x, y, base))
     eps = lns_add(atol, lns_mul(rtol, lns_abs(y)), base)
-    print("yoyoyo", abs_diff, eps)
     return lns_le(abs_diff, eps)
 
 @implements(torch.isclose, _lns_isclose, "default", default=True)
 def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
-    return _lns_isclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+    x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
+    return _lns_isclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
 
-def _lns_allclose(x, y, atol, rtol, base):
-    return torch.all(lns_isclose(x, y, atol, rtol, base))
+def _lns_allclose(x, y, base, rtol, atol):
+    return torch.all(lns_isclose(x, y, base, rtol, atol))
 
 @implements(torch.allclose, _lns_allclose, "default", default=True)
 def allclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
-    return _lns_allclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+    x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
+    return _lns_allclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
 
 def _lns_any(x, dim=None, keepdim=False):
     x_packed = x.to(torch.int64)

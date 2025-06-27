@@ -75,9 +75,9 @@ class LNSLeakyReLUFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x, negative_slope, base):
-        x_packed = x.to(torch.int64)
+        x_packed, negative_slope_packed = x.to(torch.int64), negative_slope.to(torch.int64)
 
-        negative_part = lns_mul(x_packed, LNSTensor.get_internal_tensor(negative_slope, base))
+        negative_part = lns_mul(x_packed, negative_slope_packed)
         negative_result = torch.where(x_packed & 1 == 1, negative_part, LNS_ZERO)
         positive_result = torch.where(x_packed & 1 == 1, LNS_ZERO, x_packed)
 
@@ -87,17 +87,15 @@ class LNSLeakyReLUFunction(torch.autograd.Function):
     @staticmethod
     def setup_context(ctx, inputs, output):
         _, negative_slope, base = inputs
-        ctx.save_for_backward(output, base)
-        ctx.negative_slope = negative_slope
+        ctx.save_for_backward(negative_slope, output, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+        negative_slope, output, base = ctx.saved_tensors
+        negative_slope_packed, output_packed = negative_slope.to(torch.int64), output.to(torch.int64)
 
         grad_x = torch.where((output_packed | 1 == LNS_ZERO) | (output_packed & 1 == 1),
-                             LNSTensor.get_internal_tensor(ctx.negative_slope, base),
-                             LNSTensor.get_internal_tensor(1.0, base))
+                             negative_slope_packed, LNSTensor.get_internal_tensor(1.0, base))
         grad_x = lns_mul(grad_output, grad_x)
 
         return grad_x, None, None
@@ -105,7 +103,8 @@ class LNSLeakyReLUFunction(torch.autograd.Function):
 @implements(torch.nn.functional.leaky_relu, LNSLeakyReLUFunction.forward, "default", default=True)
 def leaky_relu(x, negative_slope=0.01, inplace=False):
 
-    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope, x.base)
+    x, negative_slope = format_lnstensor_operands(x, negative_slope)
+    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope._lns, x.base)
 
     if inplace:
         x._lns = result
@@ -116,7 +115,8 @@ def leaky_relu(x, negative_slope=0.01, inplace=False):
 @implements(torch.nn.functional.leaky_relu_, LNSLeakyReLUFunction.forward, "default", default=True)
 def leaky_relu_(x, negative_slope=0.01):
 
-    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope, x.base)
+    x, negative_slope = format_lnstensor_operands(x, negative_slope)
+    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope._lns, x.base)
 
     x._lns = result._lns
     return x
@@ -125,24 +125,22 @@ class LNSThresholdFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(x, threshold, value, base):
-        x_packed = x.to(torch.int64)
+        x_packed, threshold_packed = x.to(torch.int64), threshold.to(torch.int64)
 
-        result = torch.where(lns_gt(x, LNSTensor.get_internal_tensor(threshold, base)),
-                             x_packed, LNSTensor.get_internal_tensor(value, base))
+        result = torch.where(lns_gt(x_packed, threshold_packed), x, value)
         return result.to(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
         _, _, value, base = inputs
-        ctx.save_for_backward(output, base)
-        ctx.value = value
+        ctx.save_for_backward(value, output, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+        value, output, base = ctx.saved_tensors
+        value_packed, output_packed = value.to(torch.int64), output.to(torch.int64)
 
-        grad_x = torch.where(output_packed == LNSTensor.get_internal_tensor(ctx.value, base),
+        grad_x = torch.where(output_packed == value_packed,
                              LNS_ZERO, LNSTensor.get_internal_tensor(1.0, base))
         grad_x = lns_mul(grad_output, grad_x)
 
@@ -151,7 +149,8 @@ class LNSThresholdFunction(torch.autograd.Function):
 @implements(torch.nn.functional.threshold, LNSThresholdFunction.forward, "default", default=True)
 def threshold(x, threshold, value, inplace=False):
 
-    result = LNSThresholdFunction.apply(x._lns, threshold, value, x.base)
+    x, threshold, value = format_lnstensor_operands(x, threshold, value)
+    result = LNSThresholdFunction.apply(x._lns, threshold._lns, value._lns, x.base)
 
     if inplace:
         x._lns = result
@@ -162,7 +161,8 @@ def threshold(x, threshold, value, inplace=False):
 @implements(torch.nn.functional.threshold_, LNSThresholdFunction.forward, "default", default=True)
 def threshold_(x, threshold, value):
 
-    result = LNSThresholdFunction.apply(x._lns, threshold, value, x.base)
+    x, threshold, value = format_lnstensor_operands(x, threshold, value)
+    result = LNSThresholdFunction.apply(x._lns, threshold._lns, value._lns, x.base)
 
     x._lns = result._lns
     return x
