@@ -25,7 +25,7 @@ class LNSRMSprop(torch.optim.Optimizer):
     but is designed to work with LNSTensor objects. See the PyTorch documentation
     for more details on the RMSprop algorithm.
 
-    Parameters:
+    Parameters
     -----------
     params : iterable
         An iterable of parameters to optimize or dicts defining parameter groups.

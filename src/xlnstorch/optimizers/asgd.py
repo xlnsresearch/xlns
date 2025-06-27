@@ -21,6 +21,37 @@ def _as_lnstensor(x):
 
 class LNSASGD(torch.optim.Optimizer):
     """
+    Implements the ASGD algorithm for LNSTensor parameters,
+    including optional weight decay and a "maximize" mode.
+
+    This optimizer is analogous to PyTorch's :py:class:`torch.optim.ASGD`,
+    but is designed to work with LNSTensor objects. See the PyTorch
+    documentation for more details on the ASGD algorithm.
+
+    Note that this optimizer doesn't seem to implement the ASGD algorithm
+    correctly, but it is made to match the PyTorch implementation as
+    closely as possible.
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `parameter_groups()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.
+    lambd : LNSTensor, float, optional
+        Coefficient for the learning rate decay (default: 0.0001). Must be a non-negative
+        LNSTensor or float.
+    alpha : LNSTensor, float, optional
+        Exponent for the learning rate decay (default: 0.75). Must be a non-negative
+        LNSTensor or float in the range (0.0, 1.0].
+    t0 : LNSTensor, float, optional
+        The point at which the learning rate decay starts (default: 1000000.0).
+        Must be a non-negative LNSTensor or float.
+    weight_decay : LNSTensor or float, optional
+        Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
 
     def __init__(

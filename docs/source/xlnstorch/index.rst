@@ -11,3 +11,4 @@ LNS arithmetic in machine learning models.
     LNS Tensors <lnstensors>
     Operations <operations>
     Layers <layers>
+    Optimizers <optimizers>
