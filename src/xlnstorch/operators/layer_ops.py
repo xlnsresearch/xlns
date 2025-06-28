@@ -472,7 +472,6 @@ class LNSConv1dFunction(torch.autograd.Function):
             grad_x = grad_x_padded
 
         # Compute weight gradients: correlate grad_output with input windows
-        # note: weight gradients are broken for groups > 1 right now
         for g in range(ctx.groups):
             in_start = g * g_Cin
             in_end = (g + 1) * g_Cin
@@ -488,7 +487,7 @@ class LNSConv1dFunction(torch.autograd.Function):
                             for l_out in range(L_out):
                                 l_in = l_out * ctx.stride + k * ctx.dilation
                                 inp_padded = x_padded[n, in_start + c_in, :]
-                                if l_in >= 0 and l_in < inp_padded.size(0):
+                                if ctx.padding <= l_in < inp_padded.size(0) - ctx.padding:
                                     grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], inp_padded[l_in]), base)
                         grad_weight[c_out, c_in, k] = grad
 
