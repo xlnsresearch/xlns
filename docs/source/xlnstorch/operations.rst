@@ -162,3 +162,5 @@ support ``LNSTensor`` objects.
     operators.lns_dropout2d
     operators.lns_dropout3d
     operators.lns_conv1d
+    operators.lns_conv2d
+    operators.lns_conv3d

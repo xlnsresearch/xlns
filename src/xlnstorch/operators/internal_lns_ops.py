@@ -456,3 +456,25 @@ lns_conv1d = _create_lns_op_func('conv1d', torch.nn.functional.conv1d, signature
     ("groups", "pk", int, 1)],
     torch.Tensor,
 ))
+lns_conv2d = _create_lns_op_func('conv2d', torch.nn.functional.conv2d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("weight", "pk", torch.Tensor),
+    ("bias", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("stride", "pk", int | Tuple[int], 1),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("dilation", "pk", int | Tuple[int], 1),
+    ("groups", "pk", int, 1)],
+    torch.Tensor,
+))
+lns_conv3d = _create_lns_op_func('conv3d', torch.nn.functional.conv3d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("weight", "pk", torch.Tensor),
+    ("bias", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("stride", "pk", int | Tuple[int], 1),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("dilation", "pk", int | Tuple[int], 1),
+    ("groups", "pk", int, 1)],
+    torch.Tensor,
+))

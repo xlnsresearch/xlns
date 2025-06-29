@@ -38,6 +38,8 @@ Dropout Layers                     Note
 Convolutional Layers               Note
 ===============================    =====================
 :class:`layers.LNSConv1d`
+:class:`layers.LNSConv2d`
+:class:`layers.LNSConv3d`
 ===============================    =====================
 
 .. hide the autosummary table from the main page but still
@@ -45,7 +47,7 @@ Convolutional Layers               Note
 
 .. raw:: html
 
-   <div style="display: none;">
+    <div style="display: none;">
 
 .. autosummary::
     :toctree: generated
@@ -64,10 +66,12 @@ Convolutional Layers               Note
     layers.LNSDropout3d
 
     layers.LNSConv1d
+    layers.LNSConv2d
+    layers.LNSConv3d
 
 .. raw:: html
 
-   </div>
+    </div>
 
 Custom Layers
 -------------

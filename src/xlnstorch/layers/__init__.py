@@ -15,6 +15,8 @@ from .dropout_layers import (
 )
 from .convolutional_layers import (
     LNSConv1d,
+    LNSConv2d,
+    LNSConv3d,
 )
 
 __all__ = [
@@ -31,4 +33,6 @@ __all__ = [
     "LNSDropout3d",
 
     "LNSConv1d",
+    "LNSConv2d",
+    "LNSConv3d",
 ]
