@@ -143,6 +143,21 @@ already implemented to work with ``LNSTensor`` objects.
     operators.lns_softmin
     operators.lns_softmax
     operators.lns_log_softmax
+    operators.lns_hardtanh
+    operators.lns_hardswish
+    operators.lns_elu
+    operators.lns_selu
+    operators.lns_celu
+    operators.lns_prelu
+    operators.lns_rrelu
+    operators.lns_glu
+    operators.lns_hardshrink
+    operators.lns_tanhshrink
+    operators.lns_softsign
+    operators.lns_softplus
+    operators.lns_softshrink
+    operators.lns_hardsigmoid
+    operators.lns_silu
 
 Layer Operations
 ~~~~~~~~~~~~~~~~

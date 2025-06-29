@@ -405,6 +405,92 @@ lns_log_softmax = _create_lns_op_func('log_softmax', torch.nn.functional.log_sof
     ("dim", "pk", int, None)],
     torch.Tensor,
 ))
+lns_hardtanh = _create_lns_op_func('hardtanh', torch.nn.functional.hardtanh, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("min_val", "pk", torch.Tensor),
+    ("max_val", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_hardswish = _create_lns_op_func('hardswish', torch.nn.functional.hardswish, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_elu = _create_lns_op_func('elu', torch.nn.functional.elu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("alpha", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_selu = _create_lns_op_func('selu', torch.nn.functional.selu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_celu = _create_lns_op_func('celu', torch.nn.functional.celu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("alpha", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_prelu = _create_lns_op_func('prelu', torch.nn.functional.prelu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("a", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_rrelu = _create_lns_op_func('rrelu', torch.nn.functional.rrelu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("a", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_glu = _create_lns_op_func('glu', torch.nn.functional.glu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("dim", "pk", int, -1)],
+    torch.Tensor,
+))
+lns_hardshrink = _create_lns_op_func('hardshrink', torch.nn.functional.hardshrink, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("lambd", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_tanhshrink = _create_lns_op_func('tanhshrink', torch.nn.functional.tanhshrink, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_softsign = _create_lns_op_func('softsign', torch.nn.functional.softsign, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_softplus = _create_lns_op_func('softplus', torch.nn.functional.softplus, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("beta", "pk", torch.Tensor),
+    ("threshold", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_softshrink = _create_lns_op_func('softshrink', torch.nn.functional.softshrink, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("lambd", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_hardsigmoid = _create_lns_op_func('hardsigmoid', torch.nn.functional.hardsigmoid, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_silu = _create_lns_op_func('silu', torch.nn.functional.silu, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
 
 lns_linear = _create_lns_op_func('linear', torch.nn.functional.linear, signature=_build_signature([
     ("x", "pk", torch.Tensor),
