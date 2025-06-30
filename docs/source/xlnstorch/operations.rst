@@ -118,6 +118,7 @@ functions.
     operators.lns_mse_loss
     operators.lns_l1_loss
     operators.lns_binary_cross_entropy
+    operators.lns_binary_cross_entropy_with_logits
     operators.lns_nll_loss
 
 Activation Operations

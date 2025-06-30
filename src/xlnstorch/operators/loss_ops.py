@@ -11,6 +11,7 @@ from . import(
     lns_sign,
     lns_log,
     lns_add,
+    lns_sigmoid,
 )
 
 class LNSMSELossFunction(torch.autograd.Function):
@@ -253,6 +254,105 @@ def binary_cross_entropy(x, y, weight=None, size_average=None, reduce=None, redu
         weight_lns = weight._lns
 
     result = LNSBCELossFunction.apply(x._lns, y._lns, x.base, weight_lns, size_average, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+# doesn't implement pos_weight yet
+class LNSBCEWithLogitsLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, base, weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=None):
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+        sigmoid_x = lns_sigmoid(x_packed, base)
+        log_sigmoid_x = lns_log(sigmoid_x, base)
+        pos_log_prob = lns_mul(y_packed, log_sigmoid_x)
+
+        sigmoid_x2 = lns_sub(LNSTensor.get_internal_tensor(1.0, base), sigmoid_x, base)
+        log_sigmoid_x2 = lns_log(sigmoid_x2, base)
+        y2 = lns_sub(LNSTensor.get_internal_tensor(1.0, base), y_packed, base)
+        neg_log_prob = lns_mul(y2, log_sigmoid_x2)
+
+        loss = lns_add(pos_log_prob, neg_log_prob, base)
+        if weight is not None:
+            weight = weight.to(torch.int64)
+            loss = lns_mul(loss, weight)
+        loss = lns_neg(loss)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+
+            if weight is not None:
+                weight_sum = lns_sum(weight, base)
+                weighted_mean = lns_div(loss_sum, weight_sum, base)
+                return weighted_mean.to(torch.float64)
+
+            else:
+                num_elements = x.numel()
+                mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+                return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base, weight, _, _, reduction, _ = inputs
+        ctx.reduction = reduction
+        ctx.weighted = False if weight is None else True
+        if ctx.weighted:
+            ctx.save_for_backward(x, y, base, weight)
+        else:
+            ctx.save_for_backward(x, y, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.weighted:
+            x, y, base, weight = ctx.saved_tensors
+            x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+            sigmoid_x = lns_sigmoid(x_packed, base)
+            grad_x = lns_sub(sigmoid_x, y_packed, base)
+            grad_x = lns_mul(grad_x, weight)
+
+            grad_y = lns_mul(x_packed, weight)
+            grad_y = lns_neg(grad_y)
+
+            if ctx.reduction == 'mean':
+                weight_sum = lns_sum(weight, base)
+                grad_x = lns_div(grad_x, weight_sum, base)
+                grad_y = lns_div(grad_y, weight_sum, base)
+
+        else:
+            x, y, base = ctx.saved_tensors
+            x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+            sigmoid_x = lns_sigmoid(x_packed, base)
+            grad_x = lns_sub(sigmoid_x, y_packed, base)
+            grad_y = lns_neg(x_packed)
+
+            if ctx.reduction == 'mean':
+                num_elements = x.numel()
+                grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
+                grad_y = lns_div(grad_y, LNSTensor.get_internal_tensor(num_elements, base), base)
+
+        return grad_x, grad_y, None, None, None, None, None, None
+
+@implements(torch.nn.functional.binary_cross_entropy_with_logits, LNSBCEWithLogitsLossFunction.forward, key="default", default=True)
+def binary_cross_entropy_with_logits(x, y, weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=None):
+
+    if weight is None:
+        x, y = format_lnstensor_operands(x, y)
+        weight_lns = None
+    else:
+        x, y, weight = format_lnstensor_operands(x, y, weight)
+        weight_lns = weight._lns
+
+    result = LNSBCEWithLogitsLossFunction.apply(x._lns, y._lns, x.base, weight_lns, size_average, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)
 

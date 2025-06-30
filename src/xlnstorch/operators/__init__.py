@@ -38,6 +38,7 @@ from .internal_lns_ops import (
     lns_mse_loss,
     lns_l1_loss,
     lns_binary_cross_entropy,
+    lns_binary_cross_entropy_with_logits,
     lns_nll_loss,
 
     lns_relu,
@@ -131,6 +132,7 @@ __all__ = [
     "lns_mse_loss",
     "lns_l1_loss",
     "lns_binary_cross_entropy",
+    "lns_binary_cross_entropy_with_logits",
     "lns_nll_loss",
 
     "lns_relu",
