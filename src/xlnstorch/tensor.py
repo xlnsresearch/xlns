@@ -92,6 +92,17 @@ class LNSTensor:
         self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
+        self._incoming_grads = []
+
+        if requires_grad:
+
+            def _hook(grad):
+                print(self, "hook", grad)
+                self._incoming_grads.append(grad.clone())
+                return grad
+
+            self._hook_handle = self._lns.register_hook(_hook)
+
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
         """
@@ -223,7 +234,14 @@ class LNSTensor:
         if self._lns.grad is None:
             return None
 
-        return lnstensor(self._lns.grad, from_lns=True, b=self.base)
+        if self._incoming_grads:
+            result = lnstensor(0.0, from_lns=False, b=self.base)
+            for grad in self._incoming_grads:
+                print(self, "accumulating grad", grad)
+                result += lnstensor(grad, from_lns=True, b=self.base)
+            return result
+
+        return None
 
     @property
     def shape(self) -> torch.Size:
