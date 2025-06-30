@@ -947,12 +947,44 @@ def hardshrink(x, lambd=0.5):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _lns_tanhshrink(x, base):
-    return lns_sub(x, lns_tanh(x, base), base)
+class LNSTanhshrinkFunction(torch.autograd.Function):
+    """
+    The tanhshrink function in LNS is implemented by applying
+    the tanh function and subtracting it from the input.
 
-@implements(torch.nn.functional.tanhshrink, _lns_tanhshrink, "default", default=True)
+    Gradients are computed as follows:
+    d/dx(tanhshrink(x)) = 1 - tanh(x) ^ 2
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_packed = x.to(torch.int64)
+
+        tanh_x = lns_tanh(x_packed, base)
+        result = lns_sub(x_packed, tanh_x, base)
+
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base = inputs
+        ctx.save_for_backward(x, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        x_packed = x.to(torch.int64)
+
+        tanh_x = lns_tanh(x_packed, base)
+        grad_x = lns_mul(tanh_x, tanh_x)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.nn.functional.tanhshrink, LNSTanhFunction.forward, "default", default=True)
 def tanhshrink(x):
-    return x - torch.nn.functional.tanh(x)
+    result = LNSTanhshrinkFunction.apply(x._lns, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftsignFunction(torch.autograd.Function):
     """
@@ -1126,16 +1158,49 @@ def hardsigmoid(x, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _lns_silu(x, base):
-    return lns_mul(x, lns_sigmoid(x, base))
+class LNSSiLUFunction(torch.autograd.Function):
+    """
+    The SiLU (Sigmoid Linear Unit) function in LNS is implemented
+    by multiplying the input by the sigmoid of the input.
 
-@implements(torch.nn.functional.silu, _lns_silu, "default", default=True)
+    Gradients are computed as follows:
+    d/dx(silu(x)) = sigmoid(x) + x * sigmoid(x) * (1 - sigmoid(x))
+    """
+
+    @staticmethod
+    def forward(x, base):
+        x_packed = x.to(torch.int64)
+
+        sigmoid_x = lns_sigmoid(x_packed, base)
+        result = lns_mul(x_packed, sigmoid_x)
+
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base = inputs
+        ctx.save_for_backward(x, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        x_packed = x.to(torch.int64)
+
+        sigmoid_x = lns_sigmoid(x_packed, base)
+        one_minus_sigmoid_x = lns_sub(LNSTensor.get_internal_tensor(1.0, base), sigmoid_x, base)
+        grad_x = lns_mul(x_packed, lns_mul(sigmoid_x, one_minus_sigmoid_x))
+        grad_x = lns_add(sigmoid_x, grad_x, base)
+        grad_x = lns_mul(grad_output, grad_x)
+
+        return grad_x, None
+
+@implements(torch.nn.functional.silu, LNSSiLUFunction.forward, "default", default=True)
 def silu(x, inplace=False):
 
-    result = x * torch.nn.functional.sigmoid(x)
+    result = LNSSiLUFunction.apply(x._lns, x.base)
 
     if inplace:
         x._lns = result._lns
         return x
 
-    return result
+    return lnstensor(result, from_lns=True, b=x.base)

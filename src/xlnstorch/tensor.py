@@ -92,7 +92,7 @@ class LNSTensor:
         self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
-        if requires_grad and self._lns.is_leaf:
+        if requires_grad and self._lns.is_leaf and not hasattr(self._lns, "_incoming_grads"):
             self.register_grad_hooks()
 
     @classmethod
