@@ -92,16 +92,8 @@ class LNSTensor:
         self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
-        self._incoming_grads = []
-
-        if requires_grad:
-
-            def _hook(grad):
-                print(self, "hook", grad)
-                self._incoming_grads.append(grad.clone())
-                return grad
-
-            self._hook_handle = self._lns.register_hook(_hook)
+        if requires_grad and self._lns.is_leaf:
+            self.register_grad_hooks()
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
@@ -123,6 +115,25 @@ class LNSTensor:
         impl = get_implementation(func, impl_key)
 
         return impl[0](*args, **kwargs) # LNSTensor custom operator
+
+    def register_grad_hooks(self):
+
+        self._incoming_grads = []
+
+        def _hook(grad):
+            self._incoming_grads.append(grad.clone())
+            return grad
+
+        def _accum_hook(param):
+            accum_grad = lnstensor(0, from_lns=False, b=self.base)
+            for grad in self._incoming_grads:
+                if grad is not None:
+                    accum_grad += lnstensor(grad, from_lns=True, b=self.base)
+            param.grad = accum_grad._lns
+
+        print("testesttest")
+        self._hook_handle = self._lns.register_hook(_hook)
+        self._accum_hook_handle = self._lns.register_post_accumulate_grad_hook(_accum_hook)    
 
     def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=None):
         """
@@ -234,14 +245,7 @@ class LNSTensor:
         if self._lns.grad is None:
             return None
 
-        if self._incoming_grads:
-            result = lnstensor(0.0, from_lns=False, b=self.base)
-            for grad in self._incoming_grads:
-                print(self, "accumulating grad", grad)
-                result += lnstensor(grad, from_lns=True, b=self.base)
-            return result
-
-        return None
+        return lnstensor(self._lns.grad, from_lns=True, b=self.base)
 
     @property
     def shape(self) -> torch.Size:

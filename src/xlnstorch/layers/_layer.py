@@ -36,6 +36,7 @@ class LNSModule(torch.nn.Module):
         """
         setattr(self, name, param)
         param._lns = torch.nn.Parameter(param._lns, requires_grad=requires_grad)
+        param.register_grad_hooks()
         super().register_parameter(name + "_lns", param._lns)
         super().register_buffer(name + "_base", param.base)
 
