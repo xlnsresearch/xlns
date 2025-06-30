@@ -11,6 +11,7 @@ from ..operators import (
     lns_pow,
     lns_maximum,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -18,7 +19,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdamW(torch.optim.Optimizer):
+class LNSAdamW(LNSOptimizer):
     """
     Implements the AdamW optimization algorithm for LNSTensor parameters,
     including optional weight–decay regularisation, the AMSGrad variant,

@@ -9,6 +9,7 @@ from ..operators import (
     lns_sqrt,
     lns_neg,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -16,7 +17,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdagrad(torch.optim.Optimizer):
+class LNSAdagrad(LNSOptimizer):
     """
     Implements the Adagrad algorithm with support for learning rate decay,
     weight decay, and an initial accumulator value.

@@ -7,6 +7,7 @@ from ..operators import (
     lns_add,
     lns_neg,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -14,7 +15,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSSGD(torch.optim.Optimizer):
+class LNSSGD(LNSOptimizer):
     """
     Implements stochastic gradient descent (SGD) with support for momentum,
     dampening, weight decay, and nesterov momentum.

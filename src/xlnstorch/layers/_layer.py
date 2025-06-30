@@ -1,4 +1,5 @@
 import torch
+from .. import LNS_ZERO
 
 class LNSModule(torch.nn.Module):
     """
@@ -58,3 +59,17 @@ class LNSModule(torch.nn.Module):
                 yield {
                     "params": param,
                 }
+
+    def zero_grad(self, set_to_none: bool = True):
+        """Clears the gradients of all parameters in the module."""
+        for param in self.parameters():
+            param._incoming_grads = []
+            if param.grad is not None:
+                if set_to_none:
+                    param.grad = None
+                else:
+                    if param.grad.grad_fn is not None:
+                        param.grad.detach_()
+                    else:
+                        param.grad.requires_grad_(False)
+                    param.grad.fill_(LNS_ZERO)

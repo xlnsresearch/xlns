@@ -9,6 +9,7 @@ from ..operators import (
     lns_div,
     lns_sqrt,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -16,7 +17,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdadelta(torch.optim.Optimizer):
+class LNSAdadelta(LNSOptimizer):
     """
     Implements the LNSAdadelta algorithm for LNSTensor parameters,
     supporting weight decay and a "maximize" mode.

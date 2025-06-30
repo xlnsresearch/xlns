@@ -118,20 +118,19 @@ class LNSTensor:
 
     def register_grad_hooks(self):
 
-        self._incoming_grads = []
+        self._lns._incoming_grads = []
 
         def _hook(grad):
-            self._incoming_grads.append(grad.clone())
+            self._lns._incoming_grads.append(grad.clone())
             return grad
 
         def _accum_hook(param):
             accum_grad = lnstensor(0, from_lns=False, b=self.base)
-            for grad in self._incoming_grads:
+            for grad in self._lns._incoming_grads:
                 if grad is not None:
                     accum_grad += lnstensor(grad, from_lns=True, b=self.base)
             param.grad = accum_grad._lns
 
-        print("testesttest")
         self._hook_handle = self._lns.register_hook(_hook)
         self._accum_hook_handle = self._lns.register_post_accumulate_grad_hook(_accum_hook)    
 
@@ -412,6 +411,8 @@ class LNSTensor:
             The LNSTensor with the updated requires_grad flag.
         """
         self._lns.requires_grad_(requires_grad)
+        if requires_grad:
+            self.register_grad_hooks()
         return self
 
     def __repr__(self) -> str:

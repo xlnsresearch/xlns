@@ -11,6 +11,7 @@ from ..operators import (
     lns_neg,
     lns_gt,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -18,7 +19,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSRAdam(torch.optim.Optimizer):
+class LNSRAdam(LNSOptimizer):
     """
     """
 

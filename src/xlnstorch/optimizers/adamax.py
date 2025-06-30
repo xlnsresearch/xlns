@@ -10,6 +10,7 @@ from ..operators import (
     lns_maximum,
     lns_abs,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -17,7 +18,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSAdamax(torch.optim.Optimizer):
+class LNSAdamax(LNSOptimizer):
     """
     Implements the Adamax optimization algorithm for LNSTensor parameters,
     including optional weight–decay regularisation, and a “maximize” mode.

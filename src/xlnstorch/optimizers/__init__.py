@@ -1,3 +1,4 @@
+from ._optimizer import LNSOptimizer
 from .sgd import LNSSGD
 from .adam import LNSAdam
 from .adamw import LNSAdamW
@@ -11,6 +12,8 @@ from .nadam import LNSNAdam
 from .radam import LNSRAdam
 
 __all__ = [
+    "LNSOptimizer",
+
     "LNSSGD",
     "LNSAdam",
     "LNSAdamW",

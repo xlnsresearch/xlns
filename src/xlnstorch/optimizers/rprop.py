@@ -9,6 +9,7 @@ from ..operators import (
     lns_minimum,
     lns_maximum,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -16,7 +17,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSRprop(torch.optim.Optimizer):
+class LNSRprop(LNSOptimizer):
     """
     Implements the Rprop (resilient backpropagation) algorithm.
 

@@ -9,6 +9,7 @@ from ..operators import (
     lns_sqrt,
     lns_div,
 )
+from . import LNSOptimizer
 
 def _as_lnstensor(x):
     if isinstance(x, LNSTensor):
@@ -16,7 +17,7 @@ def _as_lnstensor(x):
     else:
         return lnstensor(x)
 
-class LNSRMSprop(torch.optim.Optimizer):
+class LNSRMSprop(LNSOptimizer):
     """
     Implements the RMSprop algorithm with support for weight decay,
     momentum, and centered variants.
