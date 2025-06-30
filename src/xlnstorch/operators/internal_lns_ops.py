@@ -346,6 +346,18 @@ lns_nll_loss = _create_lns_op_func('nll_loss', torch.nn.functional.nll_loss, sig
     ("reduction", "pk", str, "mean")],
     torch.Tensor,
 ))
+lns_poisson_nll_loss = _create_lns_op_func('poisson_nll_loss', torch.nn.functional.poisson_nll_loss, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("log_input", "pk", bool, True),
+    ("full", "pk", bool, False),
+    ("size_average", "pk", bool, None),
+    ("eps", "pk", torch.Tensor, 1e-8),
+    ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean")],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),

@@ -1,3 +1,5 @@
+import math
+
 import torch
 from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros_like
 from . import(
@@ -12,6 +14,8 @@ from . import(
     lns_log,
     lns_add,
     lns_sigmoid,
+    lns_exp,
+    lns_gt,
 )
 
 class LNSMSELossFunction(torch.autograd.Function):
@@ -466,5 +470,88 @@ def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=Non
         weight_lns = weight._lns
 
     result = LNSNLLLossFunction.apply(x._lns, y, x.base, weight_lns, size_average, ignore_index, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class PoissonNLLLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, eps, base, log_input=True, full=False, size_average=None, reduce=None, reduction='mean'):
+        x_packed, y_packed, eps_packed = x.to(torch.int64), y.to(torch.int64), eps.to(torch.int64)
+
+        if log_input:
+            exp_x = lns_exp(x_packed, base)
+            loss = lns_sub(exp_x, lns_mul(y_packed, x_packed), base)
+        else:
+            log_x = lns_log(lns_add(x_packed, eps_packed, base), base)
+            loss = lns_sub(x_packed, lns_mul(y_packed, log_x), base)
+
+        if full:
+            one = LNSTensor.get_internal_tensor(1.0, base)
+            y_clamped = torch.where(lns_gt(y_packed, one), y_packed, one)
+
+            two_pi = LNSTensor.get_internal_tensor(math.tau, base)
+            stirling_term1 = lns_mul(y_clamped, lns_log(y_clamped, base))
+            stirling_term3 = lns_mul(lns_log(lns_mul(two_pi, y_clamped), base), LNSTensor.get_internal_tensor(0.5, base))
+            stirling = lns_add(lns_sub(stirling_term1, y_clamped, base), stirling_term3, base)
+
+            loss = lns_add(loss, stirling, base)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, eps, base, log_input, full, _, _, reduction = inputs
+        ctx.save_for_backward(x, y, eps, base)
+        ctx.log_input = log_input
+        ctx.full = full
+        ctx.reduction = reduction
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, eps, base = ctx.saved_tensors
+        x_packed, y_packed, eps_packed = x.to(torch.int64), y.to(torch.int64), eps.to(torch.int64)
+
+        if ctx.log_input:
+            grad_x = lns_sub(lns_exp(x_packed, base), y_packed, base)
+            grad_y = lns_neg(x_packed)
+
+        else:
+            grad_x = lns_div(y_packed, lns_add(x_packed, eps_packed, base), base)
+            grad_x = lns_sub(LNSTensor.get_internal_tensor(1.0, base), grad_x, base)
+            grad_y = lns_neg(lns_log(lns_add(x_packed, eps_packed, base), base))
+
+        if ctx.full:
+            stirling_grad = torch.where(lns_gt(y_packed, LNSTensor.get_internal_tensor(1.0, base)),
+                                       lns_add(lns_log(y_packed, base), lns_div(
+                                           LNSTensor.get_internal_tensor(0.5, base), y_packed, base), base),
+                                       LNSTensor.get_internal_tensor(0.0, base))
+            grad_y = lns_add(grad_y, stirling_grad, base)
+
+        if ctx.reduction == 'mean':
+            num_elements = x.numel()
+            grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
+
+        grad_x = lns_mul(grad_x, grad_output)
+        grad_y = lns_mul(grad_y, grad_output)
+
+        return grad_x, grad_y, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.poisson_nll_loss, PoissonNLLLossFunction.forward, key="default", default=True)
+def poisson_nll_loss(x, y, log_input=True, full=False, size_average=None, eps=1e-08, reduce=None, reduction='mean'):
+
+    x, y, eps = format_lnstensor_operands(x, y, eps)
+    result = PoissonNLLLossFunction.apply(x._lns, y._lns, eps._lns, x.base, log_input, full, size_average, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)

@@ -40,6 +40,7 @@ from .internal_lns_ops import (
     lns_binary_cross_entropy,
     lns_binary_cross_entropy_with_logits,
     lns_nll_loss,
+    lns_poisson_nll_loss,
 
     lns_relu,
     lns_relu_,
@@ -134,6 +135,7 @@ __all__ = [
     "lns_binary_cross_entropy",
     "lns_binary_cross_entropy_with_logits",
     "lns_nll_loss",
+    "lns_poisson_nll_loss",
 
     "lns_relu",
     "lns_relu_",
