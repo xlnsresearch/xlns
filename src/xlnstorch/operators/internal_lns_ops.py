@@ -368,6 +368,16 @@ lns_hinge_embedding_loss = _create_lns_op_func('hinge_embedding_loss', torch.nn.
     ("reduction", "pk", str, "mean")],
     torch.Tensor,
 ))
+lns_kl_div = _create_lns_op_func('kl_div', torch.nn.functional.kl_div, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("size_average", "pk", bool, None),
+    ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean"),
+    ("log_target", "pk", bool, False)],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),

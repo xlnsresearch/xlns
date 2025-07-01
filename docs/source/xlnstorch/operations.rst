@@ -122,6 +122,7 @@ functions.
     operators.lns_nll_loss
     operators.lns_poisson_nll_loss
     operators.lns_hinge_embedding_loss
+    operators.lns_kl_div
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~

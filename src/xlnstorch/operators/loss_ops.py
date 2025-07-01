@@ -608,3 +608,76 @@ def hinge_embedding_loss(x, y, margin=1.0, size_average=None, reduce=None, reduc
     result = LNSHingeEmbeddingLossFunction.apply(x._lns, y._lns, margin._lns, x.base, size_average, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSKLDivLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, base, size_average=None, reduce=None, reduction='mean', log_target=False):
+        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+
+        if log_target:
+            loss = lns_mul(lns_exp(y_packed, base), lns_sub(y_packed, x_packed, base))
+        else:
+            loss = lns_mul(y_packed, lns_sub(lns_log(y_packed, base), x_packed, base))
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+
+        elif reduction == 'batchmean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.size(0)
+            batch_mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return batch_mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base, _, _, reduction, log_target = inputs
+        ctx.save_for_backward(x, y, output, base)
+        ctx.reduction = reduction
+        ctx.log_target = log_target
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, output, base = ctx.saved_tensors
+        x_packed, y_packed, output_packed = x.to(torch.int64), y.to(torch.int64), output.to(torch.int64)
+
+        if ctx.log_target:
+            exp_y = lns_exp(y_packed, base)
+            grad_x = lns_neg(exp_y)
+            grad_y = lns_mul(exp_y, lns_add(lns_sub(y_packed, x_packed, base), LNSTensor.get_internal_tensor(1.0, base), base))
+        else:
+            grad_x = lns_neg(y_packed)
+            grad_y = lns_add(lns_sub(lns_log(y_packed, base), x_packed, base), LNSTensor.get_internal_tensor(1.0, base), base)
+
+        if ctx.reduction == 'mean':
+            num_elements = LNSTensor.get_internal_tensor(x.numel(), base)
+            grad_x = lns_div(grad_x, num_elements, base)
+            grad_y = lns_div(grad_y, num_elements, base)
+
+        elif ctx.reduction == 'batchmean':
+            num_elements = LNSTensor.get_internal_tensor(x.size(0), base)
+            grad_x = lns_div(grad_x, num_elements, base)
+            grad_y = lns_div(grad_y, num_elements, base)
+
+        grad_x = lns_mul(grad_x, grad_output)
+        grad_y = lns_mul(grad_y, grad_output)
+
+        return grad_x, grad_y, None, None, None, None, None
+
+@implements(torch.nn.functional.kl_div, LNSKLDivLossFunction.forward, key="default", default=True)
+def kl_div(x, y, size_average=None, reduce=None, reduction='mean', log_target=False):
+
+    x, y = format_lnstensor_operands(x, y)
+    result = LNSKLDivLossFunction.apply(x._lns, y._lns, x.base, size_average, reduce, reduction, log_target)
+
+    return lnstensor(result, from_lns=True, b=x.base)
