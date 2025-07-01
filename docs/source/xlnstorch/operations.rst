@@ -121,6 +121,7 @@ functions.
     operators.lns_binary_cross_entropy_with_logits
     operators.lns_nll_loss
     operators.lns_poisson_nll_loss
+    operators.lns_hinge_embedding_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~

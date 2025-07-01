@@ -16,6 +16,8 @@ from . import(
     lns_sigmoid,
     lns_exp,
     lns_gt,
+    lns_eq,
+    lns_maximum,
 )
 
 class LNSMSELossFunction(torch.autograd.Function):
@@ -460,9 +462,6 @@ class LNSNLLLossFunction(torch.autograd.Function):
 @implements(torch.nn.functional.nll_loss, LNSNLLLossFunction.forward, key="default", default=True)
 def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
 
-    if not torch.is_tensor(y) or torch.is_floating_point(y) or torch.is_complex(y):
-        raise TypeError("Expected target to be a tensor of type LongTensor, but got: {}".format(type(y)))
-
     if weight is None:
         weight_lns = None
     else:
@@ -553,5 +552,59 @@ def poisson_nll_loss(x, y, log_input=True, full=False, size_average=None, eps=1e
 
     x, y, eps = format_lnstensor_operands(x, y, eps)
     result = PoissonNLLLossFunction.apply(x._lns, y._lns, eps._lns, x.base, log_input, full, size_average, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSHingeEmbeddingLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, margin, base, size_average=None, reduce=None, reduction='mean'):
+        x_packed, y_packed, margin_packed = x.to(torch.int64), y.to(torch.int64), margin.to(torch.int64)
+
+        positive_mask = lns_eq(y_packed, LNSTensor.get_internal_tensor(1.0, base))
+        loss = torch.where(positive_mask, x, lns_maximum(LNS_ZERO, lns_sub(margin_packed, x_packed, base), base))
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+        
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, margin, base, _, _, reduction = inputs
+        ctx.save_for_backward(x, y, margin, base)
+        ctx.reduction = reduction
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, margin, base = ctx.saved_tensors
+        y_packed, margin_packed = y.to(torch.int64), margin.to(torch.int64)
+
+        grad_x = torch.where(lns_eq(y_packed, LNSTensor.get_internal_tensor(1.0, base)),
+                             LNSTensor.get_internal_tensor(1.0, base),
+                             torch.where(lns_gt(lns_sub(margin_packed, x, base), LNS_ZERO),
+                                         LNSTensor.get_internal_tensor(-1.0, base), LNS_ZERO))
+
+        if ctx.reduction == 'mean':
+            num_elements = x.numel()
+            grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
+
+        grad_x = lns_mul(grad_x, grad_output)
+
+        return grad_x, None, None, None, None, None, None
+
+@implements(torch.nn.functional.hinge_embedding_loss, LNSHingeEmbeddingLossFunction.forward, key="default", default=True)
+def hinge_embedding_loss(x, y, margin=1.0, size_average=None, reduce=None, reduction='mean'):
+
+    x, y, margin = format_lnstensor_operands(x, y, margin)
+    result = LNSHingeEmbeddingLossFunction.apply(x._lns, y._lns, margin._lns, x.base, size_average, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)
