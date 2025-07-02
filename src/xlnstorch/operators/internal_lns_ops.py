@@ -408,6 +408,16 @@ lns_huber_loss = _create_lns_op_func('huber_loss', torch.nn.functional.huber_los
     ("weight", "pk", torch.Tensor, None)],
     torch.Tensor,
 ))
+lns_smooth_l1_loss = _create_lns_op_func('smooth_l1_loss', torch.nn.functional.smooth_l1_loss, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("beta", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("size_average", "pk", bool, None),
+    ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean")],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),

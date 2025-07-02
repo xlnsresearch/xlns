@@ -126,6 +126,7 @@ functions.
     operators.lns_margin_ranking_loss
     operators.lns_gaussian_nll_loss
     operators.lns_huber_loss
+    operators.lns_smooth_l1_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~

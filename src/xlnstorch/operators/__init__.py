@@ -46,6 +46,7 @@ from .internal_lns_ops import (
     lns_margin_ranking_loss,
     lns_gaussian_nll_loss,
     lns_huber_loss,
+    lns_smooth_l1_loss,
 
     lns_relu,
     lns_relu_,
@@ -146,6 +147,7 @@ __all__ = [
     "lns_margin_ranking_loss",
     "lns_gaussian_nll_loss",
     "lns_huber_loss",
+    "lns_smooth_l1_loss",
 
     "lns_relu",
     "lns_relu_",
