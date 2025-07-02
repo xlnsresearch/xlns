@@ -399,6 +399,15 @@ lns_gaussian_nll_loss = _create_lns_op_func('gaussian_nll_loss', torch.nn.functi
     ("reduction", "pk", str, "mean")],
     torch.Tensor,
 ))
+lns_huber_loss = _create_lns_op_func('huber_loss', torch.nn.functional.huber_loss, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("delta", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("reduction", "pk", str, "mean"),
+    ("weight", "pk", torch.Tensor, None)],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),

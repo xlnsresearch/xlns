@@ -125,6 +125,7 @@ functions.
     operators.lns_kl_div
     operators.lns_margin_ranking_loss
     operators.lns_gaussian_nll_loss
+    operators.lns_huber_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~

@@ -19,6 +19,7 @@ from . import(
     lns_eq,
     lns_maximum,
     lns_reciprocal,
+    lns_lt,
 )
 
 class LNSMSELossFunction(torch.autograd.Function):
@@ -812,5 +813,113 @@ def gaussian_nll_loss(x, y, var, full=False, eps=1e-6, reduction='mean'):
 
     x, y, var, eps = format_lnstensor_operands(x, y, var, eps)
     result = LNSGaussianNLLLossFunction.apply(x._lns, y._lns, var._lns, eps._lns, x.base, full, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSHuberLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, delta, base, reduction='mean', weight=None):
+        x_packed, y_packed, delta_packed = x.to(torch.int64), y.to(torch.int64), delta.to(torch.int64)
+
+        two = LNSTensor.get_internal_tensor(2.0, base)
+
+        abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
+        l1_term = lns_sub(abs_diff, lns_div(delta_packed, two, base), base)
+        l1_term = lns_mul(l1_term, delta_packed)
+
+        l2_term = lns_square(lns_sub(x_packed, y_packed, base), base)
+        l2_term = lns_div(l2_term, two, base)
+
+        loss = torch.where(lns_lt(abs_diff, delta_packed), l2_term, l1_term)
+        if weight is not None:
+            weight = weight.to(torch.int64)
+            loss = lns_mul(loss, weight)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, delta, base, reduction, weight = inputs
+        ctx.reduction = reduction
+        ctx.weighted = False if weight is None else True
+        if ctx.weighted:
+            ctx.save_for_backward(x, y, delta, base, weight)
+        else:
+            ctx.save_for_backward(x, y, delta, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.weighted:
+            x, y, delta, base, weight = ctx.saved_tensors
+        else:
+            x, y, delta, base = ctx.saved_tensors
+
+        x_packed, y_packed, delta_packed = x.to(torch.int64), y.to(torch.int64), delta.to(torch.int64)
+        two = LNSTensor.get_internal_tensor(2.0, base)
+
+        l2_loss_grad_x = lns_sub(x_packed, y_packed, base)
+        l2_loss_grad_y = lns_neg(l2_loss_grad_x)
+        l1_loss_grad_x = lns_mul(lns_sign(lns_sub(x_packed, y_packed, base), base), delta_packed)
+        l1_loss_grad_y = lns_neg(l1_loss_grad_x)
+
+        abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
+        l2_mask = lns_lt(abs_diff, delta_packed)
+        grad_x = torch.where(l2_mask, l2_loss_grad_x, l1_loss_grad_x)
+        grad_y = torch.where(l2_mask, l2_loss_grad_y, l1_loss_grad_y)
+
+        if ctx.weighted:
+            weight = weight.to(torch.int64)
+
+            two = LNSTensor.get_internal_tensor(2.0, base)
+
+            abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
+            l1_term = lns_sub(abs_diff, lns_div(delta_packed, two, base), base)
+            l1_term = lns_mul(l1_term, delta_packed)
+
+            l2_term = lns_square(lns_sub(x_packed, y_packed, base), base)
+            l2_term = lns_div(l2_term, two, base)
+
+            grad_w = torch.where(lns_lt(abs_diff, delta_packed), l2_term, l1_term)
+            grad_x = lns_mul(grad_x, weight)
+            grad_y = lns_mul(grad_y, weight)
+
+        else:
+            grad_w = None
+
+        if ctx.reduction == 'mean':
+            num_elements = x.numel()
+            grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
+            grad_y = lns_div(grad_y, LNSTensor.get_internal_tensor(num_elements, base), base)
+            if grad_w is not None:
+                grad_w = lns_div(grad_w, LNSTensor.get_internal_tensor(num_elements, base), base)
+
+        grad_x = lns_mul(grad_x, grad_output)
+        grad_y = lns_mul(grad_y, grad_output)
+
+        return grad_x, grad_y, None, None, None, grad_w
+
+@implements(torch.nn.functional.huber_loss, LNSHuberLossFunction.forward, key="default", default=True)
+def huber_loss(x, y, delta=1.0, reduction='mean', weight=None):
+
+    if weight is None:
+        x, y = format_lnstensor_operands(x, y)
+        weight_lns = None
+    else:
+        x, y, weight = format_lnstensor_operands(x, y, weight)
+        weight_lns = weight._lns
+
+    result = LNSHuberLossFunction.apply(x._lns, y._lns, LNSTensor.get_internal_tensor(delta, x.base), x.base, reduction, weight_lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
