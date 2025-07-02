@@ -123,6 +123,7 @@ functions.
     operators.lns_poisson_nll_loss
     operators.lns_hinge_embedding_loss
     operators.lns_kl_div
+    operators.lns_margin_ranking_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~

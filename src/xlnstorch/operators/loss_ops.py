@@ -681,3 +681,67 @@ def kl_div(x, y, size_average=None, reduce=None, reduction='mean', log_target=Fa
     result = LNSKLDivLossFunction.apply(x._lns, y._lns, x.base, size_average, reduce, reduction, log_target)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMarginRankingLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x1, x2, y, margin, base, size_average=None, reduce=None, reduction='mean'):
+        x1_packed, x2_packed, y_packed = x1.to(torch.int64), x2.to(torch.int64), y.to(torch.int64)
+
+        loss = lns_sub(x1_packed, x2_packed, base)
+        loss = lns_mul(loss, y_packed)
+        loss = lns_sub(margin, loss, base)
+        loss = lns_maximum(LNS_ZERO, loss, base)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x1.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x1, x2, y, margin, base, _, _, reduction = inputs
+        ctx.save_for_backward(x1, x2, y, margin, base)
+        ctx.reduction = reduction
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x1, x2, y, margin, base = ctx.saved_tensors
+        x1_packed, x2_packed, y_packed, margin_packed = x1.to(torch.int64), x2.to(torch.int64), y.to(torch.int64), margin.to(torch.int64)
+
+        loss = lns_sub(x1_packed, x2_packed, base)
+        loss = lns_mul(loss, y_packed)
+        loss = lns_sub(margin, loss, base)
+        gt_zero_mask = lns_gt(loss, LNS_ZERO)
+
+        grad_x1 = torch.where(gt_zero_mask, lns_neg(y), LNS_ZERO)
+        grad_x2 = torch.where(gt_zero_mask, y, LNS_ZERO)
+        grad_y = torch.where(gt_zero_mask, lns_sub(x2_packed, x1_packed, base), LNS_ZERO)
+
+        if ctx.reduction == 'mean':
+            num_elements = LNSTensor.get_internal_tensor(x1.numel(), base)
+            grad_x1 = lns_div(grad_x1, num_elements, base)
+            grad_x2 = lns_div(grad_x2, num_elements, base)
+            grad_y = lns_div(grad_y, num_elements, base)
+
+        grad_x1 = lns_mul(grad_x1, grad_output)
+        grad_x2 = lns_mul(grad_x2, grad_output)
+        grad_y = lns_mul(grad_y, grad_output)
+
+        return grad_x1, grad_x2, grad_y, None, None, None, None, None
+
+@implements(torch.nn.functional.margin_ranking_loss, LNSMarginRankingLossFunction.forward, key="default", default=True)
+def margin_ranking_loss(x1, x2, y, margin=0.0, size_average=None, reduce=None, reduction='mean'):
+
+    x1, x2, y, margin = format_lnstensor_operands(x1, x2, y, margin)
+    result = LNSMarginRankingLossFunction.apply(x1._lns, x2._lns, y._lns, margin._lns, x1.base, size_average, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x1.base)

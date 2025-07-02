@@ -378,6 +378,17 @@ lns_kl_div = _create_lns_op_func('kl_div', torch.nn.functional.kl_div, signature
     ("log_target", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_margin_ranking_loss = _create_lns_op_func('margin_ranking_loss', torch.nn.functional.margin_ranking_loss, signature=_build_signature([
+    ("x1", "pk", torch.Tensor),
+    ("x2", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("margin", "pk", torch.Tensor | float),
+    ("base", "pk", torch.Tensor),
+    ("size_average", "pk", bool, None),
+    ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean")],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),
