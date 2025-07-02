@@ -382,10 +382,20 @@ lns_margin_ranking_loss = _create_lns_op_func('margin_ranking_loss', torch.nn.fu
     ("x1", "pk", torch.Tensor),
     ("x2", "pk", torch.Tensor),
     ("y", "pk", torch.Tensor),
-    ("margin", "pk", torch.Tensor | float),
+    ("margin", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
     ("size_average", "pk", bool, None),
     ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean")],
+    torch.Tensor,
+))
+lns_gaussian_nll_loss = _create_lns_op_func('gaussian_nll_loss', torch.nn.functional.gaussian_nll_loss, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("y", "pk", torch.Tensor),
+    ("var", "pk", torch.Tensor),
+    ("eps", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("full", "pk", bool, False),
     ("reduction", "pk", str, "mean")],
     torch.Tensor,
 ))

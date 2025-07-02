@@ -18,6 +18,7 @@ from . import(
     lns_gt,
     lns_eq,
     lns_maximum,
+    lns_reciprocal,
 )
 
 class LNSMSELossFunction(torch.autograd.Function):
@@ -745,3 +746,71 @@ def margin_ranking_loss(x1, x2, y, margin=0.0, size_average=None, reduce=None, r
     result = LNSMarginRankingLossFunction.apply(x1._lns, x2._lns, y._lns, margin._lns, x1.base, size_average, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x1.base)
+
+class LNSGaussianNLLLossFunction(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, y, var, eps, base, full=False, reduction='mean'):
+        x_packed, y_packed, var_packed, eps_packed = x.to(torch.int64), y.to(torch.int64), var.to(torch.int64), eps.to(torch.int64)
+
+        var_eps = lns_maximum(var_packed, eps_packed, base)
+        loss = lns_square(lns_sub(x_packed, y_packed, base), base)
+        loss = lns_add(lns_log(var_eps, base), lns_div(loss, var_eps, base), base)
+
+        if full:
+            two_pi = LNSTensor.get_internal_tensor(math.tau, base)
+            loss = lns_add(loss, lns_log(two_pi, base), base)
+
+        loss = lns_div(loss, LNSTensor.get_internal_tensor(2.0, base), base)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+            num_elements = x.numel()
+            mean = lns_div(loss_sum, LNSTensor.get_internal_tensor(num_elements, base), base)
+            return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, var, eps, base, _, reduction = inputs
+        ctx.save_for_backward(x, y, var, eps, base)
+        ctx.reduction = reduction
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, y, var, eps, base = ctx.saved_tensors
+        x_packed, y_packed, var_packed, eps_packed = x.to(torch.int64), y.to(torch.int64), var.to(torch.int64), eps.to(torch.int64)
+
+        var_eps = lns_maximum(var_packed, eps_packed, base)
+        grad_x = lns_div(lns_sub(x_packed, y_packed, base), var_eps, base)
+        grad_y = lns_neg(grad_x)
+
+        grad_var = lns_square(lns_div(lns_sub(x_packed, y_packed, base), var_packed, base), base)
+        grad_var = lns_sub(lns_reciprocal(var_packed, base), grad_var, base)
+        grad_var = lns_div(grad_var, LNSTensor.get_internal_tensor(2.0, base), base)
+
+        if ctx.reduction == 'mean':
+            num_elements = LNSTensor.get_internal_tensor(x.numel(), base)
+            grad_x = lns_div(grad_x, num_elements, base)
+            grad_y = lns_div(grad_y, num_elements, base)
+            grad_var = lns_div(grad_var, num_elements, base)
+
+        grad_x = lns_mul(grad_x, grad_output)
+        grad_y = lns_mul(grad_y, grad_output)
+        grad_var = lns_mul(grad_var, grad_output)
+
+        return grad_x, grad_y, grad_var, None, None, None, None
+
+@implements(torch.nn.functional.gaussian_nll_loss, LNSGaussianNLLLossFunction.forward, key="default", default=True)
+def gaussian_nll_loss(x, y, var, full=False, eps=1e-6, reduction='mean'):
+
+    x, y, var, eps = format_lnstensor_operands(x, y, var, eps)
+    result = LNSGaussianNLLLossFunction.apply(x._lns, y._lns, var._lns, eps._lns, x.base, full, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)

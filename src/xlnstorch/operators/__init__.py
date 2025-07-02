@@ -44,6 +44,7 @@ from .internal_lns_ops import (
     lns_hinge_embedding_loss,
     lns_kl_div,
     lns_margin_ranking_loss,
+    lns_gaussian_nll_loss,
 
     lns_relu,
     lns_relu_,
@@ -142,6 +143,7 @@ __all__ = [
     "lns_hinge_embedding_loss",
     "lns_kl_div",
     "lns_margin_ranking_loss",
+    "lns_gaussian_nll_loss",
 
     "lns_relu",
     "lns_relu_",

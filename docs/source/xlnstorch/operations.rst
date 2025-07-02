@@ -124,6 +124,7 @@ functions.
     operators.lns_hinge_embedding_loss
     operators.lns_kl_div
     operators.lns_margin_ranking_loss
+    operators.lns_gaussian_nll_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~
