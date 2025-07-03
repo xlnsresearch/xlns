@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import LNS_ZERO, get_default_implementation_key, get_implementation
+from . import LNS_ZERO, get_default_implementation_key, get_implementation, has_fanout, find_fanout, raise_fanout_error
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -161,6 +161,13 @@ class LNSTensor:
             attributes, all other tensors will be ignored. If not provided, the gradient is 
             accumulated into all the leaf Tensors that were used to compute the tensors.
         """
+
+        if has_fanout(self._lns):
+            # only compute detailed fan-out error if we have fan-out
+            offenders = find_fanout(self._lns)
+            print(offenders)
+            raise_fanout_error(offenders)
+
         if gradient is None:
             # if self._lns.numel() != 1:
             #     raise RuntimeError("grad can be implicitly created only for scalar outputs")
