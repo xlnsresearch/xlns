@@ -277,6 +277,13 @@ class LNSTensor:
         """
         return self._lns.requires_grad
 
+    def view(self, *shape: int) -> LNSTensor:
+        """
+        Returns a new tensor with the same data as this LNSTensor
+        but with a different shape.
+        """
+        return lnstensor(self._lns.view(*shape), from_lns=True, b=self.base)
+
     def item(self) -> float:
         """
         Returns the value of the LNSTensor as a Python number. This method

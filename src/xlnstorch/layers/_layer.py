@@ -46,13 +46,22 @@ class LNSModule(torch.nn.Module):
         Returns a list of parameter groups for the module.
         Each group contains parameters and their corresponding base values.
         """
-        for name, param in self.named_parameters():
+        for full_name, param in self.named_parameters():
 
-            if name.endswith("_lns") and hasattr(self, name[:-4]):
+            name_split = full_name.rsplit('.', 1)
+            if len(name_split) == 1:
+                submodule = self
+                name = name_split[0]
+            else:
+                submodule, name = name_split
+
+            submodule = self.get_submodule(submodule)
+
+            if name.endswith("_lns") and hasattr(submodule, name[:-4]):
                 base_name = name[:-4] + "_base"
                 yield {
                     "params": param,
-                    "base": getattr(self, base_name)
+                    "base": getattr(submodule, base_name)
                 }
 
             else:
