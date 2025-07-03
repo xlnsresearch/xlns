@@ -53,9 +53,8 @@ class LNSModule(torch.nn.Module):
                 submodule = self
                 name = name_split[0]
             else:
-                submodule, name = name_split
-
-            submodule = self.get_submodule(submodule)
+                name = name_split[1]
+                submodule = self.get_submodule(name_split[0])
 
             if name.endswith("_lns") and hasattr(submodule, name[:-4]):
                 base_name = name[:-4] + "_base"

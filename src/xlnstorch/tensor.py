@@ -165,7 +165,6 @@ class LNSTensor:
         if has_fanout(self._lns):
             # only compute detailed fan-out error if we have fan-out
             offenders = find_fanout(self._lns)
-            print(offenders)
             raise_fanout_error(offenders)
 
         if gradient is None:
