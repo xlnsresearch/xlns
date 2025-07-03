@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSModule
+==========================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSModule
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSModule.__init__
+      ~LNSModule.add_module
+      ~LNSModule.apply
+      ~LNSModule.bfloat16
+      ~LNSModule.buffers
+      ~LNSModule.children
+      ~LNSModule.compile
+      ~LNSModule.cpu
+      ~LNSModule.cuda
+      ~LNSModule.double
+      ~LNSModule.eval
+      ~LNSModule.extra_repr
+      ~LNSModule.float
+      ~LNSModule.forward
+      ~LNSModule.get_buffer
+      ~LNSModule.get_extra_state
+      ~LNSModule.get_parameter
+      ~LNSModule.get_submodule
+      ~LNSModule.half
+      ~LNSModule.ipu
+      ~LNSModule.load_state_dict
+      ~LNSModule.modules
+      ~LNSModule.mtia
+      ~LNSModule.named_buffers
+      ~LNSModule.named_children
+      ~LNSModule.named_modules
+      ~LNSModule.named_parameters
+      ~LNSModule.parameter_groups
+      ~LNSModule.parameters
+      ~LNSModule.register_backward_hook
+      ~LNSModule.register_buffer
+      ~LNSModule.register_forward_hook
+      ~LNSModule.register_forward_pre_hook
+      ~LNSModule.register_full_backward_hook
+      ~LNSModule.register_full_backward_pre_hook
+      ~LNSModule.register_load_state_dict_post_hook
+      ~LNSModule.register_load_state_dict_pre_hook
+      ~LNSModule.register_module
+      ~LNSModule.register_parameter
+      ~LNSModule.register_state_dict_post_hook
+      ~LNSModule.register_state_dict_pre_hook
+      ~LNSModule.requires_grad_
+      ~LNSModule.set_extra_state
+      ~LNSModule.set_submodule
+      ~LNSModule.share_memory
+      ~LNSModule.state_dict
+      ~LNSModule.to
+      ~LNSModule.to_empty
+      ~LNSModule.train
+      ~LNSModule.type
+      ~LNSModule.xpu
+      ~LNSModule.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSModule.T_destination
+      ~LNSModule.call_super_init
+      ~LNSModule.dump_patches
+      ~LNSModule.training
+   
+   

@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSIdentity
+============================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSIdentity
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSIdentity.__init__
+      ~LNSIdentity.add_module
+      ~LNSIdentity.apply
+      ~LNSIdentity.bfloat16
+      ~LNSIdentity.buffers
+      ~LNSIdentity.children
+      ~LNSIdentity.compile
+      ~LNSIdentity.cpu
+      ~LNSIdentity.cuda
+      ~LNSIdentity.double
+      ~LNSIdentity.eval
+      ~LNSIdentity.extra_repr
+      ~LNSIdentity.float
+      ~LNSIdentity.forward
+      ~LNSIdentity.get_buffer
+      ~LNSIdentity.get_extra_state
+      ~LNSIdentity.get_parameter
+      ~LNSIdentity.get_submodule
+      ~LNSIdentity.half
+      ~LNSIdentity.ipu
+      ~LNSIdentity.load_state_dict
+      ~LNSIdentity.modules
+      ~LNSIdentity.mtia
+      ~LNSIdentity.named_buffers
+      ~LNSIdentity.named_children
+      ~LNSIdentity.named_modules
+      ~LNSIdentity.named_parameters
+      ~LNSIdentity.parameter_groups
+      ~LNSIdentity.parameters
+      ~LNSIdentity.register_backward_hook
+      ~LNSIdentity.register_buffer
+      ~LNSIdentity.register_forward_hook
+      ~LNSIdentity.register_forward_pre_hook
+      ~LNSIdentity.register_full_backward_hook
+      ~LNSIdentity.register_full_backward_pre_hook
+      ~LNSIdentity.register_load_state_dict_post_hook
+      ~LNSIdentity.register_load_state_dict_pre_hook
+      ~LNSIdentity.register_module
+      ~LNSIdentity.register_parameter
+      ~LNSIdentity.register_state_dict_post_hook
+      ~LNSIdentity.register_state_dict_pre_hook
+      ~LNSIdentity.requires_grad_
+      ~LNSIdentity.set_extra_state
+      ~LNSIdentity.set_submodule
+      ~LNSIdentity.share_memory
+      ~LNSIdentity.state_dict
+      ~LNSIdentity.to
+      ~LNSIdentity.to_empty
+      ~LNSIdentity.train
+      ~LNSIdentity.type
+      ~LNSIdentity.xpu
+      ~LNSIdentity.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSIdentity.T_destination
+      ~LNSIdentity.call_super_init
+      ~LNSIdentity.dump_patches
+      ~LNSIdentity.training
+   
+   

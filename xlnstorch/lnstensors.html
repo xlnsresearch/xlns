@@ -16,6 +16,7 @@
       <script src="../_static/documentation_options.js?v=d55fa986"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -46,17 +47,20 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">xlnstorch</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">LNS Tensors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mathematical-context-and-internal-representation">Mathematical Context and Internal Representation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#lnstensor-class-reference">LNSTensor class reference</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor"><code class="docutils literal notranslate"><span class="pre">LNSTensor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor._lns"><code class="docutils literal notranslate"><span class="pre">LNSTensor._lns</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.LNSTensor.base"><code class="docutils literal notranslate"><span class="pre">LNSTensor.base</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.get_internal_tensor.html">xlnstorch.LNSTensor.get_internal_tensor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.base.html">xlnstorch.LNSTensor.base</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.lns.html">xlnstorch.LNSTensor.lns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.value.html">xlnstorch.LNSTensor.value</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.grad.html">xlnstorch.LNSTensor.grad</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.shape.html">xlnstorch.LNSTensor.shape</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.ndim.html">xlnstorch.LNSTensor.ndim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad.html">xlnstorch.LNSTensor.requires_grad</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.item.html">xlnstorch.LNSTensor.item</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.size.html">xlnstorch.LNSTensor.size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.numel.html">xlnstorch.LNSTensor.numel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.backward.html">xlnstorch.LNSTensor.backward</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.broadcast_to.html">xlnstorch.LNSTensor.broadcast_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.LNSTensor.dim.html">xlnstorch.LNSTensor.dim</a></li>
@@ -71,6 +75,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="operations.html">Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimizers.html">Optimizers</a></li>
 </ul>
 </li>
 </ul>
@@ -105,7 +111,44 @@
 <p>An <a class="reference internal" href="#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">xlnstorch.LNSTensor</span></code></a> is a wrapper for a <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.Tensor</span></code></a>
 that stores an ‘internal representation’ Tensor object along with an
 LNS base.</p>
-<p>Todo: Add more information/math.</p>
+<section id="mathematical-context-and-internal-representation">
+<h2>Mathematical Context and Internal Representation<a class="headerlink" href="#mathematical-context-and-internal-representation" title="Link to this heading"></a></h2>
+<p>We represent a non-zero real number <span class="math notranslate nohighlight">\(x\)</span> in the LNS (Logarithmic Number System)
+using the following scheme:</p>
+<p>Let <span class="math notranslate nohighlight">\(B\)</span> denote the chosen base and let</p>
+<div class="math notranslate nohighlight">
+\[x = (-1) ^ {s_x} \cdot B^{X}\]</div>
+<p>where:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}X = \log_B |x| \text{ and } s_x = \begin{cases}
+0 &amp; \text{if } x \ge 0 \\
+1 &amp; \text{if } x \le 0
+\end{cases}\end{split}\]</div>
+<p>We can pack the logarithm and sign into a single <code class="docutils literal notranslate"><span class="pre">int64</span></code> value as follows:</p>
+<div class="math notranslate nohighlight">
+\[x' = (\mathrm{round}(X) \ll 1) + s_x\]</div>
+<p>Since we are quantising the logarithm, we can represent it as an integer value. It is
+useful to choose a base close to 1, to ensure that the quantisation does not lose too
+much precision. This is typically done by choosing a base of the form <span class="math notranslate nohighlight">\(B = 2^{2^{-f}}\)</span>
+for some integer <span class="math notranslate nohighlight">\(f\)</span>, where <span class="math notranslate nohighlight">\(f\)</span> is the number of fractional bits in the
+LNS representation.</p>
+<p>The internal representation of an LNSTensor encodes the LNS value as an integer, but for
+compatibility with PyTorch’s autograd system, it is stored in a tensor of type <code class="docutils literal notranslate"><span class="pre">torch.float64</span></code>.
+This allows gradients to be computed and propagated correctly during backpropagation, as
+PyTorch’s autograd does not support integer tensors for gradient computation.</p>
+<p>Although the storage type is a floating point, the actual values represent
+integers. This means that before performing any bitwise operations or
+integer-specific manipulations, the values must be explicitly converted
+back to integers. Failing to do so can result in incorrect behavior, since
+bitwise operations on floating point types are not valid and may produce
+unexpected results. Note that if you are not implementing custom functionality,
+you typically do not need to worry about this, as the library handles these
+conversions.</p>
+<p>This design ensures that LNSTensor objects can fully participate in PyTorch’s
+computation graph and benefit from automatic differentiation, while still
+maintaining the integrity of their integer-based internal encoding for LNS
+arithmetic and bit-level operations.</p>
+</section>
 <section id="lnstensor-class-reference">
 <h2>LNSTensor class reference<a class="headerlink" href="#lnstensor-class-reference" title="Link to this heading"></a></h2>
 <dl class="py class">
@@ -119,38 +162,40 @@ the use of this is discouraged.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xlnstorch.LNSTensor._lns">
-<span class="sig-prename descclassname"><span class="pre">LNSTensor.</span></span><span class="sig-name descname"><span class="pre">_lns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></em><a class="headerlink" href="#xlnstorch.LNSTensor._lns" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="xlnstorch.LNSTensor.base">
-<span class="sig-prename descclassname"><span class="pre">LNSTensor.</span></span><span class="sig-name descname"><span class="pre">base</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><span class="pre">Tensor</span></a></em><a class="headerlink" href="#xlnstorch.LNSTensor.base" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.get_internal_tensor.html#xlnstorch.LNSTensor.get_internal_tensor" title="xlnstorch.LNSTensor.get_internal_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.get_internal_tensor</span></code></a></p></td>
 <td><p>Converts an array-like floating point value to an LNSTensor and returns the internal packed representation for a given base.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.lns.html#xlnstorch.LNSTensor.lns" title="xlnstorch.LNSTensor.lns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.lns</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.base.html#xlnstorch.LNSTensor.base" title="xlnstorch.LNSTensor.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.base</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.lns.html#xlnstorch.LNSTensor.lns" title="xlnstorch.LNSTensor.lns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.lns</span></code></a></p></td>
 <td><p>The packed representation that <strong>does</strong> carry gradients.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.value.html#xlnstorch.LNSTensor.value" title="xlnstorch.LNSTensor.value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.value</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.value.html#xlnstorch.LNSTensor.value" title="xlnstorch.LNSTensor.value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.value</span></code></a></p></td>
 <td><p>Decode the packed integers back to ordinary floating-point numbers.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.grad.html#xlnstorch.LNSTensor.grad" title="xlnstorch.LNSTensor.grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.grad</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.grad.html#xlnstorch.LNSTensor.grad" title="xlnstorch.LNSTensor.grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.grad</span></code></a></p></td>
 <td><p>The gradient of the LNSTensor, if it has been computed.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.shape.html#xlnstorch.LNSTensor.shape" title="xlnstorch.LNSTensor.shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.shape</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.shape.html#xlnstorch.LNSTensor.shape" title="xlnstorch.LNSTensor.shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.shape</span></code></a></p></td>
 <td><p>Returns the shape of the LNSTensor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.ndim.html#xlnstorch.LNSTensor.ndim" title="xlnstorch.LNSTensor.ndim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.ndim</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.ndim.html#xlnstorch.LNSTensor.ndim" title="xlnstorch.LNSTensor.ndim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.ndim</span></code></a></p></td>
 <td><p>Alias for <code class="xref py py-meth docutils literal notranslate"><span class="pre">dim()</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad.html#xlnstorch.LNSTensor.requires_grad" title="xlnstorch.LNSTensor.requires_grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.requires_grad</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.requires_grad.html#xlnstorch.LNSTensor.requires_grad" title="xlnstorch.LNSTensor.requires_grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.requires_grad</span></code></a></p></td>
 <td><p>Returns whether the LNSTensor requires gradients.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.item.html#xlnstorch.LNSTensor.item" title="xlnstorch.LNSTensor.item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.item</span></code></a></p></td>
+<td><p>Returns the value of the LNSTensor as a Python number.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.size.html#xlnstorch.LNSTensor.size" title="xlnstorch.LNSTensor.size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.size</span></code></a></p></td>
+<td><p>Returns the size of the LNSTensor along a specified dimension or all dimensions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.numel.html#xlnstorch.LNSTensor.numel" title="xlnstorch.LNSTensor.numel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.numel</span></code></a></p></td>
+<td><p>Returns the total number of elements in the LNSTensor.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.backward.html#xlnstorch.LNSTensor.backward" title="xlnstorch.LNSTensor.backward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.backward</span></code></a></p></td>
 <td><p>Computes the gradients of the current LNSTensor with respect to the graph leaves.</p></td>

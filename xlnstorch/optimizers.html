@@ -1,0 +1,586 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Optimizers &mdash; xlns 1.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d55fa986"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="xlnstorch.layers.LNSConv3d" href="generated/xlnstorch.layers.LNSConv3d.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            xlns
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Packages</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">xlnstorch</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lnstensors.html">LNS Tensors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operations.html">Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Optimizers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-groups">Parameter Groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#learning-rate-and-hyperparameters">Learning Rate and Hyperparameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-optimizers">Available Optimizers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stochastic-gradient-descent-sgd">Stochastic Gradient Descent (SGD)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#adam-optimizers">Adam Optimizers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#adaptive-learning-rate-optimizers">Adaptive Learning Rate Optimizers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-optimizers">Other Optimizers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">xlns</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">xlnstorch</a></li>
+      <li class="breadcrumb-item active">Optimizers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/xlnstorch/optimizers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="optimizers">
+<h1>Optimizers<a class="headerlink" href="#optimizers" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch.optimizers</span></code> module provides LNS-compatible optimization algorithms
+for training neural networks with LNSTensor parameters. These optimizers are
+designed to be analogous to the PyTorch optimizers. Currently, the optimizers are
+missing support for <code class="docutils literal notranslate"><span class="pre">foreach</span></code> and <code class="docutils literal notranslate"><span class="pre">fused</span></code> operations, but they are fully functional
+for standard LNS training tasks.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>All optimizers in xlnstorch follow the same interface as PyTorch optimizers but
+are specifically designed to handle LNSTensor parameters. They support:</p>
+<ul class="simple">
+<li><p>LNSTensor and regular float learning rates and hyperparameters</p></li>
+<li><p>Automatic gradient handling for LNS arithmetic</p></li>
+<li><p>Parameter groups from LNS layers using <code class="docutils literal notranslate"><span class="pre">model.parameter_groups()</span></code></p></li>
+<li><p>Standard optimizer features like momentum, weight decay, and adaptive learning rates</p></li>
+</ul>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<p>Here’s a basic example of using an LNS optimizer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xlnstorch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xltorch</span>
+
+<span class="c1"># Create model and data</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LNSLinear</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">input</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+<span class="c1"># Initialize optimizer with model parameters</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">LNSSGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_groups</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+
+<span class="c1"># Training loop</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="parameter-groups">
+<h2>Parameter Groups<a class="headerlink" href="#parameter-groups" title="Link to this heading"></a></h2>
+<p>LNS optimizers work with parameter groups obtained from LNS layers using the
+<code class="docutils literal notranslate"><span class="pre">parameter_groups()</span></code> method. This method returns an iterable of parameter
+dictionaries that contain both weights and biases in LNS format.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get parameter groups from a model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LNSLinear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">param_groups</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">parameter_groups</span><span class="p">()</span>
+
+<span class="c1"># Initialize optimizer with parameter groups</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">LNSAdam</span><span class="p">(</span><span class="n">param_groups</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="learning-rate-and-hyperparameters">
+<h2>Learning Rate and Hyperparameters<a class="headerlink" href="#learning-rate-and-hyperparameters" title="Link to this heading"></a></h2>
+<p>All LNS optimizers accept both regular Python floats and LNSTensor objects for
+learning rates and other hyperparameters. Using LNSTensor hyperparameters allows
+for control over the base of the LNSTensor since other hyperparameters will be
+converted to LNSTensors with the default base.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using float learning rate</span>
+<span class="n">optimizer1</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">LNSAdam</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+
+<span class="c1"># Using LNSTensor learning rate</span>
+<span class="n">lr_tensor</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>
+<span class="n">optimizer2</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">LNSAdam</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr_tensor</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="available-optimizers">
+<h2>Available Optimizers<a class="headerlink" href="#available-optimizers" title="Link to this heading"></a></h2>
+<p>xlnstorch provides LNS-compatible versions of popular PyTorch optimizers:</p>
+<section id="quick-reference">
+<h3>Quick Reference<a class="headerlink" href="#quick-reference" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#lnssgd"><span class="std std-ref">LNSSGD</span></a> - Stochastic Gradient Descent with momentum support</p></li>
+<li><p><a class="reference internal" href="#lnsadam"><span class="std std-ref">LNSAdam</span></a> - Adam optimizer with bias correction</p></li>
+<li><p><a class="reference internal" href="#lnsadamw"><span class="std std-ref">LNSAdamW</span></a> - Adam optimizer with decoupled weight decay</p></li>
+<li><p><a class="reference internal" href="#lnsadamax"><span class="std std-ref">LNSAdamax</span></a> - Adamax optimizer (infinity norm variant of Adam)</p></li>
+<li><p><a class="reference internal" href="#lnsnadam"><span class="std std-ref">LNSNAdam</span></a> - Nesterov-accelerated Adam optimizer</p></li>
+<li><p><a class="reference internal" href="#lnsradam"><span class="std std-ref">LNSRAdam</span></a> - Rectified Adam optimizer</p></li>
+<li><p><a class="reference internal" href="#lnsadagrad"><span class="std std-ref">LNSAdagrad</span></a> - Adaptive gradient algorithm</p></li>
+<li><p><a class="reference internal" href="#lnsadadelta"><span class="std std-ref">LNSAdadelta</span></a> - Adadelta optimizer</p></li>
+<li><p><a class="reference internal" href="#lnsrmsprop"><span class="std std-ref">LNSRMSprop</span></a> - RMSprop optimizer</p></li>
+<li><p><a class="reference internal" href="#lnsrprop"><span class="std std-ref">LNSRprop</span></a> - Resilient backpropagation algorithm</p></li>
+<li><p><a class="reference internal" href="#lnsasgd"><span class="std std-ref">LNSASGD</span></a> - Averaged Stochastic Gradient Descent</p></li>
+</ul>
+</section>
+<section id="stochastic-gradient-descent-sgd">
+<span id="lnssgd"></span><h3>Stochastic Gradient Descent (SGD)<a class="headerlink" href="#stochastic-gradient-descent-sgd" title="Link to this heading"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSSGD">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSSGD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">momentum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dampening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nesterov</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSSGD" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements stochastic gradient descent (SGD) with support for momentum,
+dampening, weight decay, and nesterov momentum.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.SGD</span></code></a>, but
+is designed to work with LNSTensor objects. See the PyTorch documentation
+for more details on the SGD algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>momentum</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Momentum factor (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>dampening</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Dampening for momentum (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>nesterov</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Enables Nesterov momentum if set to True (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">xlnstorch</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">LNSSGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_groups</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span> <span class="c1"># Clear gradients before the step</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss_fn</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">),</span> <span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span> <span class="c1"># Compute gradients</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span> <span class="c1"># Update parameters based on gradients</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSSGD.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSSGD.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="adam-optimizers">
+<h3>Adam Optimizers<a class="headerlink" href="#adam-optimizers" title="Link to this heading"></a></h3>
+<dl class="py class" id="lnsadam">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdam">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSAdam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.9,</span> <span class="pre">0.999)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amsgrad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdam" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Adam optimization algorithm for LNSTensor parameters,
+including optional weight–decay regularisation, the AMSGrad variant,
+and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Adam</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the Adam algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>betas</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>] or </em><em>Tuple</em><em>[</em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>]</em><em>, </em><em>optional</em>) – Coefficients used for computing running averages of gradient and its square
+(default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
+in the range [0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-8).</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>amsgrad</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Uses the AMSGrad variant that maintains the maximum of past squared gradients
+(default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdam.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdam.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsadamw">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdamW">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSAdamW</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.9,</span> <span class="pre">0.999)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amsgrad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdamW" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the AdamW optimization algorithm for LNSTensor parameters,
+including optional weight–decay regularisation, the AMSGrad variant,
+and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.AdamW.html#torch.optim.AdamW" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.AdamW</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the AdamW algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>betas</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>] or </em><em>Tuple</em><em>[</em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>]</em><em>, </em><em>optional</em>) – Coefficients used for computing running averages of gradient and its square
+(default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
+in the range [0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-8).</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Weight decay (L2 penalty) (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>amsgrad</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Uses the AMSGrad variant that maintains the maximum of past squared gradients
+(default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdamW.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdamW.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsadamax">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdamax">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSAdamax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.002</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.9,</span> <span class="pre">0.999)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdamax" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Adamax optimization algorithm for LNSTensor parameters,
+including optional weight–decay regularisation, and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Adamax.html#torch.optim.Adamax" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Adamax</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the Adamax algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>betas</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>] or </em><em>Tuple</em><em>[</em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>]</em><em>, </em><em>optional</em>) – Coefficients used for computing running averages of gradient and its square
+(default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
+in the range [0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-8).</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdamax.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdamax.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsnadam">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSNAdam">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSNAdam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.002</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.9,</span> <span class="pre">0.999)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">momentum_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.004</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoupled_weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSNAdam" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Adam optimization algorithm for LNSTensor parameters,
+including decoupled weight decay, momentum decay, and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.NAdam.html#torch.optim.NAdam" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.NAdam</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the NAdam algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>betas</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>] or </em><em>Tuple</em><em>[</em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>]</em><em>, </em><em>optional</em>) – Coefficients used for computing running averages of gradient and its square
+(default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
+in the range [0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-8).</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>momentum_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Decay factor for the momentum term (default: 0.004). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>decoupled_weight_decay</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, applies decoupled weight decay (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSNAdam.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSNAdam.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsradam">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRAdam">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSRAdam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.9,</span> <span class="pre">0.999)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoupled_weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRAdam" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRAdam.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRAdam.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="adaptive-learning-rate-optimizers">
+<h3>Adaptive Learning Rate Optimizers<a class="headerlink" href="#adaptive-learning-rate-optimizers" title="Link to this heading"></a></h3>
+<dl class="py class" id="lnsadagrad">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdagrad">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSAdagrad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_accumulator_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdagrad" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Adagrad algorithm with support for learning rate decay,
+weight decay, and an initial accumulator value.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Adagrad.html#torch.optim.Adagrad" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Adagrad</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch documentation
+for more details on the Adagrad algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>lr_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate decay factor (default: 0.0). Must be a non-negative LNSTensor
+or float.</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor
+or float.</p></li>
+<li><p><strong>initial_accumulator_value</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Initial value for the accumulator (default: 0). Must be a non-negative
+LNSTensor or float.</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-10).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization
+(default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdagrad.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdagrad.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsadadelta">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdadelta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSAdadelta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdadelta" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the LNSAdadelta algorithm for LNSTensor parameters,
+supporting weight decay and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Adamax.html#torch.optim.Adamax" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Adamax</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the Adamax algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>rho</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Coefficient used for computing running averages of gradient (default: 0.9).
+Must be a non-negative LNSTensor or float in the range (0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-6).
+Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSAdadelta.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSAdadelta.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsrmsprop">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRMSprop">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSRMSprop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">momentum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRMSprop" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the RMSprop algorithm with support for weight decay,
+momentum, and centered variants.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.RMSprop.html#torch.optim.RMSprop" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.RMSprop</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch documentation
+for more details on the RMSprop algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Smoothing constant (default: 0.99). Must be a non-negative LNSTensor or float
+in the range [0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator to improve numerical stability (default: 1e-08).
+Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>momentum</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Momentum factor (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>centered</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, computes the centered RMSprop variant (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRMSprop.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRMSprop.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="other-optimizers">
+<h3>Other Optimizers<a class="headerlink" href="#other-optimizers" title="Link to this heading"></a></h3>
+<dl class="py class" id="lnsrprop">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRprop">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSRprop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">etas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.5,</span> <span class="pre">1.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_sizes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1e-06,</span> <span class="pre">50.0)</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRprop" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Rprop (resilient backpropagation) algorithm.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Rprop.html#torch.optim.Rprop" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Rprop</span></code></a>, but
+is designed to work with LNSTensor objects. See the PyTorch documentation
+for more details on the Rprop algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>etas</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em> of </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Tuple of two factors (η₋, η₊) for decreasing and increasing the step size
+(default: (0.5, 1.2)). Must satisfy 0 &lt; η₋ &lt; 1 and η₊ &gt; 1.</p></li>
+<li><p><strong>step_sizes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em> of </em><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Tuple of two step sizes (Γ_min, Γ_max) for clamping the step size
+(default: (1e-6, 50.0)). Must satisfy 0 &lt; Γ_min &lt; Γ_max.</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSRprop.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSRprop.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsasgd">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSASGD">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optimizers.</span></span><span class="sig-name descname"><span class="pre">LNSASGD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSASGD" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the ASGD algorithm for LNSTensor parameters,
+including optional weight decay and a “maximize” mode.</p>
+<p>This optimizer is analogous to PyTorch’s <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.optim.ASGD.html#torch.optim.ASGD" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.ASGD</span></code></a>,
+but is designed to work with LNSTensor objects. See the PyTorch
+documentation for more details on the ASGD algorithm.</p>
+<p>Note that this optimizer doesn’t seem to implement the ASGD algorithm
+correctly, but it is made to match the PyTorch implementation as
+closely as possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>parameter_groups()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.001). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>lambd</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Coefficient for the learning rate decay (default: 0.0001). Must be a non-negative
+LNSTensor or float.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Exponent for the learning rate decay (default: 0.75). Must be a non-negative
+LNSTensor or float in the range (0.0, 1.0].</p></li>
+<li><p><strong>t0</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – The point at which the learning rate decay starts (default: 1000000.0).
+Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>weight_decay</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optimizers.LNSASGD.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optimizers.LNSASGD.step" title="Link to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generated/xlnstorch.layers.LNSConv3d.html" class="btn btn-neutral float-left" title="xlnstorch.layers.LNSConv3d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, xlnsresearch.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

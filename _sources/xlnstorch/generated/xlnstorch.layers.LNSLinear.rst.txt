@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSLinear
+==========================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSLinear
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSLinear.__init__
+      ~LNSLinear.add_module
+      ~LNSLinear.apply
+      ~LNSLinear.bfloat16
+      ~LNSLinear.buffers
+      ~LNSLinear.children
+      ~LNSLinear.compile
+      ~LNSLinear.cpu
+      ~LNSLinear.cuda
+      ~LNSLinear.double
+      ~LNSLinear.eval
+      ~LNSLinear.extra_repr
+      ~LNSLinear.float
+      ~LNSLinear.forward
+      ~LNSLinear.get_buffer
+      ~LNSLinear.get_extra_state
+      ~LNSLinear.get_parameter
+      ~LNSLinear.get_submodule
+      ~LNSLinear.half
+      ~LNSLinear.ipu
+      ~LNSLinear.load_state_dict
+      ~LNSLinear.modules
+      ~LNSLinear.mtia
+      ~LNSLinear.named_buffers
+      ~LNSLinear.named_children
+      ~LNSLinear.named_modules
+      ~LNSLinear.named_parameters
+      ~LNSLinear.parameter_groups
+      ~LNSLinear.parameters
+      ~LNSLinear.register_backward_hook
+      ~LNSLinear.register_buffer
+      ~LNSLinear.register_forward_hook
+      ~LNSLinear.register_forward_pre_hook
+      ~LNSLinear.register_full_backward_hook
+      ~LNSLinear.register_full_backward_pre_hook
+      ~LNSLinear.register_load_state_dict_post_hook
+      ~LNSLinear.register_load_state_dict_pre_hook
+      ~LNSLinear.register_module
+      ~LNSLinear.register_parameter
+      ~LNSLinear.register_state_dict_post_hook
+      ~LNSLinear.register_state_dict_pre_hook
+      ~LNSLinear.requires_grad_
+      ~LNSLinear.set_extra_state
+      ~LNSLinear.set_submodule
+      ~LNSLinear.share_memory
+      ~LNSLinear.state_dict
+      ~LNSLinear.to
+      ~LNSLinear.to_empty
+      ~LNSLinear.train
+      ~LNSLinear.type
+      ~LNSLinear.xpu
+      ~LNSLinear.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSLinear.T_destination
+      ~LNSLinear.call_super_init
+      ~LNSLinear.dump_patches
+      ~LNSLinear.training
+   
+   

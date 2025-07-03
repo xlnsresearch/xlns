@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSLazyLinear
+==============================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSLazyLinear
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSLazyLinear.__init__
+      ~LNSLazyLinear.add_module
+      ~LNSLazyLinear.apply
+      ~LNSLazyLinear.bfloat16
+      ~LNSLazyLinear.buffers
+      ~LNSLazyLinear.children
+      ~LNSLazyLinear.compile
+      ~LNSLazyLinear.cpu
+      ~LNSLazyLinear.cuda
+      ~LNSLazyLinear.double
+      ~LNSLazyLinear.eval
+      ~LNSLazyLinear.extra_repr
+      ~LNSLazyLinear.float
+      ~LNSLazyLinear.forward
+      ~LNSLazyLinear.get_buffer
+      ~LNSLazyLinear.get_extra_state
+      ~LNSLazyLinear.get_parameter
+      ~LNSLazyLinear.get_submodule
+      ~LNSLazyLinear.half
+      ~LNSLazyLinear.ipu
+      ~LNSLazyLinear.load_state_dict
+      ~LNSLazyLinear.modules
+      ~LNSLazyLinear.mtia
+      ~LNSLazyLinear.named_buffers
+      ~LNSLazyLinear.named_children
+      ~LNSLazyLinear.named_modules
+      ~LNSLazyLinear.named_parameters
+      ~LNSLazyLinear.parameter_groups
+      ~LNSLazyLinear.parameters
+      ~LNSLazyLinear.register_backward_hook
+      ~LNSLazyLinear.register_buffer
+      ~LNSLazyLinear.register_forward_hook
+      ~LNSLazyLinear.register_forward_pre_hook
+      ~LNSLazyLinear.register_full_backward_hook
+      ~LNSLazyLinear.register_full_backward_pre_hook
+      ~LNSLazyLinear.register_load_state_dict_post_hook
+      ~LNSLazyLinear.register_load_state_dict_pre_hook
+      ~LNSLazyLinear.register_module
+      ~LNSLazyLinear.register_parameter
+      ~LNSLazyLinear.register_state_dict_post_hook
+      ~LNSLazyLinear.register_state_dict_pre_hook
+      ~LNSLazyLinear.requires_grad_
+      ~LNSLazyLinear.set_extra_state
+      ~LNSLazyLinear.set_submodule
+      ~LNSLazyLinear.share_memory
+      ~LNSLazyLinear.state_dict
+      ~LNSLazyLinear.to
+      ~LNSLazyLinear.to_empty
+      ~LNSLazyLinear.train
+      ~LNSLazyLinear.type
+      ~LNSLazyLinear.xpu
+      ~LNSLazyLinear.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSLazyLinear.T_destination
+      ~LNSLazyLinear.call_super_init
+      ~LNSLazyLinear.dump_patches
+      ~LNSLazyLinear.training
+   
+   

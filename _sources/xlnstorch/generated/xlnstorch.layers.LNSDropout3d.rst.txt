@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSDropout3d
+=============================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSDropout3d
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSDropout3d.__init__
+      ~LNSDropout3d.add_module
+      ~LNSDropout3d.apply
+      ~LNSDropout3d.bfloat16
+      ~LNSDropout3d.buffers
+      ~LNSDropout3d.children
+      ~LNSDropout3d.compile
+      ~LNSDropout3d.cpu
+      ~LNSDropout3d.cuda
+      ~LNSDropout3d.double
+      ~LNSDropout3d.eval
+      ~LNSDropout3d.extra_repr
+      ~LNSDropout3d.float
+      ~LNSDropout3d.forward
+      ~LNSDropout3d.get_buffer
+      ~LNSDropout3d.get_extra_state
+      ~LNSDropout3d.get_parameter
+      ~LNSDropout3d.get_submodule
+      ~LNSDropout3d.half
+      ~LNSDropout3d.ipu
+      ~LNSDropout3d.load_state_dict
+      ~LNSDropout3d.modules
+      ~LNSDropout3d.mtia
+      ~LNSDropout3d.named_buffers
+      ~LNSDropout3d.named_children
+      ~LNSDropout3d.named_modules
+      ~LNSDropout3d.named_parameters
+      ~LNSDropout3d.parameter_groups
+      ~LNSDropout3d.parameters
+      ~LNSDropout3d.register_backward_hook
+      ~LNSDropout3d.register_buffer
+      ~LNSDropout3d.register_forward_hook
+      ~LNSDropout3d.register_forward_pre_hook
+      ~LNSDropout3d.register_full_backward_hook
+      ~LNSDropout3d.register_full_backward_pre_hook
+      ~LNSDropout3d.register_load_state_dict_post_hook
+      ~LNSDropout3d.register_load_state_dict_pre_hook
+      ~LNSDropout3d.register_module
+      ~LNSDropout3d.register_parameter
+      ~LNSDropout3d.register_state_dict_post_hook
+      ~LNSDropout3d.register_state_dict_pre_hook
+      ~LNSDropout3d.requires_grad_
+      ~LNSDropout3d.set_extra_state
+      ~LNSDropout3d.set_submodule
+      ~LNSDropout3d.share_memory
+      ~LNSDropout3d.state_dict
+      ~LNSDropout3d.to
+      ~LNSDropout3d.to_empty
+      ~LNSDropout3d.train
+      ~LNSDropout3d.type
+      ~LNSDropout3d.xpu
+      ~LNSDropout3d.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSDropout3d.T_destination
+      ~LNSDropout3d.call_super_init
+      ~LNSDropout3d.dump_patches
+      ~LNSDropout3d.training
+   
+   

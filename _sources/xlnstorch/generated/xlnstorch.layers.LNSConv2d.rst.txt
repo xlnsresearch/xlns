@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSConv2d
+==========================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSConv2d
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSConv2d.__init__
+      ~LNSConv2d.add_module
+      ~LNSConv2d.apply
+      ~LNSConv2d.bfloat16
+      ~LNSConv2d.buffers
+      ~LNSConv2d.children
+      ~LNSConv2d.compile
+      ~LNSConv2d.cpu
+      ~LNSConv2d.cuda
+      ~LNSConv2d.double
+      ~LNSConv2d.eval
+      ~LNSConv2d.extra_repr
+      ~LNSConv2d.float
+      ~LNSConv2d.forward
+      ~LNSConv2d.get_buffer
+      ~LNSConv2d.get_extra_state
+      ~LNSConv2d.get_parameter
+      ~LNSConv2d.get_submodule
+      ~LNSConv2d.half
+      ~LNSConv2d.ipu
+      ~LNSConv2d.load_state_dict
+      ~LNSConv2d.modules
+      ~LNSConv2d.mtia
+      ~LNSConv2d.named_buffers
+      ~LNSConv2d.named_children
+      ~LNSConv2d.named_modules
+      ~LNSConv2d.named_parameters
+      ~LNSConv2d.parameter_groups
+      ~LNSConv2d.parameters
+      ~LNSConv2d.register_backward_hook
+      ~LNSConv2d.register_buffer
+      ~LNSConv2d.register_forward_hook
+      ~LNSConv2d.register_forward_pre_hook
+      ~LNSConv2d.register_full_backward_hook
+      ~LNSConv2d.register_full_backward_pre_hook
+      ~LNSConv2d.register_load_state_dict_post_hook
+      ~LNSConv2d.register_load_state_dict_pre_hook
+      ~LNSConv2d.register_module
+      ~LNSConv2d.register_parameter
+      ~LNSConv2d.register_state_dict_post_hook
+      ~LNSConv2d.register_state_dict_pre_hook
+      ~LNSConv2d.requires_grad_
+      ~LNSConv2d.set_extra_state
+      ~LNSConv2d.set_submodule
+      ~LNSConv2d.share_memory
+      ~LNSConv2d.state_dict
+      ~LNSConv2d.to
+      ~LNSConv2d.to_empty
+      ~LNSConv2d.train
+      ~LNSConv2d.type
+      ~LNSConv2d.xpu
+      ~LNSConv2d.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSConv2d.T_destination
+      ~LNSConv2d.call_super_init
+      ~LNSConv2d.dump_patches
+      ~LNSConv2d.training
+   
+   

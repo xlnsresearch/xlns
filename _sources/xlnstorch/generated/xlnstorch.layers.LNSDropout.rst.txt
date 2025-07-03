@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSDropout
+===========================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSDropout
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSDropout.__init__
+      ~LNSDropout.add_module
+      ~LNSDropout.apply
+      ~LNSDropout.bfloat16
+      ~LNSDropout.buffers
+      ~LNSDropout.children
+      ~LNSDropout.compile
+      ~LNSDropout.cpu
+      ~LNSDropout.cuda
+      ~LNSDropout.double
+      ~LNSDropout.eval
+      ~LNSDropout.extra_repr
+      ~LNSDropout.float
+      ~LNSDropout.forward
+      ~LNSDropout.get_buffer
+      ~LNSDropout.get_extra_state
+      ~LNSDropout.get_parameter
+      ~LNSDropout.get_submodule
+      ~LNSDropout.half
+      ~LNSDropout.ipu
+      ~LNSDropout.load_state_dict
+      ~LNSDropout.modules
+      ~LNSDropout.mtia
+      ~LNSDropout.named_buffers
+      ~LNSDropout.named_children
+      ~LNSDropout.named_modules
+      ~LNSDropout.named_parameters
+      ~LNSDropout.parameter_groups
+      ~LNSDropout.parameters
+      ~LNSDropout.register_backward_hook
+      ~LNSDropout.register_buffer
+      ~LNSDropout.register_forward_hook
+      ~LNSDropout.register_forward_pre_hook
+      ~LNSDropout.register_full_backward_hook
+      ~LNSDropout.register_full_backward_pre_hook
+      ~LNSDropout.register_load_state_dict_post_hook
+      ~LNSDropout.register_load_state_dict_pre_hook
+      ~LNSDropout.register_module
+      ~LNSDropout.register_parameter
+      ~LNSDropout.register_state_dict_post_hook
+      ~LNSDropout.register_state_dict_pre_hook
+      ~LNSDropout.requires_grad_
+      ~LNSDropout.set_extra_state
+      ~LNSDropout.set_submodule
+      ~LNSDropout.share_memory
+      ~LNSDropout.state_dict
+      ~LNSDropout.to
+      ~LNSDropout.to_empty
+      ~LNSDropout.train
+      ~LNSDropout.type
+      ~LNSDropout.xpu
+      ~LNSDropout.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSDropout.T_destination
+      ~LNSDropout.call_super_init
+      ~LNSDropout.dump_patches
+      ~LNSDropout.training
+   
+   

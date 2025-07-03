@@ -53,10 +53,13 @@
 <li class="toctree-l4 current"><a class="reference internal" href="../operations.html#comparison-operations">Comparison Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../operations.html#loss-operations">Loss Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../operations.html#activation-operations">Activation Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../operations.html#layer-operations">Layer Operations</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optimizers.html">Optimizers</a></li>
 </ul>
 </li>
 </ul>
@@ -91,14 +94,18 @@
 <h1>xlnstorch.operators.lns_maximum<a class="headerlink" href="#xlnstorch-operators-lns-maximum" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="xlnstorch.operators.lns_maximum">
-<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_maximum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_maximum" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_maximum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_maximum" title="Link to this definition"></a></dt>
 <dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.maximum.html#torch.maximum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.maximum()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a>)</p></li>
-<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><em>Any</em></a>)</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>base</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a></p>
 </dd>
 </dl>
 </dd></dl>

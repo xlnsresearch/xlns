@@ -1,0 +1,82 @@
+﻿xlnstorch.layers.LNSBilinear
+============================
+
+.. currentmodule:: xlnstorch.layers
+
+.. autoclass:: LNSBilinear
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSBilinear.__init__
+      ~LNSBilinear.add_module
+      ~LNSBilinear.apply
+      ~LNSBilinear.bfloat16
+      ~LNSBilinear.buffers
+      ~LNSBilinear.children
+      ~LNSBilinear.compile
+      ~LNSBilinear.cpu
+      ~LNSBilinear.cuda
+      ~LNSBilinear.double
+      ~LNSBilinear.eval
+      ~LNSBilinear.extra_repr
+      ~LNSBilinear.float
+      ~LNSBilinear.forward
+      ~LNSBilinear.get_buffer
+      ~LNSBilinear.get_extra_state
+      ~LNSBilinear.get_parameter
+      ~LNSBilinear.get_submodule
+      ~LNSBilinear.half
+      ~LNSBilinear.ipu
+      ~LNSBilinear.load_state_dict
+      ~LNSBilinear.modules
+      ~LNSBilinear.mtia
+      ~LNSBilinear.named_buffers
+      ~LNSBilinear.named_children
+      ~LNSBilinear.named_modules
+      ~LNSBilinear.named_parameters
+      ~LNSBilinear.parameter_groups
+      ~LNSBilinear.parameters
+      ~LNSBilinear.register_backward_hook
+      ~LNSBilinear.register_buffer
+      ~LNSBilinear.register_forward_hook
+      ~LNSBilinear.register_forward_pre_hook
+      ~LNSBilinear.register_full_backward_hook
+      ~LNSBilinear.register_full_backward_pre_hook
+      ~LNSBilinear.register_load_state_dict_post_hook
+      ~LNSBilinear.register_load_state_dict_pre_hook
+      ~LNSBilinear.register_module
+      ~LNSBilinear.register_parameter
+      ~LNSBilinear.register_state_dict_post_hook
+      ~LNSBilinear.register_state_dict_pre_hook
+      ~LNSBilinear.requires_grad_
+      ~LNSBilinear.set_extra_state
+      ~LNSBilinear.set_submodule
+      ~LNSBilinear.share_memory
+      ~LNSBilinear.state_dict
+      ~LNSBilinear.to
+      ~LNSBilinear.to_empty
+      ~LNSBilinear.train
+      ~LNSBilinear.type
+      ~LNSBilinear.xpu
+      ~LNSBilinear.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSBilinear.T_destination
+      ~LNSBilinear.call_super_init
+      ~LNSBilinear.dump_patches
+      ~LNSBilinear.training
+   
+   
