@@ -118,6 +118,15 @@ functions.
     operators.lns_mse_loss
     operators.lns_l1_loss
     operators.lns_binary_cross_entropy
+    operators.lns_binary_cross_entropy_with_logits
+    operators.lns_nll_loss
+    operators.lns_poisson_nll_loss
+    operators.lns_hinge_embedding_loss
+    operators.lns_kl_div
+    operators.lns_margin_ranking_loss
+    operators.lns_gaussian_nll_loss
+    operators.lns_huber_loss
+    operators.lns_smooth_l1_loss
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -136,3 +145,45 @@ already implemented to work with ``LNSTensor`` objects.
     operators.lns_leaky_relu_
     operators.lns_threshold
     operators.lns_threshold_
+    operators.lns_tanh
+    operators.lns_sigmoid
+    operators.lns_logsigmoid
+    operators.lns_softmin
+    operators.lns_softmax
+    operators.lns_log_softmax
+    operators.lns_hardtanh
+    operators.lns_hardswish
+    operators.lns_elu
+    operators.lns_selu
+    operators.lns_celu
+    operators.lns_prelu
+    operators.lns_rrelu
+    operators.lns_glu
+    operators.lns_hardshrink
+    operators.lns_tanhshrink
+    operators.lns_softsign
+    operators.lns_softplus
+    operators.lns_softshrink
+    operators.lns_hardsigmoid
+    operators.lns_silu
+
+Layer Operations
+~~~~~~~~~~~~~~~~
+
+As per usual, you should use the standard PyTorch
+layer classes, such as ``torch.nn.Linear``, which
+support ``LNSTensor`` objects.
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_linear
+    operators.lns_bilinear
+    operators.lns_dropout
+    operators.lns_dropout1d
+    operators.lns_dropout2d
+    operators.lns_dropout3d
+    operators.lns_conv1d
+    operators.lns_conv2d
+    operators.lns_conv3d

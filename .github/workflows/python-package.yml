@@ -78,6 +78,8 @@ jobs:
         make -C docs html
 
     - name: Deploy docs to Github Pages
+      # Only deploy if this is an actual push event (not a PR)
+      if: ${{ github.event_name == 'push' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         publish_branch: gh_pages

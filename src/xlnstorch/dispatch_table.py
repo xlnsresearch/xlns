@@ -82,10 +82,10 @@ def get_implementation(torch_function: Callable, impl_key: str) -> Tuple[Callabl
         If the specified implementation key is not registered for the torch function.
     """
     if torch_function not in _HANDLED_FUNCTIONS:
-        raise ValueError("No implementations registered for the given torch function.")
+        raise ValueError(f"No implementations registered for {torch_function.__name__}.")
 
     if impl_key not in _HANDLED_FUNCTIONS[torch_function]:
-        raise ValueError(f"Implementation '{impl_key}' is not registered for {torch_function}.")
+        raise ValueError(f"Implementation '{impl_key}' is not registered for {torch_function.__name__}.")
 
     return _HANDLED_FUNCTIONS[torch_function][impl_key]
 
@@ -107,10 +107,10 @@ def set_default_implementation(torch_function: Callable, impl_key: str) -> None:
         If the specified implementation key is not registered for the torch function.
     """
     if torch_function not in _HANDLED_FUNCTIONS:
-        raise ValueError("No implementations registered for the given torch function.")
+        raise ValueError(f"No implementations registered for {torch_function.__name__}.")
 
     if impl_key not in _HANDLED_FUNCTIONS[torch_function]:
-        raise ValueError(f"Implementation '{impl_key}' is not registered for {torch_function}.")
+        raise ValueError(f"Implementation '{impl_key}' is not registered for {torch_function.__name__}.")
 
     _DEFAULT_IMPLEMENTATIONS[torch_function] = impl_key
 
@@ -135,10 +135,10 @@ def get_default_implementation_key(torch_function: Callable) -> str:
         If no default implementation is set for the torch function.
     """
     if torch_function not in _HANDLED_FUNCTIONS:
-        raise ValueError("No implementations registered for the given torch function.")
+        raise ValueError(f"No implementations registered for {torch_function.__name__}.")
 
     if torch_function not in _DEFAULT_IMPLEMENTATIONS:
-        raise ValueError(f"No default implementation set for {torch_function}.")
+        raise ValueError(f"No default implementation set for {torch_function.__name__}.")
 
     return _DEFAULT_IMPLEMENTATIONS[torch_function]
 

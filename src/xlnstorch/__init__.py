@@ -16,6 +16,11 @@ from .dispatch_table import (
     override_implementation,
     apply_lns_op
 )
+from .graph import (
+    has_fanout,
+    find_fanout,
+    raise_fanout_error,
+)
 from .tensor import (
     LNSTensor,
     lnstensor,
@@ -35,6 +40,8 @@ from .base import (
     format_lnstensor_operands,
 )
 from . import operators
+from . import layers
+from . import optimizers
 
 __all__ = [
     "LNS_ZERO",
@@ -61,4 +68,8 @@ __all__ = [
 
     "align_lnstensor_bases",
     "format_lnstensor_operands",
+
+    "has_fanout",
+    "find_fanout",
+    "raise_fanout_error",
 ]

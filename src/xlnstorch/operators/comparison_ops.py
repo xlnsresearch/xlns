@@ -113,6 +113,7 @@ def gt(x, y, *, out=None):
     return result
 
 def _lns_le(x, y):
+
     x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
     x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
     x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
@@ -121,10 +122,10 @@ def _lns_le(x, y):
     result_both_pos = torch.le(x_packed_log, y_packed_log)
 
     x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.ones_like(x_packed_sign, dtype=torch.bool)
+    result_x_pos = torch.zeros_like(x_packed_sign, dtype=torch.bool)
 
     x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+    result_x_neg = torch.ones_like(x_packed_sign, dtype=torch.bool)
 
     # no need to check explicitly for both negative case, as it's the final case
     result_both_neg = torch.le(y_packed_log, x_packed_log)
@@ -153,10 +154,10 @@ def _lns_lt(x, y):
     result_both_pos = torch.lt(x_packed_log, y_packed_log)
 
     x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.ones_like(x_packed_sign, dtype=torch.bool)
+    result_x_pos = torch.zeros_like(x_packed_sign, dtype=torch.bool)
 
     x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+    result_x_neg = torch.ones_like(x_packed_sign, dtype=torch.bool)
 
     # no need to check explicitly for both negative case, as it's the final case
     result_both_neg = torch.lt(y_packed_log, x_packed_log)
@@ -176,24 +177,23 @@ def lt(x, y, *, out=None):
 
     return result
 
-def _lns_isclose(x, y, atol, rtol, base):
+def _lns_isclose(x, y, base, rtol, atol):
     abs_diff = lns_abs(lns_sub(x, y, base))
     eps = lns_add(atol, lns_mul(rtol, lns_abs(y)), base)
-
     return lns_le(abs_diff, eps)
 
 @implements(torch.isclose, _lns_isclose, "default", default=True)
 def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
-    return _lns_isclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+    x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
+    return _lns_isclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
 
-def _lns_allclose(x, y, atol, rtol, base):
-    return torch.all(lns_isclose(x, y, atol, rtol, base))
+def _lns_allclose(x, y, base, rtol, atol):
+    return torch.all(lns_isclose(x, y, base, rtol, atol))
 
 @implements(torch.allclose, _lns_allclose, "default", default=True)
 def allclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-    x, y, atol, rtol = format_lnstensor_operands(x, y, atol, rtol)
-    return _lns_allclose(x._lns, y._lns, atol._lns, rtol._lns, x.base)
+    x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
+    return _lns_allclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
 
 def _lns_any(x, dim=None, keepdim=False):
     x_packed = x.to(torch.int64)
