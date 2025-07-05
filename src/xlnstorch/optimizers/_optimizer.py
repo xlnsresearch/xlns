@@ -14,7 +14,7 @@ class LNSOptimizer(torch.optim.Optimizer):
         """Clears the gradients of all optimized parameters."""
         for group in self.param_groups:
             for param in group['params']:
-                param._incoming_grads = []
+                param._lns_grad._lns.fill_(LNS_ZERO)
                 if param.grad is not None:
                     if set_to_none:
                         param.grad = None

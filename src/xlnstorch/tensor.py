@@ -144,14 +144,15 @@ class LNSTensor:
         they are in LNS format, we must perform our custom LNS addition.
         """
 
-        def hook(grad_inputs, grad_outputs):
-            self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+        def _edge_hook(grad_inputs, grad_outputs):
+            if grad_inputs[index] is not None:
+                self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
 
-        edge.node.register_hook(hook)
+        edge.node.register_hook(_edge_hook)
 
     def register_grad_hook(self):
 
-        self._lns._lns_grad = lnstensor(0, from_lns=False, b=self.base)
+        self._lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
 
         def _hook(grad):
             return self._lns._lns_grad._lns
