@@ -104,7 +104,7 @@ def mse_loss(x, y, size_average=None, reduce=None, reduction='mean', weight=None
 
     result = LNSMSELossFunction.apply(x._lns, y._lns, x.base, size_average, reduce, reduction, weight_lns)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSL1LossFunction(torch.autograd.Function):
 
@@ -154,7 +154,7 @@ def l1_loss(x, y, size_average=None, reduce=None, reduction='mean'):
     x, y = format_lnstensor_operands(x, y)
     result = LNSL1LossFunction.apply(x._lns, y._lns, x.base, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSBCELossFunction(torch.autograd.Function):
 
@@ -263,7 +263,7 @@ def binary_cross_entropy(x, y, weight=None, size_average=None, reduce=None, redu
 
     result = LNSBCELossFunction.apply(x._lns, y._lns, x.base, weight_lns, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y, weight), lnstensor(result, from_lns=True, b=x.base)
 
 # doesn't implement pos_weight yet
 class LNSBCEWithLogitsLossFunction(torch.autograd.Function):
@@ -362,7 +362,7 @@ def binary_cross_entropy_with_logits(x, y, weight=None, size_average=None, reduc
 
     result = LNSBCEWithLogitsLossFunction.apply(x._lns, y._lns, x.base, weight_lns, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 # currently doesn't support ignore_index
 class LNSNLLLossFunction(torch.autograd.Function):
@@ -472,7 +472,7 @@ def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=Non
 
     result = LNSNLLLossFunction.apply(x._lns, y, x.base, weight_lns, size_average, ignore_index, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class PoissonNLLLossFunction(torch.autograd.Function):
 
@@ -555,7 +555,7 @@ def poisson_nll_loss(x, y, log_input=True, full=False, size_average=None, eps=1e
     x, y, eps = format_lnstensor_operands(x, y, eps)
     result = PoissonNLLLossFunction.apply(x._lns, y._lns, eps._lns, x.base, log_input, full, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSHingeEmbeddingLossFunction(torch.autograd.Function):
 
@@ -609,7 +609,7 @@ def hinge_embedding_loss(x, y, margin=1.0, size_average=None, reduce=None, reduc
     x, y, margin = format_lnstensor_operands(x, y, margin)
     result = LNSHingeEmbeddingLossFunction.apply(x._lns, y._lns, margin._lns, x.base, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSKLDivLossFunction(torch.autograd.Function):
 
@@ -682,7 +682,7 @@ def kl_div(x, y, size_average=None, reduce=None, reduction='mean', log_target=Fa
     x, y = format_lnstensor_operands(x, y)
     result = LNSKLDivLossFunction.apply(x._lns, y._lns, x.base, size_average, reduce, reduction, log_target)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSMarginRankingLossFunction(torch.autograd.Function):
 
@@ -746,7 +746,7 @@ def margin_ranking_loss(x1, x2, y, margin=0.0, size_average=None, reduce=None, r
     x1, x2, y, margin = format_lnstensor_operands(x1, x2, y, margin)
     result = LNSMarginRankingLossFunction.apply(x1._lns, x2._lns, y._lns, margin._lns, x1.base, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x1.base)
+    return (x1, x2, y), lnstensor(result, from_lns=True, b=x1.base)
 
 class LNSGaussianNLLLossFunction(torch.autograd.Function):
 
@@ -814,7 +814,7 @@ def gaussian_nll_loss(x, y, var, full=False, eps=1e-6, reduction='mean'):
     x, y, var, eps = format_lnstensor_operands(x, y, var, eps)
     result = LNSGaussianNLLLossFunction.apply(x._lns, y._lns, var._lns, eps._lns, x.base, full, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSHuberLossFunction(torch.autograd.Function):
 
@@ -922,7 +922,7 @@ def huber_loss(x, y, delta=1.0, reduction='mean', weight=None):
 
     result = LNSHuberLossFunction.apply(x._lns, y._lns, LNSTensor.get_internal_tensor(delta, x.base), x.base, reduction, weight_lns)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSmoothL1LossFunction(torch.autograd.Function):
 
@@ -990,4 +990,4 @@ def smooth_l1_loss(x, y, size_average=None, reduce=None, reduction='mean', beta=
     x, y, beta = format_lnstensor_operands(x, y, beta)
     result = LNSSmoothL1LossFunction.apply(x._lns, y._lns, beta._lns, x.base, size_average, reduce, reduction)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)

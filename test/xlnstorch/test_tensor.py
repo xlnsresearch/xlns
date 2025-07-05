@@ -52,8 +52,8 @@ def test_lnstensor_gradients():
     """Test gradient computation and backpropagation."""
     data1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64, requires_grad=True)
     data2 = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float64, requires_grad=True)
-    lns1 = xltorch.lnstensor(data1, f=23)
-    lns2 = xltorch.lnstensor(data2, f=23)
+    lns1 = xltorch.lnstensor(data1, requires_grad=True, f=23)
+    lns2 = xltorch.lnstensor(data2, requires_grad=True, f=23)
 
     # Test forward pass
     print(xltorch.get_default_implementation_key(torch.add))

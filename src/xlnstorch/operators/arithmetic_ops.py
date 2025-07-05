@@ -154,7 +154,7 @@ def add(x, y, *, alpha=1, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSubFunction(torch.autograd.Function):
     """
@@ -190,7 +190,7 @@ def sub(x, y, *, alpha=1, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSNegFunction(torch.autograd.Function):
     """
@@ -223,7 +223,7 @@ def neg(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSMulFunction(torch.autograd.Function):
     """
@@ -265,7 +265,7 @@ def mul(x, y, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x, y), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSquareFunction(torch.autograd.Function):
     """
@@ -301,7 +301,7 @@ def square(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSqrtFunction(torch.autograd.Function):
     """
@@ -341,7 +341,7 @@ def sqrt(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSPowFunction(torch.autograd.Function):
     """
@@ -399,7 +399,7 @@ def pow(x, n, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSDivFunction(torch.autograd.Function):
     """
@@ -444,7 +444,7 @@ def div(x, y, *, out=None):
         out._lns = result
         out.base = x.base
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSReciprocalFunction(torch.autograd.Function):
     """
@@ -482,7 +482,7 @@ def reciprocal(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSExpFunction(torch.autograd.Function):
     """
@@ -516,7 +516,7 @@ def exp(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSLogFunction(torch.autograd.Function):
     """
@@ -553,7 +553,7 @@ def log(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSAbsFunction(torch.autograd.Function):
     """
@@ -594,7 +594,7 @@ def abs(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSPositiveFunction(torch.autograd.Function):
     """
@@ -621,7 +621,7 @@ class LNSPositiveFunction(torch.autograd.Function):
 def positive(x):
 
     result = LNSPositiveFunction.apply(x._lns)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSignFunction(torch.autograd.Function):
     """
@@ -657,7 +657,7 @@ def sign(x, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSumFunction(torch.autograd.Function):
     """
@@ -716,7 +716,7 @@ def sum(x, dim=None, keepdim=False, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSMatmulFunction(torch.autograd.Function):
     """
@@ -872,7 +872,7 @@ def matmul(A, B, *, out=None):
     if out is not None:
         out._lns = result
 
-    return lnstensor(result, from_lns=True, b=A.base)
+    return (A, B), lnstensor(result, from_lns=True, b=A.base)
 
 class LNSTransposeFunction(torch.autograd.Function):
     """
@@ -902,4 +902,4 @@ class LNSTransposeFunction(torch.autograd.Function):
 def transpose(A, dim0, dim1):
 
     result = LNSTransposeFunction.apply(A._lns, dim0, dim1)
-    return lnstensor(result, from_lns=True, b=A.base)
+    return (A,), lnstensor(result, from_lns=True, b=A.base)

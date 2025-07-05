@@ -78,19 +78,10 @@ class LNSTensor:
         self.base: Tensor = base.clone()
 
         if from_lns:
-            packed = data.to(torch.float64)
+            self._lns: Tensor = data.to(torch.float64)
         else:
-            with torch.no_grad():
-                log_base = torch.log(self.base)
-                log_data = torch.log(torch.abs(data)) / log_base
-                exponent = log_data.round().to(torch.int64)
+            self._lns: Tensor = FloatToLNS.apply(data, self.base)
 
-                sign_bit = (data < 0).to(torch.int64)
-                packed_int = (exponent << 1) | sign_bit
-                packed = packed_int.to(torch.float64)
-                packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
-
-        self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
         if requires_grad and not hasattr(self._lns, "_lns_grad"):
@@ -114,7 +105,7 @@ class LNSTensor:
 
         impl_key = get_default_implementation_key(func)
         impl = get_implementation(func, impl_key)
-        result = impl[0](*args, **kwargs) # LNSTensor custom operator
+        lns_args, result = impl[0](*args, **kwargs) # LNSTensor custom operator
 
         if isinstance(result, LNSTensor):
             lnstensor_results = (result,)
@@ -128,11 +119,11 @@ class LNSTensor:
             if res.requires_grad:
                 # get the gradient edge for the output tensor.
                 edge = torch.autograd.graph.get_gradient_edge(res._lns)
-                for i in range(len(args)):
+                for i in range(len(lns_args)):
                     # if the input is an LNSTensor and requires gradients, track
                     # the operation so we obtain this path's gradient for later.
-                    if isinstance(args[i], LNSTensor) and args[i].requires_grad:
-                        args[i]._track_operation(edge, i)
+                    if isinstance(lns_args[i], LNSTensor) and lns_args[i].requires_grad:
+                        lns_args[i]._track_operation(edge, i)
 
         return result
 
@@ -655,10 +646,41 @@ class LNSTensor:
     def sigmoid(self):
         return torch.sigmoid(self)
 
+class FloatToLNS(torch.autograd.Function):
+
+    @staticmethod
+    def forward(x, base):
+        log_base = torch.log(base)
+        log_data = torch.log(torch.abs(x)) / log_base
+        exponent = log_data.round().to(torch.int64)
+
+        sign_bit = (x < 0).to(torch.int64)
+        packed_int = (exponent << 1) | sign_bit
+        packed = packed_int.to(torch.float64)
+        packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
+
+        return packed
+    
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base = inputs
+        ctx.save_for_backward(base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        base, = ctx.saved_tensors
+        packed_grad_output = grad_output.to(torch.int64)
+
+        exponent = (packed_grad_output >> 1).to(torch.float64)
+        sign = torch.where((packed_grad_output & 1).bool(), -1.0, 1.0)
+
+        return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent)), None
+
 def lnstensor(
         data: Any,
         from_lns: bool = False,
         requires_grad: bool = False,
+        detach=True,
         f: int | None = None,
         b: Union[float, int, Tensor, None] = None
         ) -> LNSTensor:
@@ -687,6 +709,10 @@ def lnstensor(
         If ``True``, the LNSTensor will track gradients. Defaults to ``False``.
         If a pre-packed LNSTensor or a torch.Tensor is provided, this parameter
         is ignored.
+    detach : bool, optional
+        If ``True`` and data is a :class:`torch.Tensor` and not ``from_lns``, data
+        will be detached from its computation graph, i.e. this tensor will become
+        a leaf node.
     f : int, optional
         The number of fractional exponent bits. mutually exclusive with ``b``.
     b : float, int, torch.Tensor, optional
@@ -741,8 +767,11 @@ def lnstensor(
 
     # torch.Tensor
     elif isinstance(data, torch.Tensor):
-        input_data = data.to(torch.float64)
-        requires_grad = input_data.requires_grad
+        requires_grad = data.requires_grad
+        if detach and not from_lns:
+            input_data = data.detach().to(torch.float64)
+        else:
+            input_data = data.to(torch.float64)
 
     # numpy.ndarray
     elif isinstance(data, np.ndarray):

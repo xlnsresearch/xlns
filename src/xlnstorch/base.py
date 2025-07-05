@@ -114,6 +114,6 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
         if isinstance(operand, LNSTensor):
             converted_operands.append(operand)
         else:
-            converted_operands.append(lnstensor(operand, b=base))
+            converted_operands.append(lnstensor(operand, detach=False, b=base))
 
     return align_lnstensor_bases(*converted_operands, base=base)

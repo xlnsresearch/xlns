@@ -59,9 +59,9 @@ def relu(x, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.relu_, LNSReLUFunction.forward, "default", default=True)
 def relu_(x):
@@ -69,7 +69,7 @@ def relu_(x):
     result = LNSReLUFunction.apply(x._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSLeakyReLUFunction(torch.autograd.Function):
     """
@@ -116,9 +116,9 @@ def leaky_relu(x, negative_slope=0.01, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.leaky_relu_, LNSLeakyReLUFunction.forward, "default", default=True)
 def leaky_relu_(x, negative_slope=0.01):
@@ -127,7 +127,7 @@ def leaky_relu_(x, negative_slope=0.01):
     result = LNSLeakyReLUFunction.apply(x._lns, negative_slope._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSThresholdFunction(torch.autograd.Function):
 
@@ -162,9 +162,9 @@ def threshold(x, threshold, value, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.threshold_, LNSThresholdFunction.forward, "default", default=True)
 def threshold_(x, threshold, value):
@@ -173,7 +173,7 @@ def threshold_(x, threshold, value):
     result = LNSThresholdFunction.apply(x._lns, threshold._lns, value._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSTanhFunction(torch.autograd.Function):
     """
@@ -211,7 +211,7 @@ class LNSTanhFunction(torch.autograd.Function):
 @implements(torch.nn.functional.tanh, LNSTanhFunction.forward, "default", default=True)
 def tanh(x):
     result = LNSTanhFunction.apply(x._lns, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSigmoidFunction(torch.autograd.Function):
     """
@@ -250,7 +250,7 @@ class LNSSigmoidFunction(torch.autograd.Function):
 @implements(torch.nn.functional.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
 def sigmoid(x):
     result = LNSSigmoidFunction.apply(x._lns, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSLogSigmoidFunction(torch.autograd.Function):
     """
@@ -288,7 +288,7 @@ class LNSLogSigmoidFunction(torch.autograd.Function):
 @implements(torch.nn.functional.logsigmoid, LNSLogSigmoidFunction.forward, "default", default=True)
 def logsigmoid(x):
     result = LNSLogSigmoidFunction.apply(x._lns, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftminFunction(torch.autograd.Function):
     """
@@ -329,7 +329,7 @@ class LNSSoftminFunction(torch.autograd.Function):
 @implements(torch.nn.functional.softmin, LNSSoftminFunction.forward, "default", default=True)
 def softmin(x, dim=None, _stacklevel=3, dtype=None):
     result = LNSSoftminFunction.apply(x._lns, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftmaxFunction(torch.autograd.Function):
     """
@@ -369,7 +369,7 @@ class LNSSoftmaxFunction(torch.autograd.Function):
 @implements(torch.nn.functional.softmax, LNSSoftmaxFunction.forward, "default", default=True)
 def softmax(x, dim=None, _stacklevel=3, dtype=None):
     result = LNSSoftmaxFunction.apply(x._lns, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSLogSoftmaxFunction(torch.autograd.Function):
     """
@@ -412,7 +412,7 @@ class LNSLogSoftmaxFunction(torch.autograd.Function):
 @implements(torch.nn.functional.log_softmax, LNSLogSoftmaxFunction.forward, "default", default=True)
 def log_softmax(x, dim=None, _stacklevel=3, dtype=None):
     result = LNSLogSoftmaxFunction.apply(x._lns, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSHardtanhFunction(torch.autograd.Function):
     """
@@ -455,9 +455,9 @@ def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.hardtanh_, LNSHardtanhFunction.forward, "default", default=True)
 def hardtanh_(x, min_val=-1.0, max_val=1.0):
@@ -466,7 +466,7 @@ def hardtanh_(x, min_val=-1.0, max_val=1.0):
     result = LNSHardtanhFunction.apply(x._lns, min_val._lns, max_val._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSHardswishFunction(torch.autograd.Function):
     """
@@ -518,9 +518,9 @@ def hardswish(x, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSReLU6Function(torch.autograd.Function):
     """
@@ -564,9 +564,9 @@ def relu6(x, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSELUFunction(torch.autograd.Function):
     """
@@ -611,9 +611,9 @@ def elu(x, alpha=1.0, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.elu_, LNSELUFunction.forward, "default", default=True)
 def elu_(x, alpha=1.0):
@@ -622,7 +622,7 @@ def elu_(x, alpha=1.0):
     result = LNSELUFunction.apply(x._lns, alpha._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSSELUFunction(torch.autograd.Function):
     """
@@ -674,9 +674,9 @@ def selu(x, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSCELUFunction(torch.autograd.Function):
     """
@@ -721,9 +721,9 @@ def celu(x, alpha=1.0, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSPReLUFunction(torch.autograd.Function):
     """
@@ -781,9 +781,9 @@ def prelu(x, a, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSRReLUFunction(torch.autograd.Function):
     """
@@ -835,9 +835,9 @@ def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.nn.functional.rrelu_, LNSRReLUFunction.forward, "default", default=True)
 def rrelu_(x, lower=1/8, upper=1/3, training=False):
@@ -850,7 +850,7 @@ def rrelu_(x, lower=1/8, upper=1/3, training=False):
     result = LNSRReLUFunction.apply(x._lns, a._lns, x.base)
 
     x._lns = result._lns
-    return x
+    return (x,), x
 
 class LNSGLUFunction(torch.autograd.Function):
     """
@@ -906,7 +906,7 @@ def glu(x, dim=-1):
     x = lnstensor(x, from_lns=True, b=x.base)
     result = LNSGLUFunction.apply(x._lns, x.base, dim)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSHardshrinkFunction(torch.autograd.Function):
     """
@@ -945,7 +945,7 @@ def hardshrink(x, lambd=0.5):
     x, lambd = format_lnstensor_operands(x, lambd)
     result = LNSHardshrinkFunction.apply(x._lns, lambd._lns, x.base)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSTanhshrinkFunction(torch.autograd.Function):
     """
@@ -984,7 +984,7 @@ class LNSTanhshrinkFunction(torch.autograd.Function):
 @implements(torch.nn.functional.tanhshrink, LNSTanhFunction.forward, "default", default=True)
 def tanhshrink(x):
     result = LNSTanhshrinkFunction.apply(x._lns, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftsignFunction(torch.autograd.Function):
     """
@@ -1023,7 +1023,7 @@ class LNSSoftsignFunction(torch.autograd.Function):
 @implements(torch.nn.functional.softsign, LNSSoftsignFunction.forward, "default", default=True)
 def softsign(x):
     result = LNSSoftsignFunction.apply(x._lns, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftplusFunction(torch.autograd.Function):
     """
@@ -1068,7 +1068,7 @@ def softplus(x, beta=1.0, threshold=20.0):
     x, beta, threshold = format_lnstensor_operands(x, beta, threshold)
     result = LNSSoftplusFunction.apply(x._lns, beta._lns, threshold._lns, x.base)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSoftshrinkFunction(torch.autograd.Function):
     """
@@ -1109,7 +1109,7 @@ def softshrink(x, lambd=0.5):
     x, lambd = format_lnstensor_operands(x, lambd)
     result = LNSSoftshrinkFunction.apply(x._lns, lambd._lns, x.base)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSHardsigmoidFunction(torch.autograd.Function):
     """
@@ -1154,9 +1154,9 @@ def hardsigmoid(x, inplace=False):
 
     if inplace:
         x._lns = result
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
 
 class LNSSiLUFunction(torch.autograd.Function):
     """
@@ -1201,6 +1201,6 @@ def silu(x, inplace=False):
 
     if inplace:
         x._lns = result._lns
-        return x
+        return tuple(), x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return (x,), lnstensor(result, from_lns=True, b=x.base)
