@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, Union, List
+import collections
 
 import math
 import numpy as np
@@ -92,8 +93,8 @@ class LNSTensor:
         self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
-        if requires_grad and self._lns.is_leaf and not hasattr(self._lns, "_incoming_grads"):
-            self.register_grad_hooks()
+        if requires_grad and not hasattr(self._lns, "_lns_grad"):
+            self.register_grad_hook()
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
@@ -113,26 +114,49 @@ class LNSTensor:
 
         impl_key = get_default_implementation_key(func)
         impl = get_implementation(func, impl_key)
+        result = impl[0](*args, **kwargs) # LNSTensor custom operator
 
-        return impl[0](*args, **kwargs) # LNSTensor custom operator
+        if isinstance(result, LNSTensor):
+            lnstensor_results = (result,)
+        elif isinstance(result, tuple):
+            lnstensor_results = tuple(res for res in result if isinstance(res, LNSTensor))
+        else:
+            lnstensor_results = tuple()
 
-    def register_grad_hooks(self):
+        for res in lnstensor_results:
+            # track the operation for autograd if any of the inputs requires gradients.
+            if res.requires_grad:
+                # get the gradient edge for the output tensor.
+                edge = torch.autograd.graph.get_gradient_edge(res._lns)
+                for i in range(len(args)):
+                    # if the input is an LNSTensor and requires gradients, track
+                    # the operation so we obtain this path's gradient for later.
+                    if isinstance(args[i], LNSTensor) and args[i].requires_grad:
+                        args[i]._track_operation(edge, i)
 
-        self._lns._incoming_grads = []
+        return result
+
+    def _track_operation(self, edge, index):
+        """
+        Registers a hook to track the operation that produced this output.
+        This is used to accumulate gradients from different paths in the
+        computation graph since PyTorch will internally add these but since
+        they are in LNS format, we must perform our custom LNS addition.
+        """
+
+        def hook(grad_inputs, grad_outputs):
+            self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+
+        edge.node.register_hook(hook)
+
+    def register_grad_hook(self):
+
+        self._lns._lns_grad = lnstensor(0, from_lns=False, b=self.base)
 
         def _hook(grad):
-            self._lns._incoming_grads.append(grad.clone())
-            return grad
-
-        def _accum_hook(param):
-            accum_grad = lnstensor(0, from_lns=False, b=self.base)
-            for grad in self._lns._incoming_grads:
-                if grad is not None:
-                    accum_grad += lnstensor(grad, from_lns=True, b=self.base)
-            param.grad = accum_grad._lns
+            return self._lns._lns_grad._lns
 
         self._hook_handle = self._lns.register_hook(_hook)
-        self._accum_hook_handle = self._lns.register_post_accumulate_grad_hook(_accum_hook)    
 
     def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=None):
         """
@@ -162,25 +186,25 @@ class LNSTensor:
             accumulated into all the leaf Tensors that were used to compute the tensors.
         """
 
-        if has_fanout(self._lns):
-            # only compute detailed fan-out error if we have fan-out
-            offenders = find_fanout(self._lns)
-            raise_fanout_error(offenders)
-
         if gradient is None:
             # if self._lns.numel() != 1:
             #     raise RuntimeError("grad can be implicitly created only for scalar outputs")
             tensor_gradient = torch.zeros_like(self._lns, dtype=torch.float64)
+            gradient = ones_like(self._lns, b=self.base, requires_grad=False)
         else:
-            tensor_gradient = gradient.lns
+            tensor_gradient = gradient._lns
 
         if inputs is None:
             tensor_inputs = None
         else:
-            tensor_inputs = [inp.lns for inp in inputs]
+            tensor_inputs = [inp._lns for inp in inputs]
+
+        # Manually set the incoming gradients for the output tensor since
+        # no hooks will be registered for it.
+        self._lns._lns_grad = gradient
 
         self._lns.backward(
-            tensor_gradient,
+            gradient=tensor_gradient,
             retain_graph=retain_graph,
             create_graph=create_graph,
             inputs=tensor_inputs
@@ -726,7 +750,7 @@ def lnstensor(
     # xlns scalar objects
     elif isinstance(data, (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb)):
         if data.x == -math.inf:
-            input_data = LNS_ZERO
+            input_data = LNS_ZERO.clone()
 
         else:
             if isinstance(data, (xl.xlns, xl.xlnsud)) and not base_val == xl.xlnsB:
