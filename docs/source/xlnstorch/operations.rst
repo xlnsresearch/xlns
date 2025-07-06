@@ -73,6 +73,7 @@ Arithmetic Operations
     operators.lns_sign
     operators.lns_positive
     operators.lns_sum
+    operators.lns_prod
     operators.lns_matmul
     operators.lns_transpose
 

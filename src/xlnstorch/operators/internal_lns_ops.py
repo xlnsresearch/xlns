@@ -178,6 +178,13 @@ lns_sum = _create_lns_op_func('sum', torch.sum, signature=_build_signature([
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_prod = _create_lns_op_func('prod', torch.prod, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("dim", "pk", int | Tuple[int], None),
+    ("keepdim", "pk", bool, False)],
+    torch.Tensor,
+))
 lns_matmul = _create_lns_op_func('matmul', torch.matmul, signature=_build_signature([
     ("A", "pk", torch.Tensor),
     ("B", "pk", torch.Tensor),

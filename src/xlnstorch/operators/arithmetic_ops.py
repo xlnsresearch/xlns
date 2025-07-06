@@ -728,6 +728,94 @@ def sum(x, dim=None, keepdim=False, *, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSProdFunction(LNSFunction):
+    """
+    Product is computed using the multiplication operation.
+
+    Gradients are computed as follows:
+    d/dx(prod(x)) = prod(x) / x
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+
+        if dim is None:
+            flat = x_packed.reshape(-1)
+
+            out = flat[0]
+            for i in range(1, flat.numel()):
+                out = lns_mul(out, flat[i])
+
+            if keepdim:
+                out = out.reshape([1] * x.dim())
+
+            return out
+
+        # Reduction over a subset of the dimensions
+        red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
+        red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+        # transpose so that the reduction dimensions are at the end, then flatten.
+        permute_order = [d for d in range(x.dim()) if d not in red_dims] + list(red_dims)
+        transposed = x_packed.permute(*permute_order)
+        outer_shape = transposed.shape[:-len(red_dims)]
+        transposed = transposed.reshape(*outer_shape, -1)
+
+        out = transposed[..., 0]
+        for i in range(1, transposed.shape[-1]):
+            out = lns_mul(out, transposed[..., i])
+
+        # re-insert the reduced axes
+        if keepdim:
+            for d in red_dims:
+                out = out.unsqueeze(d)
+
+        return out.to(torch.float64)
+    
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        ctx.save_for_backward(x, output, base)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, output, base = ctx.saved_tensors
+        x_packed, output_packed = x.to(torch.int64), output.to(torch.int64)
+
+        # 1. Broadcast the forward result so it matches x's shape
+        if ctx.dim is not None and not ctx.keepdim:
+            red_dims = (ctx.dim,) if isinstance(ctx.dim, int) else tuple(ctx.dim)
+            red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+            for d in red_dims:
+                output_packed = output_packed.unsqueeze(d)
+
+        output_broadcast = output_packed.expand_as(x_packed)
+        ratio = lns_div(output_broadcast, x_packed, base)
+
+        # broadcast grad_output to match x's shape
+        if ctx.dim is not None and not ctx.keepdim:
+            for d in red_dims:
+                grad_output = grad_output.unsqueeze(d)
+
+        grad_output = grad_output.expand_as(x)
+        grad_x = lns_mul(grad_output, ratio)
+
+        return grad_x, None, None, None
+
+@implements(torch.prod, LNSProdFunction.forward, "default", default=True)
+def prod(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSProdFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSMatmulFunction(LNSFunction):
     """
     Matrix multiplication uses the lns addition and
