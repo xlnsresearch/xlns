@@ -1,11 +1,29 @@
 import functools
 import contextlib
+from dataclasses import dataclass
 from typing import Callable, Generator, Tuple
+
+@dataclass
+class Implementation:
+    """
+    A dataclass to represent an implementation of a torch function in the LNS context.
+
+    Attributes
+    ----------
+    func : Callable
+        The function that implements the LNS operation.
+    lns_op : Callable
+        The internal computation function for the LNS operation. This takes
+        internal representations as arguments rather than LNSTensor objects.
+    """
+    func: Callable
+    lns_op: Callable
 
 # _HANDLED_FUNCTIONS is a dictionary that maps torch functions to their
 # corresponding implementations for LNSTensor. Each key is a torch function
-# and the value is a dictionary mapping implementation keys to a tuple of
-# the LNSTensor implementation and its internal computation function.
+# and the value is a dictionary mapping implementation keys to an Implementation
+# object, which contains the function that implements the LNS operation, the
+# internal computation function done on the internal torch tensor representations.
 _HANDLED_FUNCTIONS = {}
 # _DEFAULT_IMPLEMENTATIONS is a dictionary that maps torch functions to their
 # default implementation keys. This is used to determine which implementation
@@ -16,7 +34,7 @@ def implements(
         torch_function: Callable,
         lns_operation: Callable,
         key: str | None = None,
-        default: bool = False
+        default: bool = False,
     ) -> Callable:
     """
     A decorator to register a custom implementation for a given torch function.
@@ -51,7 +69,12 @@ def implements(
 
         if torch_function not in _HANDLED_FUNCTIONS:
             _HANDLED_FUNCTIONS[torch_function] = {}
-        _HANDLED_FUNCTIONS[torch_function][function_key] = (func, lns_operation)
+
+        implementation = Implementation(
+            func=func,
+            lns_op=lns_operation,
+        )
+        _HANDLED_FUNCTIONS[torch_function][function_key] = implementation
 
         if default:
             _DEFAULT_IMPLEMENTATIONS[torch_function] = function_key
@@ -59,7 +82,7 @@ def implements(
         return func
     return decorator
 
-def get_implementation(torch_function: Callable, impl_key: str) -> Tuple[Callable, Callable]:
+def get_implementation(torch_function: Callable, impl_key: str) -> Implementation:
     """
     Get the implementation tuple for a given torch function and implementation key.
 
@@ -72,8 +95,9 @@ def get_implementation(torch_function: Callable, impl_key: str) -> Tuple[Callabl
 
     Returns
     -------
-    tuple[Callable, Callable]
-        A tuple containing (implementation_function, lns_operation).
+    Implementation
+        An implementation object containing the function that implements the LNS operation,
+        and the internal computation function.
 
     Raises
     ------
@@ -205,4 +229,4 @@ def apply_lns_op(torch_function: Callable, *args, **kwargs):
     impl_key = get_default_implementation_key(torch_function)
     impl = get_implementation(torch_function, impl_key)
 
-    return impl[1](*args, **kwargs) # internal computation function
+    return impl.lns_op(*args, **kwargs) # internal computation function

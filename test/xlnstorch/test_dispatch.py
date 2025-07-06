@@ -12,7 +12,7 @@ def test_implementation_registration():
     # Test retrieving the implementation
     impl = xltorch.get_implementation(torch.add, "test_impl")
     assert impl is not None
-    assert impl[0] is test_add_impl
+    assert impl.func is test_add_impl
 
     # Test setting as default
     with xltorch.override_implementation(torch.add, "test_impl"):
@@ -33,7 +33,7 @@ def test_implementation_override():
 
     # Check that the override worked
     impl = xltorch.get_implementation(torch.add, "impl1")
-    assert impl[0] is add_impl2
+    assert impl.func is add_impl2
 
 def test_apply_lns_op():
     """Test the apply_lns_op function."""

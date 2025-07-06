@@ -16,7 +16,7 @@ from .dispatch_table import (
     override_implementation,
     apply_lns_op
 )
-from .graph import (
+from .autograd import (
     has_fanout,
     find_fanout,
     raise_fanout_error,

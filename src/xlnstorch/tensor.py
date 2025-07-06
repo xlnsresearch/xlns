@@ -1,13 +1,12 @@
 from __future__ import annotations
 from typing import Any, Union, List
-import collections
 
 import math
 import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import LNS_ZERO, get_default_implementation_key, get_implementation, has_fanout, find_fanout, raise_fanout_error
+from . import LNS_ZERO, get_default_implementation_key, get_implementation
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -105,25 +104,7 @@ class LNSTensor:
 
         impl_key = get_default_implementation_key(func)
         impl = get_implementation(func, impl_key)
-        lns_args, result = impl[0](*args, **kwargs) # LNSTensor custom operator
-
-        if isinstance(result, LNSTensor):
-            lnstensor_results = (result,)
-        elif isinstance(result, tuple):
-            lnstensor_results = tuple(res for res in result if isinstance(res, LNSTensor))
-        else:
-            lnstensor_results = tuple()
-
-        for res in lnstensor_results:
-            # track the operation for autograd if any of the inputs requires gradients.
-            if res.requires_grad:
-                # get the gradient edge for the output tensor.
-                edge = torch.autograd.graph.get_gradient_edge(res._lns)
-                for i in range(len(lns_args)):
-                    # if the input is an LNSTensor and requires gradients, track
-                    # the operation so we obtain this path's gradient for later.
-                    if isinstance(lns_args[i], LNSTensor) and lns_args[i].requires_grad:
-                        lns_args[i]._track_operation(edge, i)
+        result = impl.func(*args, **kwargs) # LNSTensor custom operator
 
         return result
 

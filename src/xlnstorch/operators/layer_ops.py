@@ -3,13 +3,14 @@ import warnings
 import torch
 from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from . import (
+    LNSFunction,
     lns_mul,
     lns_sum,
     lns_add,
     lns_matmul,
 )
 
-class LNSLinearFunction(torch.autograd.Function):
+class LNSLinearFunction(LNSFunction):
     """
     Linear transformation is implemented using matrix
     multiplication followed by addition of a bias term.
@@ -66,16 +67,14 @@ def linear(x, weight, bias=None):
 
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
-        bias_lns = bias._lns
     else:
         x, weight = format_lnstensor_operands(x, weight)
-        bias_lns = None
 
-    result = LNSLinearFunction.apply(x._lns, weight._lns, x.base, bias_lns)
+    result = LNSLinearFunction.apply(x, weight, x.base, bias)
 
-    return (x, weight, bias), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSBilinearFunction(torch.autograd.Function):
+class LNSBilinearFunction(LNSFunction):
     """
     Linear transformation is implemented using matrix
     multiplication followed by addition of a bias term.
@@ -132,16 +131,14 @@ def bilinear(x, y, weight, bias=None):
 
     if bias is not None:
         x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
-        bias_lns = bias._lns
     else:
         x, y, weight = format_lnstensor_operands(x, y, weight)
-        bias_lns = None
 
-    result = LNSBilinearFunction.apply(x._lns, y._lns, weight._lns, x.base, bias_lns)
+    result = LNSBilinearFunction.apply(x, y, weight, x.base, bias)
 
-    return (x, y, weight, bias), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSDropoutFunction(torch.autograd.Function):
+class LNSDropoutFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base, p=0.5):
@@ -171,20 +168,20 @@ class LNSDropoutFunction(torch.autograd.Function):
 def dropout(x, p=0.5, training=True, inplace=False):
 
     if not training or p == 0.0:
-        return tuple(), x
+        return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
 
-    result = LNSDropoutFunction.apply(x._lns, x.base, p)
+    result = LNSDropoutFunction.apply(x, x.base, p)
 
     if inplace:
         x._lns = result
-        return tuple(), x
+        return x
 
-    return (x,), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSDropout1dFunction(torch.autograd.Function):
+class LNSDropout1dFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base, p=0.5):
@@ -222,7 +219,7 @@ class LNSDropout1dFunction(torch.autograd.Function):
 def dropout1d(x, p=0.5, training=True, inplace=False):
 
     if not training or p == 0.0:
-        return tuple(), x
+        return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
@@ -230,15 +227,15 @@ def dropout1d(x, p=0.5, training=True, inplace=False):
     if x.dim() < 2 or x.dim() > 3:
         raise ValueError(f"Dropout1d expects a 2D or 3D tensor, but got a tensor with {x.dim()} dimensions.")
 
-    result = LNSDropout1dFunction.apply(x._lns, x.base, p)
+    result = LNSDropout1dFunction.apply(x, x.base, p)
 
     if inplace:
         x._lns = result
-        return tuple(), x
+        return x
 
-    return (x,), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSDropout2dFunction(torch.autograd.Function):
+class LNSDropout2dFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base, p=0.5):
@@ -276,7 +273,7 @@ class LNSDropout2dFunction(torch.autograd.Function):
 def dropout2d(x, p=0.5, training=True, inplace=False):
 
     if not training or p == 0.0:
-        return tuple(), x
+        return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
@@ -292,15 +289,15 @@ def dropout2d(x, p=0.5, training=True, inplace=False):
                       "behavior, please switch to using dropout1d instead.")
         return torch.nn.functional.dropout1d(x, p=p, training=training, inplace=inplace)
 
-    result = LNSDropout2dFunction.apply(x._lns, x.base, p)
+    result = LNSDropout2dFunction.apply(x, x.base, p)
 
     if inplace:
         x._lns = result
-        return tuple(), x
+        return x
 
-    return (x,), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSDropout3dFunction(torch.autograd.Function):
+class LNSDropout3dFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base, p=0.5):
@@ -338,7 +335,7 @@ class LNSDropout3dFunction(torch.autograd.Function):
 def dropout3d(x, p=0.5, training=True, inplace=False):
 
     if not training or p == 0.0:
-        return tuple(), x
+        return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
@@ -346,15 +343,15 @@ def dropout3d(x, p=0.5, training=True, inplace=False):
     if x.dim() < 4 or x.dim() > 5:
         raise ValueError(f"Dropout3d expects a 4D or 5D tensor, but got a tensor with {x.dim()} dimensions.")
 
-    result = LNSDropout3dFunction.apply(x._lns, x.base, p)
+    result = LNSDropout3dFunction.apply(x, x.base, p)
 
     if inplace:
         x._lns = result
-        return tuple(), x
+        return x
 
-    return (x,), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSConv1dFunction(torch.autograd.Function):
+class LNSConv1dFunction(LNSFunction):
 
     @staticmethod
     def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
@@ -508,17 +505,15 @@ def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
-        bias_lns = bias._lns
     else:
         x, weight = format_lnstensor_operands(x, weight)
-        bias_lns = None
 
-    result = LNSConv1dFunction.apply(x._lns, weight._lns, bias_lns, x.base,
-                                     stride, padding, dilation, groups)
+    result = LNSConv1dFunction.apply(x, weight, bias, x.base, stride,
+                                     padding, dilation, groups)
 
-    return (x, weight, bias), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSConv2dFunction(torch.autograd.Function):
+class LNSConv2dFunction(LNSFunction):
 
     @staticmethod
     def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
@@ -706,17 +701,15 @@ def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
-        bias_lns = bias._lns
     else:
         x, weight = format_lnstensor_operands(x, weight)
-        bias_lns = None
 
-    result = LNSConv2dFunction.apply(x._lns, weight._lns, bias_lns, x.base,
-                                     stride, padding, dilation, groups)
+    result = LNSConv2dFunction.apply(x, weight, bias, x.base, stride,
+                                     padding, dilation, groups)
 
-    return (x, weight, bias), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSConv3dFunction(torch.autograd.Function):
+class LNSConv3dFunction(LNSFunction):
     @staticmethod
     def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
         # Standardize params to tuples
@@ -916,12 +909,10 @@ def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
-        bias_lns = bias._lns
     else:
         x, weight = format_lnstensor_operands(x, weight)
-        bias_lns = None
 
-    result = LNSConv3dFunction.apply(x._lns, weight._lns, bias_lns, x.base,
-                                     stride, padding, dilation, groups)
+    result = LNSConv3dFunction.apply(x, weight, bias, x.base, stride,
+                                     padding, dilation, groups)
 
-    return (x, weight, bias), lnstensor(result, from_lns=True, b=x.base)
+    return lnstensor(result, from_lns=True, b=x.base)

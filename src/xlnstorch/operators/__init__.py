@@ -86,6 +86,9 @@ from .internal_lns_ops import (
     lns_conv2d,
     lns_conv3d,
 )
+from ._function import (
+    LNSFunction,
+)
 from .arithmetic_ops import (
     implement_sbdb,
     sbdb,
@@ -117,6 +120,8 @@ __all__ = [
     "lns_sum",
     "lns_matmul",
     "lns_transpose",
+
+    "LNSFunction",
 
     "lns_equal",
     "lns_eq",
