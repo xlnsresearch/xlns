@@ -69,7 +69,7 @@ def relu_(x):
 
     result = LNSReLUFunction.apply(x, x.base)
 
-    x._lns = result._lns
+    x._lns.copy_(result)
     return x
 
 class LNSLeakyReLUFunction(LNSFunction):
@@ -127,7 +127,7 @@ def leaky_relu_(x, negative_slope=0.01):
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
     result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
 class LNSThresholdFunction(LNSFunction):
@@ -173,7 +173,7 @@ def threshold_(x, threshold, value):
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
     result = LNSThresholdFunction.apply(x, threshold, value, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
 class LNSTanhFunction(LNSFunction):
@@ -466,7 +466,7 @@ def hardtanh_(x, min_val=-1.0, max_val=1.0):
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
     result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
 class LNSHardswishFunction(LNSFunction):
@@ -623,7 +623,7 @@ def elu_(x, alpha=1.0):
     x, alpha = format_lnstensor_operands(x, alpha)
     result = LNSELUFunction.apply(x, alpha, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
 class LNSSELUFunction(LNSFunction):
@@ -851,7 +851,7 @@ def rrelu_(x, lower=1/8, upper=1/3, training=False):
 
     result = LNSRReLUFunction.apply(x, a, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
 class LNSGLUFunction(LNSFunction):
@@ -1199,7 +1199,7 @@ def silu(x, inplace=False):
     result = LNSSiLUFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result._lns
+        x._lns = result
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)

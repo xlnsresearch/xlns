@@ -422,7 +422,7 @@ class LNSTensor:
         """
         self._lns.requires_grad_(requires_grad)
         if requires_grad:
-            self.register_grad_hooks()
+            self.register_grad_hook()
         return self
 
     def __repr__(self) -> str:
