@@ -433,29 +433,95 @@ class LNSTensor:
             other = lnstensor(other, b=self.base)
         return torch.add(self, other)
 
+    def __radd__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.add(other, self)
+    
+    def __iadd__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.add(self, other, out=self)
+
     def __sub__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.sub(self, other)
+    
+    def __rsub__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.sub(other, self)
+
+    def __isub__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.sub(self, other, out=self)
 
     def __mul__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.mul(self, other)
 
+    def __rmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.mul(other, self)
+
+    def __imul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.mul(self, other, out=self)
+
     def __truediv__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.div(self, other)
 
+    def __rtruediv__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.div(other, self)
+
+    def __itruediv__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.div(self, other, out=self)
+
     def __pow__(self, other):
         return torch.pow(self, other) # not implemented LNSTensor powers for now
+
+    def __rpow__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.pow(other, self)
+
+    def __ipow__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.pow(self, other, out=self)
+
+    def __matmul__(self, other):
+        return torch.matmul(self, other)
+
+    def __rmatmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.matmul(other, self)
+
+    def __imatmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.matmul(self, other, out=self)
 
     def __neg__(self):
         return torch.neg(self)
 
     def __pos__(self):
         return torch.pos(self)
+
+    def __abs__(self):
+        return torch.abs(self)
 
     def __eq__(self, other):
         if isinstance(other, _xlns_types):
