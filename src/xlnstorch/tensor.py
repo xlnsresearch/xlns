@@ -426,7 +426,16 @@ class LNSTensor:
         return self
 
     def __repr__(self) -> str:
-        return f"LNSTensor(value={self.value}, base={self.base.item()})"
+         # indent the value string to match the length of "LNSTensor(value="
+        value_str = torch._tensor_str._tensor_str(self.value, 16)
+        f = -torch.log2(torch.log2(self.base))
+
+        if abs(f - torch.round(f)) < 1e-06: # check if f is an integer, works up to f=33
+            base_str = f"prec={round(f.item())}"
+        else:
+            base_str = f"base={self.base.item()}"
+
+        return f"LNSTensor(value={value_str}, {base_str}, requires_grad={self.requires_grad})"
 
     def __add__(self, other):
         if isinstance(other, _xlns_types):

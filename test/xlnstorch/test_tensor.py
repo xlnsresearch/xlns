@@ -75,4 +75,4 @@ def test_lnstensor_repr():
     repr_str = repr(lns)
     assert "LNSTensor" in repr_str
     assert "value=" in repr_str
-    assert "base=" in repr_str 
+    assert "base=" in repr_str or "prec=" in repr_str
