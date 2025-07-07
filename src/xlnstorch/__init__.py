@@ -38,7 +38,7 @@ from .tensor import (
 from . import init
 from . import operators
 from . import layers
-from . import optimizers
+from . import optim
 
 __all__ = [
     "LNS_ZERO",
