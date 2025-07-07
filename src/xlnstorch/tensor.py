@@ -562,6 +562,12 @@ class LNSTensor:
             other = lnstensor(other, b=self.base)
         return torch.lt(self, other)
 
+    def __getitem__(self, index):
+        return lnstensor(self._lns[index], from_lns=True, b=self.base)
+
+    def __setitem__(self, index, value):
+        self._lns[index] = LNSTensor.get_internal_tensor(value, self.base)
+
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)
 
