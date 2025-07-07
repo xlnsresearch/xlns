@@ -9,13 +9,13 @@ class LNSNet(xltorch.layers.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = xltorch.layers.LNSLinear(784, 100, weight_f=24, bias_f=24)
-        self.fc2 = xltorch.layers.LNSLinear(100, 10, weight_f=24, bias_f=24)
+        self.fc1 = xltorch.layers.LNSLinear(784, 100)
+        self.fc2 = xltorch.layers.LNSLinear(100, 10)
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
-        xltorch.init.normal_(self.fc1.weight, mean=0.0, std=0.01)
-        xltorch.init.normal_(self.fc2.weight, mean=0.0, std=0.01)
+        xltorch.init.normal_(self.fc1.weight, mean=0.0, std=0.1)
+        xltorch.init.normal_(self.fc2.weight, mean=0.0, std=0.1)
         xltorch.init.zeros_(self.fc1.bias)
         xltorch.init.zeros_(self.fc2.bias)
 

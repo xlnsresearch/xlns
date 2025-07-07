@@ -8,6 +8,8 @@ except ModuleNotFoundError as e:
 
 LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
 
+from . import autograd
+
 from .dispatch_table import (
     implements,
     get_implementation,
@@ -15,11 +17,6 @@ from .dispatch_table import (
     get_default_implementation_key,
     override_implementation,
     apply_lns_op
-)
-from .autograd import (
-    has_fanout,
-    find_fanout,
-    raise_fanout_error,
 )
 from .tensor import (
     LNSTensor,
@@ -69,8 +66,4 @@ __all__ = [
     "LNSFunction",
     "align_lnstensor_bases",
     "format_lnstensor_operands",
-
-    "has_fanout",
-    "find_fanout",
-    "raise_fanout_error",
 ]

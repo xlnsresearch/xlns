@@ -1,6 +1,12 @@
 import torch
-from collections import defaultdict, deque
+from collections import deque
 from typing import List, Dict, Iterable, Set, Any
+
+# This file contains functions to analyze the autograd graph in PyTorch.
+# In particular, it can detect nodes with fan-out, i.e., nodes that have
+# multiple parents. This was necessary since it broke the previous LNS
+# autograd implementation but is not a problem for the new one. The functions
+# aren't used in the library itself anymore but are kept here for reference.
 
 def _children(fn: torch.autograd.Function) -> List[torch.autograd.Function]:
     """Returns a list of the function nodes reachable from `fn`."""
