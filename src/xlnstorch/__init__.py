@@ -38,6 +38,7 @@ from .tensor import (
     align_lnstensor_bases,
     format_lnstensor_operands,
 )
+from . import init
 from . import operators
 from . import layers
 from . import optimizers
