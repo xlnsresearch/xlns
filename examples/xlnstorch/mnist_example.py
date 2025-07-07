@@ -9,25 +9,25 @@ class LNSNet(xltorch.layers.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = xltorch.layers.LNSLinear(784, 100)
-        self.fc2 = xltorch.layers.LNSLinear(100, 10)
+        self.fc1 = xltorch.layers.LNSLinear(784, 100, weight_f=24, bias_f=24)
+        self.fc2 = xltorch.layers.LNSLinear(100, 10, weight_f=24, bias_f=24)
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
         # This will be made easier with LNSTensor, but it hasn't
         # been implemented yet.
-        weight1, bias1 = torch.empty(100, 784), torch.empty(100)
-        weight2, bias2 = torch.empty(10, 100), torch.empty(10)
+        # weight1, bias1 = torch.empty(100, 784), torch.empty(100)
+        # weight2, bias2 = torch.empty(10, 100), torch.empty(10)
 
-        torch.nn.init.normal_(weight1, mean=0.0, std=0.1)
-        torch.nn.init.normal_(weight2, mean=0.0, std=0.1)
-        torch.nn.init.zeros_(bias1)
-        torch.nn.init.zeros_(bias2)
+        # torch.nn.init.normal_(weight1, mean=0.0, std=0.1)
+        # torch.nn.init.normal_(weight2, mean=0.0, std=0.1)
+        # torch.nn.init.zeros_(bias1)
+        # torch.nn.init.zeros_(bias2)
 
-        self.fc1.weight_lns.data.copy_(xltorch.lnstensor(weight1)._lns)
-        self.fc2.weight_lns.data.copy_(xltorch.lnstensor(weight2)._lns)
-        self.fc1.bias_lns.data.copy_(xltorch.lnstensor(bias1)._lns)
-        self.fc2.bias_lns.data.copy_(xltorch.lnstensor(bias2)._lns)
+        # self.fc1.weight_lns.data.copy_(xltorch.lnstensor(weight1)._lns)
+        # self.fc2.weight_lns.data.copy_(xltorch.lnstensor(weight2)._lns)
+        # self.fc1.bias_lns.data.copy_(xltorch.lnstensor(bias1)._lns)
+        # self.fc2.bias_lns.data.copy_(xltorch.lnstensor(bias2)._lns)
 
     def forward(self, x):
         # Flatten the input tensor

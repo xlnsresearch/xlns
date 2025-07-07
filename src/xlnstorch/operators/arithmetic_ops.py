@@ -1,7 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, full
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, LNSFunction
 from . import (
-    LNSFunction,
     lns_add,
     lns_neg,
     lns_mul,

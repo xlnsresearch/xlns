@@ -1,7 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand, LNSFunction
 from . import (
-    LNSFunction,
     lns_mul,
     lns_add,
     lns_gt,

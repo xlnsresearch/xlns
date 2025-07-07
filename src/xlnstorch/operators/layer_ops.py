@@ -1,9 +1,8 @@
 import warnings
 
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like, LNSFunction
 from . import (
-    LNSFunction,
     lns_mul,
     lns_sum,
     lns_add,

@@ -35,6 +35,14 @@ class LNSLinear(LNSModule):
         Whether to include a bias term in the transformation. Default is True.
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, defaults to the current.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ---------
@@ -51,17 +59,29 @@ class LNSLinear(LNSModule):
         This is only created if `bias` is set to True.
     """
 
-    def __init__(self, in_features, out_features, bias=True, device=None):
+    def __init__(
+            self,
+            in_features,
+            out_features,
+            bias=True,
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.has_bias = bias
 
         sqrt_k = (1.0 / in_features) ** 0.5
-        self.register_parameter("weight", (rand(out_features, in_features, device=device) * 2 - 1) * sqrt_k)
+        weight = rand(out_features, in_features, device=device, f=weight_f, b=weight_b)
+        self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
-            self.register_parameter("bias", (rand(out_features, device=device) * 2 - 1) * sqrt_k)
+            bias = rand(out_features, device=device, f=bias_f, b=bias_b)
+            self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
         else:
             self.bias = None
 
@@ -89,6 +109,14 @@ class LNSBilinear(LNSModule):
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, defaults to the current
         device.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ---------
@@ -106,7 +134,18 @@ class LNSBilinear(LNSModule):
         This is only created if `bias` is set to True.
     """
 
-    def __init__(self, in1_features, in2_features, out_features, bias=True, device=None):
+    def __init__(
+            self,
+            in1_features,
+            in2_features,
+            out_features,
+            bias=True,
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.in1_features = in1_features
         self.in2_features = in2_features
@@ -114,10 +153,12 @@ class LNSBilinear(LNSModule):
         self.has_bias = bias
 
         sqrt_k = (1.0 / (in1_features + in2_features)) ** 0.5
-        self.register_parameter("weight", (rand(out_features, in1_features, in2_features, device=device) * 2 - 1) * sqrt_k)
+        weight = rand(out_features, in1_features, in2_features, device=device, f=weight_f, b=weight_b)
+        self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
-            self.register_parameter("bias", (rand(out_features, device=device) * 2 - 1) * sqrt_k)
+            bias = rand(out_features, device=device, f=bias_f, b=bias_b)
+            self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
         else:
             self.bias = None
 
@@ -142,6 +183,14 @@ class LNSLazyLinear(LNSModule):
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, defaults to the current
         device.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ---------
@@ -158,21 +207,37 @@ class LNSLazyLinear(LNSModule):
         This is only created if `bias` is set to True.
     """
 
-    def __init__(self, out_features, bias=True, device=None):
+    def __init__(
+            self,
+            out_features,
+            bias=True,
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.out_features = out_features
         self.has_bias = bias
         self.device = device
         self.weight = None
         self.bias = None
+        self.weight_f = weight_f
+        self.weight_b = weight_b
+        self.bias_f = bias_f
+        self.bias_b = bias_b
 
     def forward(self, x):
         if self.weight is None:
             self.in_features = x.shape[-1]
             sqrt_k = (1.0 / self.in_features) ** 0.5
 
-            self.register_parameter("weight", (rand(self.out_features, self.in_features, device=self.device) * 2 - 1) * sqrt_k)
+            weight = rand(self.out_features, self.in_features, device=self.device, f=self.weight_f, b=self.weight_b)
+            self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
+
             if self.has_bias:
-                self.register_parameter("bias", (rand(self.out_features, device=self.device) * 2 - 1) * sqrt_k)
+                bias = rand(self.out_features, device=self.device, f=self.bias_f, b=self.bias_b)
+                self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
 
         return torch.nn.functional.linear(x, self.weight, self.bias)

@@ -34,8 +34,7 @@ from .tensor import (
     rand_like,
     randn,
     randn_like,
-)
-from .base import (
+    LNSFunction,
     align_lnstensor_bases,
     format_lnstensor_operands,
 )
@@ -66,6 +65,7 @@ __all__ = [
     "override_implementation",
     "apply_lns_op",
 
+    "LNSFunction",
     "align_lnstensor_bases",
     "format_lnstensor_operands",
 
