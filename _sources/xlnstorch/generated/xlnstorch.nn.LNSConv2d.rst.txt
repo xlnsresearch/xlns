@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSConv2d
-==========================
+﻿xlnstorch.nn.LNSConv2d
+======================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSConv2d
 

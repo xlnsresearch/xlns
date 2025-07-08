@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSBilinear
-============================
+﻿xlnstorch.nn.LNSBilinear
+========================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSBilinear
 

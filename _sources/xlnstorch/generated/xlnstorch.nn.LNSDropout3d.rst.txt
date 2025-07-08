@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSDropout3d
-=============================
+﻿xlnstorch.nn.LNSDropout3d
+=========================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSDropout3d
 

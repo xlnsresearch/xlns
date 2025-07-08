@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSIdentity
-============================
+﻿xlnstorch.nn.LNSIdentity
+========================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSIdentity
 

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xlnstorch.layers.LNSModule &mdash; xlns 1.0.5 documentation</title>
+  <title>xlnstorch.nn.LNSBilinear &mdash; xlns 1.0.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -16,11 +16,12 @@
       <script src="../../_static/documentation_options.js?v=d55fa986"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="xlnstorch.layers.LNSIdentity" href="xlnstorch.layers.LNSIdentity.html" />
-    <link rel="prev" title="Layers" href="../layers.html" /> 
+    <link rel="next" title="xlnstorch.nn.LNSLazyLinear" href="xlnstorch.nn.LNSLazyLinear.html" />
+    <link rel="prev" title="xlnstorch.nn.LNSLinear" href="xlnstorch.nn.LNSLinear.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,21 +49,21 @@
 <li class="toctree-l2"><a class="reference internal" href="../lnstensors.html">LNS Tensors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../operations.html">Operations</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../layers.html">Layers</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">xlnstorch.layers.LNSModule</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.layers.LNSModule"><code class="docutils literal notranslate"><span class="pre">LNSModule</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSModule.html">xlnstorch.nn.LNSModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSIdentity.html">xlnstorch.nn.LNSIdentity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSLinear.html">xlnstorch.nn.LNSLinear</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">xlnstorch.nn.LNSBilinear</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#xlnstorch.nn.LNSBilinear"><code class="docutils literal notranslate"><span class="pre">LNSBilinear</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSIdentity.html">xlnstorch.layers.LNSIdentity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSLinear.html">xlnstorch.layers.LNSLinear</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSBilinear.html">xlnstorch.layers.LNSBilinear</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSLazyLinear.html">xlnstorch.layers.LNSLazyLinear</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSDropout.html">xlnstorch.layers.LNSDropout</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSDropout1d.html">xlnstorch.layers.LNSDropout1d</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSDropout2d.html">xlnstorch.layers.LNSDropout2d</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSDropout3d.html">xlnstorch.layers.LNSDropout3d</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSConv1d.html">xlnstorch.layers.LNSConv1d</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSConv2d.html">xlnstorch.layers.LNSConv2d</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xlnstorch.layers.LNSConv3d.html">xlnstorch.layers.LNSConv3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSLazyLinear.html">xlnstorch.nn.LNSLazyLinear</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSDropout.html">xlnstorch.nn.LNSDropout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSDropout1d.html">xlnstorch.nn.LNSDropout1d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSDropout2d.html">xlnstorch.nn.LNSDropout2d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSDropout3d.html">xlnstorch.nn.LNSDropout3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSConv1d.html">xlnstorch.nn.LNSConv1d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSConv2d.html">xlnstorch.nn.LNSConv2d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch.nn.LNSConv3d.html">xlnstorch.nn.LNSConv3d</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../layers.html#custom-layers">Custom Layers</a></li>
 </ul>
 </li>
@@ -87,9 +88,9 @@
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">xlnstorch</a></li>
           <li class="breadcrumb-item"><a href="../layers.html">Layers</a></li>
-      <li class="breadcrumb-item active">xlnstorch.layers.LNSModule</li>
+      <li class="breadcrumb-item active">xlnstorch.nn.LNSBilinear</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/xlnstorch/generated/xlnstorch.layers.LNSModule.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/xlnstorch/generated/xlnstorch.nn.LNSBilinear.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -97,37 +98,71 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="xlnstorch-layers-lnsmodule">
-<h1>xlnstorch.layers.LNSModule<a class="headerlink" href="#xlnstorch-layers-lnsmodule" title="Link to this heading"></a></h1>
+  <section id="xlnstorch-nn-lnsbilinear">
+<h1>xlnstorch.nn.LNSBilinear<a class="headerlink" href="#xlnstorch-nn-lnsbilinear" title="Link to this heading"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="xlnstorch.layers.LNSModule">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.layers.</span></span><span class="sig-name descname"><span class="pre">LNSModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.layers.LNSModule" title="Link to this definition"></a></dt>
-<dd><p>An LNS module that serves as a base class for all LNS layers.</p>
-<p>This class extends <cite>torch.nn.Module</cite> and provides a mechanism to register
-LNSTensor parameters. For a given LNSTensor parameter, say <cite>param</cite>, it converts
-the <cite>param._lns</cite> attribute into a <cite>torch.nn.Parameter</cite> and registers it with
-the name <cite>param_lns</cite> in the module. This is necessary to ensure that PyTorch
-has visibility of the LNS parameters for optimization and state management.</p>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">CustomLayer</span><span class="p">(</span><span class="n">xlnstorch</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LNSModule</span><span class="p">):</span>
-<span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="gp">... </span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">register_parameter</span><span class="p">(</span><span class="s2">&quot;custom_param&quot;</span><span class="p">,</span> <span class="n">xlnstorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">layer</span> <span class="o">=</span> <span class="n">CustomLayer</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">custom_param</span><span class="p">)</span> <span class="c1"># LNSTensor(value=1.0, base=1.0006771306930664)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">custom_param_lns</span><span class="p">)</span> <span class="c1"># Parameter containing: tensor(0., dtype=torch.float64, requires_grad=True)</span>
-</pre></div>
-</div>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSBilinear">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.nn.</span></span><span class="sig-name descname"><span class="pre">LNSBilinear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in1_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in2_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSBilinear" title="Link to this definition"></a></dt>
+<dd><p>An LNS bilinear layer that performs a bilinear transformation on two inputs, <span class="math notranslate nohighlight">\(x_1\)</span>
+and <span class="math notranslate nohighlight">\(x_2\)</span>. It applies the transformation <span class="math notranslate nohighlight">\(y = x_1^T A x_2 + b\)</span>, where <span class="math notranslate nohighlight">\(A\)</span>
+is the weight tensor, and <span class="math notranslate nohighlight">\(b\)</span> is the bias vector if bias is enabled.</p>
+<p>See also: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Bilinear.html#torch.nn.Bilinear" title="(in PyTorch v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Bilinear</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in1_features</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The number of input features for the first input.</p></li>
+<li><p><strong>in2_features</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The number of input features for the second input.</p></li>
+<li><p><strong>out_features</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The number of output features.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to include a bias term in the transformation. Default is True.</p></li>
+<li><p><strong>device</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.7)"><em>torch.device</em></a><em>, </em><em>optional</em>) – The device on which to create the layer’s parameters. If None, defaults to the current
+device.</p></li>
+<li><p><strong>weight_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of fractional exponent bits for the weight. mutually exclusive with <code class="docutils literal notranslate"><span class="pre">weight_b</span></code>.</p></li>
+<li><p><strong>weight_b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a><em>, </em><em>optional</em>) – The explicit logarithm base for the weight; mutually exclusive with <code class="docutils literal notranslate"><span class="pre">weight_f</span></code>.</p></li>
+<li><p><strong>bias_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of fractional exponent bits for the bias. mutually exclusive with <code class="docutils literal notranslate"><span class="pre">bias_b</span></code>.</p></li>
+<li><p><strong>bias_b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>torch.Tensor</em></a><em>, </em><em>optional</em>) – The explicit logarithm base for the bias; mutually exclusive with <code class="docutils literal notranslate"><span class="pre">bias_f</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSBilinear.weight">
+<span class="sig-name descname"><span class="pre">weight</span></span><a class="headerlink" href="#xlnstorch.nn.LNSBilinear.weight" title="Link to this definition"></a></dt>
+<dd><p>The weight tensor of shape
+<span class="math notranslate nohighlight">\((\text{out_features}, \text{in1_features}, \text{in2_features})\)</span>,
+initialized with random values uniformly distributed between
+<span class="math notranslate nohighlight">\(-\sqrt{k}\)</span> and <span class="math notranslate nohighlight">\(\sqrt{k}\)</span>,
+where <span class="math notranslate nohighlight">\(k = \frac{1}{\text{in1_features}}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSBilinear.bias">
+<span class="sig-name descname"><span class="pre">bias</span></span><a class="headerlink" href="#xlnstorch.nn.LNSBilinear.bias" title="Link to this definition"></a></dt>
+<dd><p>The bias vector of shape <span class="math notranslate nohighlight">\((\text{out_features},)\)</span>,
+initialized with random values uniformly distributed between
+<span class="math notranslate nohighlight">\(-\sqrt{k}\)</span> and <span class="math notranslate nohighlight">\(\sqrt{k}\)</span>,
+where <span class="math notranslate nohighlight">\(k = \frac{1}{\text{in1_features}}\)</span>.
+This is only created if <cite>bias</cite> is set to True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
-<dt class="sig sig-object py" id="xlnstorch.layers.LNSModule.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.layers.LNSModule.__init__" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSBilinear.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in1_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in2_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSBilinear.__init__" title="Link to this definition"></a></dt>
 <dd><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.layers.LNSModule.__init__" title="xlnstorch.layers.LNSModule.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.nn.LNSBilinear.__init__" title="xlnstorch.nn.LNSBilinear.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(in1_features, in2_features, ...[, ...])</p></td>
 <td><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(name, module)</p></td>
@@ -166,7 +201,7 @@ has visibility of the LNS parameters for optimization and state management.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>()</p></td>
 <td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">float</span></code> datatype.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(*input)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(x1, x2)</p></td>
 <td><p>Define the computation performed at every call.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_buffer</span></code>(target)</p></td>
@@ -310,8 +345,8 @@ has visibility of the LNS parameters for optimization and state management.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../layers.html" class="btn btn-neutral float-left" title="Layers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="xlnstorch.layers.LNSIdentity.html" class="btn btn-neutral float-right" title="xlnstorch.layers.LNSIdentity" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="xlnstorch.nn.LNSLinear.html" class="btn btn-neutral float-left" title="xlnstorch.nn.LNSLinear" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="xlnstorch.nn.LNSLazyLinear.html" class="btn btn-neutral float-right" title="xlnstorch.nn.LNSLazyLinear" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

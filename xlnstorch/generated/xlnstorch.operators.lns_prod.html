@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xlnstorch.operators.lns_matmul &mdash; xlns 1.0.5 documentation</title>
+  <title>xlnstorch.operators.lns_prod &mdash; xlns 1.0.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -19,8 +19,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="xlnstorch.operators.lns_transpose" href="xlnstorch.operators.lns_transpose.html" />
-    <link rel="prev" title="xlnstorch.operators.lns_prod" href="xlnstorch.operators.lns_prod.html" /> 
+    <link rel="next" title="xlnstorch.operators.lns_matmul" href="xlnstorch.operators.lns_matmul.html" />
+    <link rel="prev" title="xlnstorch.operators.lns_sum" href="xlnstorch.operators.lns_sum.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -80,9 +80,9 @@
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">xlnstorch</a></li>
           <li class="breadcrumb-item"><a href="../operations.html">Operations</a></li>
-      <li class="breadcrumb-item active">xlnstorch.operators.lns_matmul</li>
+      <li class="breadcrumb-item active">xlnstorch.operators.lns_prod</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/xlnstorch/generated/xlnstorch.operators.lns_matmul.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/xlnstorch/generated/xlnstorch.operators.lns_prod.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -90,18 +90,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="xlnstorch-operators-lns-matmul">
-<h1>xlnstorch.operators.lns_matmul<a class="headerlink" href="#xlnstorch-operators-lns-matmul" title="Link to this heading"></a></h1>
+  <section id="xlnstorch-operators-lns-prod">
+<h1>xlnstorch.operators.lns_prod<a class="headerlink" href="#xlnstorch-operators-lns-prod" title="Link to this heading"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="xlnstorch.operators.lns_matmul">
-<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_matmul" title="Link to this definition"></a></dt>
-<dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.matmul.html#torch.matmul" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.matmul()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
+<dt class="sig sig-object py" id="xlnstorch.operators.lns_prod">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_prod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_prod" title="Link to this definition"></a></dt>
+<dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.prod.html#torch.prod" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.prod()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
-<li><p><strong>B</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
 <li><p><strong>base</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>)</p></li>
+<li><p><strong>keepdim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -116,8 +117,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="xlnstorch.operators.lns_prod.html" class="btn btn-neutral float-left" title="xlnstorch.operators.lns_prod" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="xlnstorch.operators.lns_transpose.html" class="btn btn-neutral float-right" title="xlnstorch.operators.lns_transpose" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="xlnstorch.operators.lns_sum.html" class="btn btn-neutral float-left" title="xlnstorch.operators.lns_sum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="xlnstorch.operators.lns_matmul.html" class="btn btn-neutral float-right" title="xlnstorch.operators.lns_matmul" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

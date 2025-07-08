@@ -19,7 +19,7 @@ the same way as PyTorch's built-in operations. For example,
 
     z = x + y
     print(z)
-    # LNSTensor(value=tensor([4.0000, 6.0000], dtype=torch.float64), base=1.0000000826295863)
+    # LNSTensor(value=[4.0000, 6.0000], prec=23, requires_grad=False)
 
 Custom Operations
 -----------------
@@ -73,6 +73,7 @@ Arithmetic Operations
     operators.lns_sign
     operators.lns_positive
     operators.lns_sum
+    operators.lns_prod
     operators.lns_matmul
     operators.lns_transpose
 

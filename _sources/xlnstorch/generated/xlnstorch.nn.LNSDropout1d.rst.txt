@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSDropout1d
-=============================
+﻿xlnstorch.nn.LNSDropout1d
+=========================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSDropout1d
 

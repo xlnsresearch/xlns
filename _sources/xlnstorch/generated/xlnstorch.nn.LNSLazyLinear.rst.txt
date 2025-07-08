@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSLazyLinear
-==============================
+﻿xlnstorch.nn.LNSLazyLinear
+==========================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSLazyLinear
 

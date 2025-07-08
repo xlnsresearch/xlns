@@ -113,7 +113,7 @@ the same way as PyTorch’s built-in operations. For example,</p>
 
 <span class="n">z</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
-<span class="c1"># LNSTensor(value=tensor([4.0000, 6.0000], dtype=torch.float64), base=1.0000000826295863)</span>
+<span class="c1"># LNSTensor(value=[4.0000, 6.0000], prec=23, requires_grad=False)</span>
 </pre></div>
 </div>
 <section id="custom-operations">
@@ -208,10 +208,13 @@ operations. For the most part, these internal operator functions wrap the
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_sum.html#xlnstorch.operators.lns_sum" title="xlnstorch.operators.lns_sum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_sum</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.sum.html#torch.sum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.sum()</span></code></a> for parameter/return details.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_matmul.html#xlnstorch.operators.lns_matmul" title="xlnstorch.operators.lns_matmul"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_matmul</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_prod.html#xlnstorch.operators.lns_prod" title="xlnstorch.operators.lns_prod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_prod</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.prod.html#torch.prod" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.prod()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_matmul.html#xlnstorch.operators.lns_matmul" title="xlnstorch.operators.lns_matmul"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_matmul</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.matmul.html#torch.matmul" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.matmul()</span></code></a> for parameter/return details.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_transpose.html#xlnstorch.operators.lns_transpose" title="xlnstorch.operators.lns_transpose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_transpose</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_transpose.html#xlnstorch.operators.lns_transpose" title="xlnstorch.operators.lns_transpose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_transpose</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.transpose.html#torch.transpose" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.transpose()</span></code></a> for parameter/return details.</p></td>
 </tr>
 </tbody>

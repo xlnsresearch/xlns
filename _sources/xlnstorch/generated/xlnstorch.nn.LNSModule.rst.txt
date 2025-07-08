@@ -1,7 +1,7 @@
-﻿xlnstorch.layers.LNSModule
-==========================
+﻿xlnstorch.nn.LNSModule
+======================
 
-.. currentmodule:: xlnstorch.layers
+.. currentmodule:: xlnstorch.nn
 
 .. autoclass:: LNSModule
 
