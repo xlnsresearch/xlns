@@ -44,7 +44,7 @@ class LNSSGD(LNSOptimizer):
 
     Examples
     --------
-    >>> optimizer = xlnstorch.optimizers.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
+    >>> optimizer = xlnstorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
     >>> optimizer.zero_grad() # Clear gradients before the step
     >>> loss_fn(model(input), target).backward() # Compute gradients
     >>> optimizer.step() # Update parameters based on gradients

@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand, LNSFunction
 from . import (
     lns_mul,
     lns_add,
@@ -21,7 +21,7 @@ from . import (
     lns_tanh,
 )
 
-class LNSReLUFunction(torch.autograd.Function):
+class LNSReLUFunction(LNSFunction):
     """
     The ReLU activation function in LNS simply involves checking
     if the sign bit is set (i.e. if the value is negative).
@@ -55,7 +55,7 @@ class LNSReLUFunction(torch.autograd.Function):
 @implements(torch.nn.functional.relu, LNSReLUFunction.forward, "default", default=True)
 def relu(x, inplace=False):
 
-    result = LNSReLUFunction.apply(x._lns, x.base)
+    result = LNSReLUFunction.apply(x, x.base)
 
     if inplace:
         x._lns = result
@@ -66,12 +66,12 @@ def relu(x, inplace=False):
 @implements(torch.nn.functional.relu_, LNSReLUFunction.forward, "default", default=True)
 def relu_(x):
 
-    result = LNSReLUFunction.apply(x._lns, x.base)
+    result = LNSReLUFunction.apply(x, x.base)
 
-    x._lns = result._lns
+    x._lns.copy_(result)
     return x
 
-class LNSLeakyReLUFunction(torch.autograd.Function):
+class LNSLeakyReLUFunction(LNSFunction):
     """
     Again, the leaky ReLU activation function in LNS just involves
     checking the sign bit and applying a negative slope to the
@@ -112,7 +112,7 @@ class LNSLeakyReLUFunction(torch.autograd.Function):
 def leaky_relu(x, negative_slope=0.01, inplace=False):
 
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
-    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope._lns, x.base)
+    result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
 
     if inplace:
         x._lns = result
@@ -124,12 +124,12 @@ def leaky_relu(x, negative_slope=0.01, inplace=False):
 def leaky_relu_(x, negative_slope=0.01):
 
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
-    result = LNSLeakyReLUFunction.apply(x._lns, negative_slope._lns, x.base)
+    result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
-class LNSThresholdFunction(torch.autograd.Function):
+class LNSThresholdFunction(LNSFunction):
 
     @staticmethod
     def forward(x, threshold, value, base):
@@ -158,7 +158,7 @@ class LNSThresholdFunction(torch.autograd.Function):
 def threshold(x, threshold, value, inplace=False):
 
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
-    result = LNSThresholdFunction.apply(x._lns, threshold._lns, value._lns, x.base)
+    result = LNSThresholdFunction.apply(x, threshold, value, x.base)
 
     if inplace:
         x._lns = result
@@ -170,12 +170,12 @@ def threshold(x, threshold, value, inplace=False):
 def threshold_(x, threshold, value):
 
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
-    result = LNSThresholdFunction.apply(x._lns, threshold._lns, value._lns, x.base)
+    result = LNSThresholdFunction.apply(x, threshold, value, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
-class LNSTanhFunction(torch.autograd.Function):
+class LNSTanhFunction(LNSFunction):
     """
     For now, we will implement the tanh function by converting
     the input back to its floating-point representation.
@@ -210,10 +210,10 @@ class LNSTanhFunction(torch.autograd.Function):
 @implements(torch.tanh, LNSTanhFunction.forward, "default", default=True)
 @implements(torch.nn.functional.tanh, LNSTanhFunction.forward, "default", default=True)
 def tanh(x):
-    result = LNSTanhFunction.apply(x._lns, x.base)
+    result = LNSTanhFunction.apply(x, x.base)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSigmoidFunction(torch.autograd.Function):
+class LNSSigmoidFunction(LNSFunction):
     """
     For now, we will implement the sigmoid function by
     converting the input back to its floating-point
@@ -249,10 +249,10 @@ class LNSSigmoidFunction(torch.autograd.Function):
 @implements(torch.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
 @implements(torch.nn.functional.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
 def sigmoid(x):
-    result = LNSSigmoidFunction.apply(x._lns, x.base)
+    result = LNSSigmoidFunction.apply(x, x.base)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSLogSigmoidFunction(torch.autograd.Function):
+class LNSLogSigmoidFunction(LNSFunction):
     """
     For now, we will implement the log sigmoid function by
     converting the input back to its floating-point
@@ -287,10 +287,10 @@ class LNSLogSigmoidFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.logsigmoid, LNSLogSigmoidFunction.forward, "default", default=True)
 def logsigmoid(x):
-    result = LNSLogSigmoidFunction.apply(x._lns, x.base)
+    result = LNSLogSigmoidFunction.apply(x, x.base)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSoftminFunction(torch.autograd.Function):
+class LNSSoftminFunction(LNSFunction):
     """
     The softmin function in LNS involves exponentiation,
     which currently requires converting to floating-point
@@ -328,10 +328,10 @@ class LNSSoftminFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.softmin, LNSSoftminFunction.forward, "default", default=True)
 def softmin(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSSoftminFunction.apply(x._lns, x.base, dim)
+    result = LNSSoftminFunction.apply(x, x.base, dim)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSoftmaxFunction(torch.autograd.Function):
+class LNSSoftmaxFunction(LNSFunction):
     """
     The softmax function in LNS involves exponentiation,
     which currently requires converting to floating-point
@@ -368,10 +368,10 @@ class LNSSoftmaxFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.softmax, LNSSoftmaxFunction.forward, "default", default=True)
 def softmax(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSSoftmaxFunction.apply(x._lns, x.base, dim)
+    result = LNSSoftmaxFunction.apply(x, x.base, dim)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSLogSoftmaxFunction(torch.autograd.Function):
+class LNSLogSoftmaxFunction(LNSFunction):
     """
     The log softmax function in LNS involves exponentiation,
     which currently requires converting to floating-point
@@ -411,10 +411,10 @@ class LNSLogSoftmaxFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.log_softmax, LNSLogSoftmaxFunction.forward, "default", default=True)
 def log_softmax(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSLogSoftmaxFunction.apply(x._lns, x.base, dim)
+    result = LNSLogSoftmaxFunction.apply(x, x.base, dim)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSHardtanhFunction(torch.autograd.Function):
+class LNSHardtanhFunction(LNSFunction):
     """
     The hardtanh function in LNS is implemented by checking
     the input value and clamping it to the given range.
@@ -451,7 +451,7 @@ class LNSHardtanhFunction(torch.autograd.Function):
 def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
 
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
-    result = LNSHardtanhFunction.apply(x._lns, min_val._lns, max_val._lns, x.base)
+    result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
 
     if inplace:
         x._lns = result
@@ -463,12 +463,12 @@ def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
 def hardtanh_(x, min_val=-1.0, max_val=1.0):
 
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
-    result = LNSHardtanhFunction.apply(x._lns, min_val._lns, max_val._lns, x.base)
+    result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
-class LNSHardswishFunction(torch.autograd.Function):
+class LNSHardswishFunction(LNSFunction):
     """
     The hardswish function in LNS is implemented by checking
     the input value and applying the hardswish formula.
@@ -514,7 +514,7 @@ class LNSHardswishFunction(torch.autograd.Function):
 @implements(torch.nn.functional.hardswish, LNSHardswishFunction.forward, "default", default=True)
 def hardswish(x, inplace=False):
 
-    result = LNSHardswishFunction.apply(x._lns, x.base)
+    result = LNSHardswishFunction.apply(x, x.base)
 
     if inplace:
         x._lns = result
@@ -522,7 +522,7 @@ def hardswish(x, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSReLU6Function(torch.autograd.Function):
+class LNSReLU6Function(LNSFunction):
     """
     The ReLU6 function in LNS is implemented by checking
     the input value and clamping it to the range [0, 6].
@@ -560,7 +560,7 @@ class LNSReLU6Function(torch.autograd.Function):
 @implements(torch.nn.functional.relu6, LNSReLU6Function.forward, "default", default=True)
 def relu6(x, inplace=False):
 
-    result = LNSReLU6Function.apply(x._lns, x.base)
+    result = LNSReLU6Function.apply(x, x.base)
 
     if inplace:
         x._lns = result
@@ -568,7 +568,7 @@ def relu6(x, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSELUFunction(torch.autograd.Function):
+class LNSELUFunction(LNSFunction):
     """
     The ELU function in LNS is implemented by checking
     the input value and applying the ELU formula.
@@ -607,7 +607,8 @@ class LNSELUFunction(torch.autograd.Function):
 def elu(x, alpha=1.0, inplace=False):
 
     x, alpha = format_lnstensor_operands(x, alpha)
-    result = LNSELUFunction.apply(x._lns, alpha._lns, x.base)
+
+    result = LNSELUFunction.apply(x, alpha, x.base)
 
     if inplace:
         x._lns = result
@@ -619,12 +620,12 @@ def elu(x, alpha=1.0, inplace=False):
 def elu_(x, alpha=1.0):
 
     x, alpha = format_lnstensor_operands(x, alpha)
-    result = LNSELUFunction.apply(x._lns, alpha._lns, x.base)
+    result = LNSELUFunction.apply(x, alpha, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
-class LNSSELUFunction(torch.autograd.Function):
+class LNSSELUFunction(LNSFunction):
     """
     The SELU function in LNS is implemented by checking
     the input value and applying the SELU formula.
@@ -670,7 +671,7 @@ class LNSSELUFunction(torch.autograd.Function):
 @implements(torch.nn.functional.selu, LNSSELUFunction.forward, "default", default=True)
 def selu(x, inplace=False):
 
-    result = LNSSELUFunction.apply(x._lns, x.base)
+    result = LNSSELUFunction.apply(x, x.base)
 
     if inplace:
         x._lns = result
@@ -678,7 +679,7 @@ def selu(x, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSCELUFunction(torch.autograd.Function):
+class LNSCELUFunction(LNSFunction):
     """
     The CELU function in LNS is implemented by checking
     the input value and applying the CELU formula.
@@ -717,7 +718,7 @@ class LNSCELUFunction(torch.autograd.Function):
 def celu(x, alpha=1.0, inplace=False):
 
     x, alpha = format_lnstensor_operands(x, alpha)
-    result = LNSCELUFunction.apply(x._lns, alpha._lns, x.base)
+    result = LNSCELUFunction.apply(x, alpha, x.base)
 
     if inplace:
         x._lns = result
@@ -725,7 +726,7 @@ def celu(x, alpha=1.0, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSPReLUFunction(torch.autograd.Function):
+class LNSPReLUFunction(LNSFunction):
     """
     The PReLU function in LNS is implemented by checking
     the input value and applying the PReLU formula.
@@ -777,7 +778,7 @@ class LNSPReLUFunction(torch.autograd.Function):
 def prelu(x, a, inplace=False):
 
     x, a = format_lnstensor_operands(x, a)
-    result = LNSPReLUFunction.apply(x._lns, a._lns, x.base)
+    result = LNSPReLUFunction.apply(x, a, x.base)
 
     if inplace:
         x._lns = result
@@ -785,7 +786,7 @@ def prelu(x, a, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSRReLUFunction(torch.autograd.Function):
+class LNSRReLUFunction(LNSFunction):
     """
     The RReLU function in LNS is implemented by checking
     the input value and applying the RReLU formula. This
@@ -831,7 +832,7 @@ def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
     else:
         a = lnstensor((lower + upper) / 2, b=x.base)
 
-    result = LNSRReLUFunction.apply(x._lns, a._lns, x.base)
+    result = LNSRReLUFunction.apply(x, a, x.base)
 
     if inplace:
         x._lns = result
@@ -847,12 +848,12 @@ def rrelu_(x, lower=1/8, upper=1/3, training=False):
     else:
         a = lnstensor((lower + upper) / 2, b=x.base)
 
-    result = LNSRReLUFunction.apply(x._lns, a._lns, x.base)
+    result = LNSRReLUFunction.apply(x, a, x.base)
 
-    x._lns = result._lns
+    x._lns = result
     return x
 
-class LNSGLUFunction(torch.autograd.Function):
+class LNSGLUFunction(LNSFunction):
     """
     The GLU function in LNS is implemented by splitting the input
     into two halves and applying the sigmoid activation to the
@@ -902,13 +903,10 @@ class LNSGLUFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.glu, LNSGLUFunction.forward, "default", default=True)
 def glu(x, dim=-1):
-
-    x = lnstensor(x, from_lns=True, b=x.base)
-    result = LNSGLUFunction.apply(x._lns, x.base, dim)
-
+    result = LNSGLUFunction.apply(x, x.base, dim)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSHardshrinkFunction(torch.autograd.Function):
+class LNSHardshrinkFunction(LNSFunction):
     """
     The hardshrink function in LNS is implemented by checking
     the input value and applying the hardshrink formula.
@@ -943,11 +941,11 @@ class LNSHardshrinkFunction(torch.autograd.Function):
 def hardshrink(x, lambd=0.5):
 
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSHardshrinkFunction.apply(x._lns, lambd._lns, x.base)
+    result = LNSHardshrinkFunction.apply(x, lambd, x.base)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSTanhshrinkFunction(torch.autograd.Function):
+class LNSTanhshrinkFunction(LNSFunction):
     """
     The tanhshrink function in LNS is implemented by applying
     the tanh function and subtracting it from the input.
@@ -983,10 +981,10 @@ class LNSTanhshrinkFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.tanhshrink, LNSTanhFunction.forward, "default", default=True)
 def tanhshrink(x):
-    result = LNSTanhshrinkFunction.apply(x._lns, x.base)
+    result = LNSTanhshrinkFunction.apply(x, x.base)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSoftsignFunction(torch.autograd.Function):
+class LNSSoftsignFunction(LNSFunction):
     """
     The softsign function in LNS is implemented by dividing
     the input by the sum of its absolute value and 1.
@@ -1022,10 +1020,10 @@ class LNSSoftsignFunction(torch.autograd.Function):
 
 @implements(torch.nn.functional.softsign, LNSSoftsignFunction.forward, "default", default=True)
 def softsign(x):
-    result = LNSSoftsignFunction.apply(x._lns, x.base)
+    result = LNSSoftsignFunction.apply(x, x.base)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSoftplusFunction(torch.autograd.Function):
+class LNSSoftplusFunction(LNSFunction):
     """
     The softplus function in LNS is implemented by applying
     the softplus formula.
@@ -1066,11 +1064,11 @@ class LNSSoftplusFunction(torch.autograd.Function):
 def softplus(x, beta=1.0, threshold=20.0):
 
     x, beta, threshold = format_lnstensor_operands(x, beta, threshold)
-    result = LNSSoftplusFunction.apply(x._lns, beta._lns, threshold._lns, x.base)
+    result = LNSSoftplusFunction.apply(x, beta, threshold, x.base)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSoftshrinkFunction(torch.autograd.Function):
+class LNSSoftshrinkFunction(LNSFunction):
     """
     The softshrink function in LNS is implemented by checking
     the input value and applying the softshrink formula.
@@ -1107,11 +1105,11 @@ class LNSSoftshrinkFunction(torch.autograd.Function):
 def softshrink(x, lambd=0.5):
 
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSSoftshrinkFunction.apply(x._lns, lambd._lns, x.base)
+    result = LNSSoftshrinkFunction.apply(x, lambd, x.base)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSHardsigmoidFunction(torch.autograd.Function):
+class LNSHardsigmoidFunction(LNSFunction):
     """
     The hard sigmoid function in LNS is implemented by checking
     the input value and applying the hard sigmoid formula.
@@ -1150,7 +1148,7 @@ class LNSHardsigmoidFunction(torch.autograd.Function):
 @implements(torch.nn.functional.hardsigmoid, LNSHardsigmoidFunction.forward, "default", default=True)
 def hardsigmoid(x, inplace=False):
 
-    result = LNSHardsigmoidFunction.apply(x._lns, x.base)
+    result = LNSHardsigmoidFunction.apply(x, x.base)
 
     if inplace:
         x._lns = result
@@ -1158,7 +1156,7 @@ def hardsigmoid(x, inplace=False):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSiLUFunction(torch.autograd.Function):
+class LNSSiLUFunction(LNSFunction):
     """
     The SiLU (Sigmoid Linear Unit) function in LNS is implemented
     by multiplying the input by the sigmoid of the input.
@@ -1197,10 +1195,10 @@ class LNSSiLUFunction(torch.autograd.Function):
 @implements(torch.nn.functional.silu, LNSSiLUFunction.forward, "default", default=True)
 def silu(x, inplace=False):
 
-    result = LNSSiLUFunction.apply(x._lns, x.base)
+    result = LNSSiLUFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result._lns
+        x._lns = result
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)

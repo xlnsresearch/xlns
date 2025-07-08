@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, LNSFunction
 from . import (
     lns_sub,
     lns_abs,
@@ -231,7 +231,7 @@ def isin(x, y, *, assume_unique=False, invert=False):
 
     return result
 
-class LNSSortFunction(torch.autograd.Function):
+class LNSSortFunction(LNSFunction):
 
     @staticmethod
     def forward(x, dim=-1, descending=False, stable=False):
@@ -261,7 +261,7 @@ class LNSSortFunction(torch.autograd.Function):
 
 @implements(torch.sort, LNSSortFunction.forward, "default", default=True)
 def sort(x, dim=-1, descending=False, stable=False, *, out=None):
-    result = LNSSortFunction.apply(x._lns, dim, descending, stable)
+    result = LNSSortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
         out.copy_(result)
@@ -286,7 +286,7 @@ def argsort(x, dim=-1, descending=False, stable=False, *, out=None):
 
     return result
 
-class LNSKthvalueFunction(torch.autograd.Function):
+class LNSKthvalueFunction(LNSFunction):
 
     @staticmethod
     def forward(x, k, dim=-1, keepdim=False):
@@ -331,14 +331,14 @@ class LNSKthvalueFunction(torch.autograd.Function):
 
 @implements(torch.kthvalue, LNSKthvalueFunction.forward, "default", default=True)
 def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
-    result = LNSKthvalueFunction.apply(x._lns, k, dim, keepdim)
+    result = LNSKthvalueFunction.apply(x, k, dim, keepdim)
 
     if out is not None:
         out.copy_(result)
 
     return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
 
-class LNSMaximumFunction(torch.autograd.Function):
+class LNSMaximumFunction(LNSFunction):
 
     @staticmethod
     def forward(x, y, base):
@@ -372,14 +372,14 @@ class LNSMaximumFunction(torch.autograd.Function):
 @implements(torch.maximum, LNSMaximumFunction.forward, "default", default=True)
 def maximum(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMaximumFunction.apply(x._lns, y._lns, x.base)
+    result = LNSMaximumFunction.apply(x, y, x.base)
 
     if out is not None:
         out.copy_(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSMinimumFunction(torch.autograd.Function):
+class LNSMinimumFunction(LNSFunction):
 
     @staticmethod
     def forward(x, y, base):
@@ -413,7 +413,7 @@ class LNSMinimumFunction(torch.autograd.Function):
 @implements(torch.minimum, LNSMinimumFunction.forward, "default", default=True)
 def minimum(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMinimumFunction.apply(x._lns, y._lns, x.base)
+    result = LNSMinimumFunction.apply(x, y, x.base)
 
     if out is not None:
         out.copy_(result)

@@ -5,29 +5,19 @@ from torch.utils.data import TensorDataset, DataLoader
 from torchvision import datasets, transforms
 import xlnstorch as xltorch
 
-class LNSNet(xltorch.layers.LNSModule):
+class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = xltorch.layers.LNSLinear(784, 100)
-        self.fc2 = xltorch.layers.LNSLinear(100, 10)
+        self.fc1 = xltorch.nn.LNSLinear(784, 100)
+        self.fc2 = xltorch.nn.LNSLinear(100, 10)
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
-        # This will be made easier with LNSTensor, but it hasn't
-        # been implemented yet.
-        weight1, bias1 = torch.empty(100, 784), torch.empty(100)
-        weight2, bias2 = torch.empty(10, 100), torch.empty(10)
-
-        torch.nn.init.normal_(weight1, mean=0.0, std=0.1)
-        torch.nn.init.normal_(weight2, mean=0.0, std=0.1)
-        torch.nn.init.zeros_(bias1)
-        torch.nn.init.zeros_(bias2)
-
-        self.fc1.weight_lns.data.copy_(xltorch.lnstensor(weight1)._lns)
-        self.fc2.weight_lns.data.copy_(xltorch.lnstensor(weight2)._lns)
-        self.fc1.bias_lns.data.copy_(xltorch.lnstensor(bias1)._lns)
-        self.fc2.bias_lns.data.copy_(xltorch.lnstensor(bias2)._lns)
+        xltorch.nn.init.normal_(self.fc1.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.normal_(self.fc2.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.zeros_(self.fc1.bias)
+        xltorch.nn.init.zeros_(self.fc2.bias)
 
     def forward(self, x):
         # Flatten the input tensor
@@ -63,7 +53,7 @@ test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 device = "cpu"
 model = LNSNet().to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
-optimizer = xltorch.optimizers.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
+optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
 
 start = time.time()
 num_epochs = 5
@@ -81,6 +71,7 @@ for epoch in range(1, num_epochs + 1):
         # Convert only data to LNSTensor, target remains a regular tensor
         # since it is an integer tensor for classification.
         data, target = xltorch.lnstensor(data.to(device)), target.to(device)
+        print(target)
         optimizer.zero_grad()
 
         # Forward pass

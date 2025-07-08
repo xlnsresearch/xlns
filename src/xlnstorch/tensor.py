@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Any, Union, List
+from typing import Any, Union, List, Tuple
 
 import math
 import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import LNS_ZERO, get_default_implementation_key, get_implementation, has_fanout, find_fanout, raise_fanout_error
+from . import LNS_ZERO, get_default_implementation_key, get_implementation
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -77,23 +77,14 @@ class LNSTensor:
         self.base: Tensor = base.clone()
 
         if from_lns:
-            packed = data.to(torch.float64)
+            self._lns: Tensor = data.to(torch.float64)
         else:
-            with torch.no_grad():
-                log_base = torch.log(self.base)
-                log_data = torch.log(torch.abs(data)) / log_base
-                exponent = log_data.round().to(torch.int64)
+            self._lns: Tensor = FloatToLNS.apply(data, self.base)
 
-                sign_bit = (data < 0).to(torch.int64)
-                packed_int = (exponent << 1) | sign_bit
-                packed = packed_int.to(torch.float64)
-                packed = torch.where(torch.eq(data, 0), LNS_ZERO, packed)
-
-        self._lns: Tensor = packed
         self._lns.requires_grad_(requires_grad)
 
-        if requires_grad and self._lns.is_leaf and not hasattr(self._lns, "_incoming_grads"):
-            self.register_grad_hooks()
+        if requires_grad and not hasattr(self._lns, "_lns_grad"):
+            self.register_grad_hook()
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
@@ -113,26 +104,32 @@ class LNSTensor:
 
         impl_key = get_default_implementation_key(func)
         impl = get_implementation(func, impl_key)
+        result = impl.func(*args, **kwargs) # LNSTensor custom operator
 
-        return impl[0](*args, **kwargs) # LNSTensor custom operator
+        return result
 
-    def register_grad_hooks(self):
+    def _track_operation(self, edge, index):
+        """
+        Registers a hook to track the operation that produced this output.
+        This is used to accumulate gradients from different paths in the
+        computation graph since PyTorch will internally add these but since
+        they are in LNS format, we must perform our custom LNS addition.
+        """
 
-        self._lns._incoming_grads = []
+        def _edge_hook(grad_inputs, grad_outputs):
+            if grad_inputs[index] is not None:
+                self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+
+        edge.node.register_hook(_edge_hook)
+
+    def register_grad_hook(self):
+
+        self._lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
 
         def _hook(grad):
-            self._lns._incoming_grads.append(grad.clone())
-            return grad
-
-        def _accum_hook(param):
-            accum_grad = lnstensor(0, from_lns=False, b=self.base)
-            for grad in self._lns._incoming_grads:
-                if grad is not None:
-                    accum_grad += lnstensor(grad, from_lns=True, b=self.base)
-            param.grad = accum_grad._lns
+            return self._lns._lns_grad._lns
 
         self._hook_handle = self._lns.register_hook(_hook)
-        self._accum_hook_handle = self._lns.register_post_accumulate_grad_hook(_accum_hook)    
 
     def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=None):
         """
@@ -162,25 +159,25 @@ class LNSTensor:
             accumulated into all the leaf Tensors that were used to compute the tensors.
         """
 
-        if has_fanout(self._lns):
-            # only compute detailed fan-out error if we have fan-out
-            offenders = find_fanout(self._lns)
-            raise_fanout_error(offenders)
-
         if gradient is None:
             # if self._lns.numel() != 1:
             #     raise RuntimeError("grad can be implicitly created only for scalar outputs")
             tensor_gradient = torch.zeros_like(self._lns, dtype=torch.float64)
+            gradient = ones_like(self._lns, b=self.base, requires_grad=False)
         else:
-            tensor_gradient = gradient.lns
+            tensor_gradient = gradient._lns
 
         if inputs is None:
             tensor_inputs = None
         else:
-            tensor_inputs = [inp.lns for inp in inputs]
+            tensor_inputs = [inp._lns for inp in inputs]
+
+        # Manually set the incoming gradients for the output tensor since
+        # no hooks will be registered for it.
+        self._lns._lns_grad = gradient
 
         self._lns.backward(
-            tensor_gradient,
+            gradient=tensor_gradient,
             retain_graph=retain_graph,
             create_graph=create_graph,
             inputs=tensor_inputs
@@ -425,40 +422,115 @@ class LNSTensor:
         """
         self._lns.requires_grad_(requires_grad)
         if requires_grad:
-            self.register_grad_hooks()
+            self.register_grad_hook()
         return self
 
     def __repr__(self) -> str:
-        return f"LNSTensor(value={self.value}, base={self.base.item()})"
+         # indent the value string to match the length of "LNSTensor(value="
+        value_str = torch._tensor_str._tensor_str(self.value, 16)
+        f = -torch.log2(torch.log2(self.base))
+
+        if abs(f - torch.round(f)) < 1e-06: # check if f is an integer, works up to f=33
+            base_str = f"prec={round(f.item())}"
+        else:
+            base_str = f"base={self.base.item()}"
+
+        return f"LNSTensor(value={value_str}, {base_str}, requires_grad={self.requires_grad})"
 
     def __add__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.add(self, other)
 
+    def __radd__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.add(other, self)
+    
+    def __iadd__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.add(self, other, out=self)
+
     def __sub__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.sub(self, other)
+    
+    def __rsub__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.sub(other, self)
+
+    def __isub__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.sub(self, other, out=self)
 
     def __mul__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.mul(self, other)
 
+    def __rmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.mul(other, self)
+
+    def __imul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.mul(self, other, out=self)
+
     def __truediv__(self, other):
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.div(self, other)
 
+    def __rtruediv__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.div(other, self)
+
+    def __itruediv__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.div(self, other, out=self)
+
     def __pow__(self, other):
         return torch.pow(self, other) # not implemented LNSTensor powers for now
+
+    def __rpow__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.pow(other, self)
+
+    def __ipow__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.pow(self, other, out=self)
+
+    def __matmul__(self, other):
+        return torch.matmul(self, other)
+
+    def __rmatmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.matmul(other, self)
+
+    def __imatmul__(self, other):
+        if isinstance(other, _xlns_types):
+            other = lnstensor(other, b=self.base)
+        return torch.matmul(self, other, out=self)
 
     def __neg__(self):
         return torch.neg(self)
 
     def __pos__(self):
         return torch.pos(self)
+
+    def __abs__(self):
+        return torch.abs(self)
 
     def __eq__(self, other):
         if isinstance(other, _xlns_types):
@@ -489,6 +561,12 @@ class LNSTensor:
         if isinstance(other, _xlns_types):
             other = lnstensor(other, b=self.base)
         return torch.lt(self, other)
+
+    def __getitem__(self, index):
+        return lnstensor(self._lns[index], from_lns=True, b=self.base)
+
+    def __setitem__(self, index, value):
+        self._lns[index] = LNSTensor.get_internal_tensor(value, self.base)
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)
@@ -573,6 +651,9 @@ class LNSTensor:
     def sum(self, dim=None, keepdim=False):
         return torch.sum(self, dim=dim, keepdim=keepdim)
 
+    def prod(self, dim=None, keepdim=False):
+        return torch.prod(self, dim=dim, keepdim=keepdim)
+
     def transpose(self, dim0, dim1):
         return torch.transpose(self, dim0, dim1)
 
@@ -630,10 +711,238 @@ class LNSTensor:
     def sigmoid(self):
         return torch.sigmoid(self)
 
+class LNSFunction(torch.autograd.Function):
+    """
+    Base class for LNS operations that require custom forward and backward methods.
+    This class should be subclassed for specific LNS operations.
+    """
+
+    @staticmethod
+    def forward(ctx, *args, **kwargs):
+        """
+        Forward pass for the LNS operation.
+        Should be implemented in subclasses.
+        """
+        raise NotImplementedError("Forward method must be implemented in subclasses.")
+
+    @staticmethod
+    def backward(ctx, *grad_outputs):
+        """
+        Backward pass for the LNS operation.
+        Should be implemented in subclasses.
+        """
+        raise NotImplementedError("Backward method must be implemented in subclasses.")
+
+    @classmethod
+    def apply(cls, *args, **kwargs):
+        """
+        Applies the LNS operation defined by this class.
+        This method is used to call the forward and backward methods.
+
+        Note that any keyword arguments passed to this method will raise an error,
+        as `torch.autograd.Function` does not support keyword arguments. Instead,
+        use positional arguments only.
+
+        In addition, this method converts any `LNSTensor` arguments to their
+        internal representation (i.e., the underlying tensor) before calling the
+        forward method. This is necessary for LNSTensor internal behavior.
+        """
+        # This check is also performed in the base class, but we do it here too
+        # in case PyTorch decides to change the behavior of the apply method.
+        if kwargs:
+            raise ValueError("torch.autograd.Function does not support keyword arguments. Please use positional arguments only.")
+
+        # Convert LNSTensor arguments to internal representation. This is necessary
+        # because the autograd.Function expects tensors, not LNSTensor objects.
+        internal_args = []
+        for arg in args:
+            if isinstance(arg, LNSTensor):
+                internal_args.append(arg._lns)
+            else:
+                internal_args.append(arg)
+
+        # call the forward method of the class with the internal arguments
+        result = super().apply(*internal_args)
+
+        # get all output tensors and store them in a tuple
+        if isinstance(result, torch.Tensor):
+            result_tuple = (result,)
+        elif isinstance(result, (tuple, list)):
+            result_tuple = tuple(result)
+        else:
+            result_tuple = tuple()
+
+        # we register hooks on each input to each output for gradient accumulation
+        for output in result_tuple:
+
+            # only register hooks for tensors outputs that require gradients
+            if not (isinstance(output, torch.Tensor) and output.requires_grad):
+                continue
+
+            # get the gradient edge for the output tensor.
+            edge = torch.autograd.graph.get_gradient_edge(output)
+
+            for i in range(len(args)):
+
+                # only register hooks for LNSTensor inputs with gradients
+                if not (isinstance(args[i], LNSTensor) and args[i].requires_grad):
+                    continue
+
+                # track operation by registering a hook on the input tensor
+                # to use custom addition logic each time it receives a gradient
+                args[i]._track_operation(edge, i)
+
+        return result
+
+class FloatToLNS(LNSFunction):
+
+    @staticmethod
+    def forward(x, base):
+        log_base = torch.log(base)
+        log_data = torch.log(torch.abs(x)) / log_base
+        exponent = log_data.round().to(torch.int64)
+
+        sign_bit = (x < 0).to(torch.int64)
+        packed_int = (exponent << 1) | sign_bit
+        packed = packed_int.to(torch.float64)
+        packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
+
+        return packed
+    
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base = inputs
+        ctx.save_for_backward(base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        base, = ctx.saved_tensors
+        packed_grad_output = grad_output.to(torch.int64)
+
+        exponent = (packed_grad_output >> 1).to(torch.float64)
+        sign = torch.where((packed_grad_output & 1).bool(), -1.0, 1.0)
+
+        return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent)), None
+
+class LNSChangeBaseFunction(LNSFunction):
+
+    @staticmethod
+    def forward(tensor, old_base, new_base):
+        packed_int = tensor.to(torch.int64)
+        sign_bit = packed_int & 1
+        exponent = (packed_int >> 1).to(torch.float64)
+
+        exponent_new = exponent * torch.log(old_base) / torch.log(new_base)
+        new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
+        new_tensor = new_packed_int.to(torch.float64)
+
+        return new_tensor
+
+    @staticmethod
+    def setup_context(ctx, inputs, outputs):
+        _, old_base, new_base = inputs
+        ctx.save_for_backward(old_base, new_base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        old_base, new_base = ctx.saved_tensors
+
+        packed_int = grad_output.to(torch.int64)
+        sign_bit = packed_int & 1
+        exponent = (packed_int >> 1).to(torch.float64)
+
+        exponent_new = exponent * torch.log(new_base) / torch.log(old_base)
+        new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
+        new_tensor = new_packed_int.to(torch.float64)
+
+        return new_tensor, None, None
+
+def align_lnstensor_bases(
+        *tensors: LNSTensor,
+        base: torch.Tensor | None = None
+    ) -> Tuple[LNSTensor, ...]:
+    """
+    Aligns the bases of a sequence of LNSTensors to a common base.
+
+    Parameters
+    ----------
+    tensors : LNSTensor
+        Variable number of LNSTensor objects to be aligned.
+    base : torch.Tensor, optional
+        The target base to which all tensors should be aligned.
+        If None, the default base from `xl.xlnsB` will be used.
+
+    Returns
+    -------
+    Tuple[LNSTensor, ...]
+        A tuple containing the LNSTensors with their bases aligned
+        to the specified base or default base. Tensors that already
+        match the base will be returned unchanged.
+
+    Notes
+    -----
+    This function ensures compatibility for operations requiring a
+    common logarithmic base. This operation is tracked by PyTorch's
+    autograd system to allow for correct gradient computation on the
+    original tensors in their original bases.
+    """
+    if base is None:
+        new_base = torch.tensor(xl.xlnsB, dtype=torch.float64)
+    else:
+        new_base = base.detach()
+
+    aligned_tensors = []
+    for tensor in tensors:
+
+        if torch.eq(tensor.base, new_base):
+            aligned_tensors.append(tensor)
+        else:
+            aligned_tensor = LNSChangeBaseFunction.apply(tensor, tensor.base, new_base)
+            aligned_tensors.append(lnstensor(aligned_tensor, from_lns=True, b=new_base))
+
+    return tuple(aligned_tensors)
+
+def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
+    """
+    Converts a variable number of operands to LNSTensor objects, aligning
+    all operands to the base of the first operand that is an LNSTensor.
+
+    Parameters
+    ----------
+    operands : Any
+        Variable number of operands, which can be LNSTensor objects or
+        other array-like objects that can be converted to LNSTensor.
+
+    Returns
+    -------
+    Tuple[LNSTensor, ...]
+        A tuple of LNSTensor objects with their bases aligned to the base
+        of the first LNSTensor operand. If no LNSTensor is found, all
+        operands are converted to LNSTensors with the default base.
+    """
+    base = None
+
+    for operand in operands:
+        if isinstance(operand, LNSTensor):
+            base = operand.base
+            break
+    else:
+        base = torch.tensor(xl.xlnsB, dtype=torch.float64)
+
+    converted_operands = []
+    for operand in operands:
+        if isinstance(operand, LNSTensor):
+            converted_operands.append(operand)
+        else:
+            converted_operands.append(lnstensor(operand, detach=False, b=base))
+
+    return align_lnstensor_bases(*converted_operands, base=base)
+
 def lnstensor(
         data: Any,
         from_lns: bool = False,
         requires_grad: bool = False,
+        detach=True,
         f: int | None = None,
         b: Union[float, int, Tensor, None] = None
         ) -> LNSTensor:
@@ -662,6 +971,10 @@ def lnstensor(
         If ``True``, the LNSTensor will track gradients. Defaults to ``False``.
         If a pre-packed LNSTensor or a torch.Tensor is provided, this parameter
         is ignored.
+    detach : bool, optional
+        If ``True`` and data is a :class:`torch.Tensor` and not ``from_lns``, data
+        will be detached from its computation graph, i.e. this tensor will become
+        a leaf node.
     f : int, optional
         The number of fractional exponent bits. mutually exclusive with ``b``.
     b : float, int, torch.Tensor, optional
@@ -716,8 +1029,11 @@ def lnstensor(
 
     # torch.Tensor
     elif isinstance(data, torch.Tensor):
-        input_data = data.to(torch.float64)
-        requires_grad = input_data.requires_grad
+        requires_grad = data.requires_grad
+        if detach and not from_lns:
+            input_data = data.detach().to(torch.float64)
+        else:
+            input_data = data.to(torch.float64)
 
     # numpy.ndarray
     elif isinstance(data, np.ndarray):
@@ -726,7 +1042,7 @@ def lnstensor(
     # xlns scalar objects
     elif isinstance(data, (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb)):
         if data.x == -math.inf:
-            input_data = LNS_ZERO
+            input_data = LNS_ZERO.clone()
 
         else:
             if isinstance(data, (xl.xlns, xl.xlnsud)) and not base_val == xl.xlnsB:

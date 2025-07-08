@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, full
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, LNSFunction
 from . import (
     lns_add,
     lns_neg,
@@ -101,7 +101,7 @@ def sbdb_ideal(z, s, base):
 
     return result.to(torch.float64)
 
-class LNSAddFunction(torch.autograd.Function):
+class LNSAddFunction(LNSFunction):
     """
     Addition is far more challenging in the logarithmic domain.
     We can implement different approximate methods for the sum
@@ -149,14 +149,15 @@ def add(x, y, *, alpha=1, out=None):
 
     if alpha != 1:
         y = torch.mul(y, alpha)
-    result = LNSAddFunction.apply(x._lns, y._lns, x.base)
+
+    result = LNSAddFunction.apply(x, y, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSubFunction(torch.autograd.Function):
+class LNSSubFunction(LNSFunction):
     """
     See LNSAddFunction for details on the internal computations.
 
@@ -183,16 +184,18 @@ class LNSSubFunction(torch.autograd.Function):
 def sub(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
+
     if alpha != 1:
         y = torch.mul(y, alpha)
-    result = LNSSubFunction.apply(x._lns, y._lns, x.base)
+
+    result = LNSSubFunction.apply(x, y, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSNegFunction(torch.autograd.Function):
+class LNSNegFunction(LNSFunction):
     """
     Negation becomes flipping the sign bit.
 
@@ -218,14 +221,14 @@ class LNSNegFunction(torch.autograd.Function):
 @implements(torch.neg, LNSNegFunction.forward, key="default", default=True)
 def neg(x, *, out=None):
 
-    result = LNSNegFunction.apply(x._lns)
+    result = LNSNegFunction.apply(x)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSMulFunction(torch.autograd.Function):
+class LNSMulFunction(LNSFunction):
     """
     Multiplication becomes addition in the logarithmic domain.
 
@@ -260,14 +263,14 @@ class LNSMulFunction(torch.autograd.Function):
 def mul(x, y, *, out=None):
 
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMulFunction.apply(x._lns, y._lns)
+    result = LNSMulFunction.apply(x, y)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSquareFunction(torch.autograd.Function):
+class LNSSquareFunction(LNSFunction):
     """
     Squaring becomes doubling in the logarithmic domain.
 
@@ -296,14 +299,14 @@ class LNSSquareFunction(torch.autograd.Function):
 @implements(torch.square, LNSSquareFunction.forward, key='default', default=True)
 def square(x, *, out=None):
 
-    result = LNSSquareFunction.apply(x._lns, x.base)
+    result = LNSSquareFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSqrtFunction(torch.autograd.Function):
+class LNSSqrtFunction(LNSFunction):
     """
     Square rooting becomes halving in the logarithmic domain.
 
@@ -336,14 +339,14 @@ class LNSSqrtFunction(torch.autograd.Function):
 @implements(torch.sqrt, LNSSqrtFunction.forward, key='default', default=True)
 def sqrt(x, *, out=None):
 
-    result = LNSSqrtFunction.apply(x._lns, x.base)
+    result = LNSSqrtFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSPowFunction(torch.autograd.Function):
+class LNSPowFunction(LNSFunction):
     """
     Raising to a power becomes multiplication in the logarithmic domain.
     This function relies on the fact that the exponent is a floating
@@ -385,23 +388,28 @@ class LNSPowFunction(torch.autograd.Function):
 def pow(x, n, *, out=None):
 
     if isinstance(x, LNSTensor) and not isinstance(n, LNSTensor):
+
         if not isinstance(n, torch.Tensor):
             dtype = torch.int64 if (isinstance(n, int) or isinstance(n, float) and n.is_integer()) else torch.float64
             n = torch.tensor(n, dtype=dtype)
+
         x._lns, n = torch.broadcast_tensors(x._lns, n)
-        result = LNSPowFunction.apply(x._lns, n, x.base)
+
+        result = LNSPowFunction.apply(x, n, x.base)
 
     else:
+
         x, n = format_lnstensor_operands(x, n)
         x._lns, n._lns = torch.broadcast_tensors(x._lns, n._lns)
-        result = LNSPowFunction.apply(x._lns, n.value, x.base)
+
+        result = LNSPowFunction.apply(x, n.value, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSDivFunction(torch.autograd.Function):
+class LNSDivFunction(LNSFunction):
     """
     Division becomes subtraction in the logarithmic domain.
 
@@ -438,7 +446,8 @@ class LNSDivFunction(torch.autograd.Function):
 def div(x, y, *, out=None):
 
     x, y = format_lnstensor_operands(x, y)
-    result = LNSDivFunction.apply(x._lns, y._lns, x.base)
+
+    result = LNSDivFunction.apply(x, y, x.base)
 
     if out is not None:
         out._lns = result
@@ -446,7 +455,7 @@ def div(x, y, *, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSReciprocalFunction(torch.autograd.Function):
+class LNSReciprocalFunction(LNSFunction):
     """
     See LNSDivFunction for details on the internal computation.
 
@@ -477,14 +486,14 @@ class LNSReciprocalFunction(torch.autograd.Function):
 @implements(torch.reciprocal, LNSReciprocalFunction.forward, key='default', default=True)
 def reciprocal(x, *, out=None):
 
-    result = LNSReciprocalFunction.apply(x._lns, x.base)
+    result = LNSReciprocalFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSExpFunction(torch.autograd.Function):
+class LNSExpFunction(LNSFunction):
     """
     Exponentiation in the logarithmic domain requires us to
     convert the input to its floating point representation
@@ -511,14 +520,14 @@ class LNSExpFunction(torch.autograd.Function):
 @implements(torch.exp, LNSExpFunction.forward, key='default', default=True)
 def exp(x, *, out=None):
 
-    result = LNSExpFunction.apply(x._lns, x.base)
+    result = LNSExpFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSLogFunction(torch.autograd.Function):
+class LNSLogFunction(LNSFunction):
     """
     Taking the logarithm in the logarithmic domain requires us to
     convert the input to its floating point representation and then
@@ -548,14 +557,14 @@ class LNSLogFunction(torch.autograd.Function):
 @implements(torch.log, LNSLogFunction.forward, key='default', default=True)
 def log(x, *, out=None):
 
-    result = LNSLogFunction.apply(x._lns, x.base)
+    result = LNSLogFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSAbsFunction(torch.autograd.Function):
+class LNSAbsFunction(LNSFunction):
     """
     Absolute value becomes setting the sign bit off.
 
@@ -586,17 +595,17 @@ class LNSAbsFunction(torch.autograd.Function):
 
         return torch.where(torch.eq(x_packed_sign, 1), lns_neg(grad_output), grad_output)
 
-@implements(torch.abs, LNSAbsFunction.apply, "default", default=True)
+@implements(torch.abs, LNSAbsFunction.forward, "default", default=True)
 def abs(x, *, out=None):
 
-    result = LNSAbsFunction.apply(x._lns)
+    result = LNSAbsFunction.apply(x)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSPositiveFunction(torch.autograd.Function):
+class LNSPositiveFunction(LNSFunction):
     """
     This is implemented solely for completeness, this
     operation returns the input.
@@ -617,13 +626,13 @@ class LNSPositiveFunction(torch.autograd.Function):
     def backward(ctx, grad_output):
         return grad_output
 
-@implements(torch.positive, LNSPositiveFunction.apply, "default", default=True)
+@implements(torch.positive, LNSPositiveFunction.forward, "default", default=True)
 def positive(x):
 
-    result = LNSPositiveFunction.apply(x._lns)
+    result = LNSPositiveFunction.apply(x)
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSignFunction(torch.autograd.Function):
+class LNSSignFunction(LNSFunction):
     """
     Sign becomes checking the sign bit (rightmost bit).
 
@@ -652,14 +661,14 @@ class LNSSignFunction(torch.autograd.Function):
 @implements(torch.sign, LNSSignFunction.forward, "default", default=True)
 def sign(x, *, out=None):
 
-    result = LNSSignFunction.apply(x._lns, x.base)
+    result = LNSSignFunction.apply(x, x.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSSumFunction(torch.autograd.Function):
+class LNSSumFunction(LNSFunction):
     """
     We use the addition operation to compute the sum.
 
@@ -711,14 +720,102 @@ class LNSSumFunction(torch.autograd.Function):
 @implements(torch.sum, LNSSumFunction.forward, "default", default=True)
 def sum(x, dim=None, keepdim=False, *, out=None):
 
-    result = LNSSumFunction.apply(x._lns, x.base, dim, keepdim)
+    result = LNSSumFunction.apply(x, x.base, dim, keepdim)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-class LNSMatmulFunction(torch.autograd.Function):
+class LNSProdFunction(LNSFunction):
+    """
+    Product is computed using the multiplication operation.
+
+    Gradients are computed as follows:
+    d/dx(prod(x)) = prod(x) / x
+    """
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+
+        if dim is None:
+            flat = x_packed.reshape(-1)
+
+            out = flat[0]
+            for i in range(1, flat.numel()):
+                out = lns_mul(out, flat[i])
+
+            if keepdim:
+                out = out.reshape([1] * x.dim())
+
+            return out
+
+        # Reduction over a subset of the dimensions
+        red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
+        red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+        # transpose so that the reduction dimensions are at the end, then flatten.
+        permute_order = [d for d in range(x.dim()) if d not in red_dims] + list(red_dims)
+        transposed = x_packed.permute(*permute_order)
+        outer_shape = transposed.shape[:-len(red_dims)]
+        transposed = transposed.reshape(*outer_shape, -1)
+
+        out = transposed[..., 0]
+        for i in range(1, transposed.shape[-1]):
+            out = lns_mul(out, transposed[..., i])
+
+        # re-insert the reduced axes
+        if keepdim:
+            for d in red_dims:
+                out = out.unsqueeze(d)
+
+        return out.to(torch.float64)
+    
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        ctx.save_for_backward(x, output, base)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, output, base = ctx.saved_tensors
+        x_packed, output_packed = x.to(torch.int64), output.to(torch.int64)
+
+        # 1. Broadcast the forward result so it matches x's shape
+        if ctx.dim is not None and not ctx.keepdim:
+            red_dims = (ctx.dim,) if isinstance(ctx.dim, int) else tuple(ctx.dim)
+            red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+            for d in red_dims:
+                output_packed = output_packed.unsqueeze(d)
+
+        output_broadcast = output_packed.expand_as(x_packed)
+        ratio = lns_div(output_broadcast, x_packed, base)
+
+        # broadcast grad_output to match x's shape
+        if ctx.dim is not None and not ctx.keepdim:
+            for d in red_dims:
+                grad_output = grad_output.unsqueeze(d)
+
+        grad_output = grad_output.expand_as(x)
+        grad_x = lns_mul(grad_output, ratio)
+
+        return grad_x, None, None, None
+
+@implements(torch.prod, LNSProdFunction.forward, "default", default=True)
+def prod(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSProdFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+        out._lns = result
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMatmulFunction(LNSFunction):
     """
     Matrix multiplication uses the lns addition and
     multiplication functions to compute the result.
@@ -867,14 +964,14 @@ class LNSMatmulFunction(torch.autograd.Function):
 def matmul(A, B, *, out=None):
 
     A, B = format_lnstensor_operands(A, B)
-    result = LNSMatmulFunction.apply(A._lns, B._lns, A.base)
+    result = LNSMatmulFunction.apply(A, B, A.base)
 
     if out is not None:
         out._lns = result
 
     return lnstensor(result, from_lns=True, b=A.base)
 
-class LNSTransposeFunction(torch.autograd.Function):
+class LNSTransposeFunction(LNSFunction):
     """
     Transpose operation simply rearranges the dimensions
     of the input tensor. It doesn't change the underlying
@@ -901,5 +998,5 @@ class LNSTransposeFunction(torch.autograd.Function):
 @implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
 def transpose(A, dim0, dim1):
 
-    result = LNSTransposeFunction.apply(A._lns, dim0, dim1)
+    result = LNSTransposeFunction.apply(A, dim0, dim1)
     return lnstensor(result, from_lns=True, b=A.base)

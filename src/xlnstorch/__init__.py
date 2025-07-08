@@ -8,6 +8,8 @@ except ModuleNotFoundError as e:
 
 LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
 
+from . import autograd
+
 from .dispatch_table import (
     implements,
     get_implementation,
@@ -15,11 +17,6 @@ from .dispatch_table import (
     get_default_implementation_key,
     override_implementation,
     apply_lns_op
-)
-from .graph import (
-    has_fanout,
-    find_fanout,
-    raise_fanout_error,
 )
 from .tensor import (
     LNSTensor,
@@ -34,14 +31,14 @@ from .tensor import (
     rand_like,
     randn,
     randn_like,
-)
-from .base import (
+    LNSFunction,
     align_lnstensor_bases,
     format_lnstensor_operands,
 )
 from . import operators
-from . import layers
-from . import optimizers
+from . import nn
+from . import optim
+from . import viz
 
 __all__ = [
     "LNS_ZERO",
@@ -66,10 +63,7 @@ __all__ = [
     "override_implementation",
     "apply_lns_op",
 
+    "LNSFunction",
     "align_lnstensor_bases",
     "format_lnstensor_operands",
-
-    "has_fanout",
-    "find_fanout",
-    "raise_fanout_error",
 ]

@@ -45,6 +45,14 @@ class LNSConv1d(LNSModule):
         or 'circular'. Default is 'zeros'.
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, uses the default device.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -73,7 +81,12 @@ class LNSConv1d(LNSModule):
             groups: int = 1,
             bias: bool = True,
             padding_mode: str = 'zeros',
-            device=None):
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -87,10 +100,12 @@ class LNSConv1d(LNSModule):
         self.device = device
 
         sqrt_k = (groups / (in_channels * kernel_size)) ** 0.5
-        self.register_parameter("weight", (rand(out_channels, in_channels / groups, kernel_size, device=device) * 2 - 1) * sqrt_k)
+        weight = rand(out_channels, in_channels / groups, kernel_size, device=device, f=weight_f, b=weight_b)
+        self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
-            self.register_parameter("bias", (rand(out_channels, device=device) * 2 - 1) * sqrt_k)
+            bias = rand(out_channels, device=device, f=bias_f, b=bias_b)
+            self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
         else:
             self.bias = None
 
@@ -134,6 +149,14 @@ class LNSConv2d(LNSModule):
         or 'circular'. Default is 'zeros'.
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, uses the default device.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -162,7 +185,12 @@ class LNSConv2d(LNSModule):
             groups: int | Tuple[int] = 1,
             bias: bool = True,
             padding_mode: str = 'zeros',
-            device=None):
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -176,11 +204,13 @@ class LNSConv2d(LNSModule):
         self.device = device
 
         sqrt_k = (groups / (in_channels * kernel_size[0] * kernel_size[1])) ** 0.5
-        self.register_parameter("weight", (rand(out_channels, in_channels / groups,
-                                                kernel_size[0], kernel_size[1], device=device) * 2 - 1) * sqrt_k)
+        weight = rand(out_channels, in_channels / groups, kernel_size[0],
+                      kernel_size[1], device=device, f=weight_f, b=weight_b)
+        self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
-            self.register_parameter("bias", (rand(out_channels, device=device) * 2 - 1) * sqrt_k)
+            bias = rand(out_channels, device=device, f=bias_f, b=bias_b)
+            self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
         else:
             self.bias = None
 
@@ -224,6 +254,14 @@ class LNSConv3d(LNSModule):
         or 'circular'. Default is 'zeros'.
     device : torch.device, optional
         The device on which to create the layer's parameters. If None, uses the default device.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -253,7 +291,12 @@ class LNSConv3d(LNSModule):
             groups: int | Tuple[int] = 1,
             bias: bool = True,
             padding_mode: str = 'zeros',
-            device=None):
+            device=None,
+            weight_f=None,
+            weight_b=None,
+            bias_f=None,
+            bias_b=None,
+        ):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -267,11 +310,13 @@ class LNSConv3d(LNSModule):
         self.device = device
 
         sqrt_k = (groups / (in_channels * kernel_size[0] * kernel_size[1] * kernel_size[2])) ** 0.5
-        self.register_parameter("weight", (rand(out_channels, in_channels / groups,
-                                                kernel_size[0], kernel_size[1], kernel_size[2], device=device) * 2 - 1) * sqrt_k)
+        weight = rand(out_channels, in_channels / groups, kernel_size[0], kernel_size[1],
+                      kernel_size[2], device=device, f=weight_f, b=weight_b)
+        self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
-            self.register_parameter("bias", (rand(out_channels, device=device) * 2 - 1) * sqrt_k)
+            bias = rand(out_channels, device=device, f=bias_f, b=bias_b)
+            self.register_parameter("bias", (bias * 2 - 1) * sqrt_k)
         else:
             self.bias = None
 
