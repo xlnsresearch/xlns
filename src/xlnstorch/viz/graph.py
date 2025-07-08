@@ -19,6 +19,9 @@ default_edge_attr = {
     "arrowhead": "vee",
 }
 
+def _get_size(tensor: torch.Tensor) -> str:
+    return ",".join(map(str, tensor.size()))
+
 def _check_import_graphviz():
     """
     Check if the 'graphviz' package is installed and available.
@@ -163,7 +166,7 @@ def make_autograd_graph(
             name = param_id_to_name.get(obj_id, "")
             if name:
                 name += "\n"
-            label = f"{name}({",".join(map(str, tensor.size()))})"
+            label = f"{name}({_get_size(tensor)})"
             fillcolor = "lightblue" if name else "orange"
             dot.node(str(obj_id), label=label, fillcolor=fillcolor)
 
@@ -174,7 +177,7 @@ def make_autograd_graph(
             name = param_id_to_name.get(tensor_id, "")
             if name:
                 name += "\n"
-            label = f"{name}({",".join(map(str, tensor.size()))})"
+            label = f"{name}({_get_size(tensor)})"
             dot.node(str(obj_id), label=label, fillcolor="brown")
 
         else:
@@ -200,7 +203,7 @@ def make_autograd_graph(
             name = param_id_to_name.get(id(root), "")
             if name:
                 name += "\n"
-            label = f"{name}({",".join(map(str, root.size()))})"
+            label = f"{name}({_get_size(root)})"
             dot.node(str(id(root)), label, fillcolor="yellow")
             dot.edge(str(id(root.grad_fn)), str(id(root)))
         else:
