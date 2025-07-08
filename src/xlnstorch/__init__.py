@@ -38,6 +38,7 @@ from .tensor import (
 from . import operators
 from . import nn
 from . import optim
+from . import viz
 
 __all__ = [
     "LNS_ZERO",

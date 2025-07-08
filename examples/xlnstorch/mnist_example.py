@@ -71,6 +71,7 @@ for epoch in range(1, num_epochs + 1):
         # Convert only data to LNSTensor, target remains a regular tensor
         # since it is an integer tensor for classification.
         data, target = xltorch.lnstensor(data.to(device)), target.to(device)
+        print(target)
         optimizer.zero_grad()
 
         # Forward pass
