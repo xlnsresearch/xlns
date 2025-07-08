@@ -18,6 +18,7 @@ from .convolutional_layers import (
     LNSConv2d,
     LNSConv3d,
 )
+from . import init
 
 __all__ = [
     "LNSModule",

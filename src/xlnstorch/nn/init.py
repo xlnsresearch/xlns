@@ -1,5 +1,5 @@
 import torch
-from . import lnstensor, LNSTensor, LNS_ZERO
+from .. import LNSTensor, LNS_ZERO
 
 __all__ = [
     "normal_",

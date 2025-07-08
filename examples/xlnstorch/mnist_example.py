@@ -14,10 +14,10 @@ class LNSNet(xltorch.nn.LNSModule):
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
-        xltorch.init.normal_(self.fc1.weight, mean=0.0, std=0.1)
-        xltorch.init.normal_(self.fc2.weight, mean=0.0, std=0.1)
-        xltorch.init.zeros_(self.fc1.bias)
-        xltorch.init.zeros_(self.fc2.bias)
+        xltorch.nn.init.normal_(self.fc1.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.normal_(self.fc2.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.zeros_(self.fc1.bias)
+        xltorch.nn.init.zeros_(self.fc2.bias)
 
     def forward(self, x):
         # Flatten the input tensor
