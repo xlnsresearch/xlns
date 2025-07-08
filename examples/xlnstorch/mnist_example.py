@@ -5,12 +5,12 @@ from torch.utils.data import TensorDataset, DataLoader
 from torchvision import datasets, transforms
 import xlnstorch as xltorch
 
-class LNSNet(xltorch.layers.LNSModule):
+class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = xltorch.layers.LNSLinear(784, 100)
-        self.fc2 = xltorch.layers.LNSLinear(100, 10)
+        self.fc1 = xltorch.nn.LNSLinear(784, 100)
+        self.fc2 = xltorch.nn.LNSLinear(100, 10)
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.

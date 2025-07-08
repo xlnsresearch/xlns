@@ -37,7 +37,7 @@ from .tensor import (
 )
 from . import init
 from . import operators
-from . import layers
+from . import nn
 from . import optim
 
 __all__ = [

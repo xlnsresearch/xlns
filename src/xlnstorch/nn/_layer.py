@@ -13,7 +13,7 @@ class LNSModule(torch.nn.Module):
 
     Examples
     --------
-    >>> class CustomLayer(xlnstorch.layers.LNSModule):
+    >>> class CustomLayer(xlnstorch.nn.LNSModule):
     ...     def __init__(self):
     ...         super().__init__()
     ...         self.register_parameter("custom_param", xlnstorch.lnstensor(1.0, f=10))
