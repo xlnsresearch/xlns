@@ -39,6 +39,7 @@ from . import operators
 from . import nn
 from . import optim
 from . import viz
+from . import benchmark
 
 __all__ = [
     "LNS_ZERO",

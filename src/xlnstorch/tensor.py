@@ -77,7 +77,7 @@ class LNSTensor:
         self.base: Tensor = base.clone()
 
         if from_lns:
-            self._lns: Tensor = data.to(torch.float64)
+            self._lns: Tensor = data
         else:
             self._lns: Tensor = FloatToLNS.apply(data, self.base)
 
