@@ -25,6 +25,8 @@ class BenchResult:
 
     Attributes
     ----------
+    prof : torch.profiler.profile | None
+        The profiler output, if profiling was enabled. Otherwise ``None``.
     wall_ms: float
         Mean wall-clock latency in milliseconds.
     p50 / p90 / p99 : float
@@ -33,19 +35,49 @@ class BenchResult:
         Self CPU / CUDA time reported by `torch.profiler` in micro-seconds.
         Values are zero when ``profile=False`` or the respective device is
         unavailable.
-    cpu_mem / cuda_mem : int
-        Peak memory (bytes) reported by `torch.profiler`. Same fallback rules
+    cpu_mem_mb / cuda_mem_mb : float
+        Peak memory (mb) reported by `torch.profiler`. Same fallback rules
         as above apply.
     """
 
+    prof : torch.profiler.profile | None
     wall_ms: float
     p50: float
     p90: float
     p99: float
     cpu_us: float = 0.0
-    cpu_mem: int = 0
+    cpu_mem_mb: float = 0.0
     cuda_us: float = 0.0
-    cuda_mem: int = 0
+    cuda_mem_mb: float = 0.0
+
+    def print(self) -> None:
+        """Nicely format the dataclass to stdout (monospaced columns)."""
+        headers = [f.name for f in fields(self) if f.name != "prof"]
+        values = [getattr(self, name) for name in headers]
+
+        # format floats with two decimals, leave ints / others unchanged
+        fmt_vals = [
+            f"{v:.2f}" if isinstance(v, float) else str(v)
+            for v in values
+        ]
+        # Column widths required for each field
+        widths = [max(len(h), len(v)) for h, v in zip(headers, fmt_vals)]
+
+        def line(parts: Iterable[str]) -> str:
+            return "  ".join(p.ljust(w) for p, w in zip(parts, widths))
+
+        print(line(headers))
+        print("  ".join("-" * w for w in widths))
+        print(line(fmt_vals))
+
+    def save_full_profile(self, path: str, group_by_stack_n=0, sort_by="cpu_time_total", row_limit=10) -> None:
+        if self.prof is None:
+            raise ValueError("No profiler data available; run with profile=True")
+        with open(path, "w") as f:
+            f.write(self.prof.key_averages(group_by_stack_n=group_by_stack_n).table(
+                sort_by=sort_by,
+                row_limit=row_limit,
+            ))
 
 class Benchmark:
     """
@@ -147,7 +179,7 @@ class BenchmarkRunner:
     def run(self) -> BenchResult:
         """
         Execute the benchmark.
-        
+
         Returns
         -------
         BenchResult
@@ -160,55 +192,79 @@ class BenchmarkRunner:
         base_args, base_kwargs = self._construct_inputs()
         prof_ctx = None
 
-        def _run_once() -> None:
-            args = self._clone(base_args)
-            kwargs = self._clone(base_kwargs)
+        if self.profile:
+            prof_ctx = self._profile_loop(base_args, base_kwargs, device)
+
+        times = self._time_loop(base_args, base_kwargs, device)
+        result = self._aggregate(times, prof_ctx)
+
+        return result
+
+    def _time_loop(self, base_args, base_kwargs, device) -> list[float]:
+        """Return a list of millisecond latencies of length ``self.iters``."""
+        # warm-up (not timed)
+        for i in range(self.warmup):
+
+            args, kwargs = self._clone((base_args, base_kwargs))
+            self.bench_obj.before_epoch(i)
 
             out = self.bench_obj.forward(*args, **kwargs)
 
-            if self.backward and isinstance(out, LNSTensor):
+            if self.backward and isinstance(out, (LNSTensor, torch.Tensor)):
                 out.sum().backward()
 
             self.bench_obj.post_forward(out)
+            self.bench_obj.after_epoch(i)
 
-        if self.profile:
-            prof_ctx = self._profile_loop(_run_once, device)
-
-        times = self._time_loop(_run_once, device)
-        result = self._aggregate(times, prof_ctx)
-
-        self._pretty_print(result)
-        return result
-
-    def _time_loop(self, run_fn: Callable, device: torch.device) -> list[float]:
-        """Return a list of millisecond latencies of length ``self.iters``."""
-        # warm-up (not timed)
-        for _ in range(self.warmup):
-            run_fn()
         _sync(device)
 
         times: list[float] = []
-        for _ in range(self.iters):
+        for j in range(self.iters):
+
+            args, kwargs = self._clone((base_args, base_kwargs))
+            self.bench_obj.before_epoch(i + j)
+
             t0 = time.perf_counter()
-            run_fn()
+            out = self.bench_obj.forward(*args, **kwargs)
+
+            if self.backward and isinstance(out, (LNSTensor, torch.Tensor)):
+                out.sum().backward()
+
             _sync(device)
+
             t1 = time.perf_counter()
             times.append((t1 - t0) * 1000) # seconds -> milliseconds
 
+            self.bench_obj.post_forward(out)
+            self.bench_obj.after_epoch(i)
+
         return times
-    
-    def _profile_loop(self, run_fn: Callable, device: torch.device) -> torch.profiler.profile:
+
+    def _profile_loop(self, base_args, base_kwargs, device: torch.device) -> torch.profiler.profile:
         """Profile a single iteration and return the populated Profile object."""
         activities = [ProfilerActivity.CPU]
         if device.type == "cuda":
             activities.append(ProfilerActivity.CUDA)
 
+        args, kwargs = self._clone((base_args, base_kwargs))
+        self.bench_obj.before_epoch(0)
+
         with profile(
             activities=activities,
             record_shapes=True,
-            with_stack=False
+            profile_memory=True,
+            with_stack=True,
+            experimental_config=torch._C._profiler._ExperimentalConfig(verbose=True),
         ) as prof:
-            run_fn()
+            out = self.bench_obj.forward(*args, **kwargs)
+
+            if self.backward and isinstance(out, (LNSTensor, torch.Tensor)):
+                out.sum().backward()
+
+            _sync(device)
+
+        self.bench_obj.post_forward(out)
+        self.bench_obj.after_epoch(0)
 
         return prof
 
@@ -225,7 +281,7 @@ class BenchmarkRunner:
     def _clone(self, data: Any) -> Any:
         """Recursively clone tensors contained in *data*. Scalars and non-tensor objects are returned as-is."""
         if isinstance(data, (torch.Tensor, LNSTensor)):
-            return data.detach().clone()
+            return data.detach().clone().requires_grad_(data.requires_grad)
 
         if isinstance(data, list):
             return [self._clone(x) for x in data]
@@ -245,34 +301,16 @@ class BenchmarkRunner:
         wall_ms = float(np.mean(times))
         p50, p90, p99 = np.percentile(times, [50, 90, 99])
 
-        cpu_us = cpu_mem = cuda_us = cuda_mem = 0
+        cpu_us = cpu_mem_mb = cuda_us = cuda_mem_mb = 0
         if prof is not None:
             # torch.profiler metrics are in micro-seconds
-            key_agg = prof.key_averages()
+            key_agg = prof.key_averages(group_by_stack_n=5)
+            # with open("profiler.txt", "w") as f:
+            #     f.write(key_agg.table(sort_by="self_cpu_time_total"))
             cpu_us  = sum(e.self_cpu_time_total for e in key_agg)
-            cpu_mem = sum(e.cpu_memory_usage for e in key_agg)
+            cpu_mem_mb = sum(e.cpu_memory_usage for e in key_agg) / (1024 * 1024) # convert to MB
             if torch.cuda.is_available():
                 cuda_us  = sum(e.self_cuda_time_total for e in key_agg)
-                cuda_mem = sum(e.cuda_memory_usage for e in key_agg)
+                cuda_mem_mb = sum(e.cuda_memory_usage for e in key_agg) / (1024 * 1024) # convert to MB
 
-        return BenchResult(wall_ms, p50, p90, p99, cpu_us, cpu_mem, cuda_us, cuda_mem)
-
-    def _pretty_print(self, results: BenchResult) -> None:
-        """Nicely format the dataclass to stdout (monospaced columns)."""
-        headers = [f.name for f in fields(results)]
-        values = [getattr(results, f.name) for f in fields(results)]
-
-        # format floats with two decimals, leave ints / others unchanged
-        fmt_vals = [
-            f"{v:.2f}" if isinstance(v, float) else str(v)
-            for v in values
-        ]
-        # Column widths required for each field
-        widths = [max(len(h), len(v)) for h, v in zip(headers, fmt_vals)]
-
-        def line(parts: Iterable[str]) -> str:
-            return "  ".join(p.ljust(w) for p, w in zip(parts, widths))
-
-        print(line(headers))
-        print("  ".join("-" * w for w in widths))
-        print(line(fmt_vals))
+        return BenchResult(prof, wall_ms, p50, p90, p99, cpu_us, cpu_mem_mb, cuda_us, cuda_mem_mb)
