@@ -89,12 +89,13 @@ def make_error_grid(
 
     Returns
     -------
-    Tuple[torch.Tensor, torch.Tensor | None, torch.Tensor]:
+    Tuple[torch.Tensor, torch.Tensor, torch.Tensor] or Tuple[torch.Tensor, torch.Tensor]
         A tuple containing:
         - `xs`: A tensor of x values sampled from the specified range.
         - `ys`: A tensor of y values sampled from the specified range (if binary operation).
+        If `y_range` is None, only `xs` and `err` are returned.
         - `err`: A tensor of errors, where each element is the absolute or signed
-          difference between the computed value and the exact value.
+        difference between the computed value and the exact value.
     """
     getcontext().prec = decimal_prec
     ideal_op = ideal_op or operator_reference.get(op)

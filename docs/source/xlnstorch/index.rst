@@ -12,3 +12,5 @@ LNS arithmetic in machine learning models.
     Operations <operations>
     Layers <layers>
     Optimizers <optimizers>
+    Benchmarking <benchmark>
+    Vizualization <vizualization>
