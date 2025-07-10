@@ -656,7 +656,7 @@ class LNSSignFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, grad_output):
-        return LNS_ZERO, None
+        return torch.full_like(grad_output, LNS_ZERO), None
 
 @implements(torch.sign, LNSSignFunction.forward, "default", default=True)
 def sign(x, *, out=None):
