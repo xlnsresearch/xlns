@@ -305,8 +305,6 @@ class BenchmarkRunner:
         if prof is not None:
             # torch.profiler metrics are in micro-seconds
             key_agg = prof.key_averages(group_by_stack_n=5)
-            # with open("profiler.txt", "w") as f:
-            #     f.write(key_agg.table(sort_by="self_cpu_time_total"))
             cpu_us  = sum(e.self_cpu_time_total for e in key_agg)
             cpu_mem_mb = sum(e.cpu_memory_usage for e in key_agg) / (1024 * 1024) # convert to MB
             if torch.cuda.is_available():
