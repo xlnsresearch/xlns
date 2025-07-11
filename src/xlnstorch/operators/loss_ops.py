@@ -1,7 +1,8 @@
 import math
 
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros_like, LNSFunction
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros_like
+from ..autograd import LNSFunction
 from . import(
     lns_sub,
     lns_mul,
