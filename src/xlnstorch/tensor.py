@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS
+from .tensor_utils import FloatToLNS, get_precision_from_base, get_base_from_precision
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -429,14 +429,17 @@ class LNSTensor:
     def __repr__(self) -> str:
          # indent the value string to match the length of "LNSTensor(value="
         value_str = torch._tensor_str._tensor_str(self.value, 16)
-        f = -torch.log2(torch.log2(self.base))
+        precision = get_precision_from_base(self.base.item())
 
-        if abs(f - torch.round(f)) < 1e-06: # check if f is an integer, works up to f=33
-            base_str = f"prec={round(f.item())}"
+        if precision is not None:
+            info_str = f"prec={precision}"
         else:
-            base_str = f"base={self.base.item()}"
+            info_str = f"base={self.base.item()}"
 
-        return f"LNSTensor(value={value_str}, {base_str}, requires_grad={self.requires_grad})"
+        if self.requires_grad:
+            info_str += ", requires_grad=True"
+
+        return f"LNSTensor(value={value_str}, {info_str})"
 
     def __add__(self, other):
         if isinstance(other, _xlns_types):
@@ -771,15 +774,19 @@ def lnstensor(
     if f is not None and b is not None:
         raise ValueError("Cannot specify both `f` and `b`.")
     if f is not None:
-        base_val: float = 2.0 ** (2 ** (-f))
+        base_val: Tensor = get_base_from_precision(f)
     elif b is not None:
-        base_val = float(b) if isinstance(b, Tensor) else b
+        base_val = b
     else:
         base_val = xl.xlnsB
 
     if base_val < 0 or base_val == 1:
         raise ValueError("base must be positive and not equal to 1")
-    base_tensor: Tensor = torch.tensor(base_val, dtype=torch.float64)
+
+    if isinstance(base_val, Tensor):
+        base_tensor: Tensor = base_val.clone().to(torch.float64)
+    else:
+        base_tensor: Tensor = torch.tensor(base_val, dtype=torch.float64)
 
     # 2. Convert data to a float64 tensor
     # Some branchs switch from_lns to True if the data is already packed.

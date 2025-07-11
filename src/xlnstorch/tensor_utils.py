@@ -10,6 +10,65 @@ import xlns as xl
 from . import LNS_ZERO
 from .autograd import LNSFunction
 
+# Precomputed table of bases from precisions
+# base = 2^(2^(-f)) for f in [1, 40]
+# f=32 gives base ≈ 1.0000000023283064365, which is very close to 1
+# Going beyond f=32 risks numerical precision issues
+
+# Create tensor of precision values f from 1 to 40
+PRECISION_VALUES = torch.arange(1, 41, dtype=torch.float64)
+PRECISION_BASES = torch.pow(2.0, torch.pow(2.0, -PRECISION_VALUES))
+
+def get_base_from_precision(f: int) -> torch.Tensor:
+    """
+    Get the logarithmic base for a given precision.
+
+    Parameters
+    ----------
+    f : int
+        The precision (number of fractional exponent bits).
+        Must be in range [1, 40].
+
+    Returns
+    -------
+    torch.Tensor
+        The corresponding logarithmic base (2^(2^(-f))).
+
+    Raises
+    ------
+    ValueError
+        If precision f is outside the supported range [1, 40].
+    """
+    if f < 1 or f > 40:
+        raise ValueError(f"Precision f={f} not supported. Must be in range [1, 40].")
+    return PRECISION_BASES[f - 1]
+
+def get_precision_from_base(base: torch.Tensor, tolerance: float | torch.Tensor = 0) -> int | None:
+    """
+    Get the precision for a given logarithmic base, if it matches a precomputed base.
+
+    Parameters
+    ----------
+    base : torch.Tensor
+        The logarithmic base to check.
+    tolerance : float, torch.Tensor, optional
+        Tolerance for floating-point comparison. Default is 0 as bases should
+        match exactly since we use precomputed values.
+
+    Returns
+    -------
+    int or None
+        The corresponding precision if the base matches a precomputed value,
+        otherwise None.
+    """
+    # Check if base matches any precomputed base within tolerance
+    differences = torch.abs(PRECISION_BASES - base)
+    matches = differences <= tolerance
+    if matches.any():
+        # Return the first match (precision = index + 1)
+        return matches.nonzero()[0].item() + 1
+    return None
+
 # Use TYPE_CHECKING for type hints only
 if TYPE_CHECKING:
     from .tensor import LNSTensor
