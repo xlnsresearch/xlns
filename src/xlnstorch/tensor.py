@@ -117,18 +117,25 @@ class LNSTensor:
         they are in LNS format, we must perform our custom LNS addition.
         """
 
+        # create variable that references the current internal representation.
+        # If we reference self._lns here gradients will not be tracked correctly
+        # for inplace operations (which modify self._lns)
+        curr_lns = self._lns
         def _edge_hook(grad_inputs, grad_outputs):
             if grad_inputs[index] is not None:
-                self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+                curr_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
 
         edge.node.register_hook(_edge_hook)
 
     def register_grad_hook(self):
 
-        self._lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
-
+        # create variable that references the current internal representation.
+        # If we reference self._lns here gradients will not be tracked correctly
+        # for inplace operations (which modify self._lns)
+        curr_lns = self._lns
+        curr_lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
         def _hook(grad):
-            return self._lns._lns_grad._lns
+            return curr_lns._lns_grad._lns
 
         self._hook_handle = self._lns.register_hook(_hook)
 

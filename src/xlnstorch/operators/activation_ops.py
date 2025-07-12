@@ -69,7 +69,7 @@ def relu_(x):
 
     result = LNSReLUFunction.apply(x, x.base)
 
-    x._lns.copy_(result)
+    x._lns = result
     return x
 
 class LNSLeakyReLUFunction(LNSFunction):
