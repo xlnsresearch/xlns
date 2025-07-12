@@ -1,0 +1,175 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xlnstorch.viz.make_error_grid &mdash; xlns 1.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d55fa986"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="xlnstorch.viz.plot_error_heatmap" href="xlnstorch.viz.plot_error_heatmap.html" />
+    <link rel="prev" title="Vizualization" href="../vizualization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            xlns
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Packages</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">xlnstorch</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lnstensors.html">LNS Tensors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operations.html">Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../layers.html">Layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optimizers.html">Optimizers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../benchmark.html">Benchmarking</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../vizualization.html">Vizualization</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#quick-start">Quick Start</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../vizualization.html#error-analysis-functions">Error Analysis Functions</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">xlnstorch.viz.make_error_grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xlnstorch.viz.plot_error_heatmap.html">xlnstorch.viz.plot_error_heatmap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#autograd-vizualization">Autograd vizualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#error-grid-generation">Error Grid Generation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#error-vizualization">Error vizualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#autograd-graph-vizualization">Autograd Graph vizualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vizualization.html#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">xlns</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">xlnstorch</a></li>
+          <li class="breadcrumb-item"><a href="../vizualization.html">Vizualization</a></li>
+      <li class="breadcrumb-item active">xlnstorch.viz.make_error_grid</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/xlnstorch/generated/xlnstorch.viz.make_error_grid.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="xlnstorch-viz-make-error-grid">
+<h1>xlnstorch.viz.make_error_grid<a class="headerlink" href="#xlnstorch-viz-make-error-grid" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="xlnstorch.viz.make_error_grid">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.viz.</span></span><span class="sig-name descname"><span class="pre">make_error_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-1.0,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">201</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_prec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.viz.make_error_grid" title="Link to this definition"></a></dt>
+<dd><p>Generate a uniformly-sampled grid of differences between an xlnstorch
+operation <cite>op</cite> and an <em>exact</em> reference computed with Decimal.</p>
+<p>Set <cite>decimal_prec</cite> high enough that Decimal is effectively exact
+over the chosen ranges (50 digits is usually plenty up to ~1e15).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op</strong> (<em>Callable</em>) – The xlnstorch operation to benchmark, e.g., <cite>torch.mul</cite>.</p></li>
+<li><p><strong>ideal_op</strong> (<em>Callable</em><em>, </em><em>optional</em>) – A reference function that computes the exact result using Decimal.
+If not provided, a default mapping from <cite>op</cite> to an ideal function
+is used if available.</p></li>
+<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – The <cite>f</cite> parameter for the LNSTensor constructor.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – The <cite>b</cite> parameter for the LNSTensor constructor.</p></li>
+<li><p><strong>x_range</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>, </em><em>optional</em>) – The range of x values to sample, defaulting to (-1.0, 1.0).</p></li>
+<li><p><strong>y_range</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>, </em><em>optional</em>) – The range of y values to sample for binary operations. If None,
+only a unary operation is performed.</p></li>
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of steps to sample in each dimension. Default is 201.</p></li>
+<li><p><strong>device</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.7)"><em>torch.device</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The device on which to create the input tensors (default is “cpu”).</p></li>
+<li><p><strong>absolute</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, return the absolute error; otherwise, return signed error.
+Default is True.</p></li>
+<li><p><strong>decimal_prec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The precision for Decimal operations. This should be set high enough
+to ensure that Decimal calculations are effectively exact over the
+specified ranges. Default is 50 digits.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing:
+- <cite>xs</cite>: A tensor of x values sampled from the specified range.
+- <cite>ys</cite>: A tensor of y values sampled from the specified range (if binary operation).
+If <cite>y_range</cite> is None, only <cite>xs</cite> and <cite>err</cite> are returned.
+- <cite>err</cite>: A tensor of errors, where each element is the absolute or signed
+difference between the computed value and the exact value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a>] or Tuple[<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a>, <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.7)">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../vizualization.html" class="btn btn-neutral float-left" title="Vizualization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="xlnstorch.viz.plot_error_heatmap.html" class="btn btn-neutral float-right" title="xlnstorch.viz.plot_error_heatmap" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, xlnsresearch.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
