@@ -18,6 +18,11 @@ from .dispatch_table import (
     override_implementation,
     apply_lns_op
 )
+from .autograd import LNSFunction
+from .tensor_utils import (
+    align_lnstensor_bases,
+    format_lnstensor_operands,
+)
 from .tensor import (
     LNSTensor,
     lnstensor,
@@ -31,14 +36,12 @@ from .tensor import (
     rand_like,
     randn,
     randn_like,
-    LNSFunction,
-    align_lnstensor_bases,
-    format_lnstensor_operands,
 )
 from . import operators
 from . import nn
 from . import optim
 from . import viz
+from . import benchmark
 
 __all__ = [
     "LNS_ZERO",

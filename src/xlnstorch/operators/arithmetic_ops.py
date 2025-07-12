@@ -1,5 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like, LNSFunction
+from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from ..autograd import LNSFunction
 from . import (
     lns_add,
     lns_neg,
@@ -656,7 +657,7 @@ class LNSSignFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, grad_output):
-        return LNS_ZERO, None
+        return torch.full_like(grad_output, LNS_ZERO), None
 
 @implements(torch.sign, LNSSignFunction.forward, "default", default=True)
 def sign(x, *, out=None):

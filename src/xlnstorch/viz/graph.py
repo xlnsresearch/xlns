@@ -1,7 +1,15 @@
-import warnings
+from collections import OrderedDict
 from typing import Any, Dict, Iterable, List, Set
 import torch
 from .. import LNSTensor, lnstensor
+
+# This module is heavily based on pytorchviz. I have adapted it to
+# work with LNSTensor objects and to only import graphviz when
+# this function is called (so that it is not a hard dependency)
+# among other things.
+# 
+# Original source:
+# https://github.com/szagoruyko/pytorchviz
 
 __all__ = [
     "make_autograd_graph"
@@ -12,6 +20,7 @@ default_node_attr = {
     "shape": "box",
     "align": "left",
     "fontsize": "9",
+    "fontname": "monospace",
     "ranksep": "0.1",
     "height": "0.2",
 }
@@ -20,7 +29,78 @@ default_edge_attr = {
 }
 
 def _get_size(tensor: torch.Tensor) -> str:
-    return ",".join(map(str, tensor.size()))
+    if tensor.dim() == 0:
+        return "(scalar)"
+    return "(" + ",".join(map(str, tensor.size())) + ")"
+
+def _get_label(tensor: torch.Tensor, names: Dict[int, str]) -> str:
+    label = names.get(id(tensor), "")
+    if label:
+        label += "\n"
+    return label + _get_size(tensor)
+
+def _make_node_table(fn: torch.autograd.Function, show_saved: bool) -> str:
+    """
+    Return a string representation of the saved attributes in the function.
+    If no saved attributes are present, return an empty string.
+    """
+    table_str = type(fn).__name__
+
+    if not show_saved:
+        return table_str
+
+    attrs = []
+    names_len = 0
+    values_len = 0
+
+    # for standard pytorch functions, saved tensors are stored as attributes
+    # with the prefix "_saved_".
+    for attr in dir(fn):
+        if attr.startswith("_saved_"):
+
+            name = attr[7:]  # remove the "_saved_" prefix
+            value = getattr(fn, attr)
+
+            if isinstance(value, torch.Tensor):
+                value = _get_size(value)
+            else:
+                value = repr(value)
+
+            attrs.append((name, value))
+            names_len = max(names_len, len(name))
+            values_len = max(values_len, len(value))
+
+    # for custom functions, tensors are saved in the `saved_tensors` attribute
+    # and other variables in the `__dict__` attribute.
+    if hasattr(fn, 'saved_tensors'):
+        for tensor in fn.saved_tensors:
+
+            name = "saved_tensor"
+            value = _get_size(tensor)
+
+            attrs.append((name, value))
+            names_len = max(names_len, len(name))
+            values_len = max(values_len, len(value))
+
+    if hasattr(fn, '__dict__'):
+        for name, value in fn.__dict__.items():
+            value = repr(value)
+            attrs.append((name, value))
+            names_len = max(names_len, len(name))
+            values_len = max(values_len, len(value))
+
+    # if no attributes are found, return the function name
+    if len(attrs) == 0:
+        return table_str
+
+    max_len = max(len(table_str), names_len + values_len + 3)
+    table_str += "\n" + "-" * max_len + "\n"
+    table_str += "\n".join(
+        name.ljust(names_len) + " : " + value.rjust(max_len - names_len - 3)
+        for name, value in attrs
+    )
+
+    return table_str
 
 def _check_import_graphviz():
     """
@@ -62,8 +142,12 @@ def unwrap(obj: torch.Tensor | LNSTensor) -> torch.Tensor:
 
 def make_autograd_graph(
         *vars: torch.Tensor | LNSTensor,
-        params: Dict[str, torch.Tensor | LNSTensor] | None = None,
         graph_name: str = "Autograd Graph",
+        show_saved: bool = False,
+        leaf_color: str = "orange",
+        node_color: str = "lightgrey",
+        output_color: str = "yellow",
+        params: Dict[str, torch.Tensor | LNSTensor] | None = None,
         node_attr: Dict[str, str] | None = None,
         edge_attr: Dict[str, str] | None = None,
     ):
@@ -76,15 +160,27 @@ def make_autograd_graph(
     vars : torch.Tensor | LNSTensor
         The output variables for which to build the autograd graph.
         Typically just the one output of the loss function.
+    graph_name : str, optional
+        The name of the graph to be displayed in the visualization.
+        Defaults to "Autograd Graph".
+    show_saved : bool, optional
+        If `True`, saved tensors and variables will be shown in the
+        graph (inside their respective function nodes).
+    leaf_color : str, optional
+        The color to use for leaf nodes (i.e., tensors that are not
+        outputs of any autograd function). Defaults to "orange".
+    node_color : str, optional
+        The color to use for function nodes in the graph. Defaults
+        to "lightgrey".
+    output_color : str, optional
+        The color to use for the final output tensor node in the
+        graph. Defaults to "yellow".
     params : Dict[str, torch.Tensor | LNSTensor], optional
         An optional mapping ``parameter_name -> value`` where *value*
         is either a ``torch.Tensor`` or an ``LNSTensor`` instance.
         If supplied, the corresponding nodes will be highlighted and
         annotated with the user-provided name, which makes it much
         easier to see where model parameters occur in the graph.
-    graph_name : str, optional
-        The name of the graph to be displayed in the visualization.
-        Defaults to "Autograd Graph".
     node_attr : Dict[str, str], optional
         Additional attributes to apply to all nodes in the graph.
         This can be used to set styles, colors, or other properties
@@ -134,20 +230,21 @@ def make_autograd_graph(
                 raise TypeError(
                     f"Parameter '{name}' is not a tensor / LNSTensor (got {type(value)})"
                 )
+            if name.endswith("_lns"):
+                name = name[:-4]  # remove the "_lns" suffix if present
             param_id_to_name[id(unwrap(value))] = name
 
-    # 4. construct the graph
+    # 4. initialize node and edge attributes
+    node_attributes = default_node_attr.copy()
     if node_attr:
-        node_attr = default_node_attr.copy().update(node_attr)
-    else:
-        node_attr = default_node_attr.copy()
+        node_attributes.update(node_attr)
 
+    edge_attributes = default_edge_attr.copy()
     if edge_attr:
-        edge_attr = default_edge_attr.copy().update(edge_attr)
-    else:
-        edge_attr = default_edge_attr.copy()
+        edge_attributes.update(edge_attr)
 
-    dot = graphviz.Digraph(graph_name, node_attr=default_node_attr, edge_attr=default_edge_attr)
+    # 5. construct the graph
+    dot = graphviz.Digraph(graph_name, node_attr=node_attributes, edge_attr=edge_attributes)
     seen: Set[int] = set()
 
     def add_node(obj: Any) -> None:
@@ -162,27 +259,17 @@ def make_autograd_graph(
         # distinguish between leaf tensors, saved tensors, and function nodes
         if torch.is_tensor(obj):
             # plain tensor (leaf or saved value)
-            tensor: torch.Tensor = obj
-            name = param_id_to_name.get(obj_id, "")
-            if name:
-                name += "\n"
-            label = f"{name}({_get_size(tensor)})"
-            fillcolor = "lightblue" if name else "orange"
-            dot.node(str(obj_id), label=label, fillcolor=fillcolor)
+            dot.node(str(obj_id), label=_get_label(obj, param_id_to_name), fillcolor=leaf_color)
 
         elif isinstance(obj, torch._C._functions.AccumulateGrad):
-            # GradAccumulate node
+            # GradAccumulate node - skip it and add the tensor it accumulates to the graph
             tensor = obj.variable
-            tensor_id = id(tensor)
-            name = param_id_to_name.get(tensor_id, "")
-            if name:
-                name += "\n"
-            label = f"{name}({_get_size(tensor)})"
-            dot.node(str(obj_id), label=label, fillcolor="brown")
+            dot.node(str(obj_id), label=_get_label(tensor, param_id_to_name), fillcolor=leaf_color)
 
         else:
             # autograd function node
-            dot.node(str(obj_id), type(obj).__name__, fillcolor="lightgrey")
+            label = _make_node_table(obj, show_saved)
+            dot.node(str(obj_id), label, fillcolor=node_color)
 
         if hasattr(obj, "next_functions"):
             for next_obj, _ in obj.next_functions:
@@ -190,21 +277,12 @@ def make_autograd_graph(
                     dot.edge(str(id(next_obj)), str(obj_id))
                     add_node(next_obj)
 
-        # if hasattr(obj, "saved_tensors"):
-        #     for t in obj.saved_tensors:
-        #         dot.edge(str(id(t)), str(obj_id))
-        #         add_node(t)
-
     # add all root nodes
     for root in roots:
         if root.grad_fn is not None:
             add_node(root.grad_fn)
             # Also show the final output tensor as a small extra node
-            name = param_id_to_name.get(id(root), "")
-            if name:
-                name += "\n"
-            label = f"{name}({_get_size(root)})"
-            dot.node(str(id(root)), label, fillcolor="yellow")
+            dot.node(str(id(root)), _get_label(root, param_id_to_name), fillcolor=output_color)
             dot.edge(str(id(root.grad_fn)), str(id(root)))
         else:
             add_node(root)
