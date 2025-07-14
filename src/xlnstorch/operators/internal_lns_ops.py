@@ -302,6 +302,28 @@ lns_minimum = _create_lns_op_func('minimum', torch.minimum, signature=_build_sig
     torch.Tensor,
 ))
 
+lns_broadcast_to = _create_lns_op_func('broadcast_to', torch.broadcast_to, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("shape", "pk", int | Tuple[int]),
+    ("base", "pk", torch.Tensor)],
+    torch.Tensor,
+))
+lns_clone = _create_lns_op_func('clone', torch.clone, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("memory_format", "pk", torch.memory_format, torch.preserve_format)],
+    torch.Tensor,
+))
+lns_squeeze = _create_lns_op_func('squeeze', torch.squeeze, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("dim", "pk", int | None, None)],
+    torch.Tensor,
+))
+lns_unsqueeze = _create_lns_op_func('unsqueeze', torch.unsqueeze, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("dim", "pk", int)],
+    torch.Tensor,
+))
+
 lns_mse_loss = _create_lns_op_func('mse_loss', torch.nn.functional.mse_loss, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("y", "pk", torch.Tensor),

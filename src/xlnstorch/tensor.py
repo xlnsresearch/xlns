@@ -356,18 +356,38 @@ class LNSTensor:
 
         Returns
         -------
-        An ```LNSTensor`` object broadcasted to the new shape ``shape``.
+        LNSTensor
+            An LNSTensor broadcasted to the new shape ``shape``.
         """
-        return lnstensor(self._lns.broadcast_to(shape), from_lns=True, b=self.base)
+        return torch.broadcast_to(self, shape)
+
+    def expand(self, *sizes: int) -> LNSTensor:
+        """
+        Expands ``self`` to the shape ``sizes``. Analogous to
+
+        https://docs.pytorch.org/docs/stable/generated/torch.Tensor.expand.html
+
+        Parameters
+        ----------
+        sizes : int
+            The new shape to expand to. If a dimension is set to -1, it will
+            be inferred from the size of the original tensor.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor with the expanded shape. The data is not copied,
+            but the view is adjusted to the new shape.
+        """
+        return torch.broadcast_to(self, sizes)
 
     def clone(self, *, memory_format=torch.preserve_format) -> LNSTensor:
         """
         Returns a copy of the LNSTensor with the same data and base.
         """
-        cloned_lns = self._lns.clone(memory_format=memory_format)
-        return lnstensor(cloned_lns, from_lns=True, b=self.base)
+        return torch.clone(self, memory_format=memory_format)
 
-    def squeeze(self, dim: Union[int, List[int]] | None = None) -> LNSTensor:
+    def squeeze(self, dim: int | List[int] | None = None) -> LNSTensor:
         """
         Returns a new LNSTensor with all specified dimensions of size
         1 removed. If no dimensions are specified, all dimensions of
@@ -384,7 +404,7 @@ class LNSTensor:
         LNSTensor
             A new LNSTensor with the specified dimensions removed.
         """
-        return lnstensor(self._lns.squeeze(dim), from_lns=True, b=self.base)
+        return torch.squeeze(self, dim)
 
     def unsqueeze(self, dim: int) -> LNSTensor:
         """
@@ -400,7 +420,7 @@ class LNSTensor:
         LNSTensor
             A new LNSTensor with the specified dimension added.
         """
-        return lnstensor(self._lns.unsqueeze(dim), from_lns=True, b=self.base)
+        return torch.unsqueeze(self, dim)
 
     def detach(self) -> LNSTensor:
         """

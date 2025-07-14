@@ -102,6 +102,18 @@ Comparison Operations
     operators.lns_maximum
     operators.lns_minimum
 
+Miscellaneous Operations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_broadcast_to
+    operators.lns_clone
+    operators.lns_squeeze
+    operators.lns_unsqueeze
+
 Loss Operations
 ~~~~~~~~~~~~~~~
 
