@@ -613,7 +613,7 @@ class LNSTensor:
 
     def __setitem__(self, index, value):
         # We must convert the indexing object to a suitable format for torch.index_put_.
-        self._lns = torch.index_put(self, make_index_tensors(index, self.shape), value, accumulate=False)._lns
+        self._lns = torch.index_put(self, make_index_tensors(index, self.shape), value)._lns
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)

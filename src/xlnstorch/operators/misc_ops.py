@@ -115,17 +115,17 @@ def unsqueeze(x, dim):
 class LNSIndexPutFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, value, idx, base):
-        result = torch.index_put(x, idx, value, accumulate=False)
+    def forward(x, idx, value, base, accumulate=False):
+        result = torch.index_put(x, idx, value, accumulate=accumulate)
         return result
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        _, value, idx, base = inputs
+        _, idx, value, base, _ = inputs
         ctx.is_idx_tensor = torch.is_tensor(idx)
 
         if ctx.is_idx_tensor:
-            ctx.save_for_backward(value, idx, base)
+            ctx.save_for_backward(idx, value, base)
         else:
             ctx.save_for_backward(value, base)
             ctx.idx = idx
@@ -133,7 +133,7 @@ class LNSIndexPutFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         if ctx.is_idx_tensor:
-            value, idx, base = ctx.saved_tensors
+            idx, value, base = ctx.saved_tensors
         else:
             value, base = ctx.saved_tensors
             idx = ctx.idx
@@ -153,19 +153,21 @@ class LNSIndexPutFunction(LNSFunction):
             grad_value = lns_sum(grad_value, base, dim=extra_dims, keepdim=True)
             grad_value = grad_value.reshape(value.shape)
 
-        return grad_x, grad_value, None, None
+        return grad_x, None, grad_value, None, None
 
 @implements(torch.index_put, LNSIndexPutFunction.forward, "default", default=True)
 def index_put(x, indices, values, accumulate=False):
 
-    result = LNSIndexPutFunction.apply(x, values, indices, x.base)
+    x, values = format_lnstensor_operands(x, values)
+    result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
 @implements(torch.index_put_, LNSIndexPutFunction.forward, "default", default=True)
 def index_put_(x, indices, values, accumulate=False):
 
-    result = LNSIndexPutFunction.apply(x, values, indices, x.base)
+    x, values = format_lnstensor_operands(x, values)
+    result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
 
     x._lns = result
     return x
