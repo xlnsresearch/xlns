@@ -109,6 +109,30 @@ class LNSTensor:
 
         return result
 
+    def _inplace_copy(self, lns) -> LNSTensor:
+        """
+        Copies the internal packed representation ``lns`` to the current
+        LNSTensor. This is used for inplace operations to handle gradients
+        correctly.
+
+        Parameters
+        ----------
+        lns : torch.Tensor
+            The packed representation to copy to the current LNSTensor.
+            Must have dtype ``float64`` and be a scalar tensor.
+
+        Returns
+        -------
+        LNSTensor
+            The current LNSTensor with the internal packed representation
+            updated to ``lns``.
+        """
+        self._lns = lns
+        if lns.requires_grad:
+            self.register_grad_hook()
+
+        return self
+
     def _track_operation(self, edge, index):
         """
         Registers a hook to track the operation that produced this output.
@@ -613,7 +637,7 @@ class LNSTensor:
 
     def __setitem__(self, index, value):
         # We must convert the indexing object to a suitable format for torch.index_put_.
-        self._lns = torch.index_put(self, make_index_tensors(index, self.shape), value)._lns
+        torch.index_put_(self, make_index_tensors(index, self.shape), value)
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)

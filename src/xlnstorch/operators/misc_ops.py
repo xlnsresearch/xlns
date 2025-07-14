@@ -96,13 +96,11 @@ class LNSUnsqueezeFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, dim = inputs
-        ctx.save_for_backward(x)
+        _, dim = inputs
         ctx.dim = dim
 
     @staticmethod
     def backward(ctx, grad_output):
-        x, = ctx.saved_tensors
         grad_input = torch.squeeze(grad_output, dim=ctx.dim)
         return grad_input, None
 
@@ -116,8 +114,7 @@ class LNSIndexPutFunction(LNSFunction):
 
     @staticmethod
     def forward(x, idx, value, base, accumulate=False):
-        result = torch.index_put(x, idx, value, accumulate=accumulate)
-        return result
+        return torch.index_put(x, idx, value, accumulate=accumulate)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -169,5 +166,4 @@ def index_put_(x, indices, values, accumulate=False):
     x, values = format_lnstensor_operands(x, values)
     result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
 
-    x._lns = result
-    return x
+    return x._inplace_copy(result)

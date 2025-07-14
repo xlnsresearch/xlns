@@ -154,7 +154,7 @@ def add(x, y, *, alpha=1, out=None):
     result = LNSAddFunction.apply(x, y, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -192,7 +192,7 @@ def sub(x, y, *, alpha=1, out=None):
     result = LNSSubFunction.apply(x, y, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -225,7 +225,7 @@ def neg(x, *, out=None):
     result = LNSNegFunction.apply(x)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -267,7 +267,7 @@ def mul(x, y, *, out=None):
     result = LNSMulFunction.apply(x, y)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -303,7 +303,7 @@ def square(x, *, out=None):
     result = LNSSquareFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -343,7 +343,7 @@ def sqrt(x, *, out=None):
     result = LNSSqrtFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -406,7 +406,7 @@ def pow(x, n, *, out=None):
         result = LNSPowFunction.apply(x, n.value, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -451,8 +451,7 @@ def div(x, y, *, out=None):
     result = LNSDivFunction.apply(x, y, x.base)
 
     if out is not None:
-        out._lns = result
-        out.base = x.base
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -490,7 +489,7 @@ def reciprocal(x, *, out=None):
     result = LNSReciprocalFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -524,7 +523,7 @@ def exp(x, *, out=None):
     result = LNSExpFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -561,7 +560,7 @@ def log(x, *, out=None):
     result = LNSLogFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -602,7 +601,7 @@ def abs(x, *, out=None):
     result = LNSAbsFunction.apply(x)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -665,7 +664,7 @@ def sign(x, *, out=None):
     result = LNSSignFunction.apply(x, x.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -724,7 +723,7 @@ def sum(x, dim=None, keepdim=False, *, out=None):
     result = LNSSumFunction.apply(x, x.base, dim, keepdim)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -812,7 +811,7 @@ def prod(x, dim=None, keepdim=False, *, out=None):
     result = LNSProdFunction.apply(x, x.base, dim, keepdim)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -968,7 +967,7 @@ def matmul(A, B, *, out=None):
     result = LNSMatmulFunction.apply(A, B, A.base)
 
     if out is not None:
-        out._lns = result
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=A.base)
 

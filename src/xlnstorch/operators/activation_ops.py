@@ -59,8 +59,7 @@ def relu(x, inplace=False):
     result = LNSReLUFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -68,9 +67,7 @@ def relu(x, inplace=False):
 def relu_(x):
 
     result = LNSReLUFunction.apply(x, x.base)
-
-    x._lns = result
-    return x
+    return x._inplace_copy(result)
 
 class LNSLeakyReLUFunction(LNSFunction):
     """
@@ -116,8 +113,7 @@ def leaky_relu(x, negative_slope=0.01, inplace=False):
     result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -127,8 +123,7 @@ def leaky_relu_(x, negative_slope=0.01):
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
     result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
 
-    x._lns = result
-    return x
+    return x._inplace_copy(result)
 
 class LNSThresholdFunction(LNSFunction):
 
@@ -162,7 +157,7 @@ def threshold(x, threshold, value, inplace=False):
     result = LNSThresholdFunction.apply(x, threshold, value, x.base)
 
     if inplace:
-        x._lns = result
+        x._inplace_copy(result)
         return x
 
     return lnstensor(result, from_lns=True, b=x.base)
@@ -173,7 +168,7 @@ def threshold_(x, threshold, value):
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
     result = LNSThresholdFunction.apply(x, threshold, value, x.base)
 
-    x._lns = result
+    x._inplace_copy(result)
     return x
 
 class LNSTanhFunction(LNSFunction):
@@ -455,8 +450,7 @@ def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
     result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -466,8 +460,7 @@ def hardtanh_(x, min_val=-1.0, max_val=1.0):
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
     result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
 
-    x._lns = result
-    return x
+    return x._inplace_copy(result)
 
 class LNSHardswishFunction(LNSFunction):
     """
@@ -518,8 +511,7 @@ def hardswish(x, inplace=False):
     result = LNSHardswishFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -564,8 +556,7 @@ def relu6(x, inplace=False):
     result = LNSReLU6Function.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -612,8 +603,7 @@ def elu(x, alpha=1.0, inplace=False):
     result = LNSELUFunction.apply(x, alpha, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -623,8 +613,7 @@ def elu_(x, alpha=1.0):
     x, alpha = format_lnstensor_operands(x, alpha)
     result = LNSELUFunction.apply(x, alpha, x.base)
 
-    x._lns = result
-    return x
+    return x._inplace_copy(result)
 
 class LNSSELUFunction(LNSFunction):
     """
@@ -675,8 +664,7 @@ def selu(x, inplace=False):
     result = LNSSELUFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -722,8 +710,7 @@ def celu(x, alpha=1.0, inplace=False):
     result = LNSCELUFunction.apply(x, alpha, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -782,8 +769,7 @@ def prelu(x, a, inplace=False):
     result = LNSPReLUFunction.apply(x, a, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -836,8 +822,7 @@ def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
     result = LNSRReLUFunction.apply(x, a, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -850,9 +835,7 @@ def rrelu_(x, lower=1/8, upper=1/3, training=False):
         a = lnstensor((lower + upper) / 2, b=x.base)
 
     result = LNSRReLUFunction.apply(x, a, x.base)
-
-    x._lns = result
-    return x
+    return x._inplace_copy(result)
 
 class LNSGLUFunction(LNSFunction):
     """
@@ -1152,8 +1135,7 @@ def hardsigmoid(x, inplace=False):
     result = LNSHardsigmoidFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -1199,7 +1181,6 @@ def silu(x, inplace=False):
     result = LNSSiLUFunction.apply(x, x.base)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)

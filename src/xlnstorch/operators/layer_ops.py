@@ -176,8 +176,7 @@ def dropout(x, p=0.5, training=True, inplace=False):
     result = LNSDropoutFunction.apply(x, x.base, p)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -230,8 +229,7 @@ def dropout1d(x, p=0.5, training=True, inplace=False):
     result = LNSDropout1dFunction.apply(x, x.base, p)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -292,8 +290,7 @@ def dropout2d(x, p=0.5, training=True, inplace=False):
     result = LNSDropout2dFunction.apply(x, x.base, p)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -346,8 +343,7 @@ def dropout3d(x, p=0.5, training=True, inplace=False):
     result = LNSDropout3dFunction.apply(x, x.base, p)
 
     if inplace:
-        x._lns = result
-        return x
+        return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
