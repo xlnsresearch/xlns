@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS, LNSGetItemFunction, get_precision_from_base, get_base_from_precision, make_index_tensors
+from .tensor_utils import FloatToLNS, LNSGetItemFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -493,7 +493,7 @@ class LNSTensor:
 
     def __repr__(self) -> str:
          # indent the value string to match the length of "LNSTensor(value="
-        value_str = torch._tensor_str._tensor_str(self.value, 16)
+        value_str = _lns_tensor_str(self, 16)
         precision = get_precision_from_base(self.base.item())
 
         if precision is not None:
