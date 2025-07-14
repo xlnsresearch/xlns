@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS, get_precision_from_base, get_base_from_precision
+from .tensor_utils import FloatToLNS, LNSGetItemFunction, get_precision_from_base, get_base_from_precision, make_index_tensors
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -287,6 +287,20 @@ class LNSTensor:
             True if the LNSTensor requires gradients, False otherwise.
         """
         return self._lns.requires_grad
+
+    @property
+    def grad_fn(self) -> torch._C.Function | None:
+        """
+        Returns the function that created this LNSTensor, if it was created
+        by an operation that has a gradient function.
+
+        Returns
+        -------
+        torch._C.Function or None
+            The gradient function that created this LNSTensor, or None if it
+            was created by a non-differentiable operation.
+        """
+        return self._lns.grad_fn
 
     def view(self, *shape: int) -> LNSTensor:
         """
@@ -594,10 +608,12 @@ class LNSTensor:
         return torch.lt(self, other)
 
     def __getitem__(self, index):
-        return lnstensor(self._lns[index], from_lns=True, b=self.base)
+        result = LNSGetItemFunction.apply(self, index)
+        return lnstensor(result, from_lns=True, b=self.base)
 
     def __setitem__(self, index, value):
-        self._lns[index] = LNSTensor.get_internal_tensor(value, self.base)
+        # We must convert the indexing object to a suitable format for torch.index_put_.
+        self._lns = torch.index_put(self, make_index_tensors(index, self.shape), value, accumulate=False)._lns
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)

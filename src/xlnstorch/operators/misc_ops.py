@@ -112,3 +112,60 @@ def unsqueeze(x, dim):
     result = LNSUnsqueezeFunction.apply(x, dim)
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSIndexPutFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, value, idx, base):
+        result = torch.index_put(x, idx, value, accumulate=False)
+        return result
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, value, idx, base = inputs
+        ctx.is_idx_tensor = torch.is_tensor(idx)
+
+        if ctx.is_idx_tensor:
+            ctx.save_for_backward(value, idx, base)
+        else:
+            ctx.save_for_backward(value, base)
+            ctx.idx = idx
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.is_idx_tensor:
+            value, idx, base = ctx.saved_tensors
+        else:
+            value, base = ctx.saved_tensors
+            idx = ctx.idx
+
+        grad_x = grad_output.clone()
+        grad_x[idx] = LNS_ZERO
+
+        grad_value = grad_output.clone()[idx]
+        if grad_value.shape != value.shape:
+
+            # Find the dims that were broadcast (= size 1 in value but >1 in grad_value)
+            extra_dims = (
+                [i for i, (gv, v) in enumerate(zip(grad_value.shape[-len(value.shape):],
+                                                   value.shape)) if v == 1 and gv != 1]
+                + list(range(len(grad_value.shape) - len(value.shape)))  # leading dims
+            )
+            grad_value = lns_sum(grad_value, base, dim=extra_dims, keepdim=True)
+            grad_value = grad_value.reshape(value.shape)
+
+        return grad_x, grad_value, None, None
+
+@implements(torch.index_put, LNSIndexPutFunction.forward, "default", default=True)
+def index_put(x, indices, values, accumulate=False):
+
+    result = LNSIndexPutFunction.apply(x, values, indices, x.base)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+@implements(torch.index_put_, LNSIndexPutFunction.forward, "default", default=True)
+def index_put_(x, indices, values, accumulate=False):
+
+    result = LNSIndexPutFunction.apply(x, values, indices, x.base)
+
+    x._lns = result
+    return x

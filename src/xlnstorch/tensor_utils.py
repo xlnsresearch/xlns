@@ -2,7 +2,8 @@
 Utility functions for LNSTensor operations and autograd functions.
 """
 from __future__ import annotations
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import Any, Tuple, Sequence, TYPE_CHECKING
+import math
 import torch
 import xlns as xl
 
@@ -150,6 +151,37 @@ class LNSChangeBaseFunction(LNSFunction):
         return new_tensor, None, None
 
 
+class LNSGetItemFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, idx):
+        return x[idx]
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, idx = inputs
+        ctx.is_idx_tensor = torch.is_tensor(idx)
+
+        if ctx.is_idx_tensor:
+            ctx.save_for_backward(x, idx)
+        else:
+            ctx.save_for_backward(x)
+            ctx.idx = idx
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.is_idx_tensor:
+            x, idx = ctx.saved_tensors
+        else:
+            x, = ctx.saved_tensors
+            idx = ctx.idx
+
+        grad_x = torch.full_like(x, LNS_ZERO)
+        grad_x[idx] = grad_output
+
+        return grad_x, None
+
+
 def align_lnstensor_bases(
         *tensors: LNSTensor,
         base: torch.Tensor | None = None
@@ -235,3 +267,18 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
             converted_operands.append(tensor_module.lnstensor(operand, detach=False, b=base))
 
     return align_lnstensor_bases(*converted_operands, base=base)
+
+def make_index_tensors(
+        index: Any,
+        shape: torch.Size | Sequence[int]
+    ) -> Tuple[torch.Tensor, ...]:
+
+    flat_count = math.prod(shape)
+    labels = torch.arange(flat_count).reshape(shape)
+
+    selected = labels[index]
+
+    flat_idx = selected.reshape(-1)
+    coord_tuples = torch.unravel_index(flat_idx, shape)
+
+    return coord_tuples
