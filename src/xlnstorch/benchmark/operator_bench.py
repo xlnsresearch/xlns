@@ -16,6 +16,10 @@ class UnaryBench(Benchmark):
         The shape of the input tensor.
     lns : bool, optional
         If True, uses `xlnstorch.randn` for generating inputs, otherwise uses `torch.randn`.
+    f : int, optional
+        The precision parameter for the input LNSTensor.
+    b : float, optional
+        The base parameter for the input LNSTensor.
     backward : bool, optional
         If True, the input tensor will require gradients for backward pass.
     device : torch.device or str, optional
@@ -29,6 +33,8 @@ class UnaryBench(Benchmark):
             func: Callable,
             shape: Tuple,
             lns: bool = True,
+            f: int | None = None,
+            b: float | None = None,
             backward: bool = False,
             device: torch.device | str = "cpu",
             kwargs: Dict | None = None
@@ -36,13 +42,15 @@ class UnaryBench(Benchmark):
         self.func = func
         self.shape = shape
         self.lns = lns
+        self.f = f
+        self.b = b
         self.backward = backward
         self.device = device
         self.kwargs = kwargs if kwargs is not None else {}
 
     def make_inputs(self):
         if self.lns:
-            a = randn(*self.shape, device=self.device, requires_grad=self.backward)
+            a = randn(*self.shape, f=self.f, b=self.b, device=self.device, requires_grad=self.backward)
         else:
             a = torch.randn(*self.shape, device=self.device, requires_grad=self.backward)
         return (a,)
@@ -63,6 +71,10 @@ class BinaryBench(Benchmark):
         The shape of the input tensor.
     lns : bool, optional
         If True, uses `xlnstorch.randn` for generating inputs, otherwise uses `torch.randn`.
+    f : int, optional
+        The precision parameter for the input LNSTensor.
+    b : float, optional
+        The base parameter for the input LNSTensor.
     backward : bool, optional
         If True, the input tensor will require gradients for backward pass.
     device : torch.device or str, optional
@@ -76,6 +88,8 @@ class BinaryBench(Benchmark):
             func: Callable,
             shape: Tuple,
             lns: bool = True,
+            f: int | None = None,
+            b: float | None = None,
             backward: bool = False,
             device: torch.device | str = "cpu",
             kwargs: Dict | None = None
@@ -83,13 +97,15 @@ class BinaryBench(Benchmark):
         self.func = func
         self.shape = shape
         self.lns = lns
+        self.f = f
+        self.b = b
         self.backward = backward
         self.device = device
         self.kwargs = kwargs if kwargs is not None else {}
 
     def make_inputs(self):
         if self.lns:
-            a = randn(*self.shape, device=self.device, requires_grad=self.backward)
+            a = randn(*self.shape, f=self.f, b=self.b, device=self.device, requires_grad=self.backward)
             b = randn_like(a, requires_grad=self.backward)
         else:
             a = torch.randn(*self.shape, device=self.device, requires_grad=self.backward)

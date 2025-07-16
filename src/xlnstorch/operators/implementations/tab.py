@@ -67,7 +67,6 @@ def sbdb_ufunc_tab(z, s, base):
         raise RuntimeError("Tab ufunc implementation not initialized. Call `make_table` first.")
 
     if base == tab_base:
-        print(s.shape, s.dtype, z.shape, z.dtype)
         return tab_sbdb[s, torch.maximum(tab_ez, torch.where(z == 0, -1, z))]
 
     else:
