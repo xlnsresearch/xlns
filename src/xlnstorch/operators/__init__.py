@@ -92,10 +92,12 @@ from .internal_lns_ops import (
     lns_conv2d,
     lns_conv3d,
 )
-from .arithmetic_ops import (
+from .addition_ops import (
     implement_sbdb,
     sbdb,
 )
+from . import arithmetic_ops # needed to register arithmetic ops
+from . import unary_ops # needed to register unary ops
 from . import comparison_ops # needed to register comparison ops
 from . import loss_ops # needed to register loss ops
 from . import activation_ops # needed to register activation ops
