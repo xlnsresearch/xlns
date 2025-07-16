@@ -1,4 +1,6 @@
 import torch
+import contextlib
+from typing import Generator
 from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
 from ..autograd import LNSFunction
 from . import lns_add, lns_neg
@@ -8,6 +10,51 @@ from . import lns_add, lns_neg
 # registered with a unique key.
 SBDB_FUNCS = {}
 DEFAULT_SBDB_FUNC = ""
+
+def set_default_sbdb_implementation(impl_key: str) -> None:
+    """
+    Set the default implementation for the sbdb function.
+
+    Parameters
+    ----------
+    impl_key : str
+        The key identifying the implementation to be set as default.
+
+    Raises
+    ------
+    ValueError
+        If the specified implementation key is not registered for the sbdb function.
+    """
+    if impl_key not in SBDB_FUNCS:
+        raise ValueError(f"Implementation '{impl_key}' is not registered for the sbdb function.")
+
+    global DEFAULT_SBDB_FUNC
+    DEFAULT_SBDB_FUNC = impl_key
+
+@contextlib.contextmanager
+def override_sbdb_implementation(impl_key: str) -> Generator[None, None, None]:
+    """
+    Temporarily override the default sbdb implementation within a context. This
+    allows for testing or using a different implementation without permanently
+    changing the default.
+
+    Parameters
+    ----------
+    impl_key : str
+        The key identifying the new implementation to use as default.
+
+    Yields
+    ------
+    None
+        The function yields control back to the context block.
+    """
+    original_default = DEFAULT_SBDB_FUNC
+    set_default_sbdb_implementation(impl_key)
+
+    try:
+        yield
+    finally:
+        DEFAULT_SBDB_FUNC = original_default
 
 def implement_sbdb(key, default=False):
     """

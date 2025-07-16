@@ -94,6 +94,8 @@ from .internal_lns_ops import (
 )
 from .addition_ops import (
     implement_sbdb,
+    set_default_sbdb_implementation,
+    override_sbdb_implementation,
     sbdb,
 )
 from . import arithmetic_ops # needed to register arithmetic ops
@@ -106,6 +108,8 @@ from . import misc_ops # needed to register misc ops
 
 __all__ = [
     "implement_sbdb",
+    "set_default_sbdb_implementation",
+    "override_sbdb_implementation",
     "sbdb",
 
     #  internal LNS operation functions

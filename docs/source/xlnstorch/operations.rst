@@ -40,6 +40,8 @@ or define a new operation, you can use the following functions.
     format_lnstensor_operands
 
     operators.implement_sbdb
+    operators.set_default_sbdb_implementation
+    operators.override_sbdb_implementation
     operators.sbdb
 
 Internal Operations
