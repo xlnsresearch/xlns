@@ -42,6 +42,7 @@ or define a new operation, you can use the following functions.
     operators.implement_sbdb
     operators.set_default_sbdb_implementation
     operators.override_sbdb_implementation
+    operators.register_xlnsconf_implementation
     operators.sbdb
 
 Internal Operations

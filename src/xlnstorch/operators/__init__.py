@@ -96,6 +96,7 @@ from .addition_ops import (
     implement_sbdb,
     set_default_sbdb_implementation,
     override_sbdb_implementation,
+    register_xlnsconf_implementation,
     sbdb,
 )
 from . import arithmetic_ops
@@ -112,6 +113,7 @@ __all__ = [
     "implement_sbdb",
     "set_default_sbdb_implementation",
     "override_sbdb_implementation",
+    "register_xlnsconf_implementation",
     "sbdb",
 
     #  internal LNS operation functions

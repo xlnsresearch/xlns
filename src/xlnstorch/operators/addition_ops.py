@@ -1,8 +1,9 @@
 import torch
 import contextlib
-from typing import Generator
+from typing import Generator, Callable
 from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
 from ..autograd import LNSFunction
+from ..tensor_utils import get_precision_from_base
 from . import lns_add, lns_neg
 
 # SBDB_FUNCS is a dictionary that contains different implementations
@@ -95,6 +96,22 @@ def implement_sbdb(key, default=False):
 
         return func
     return decorator
+
+def register_xlnsconf_implementation(xlns_function: Callable, impl_key: str) -> None:
+    """
+    """
+    if impl_key in SBDB_FUNCS:
+        raise ValueError(f"Implementation '{impl_key}' is already registered for the sbdb function.")
+
+    def wrapper_sbdb(z, s, base):
+        precision = get_precision_from_base(base)
+        z_np = z.numpy()
+        s_np = s.numpy()
+
+        xlns_result = xlns_function(z_np, s_np, B=base.item(), F=precision)
+        return torch.tensor(xlns_result, dtype=torch.int64)
+
+    SBDB_FUNCS[impl_key] = wrapper_sbdb
 
 def sbdb(z, s, base):
     """
