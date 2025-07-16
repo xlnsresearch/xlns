@@ -48,6 +48,7 @@ def override_sbdb_implementation(impl_key: str) -> Generator[None, None, None]:
     None
         The function yields control back to the context block.
     """
+    global DEFAULT_SBDB_FUNC
     original_default = DEFAULT_SBDB_FUNC
     set_default_sbdb_implementation(impl_key)
 
