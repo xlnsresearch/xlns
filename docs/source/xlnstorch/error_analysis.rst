@@ -113,3 +113,24 @@ Error Visualization
 
     plt.tight_layout()
     plt.show()
+
+Range Analysis
+--------------
+
+:func:`viz.plot_staircase` visualizes the staircase representation of LNS numbers
+and shows how different precisions affect the representation of numbers.
+
+.. code-block:: python
+
+    fig, ax = plt.subplots()
+    xlnstorch.viz.plot_staircase(ax, [4, 6, 8], -60, 60)
+    plt.show()
+
+:func:`viz.plot_spacing_heatmap` vizualizes the spacing of representations of LNS
+numbers across different precisions. This helps understand how LNS numbers are
+distributed and how precision affects their representation.
+
+.. code-block:: python
+
+    xlnstorch.viz.plot_spacing_heatmap([3, 4, 5, 6, 7, 8], -5, 5, step=0.05, rows=2)
+    plt.show()

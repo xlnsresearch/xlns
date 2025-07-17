@@ -78,6 +78,8 @@ compared to exact arithmetic.
 
     viz.make_error_grid
     viz.plot_error_heatmap
+    viz.plot_staircase
+    viz.plot_spacing_heatmap
 
 Precision Comparison Functions
 ------------------------------

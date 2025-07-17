@@ -6,6 +6,10 @@ from .operator import (
     plot_precision_comparison,
     plot_precision_heatmap_grid,
 )
+from .range import (
+    plot_staircase,
+    plot_spacing_heatmap,
+)
 
 __all__ = [
     "make_error_grid",
@@ -13,4 +17,6 @@ __all__ = [
     "precision_sweep_analysis",
     "plot_precision_comparison", 
     "plot_precision_heatmap_grid",
+    "plot_staircase",
+    "plot_spacing_heatmap",
 ]
