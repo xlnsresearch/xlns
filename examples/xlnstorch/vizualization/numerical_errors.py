@@ -103,10 +103,8 @@ def main():
     print("Demo completed!")
     print("\nGenerated files:")
     print("  - lns_error_analysis.png (if matplotlib available)")
-    print("  - lns_autograd_graph.png (if graphviz available)")
-    print("  - lns_autograd_graph.dot (if graphviz available)")
     print("\nTo install optional dependencies:")
-    print("  pip install matplotlib graphviz")
+    print("  pip install matplotlib")
 
 if __name__ == "__main__":
     main()
