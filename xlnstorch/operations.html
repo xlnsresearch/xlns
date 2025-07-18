@@ -56,12 +56,16 @@
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.align_lnstensor_bases.html">xlnstorch.align_lnstensor_bases</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.format_lnstensor_operands.html">xlnstorch.format_lnstensor_operands</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.implement_sbdb.html">xlnstorch.operators.implement_sbdb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.set_default_sbdb_implementation.html">xlnstorch.operators.set_default_sbdb_implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.override_sbdb_implementation.html">xlnstorch.operators.override_sbdb_implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.register_xlnsconf_implementation.html">xlnstorch.operators.register_xlnsconf_implementation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.operators.sbdb.html">xlnstorch.operators.sbdb</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#internal-operations">Internal Operations</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#arithmetic-operations">Arithmetic Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#comparison-operations">Comparison Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#miscellaneous-operations">Miscellaneous Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#loss-operations">Loss Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#activation-operations">Activation Operations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#layer-operations">Layer Operations</a></li>
@@ -148,7 +152,16 @@ or define a new operation, you can use the following functions.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.implement_sbdb.html#xlnstorch.operators.implement_sbdb" title="xlnstorch.operators.implement_sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.implement_sbdb</span></code></a></p></td>
 <td><p>A decorator to register a custom sbdb implementation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.sbdb.html#xlnstorch.operators.sbdb" title="xlnstorch.operators.sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.sbdb</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.set_default_sbdb_implementation.html#xlnstorch.operators.set_default_sbdb_implementation" title="xlnstorch.operators.set_default_sbdb_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.set_default_sbdb_implementation</span></code></a></p></td>
+<td><p>Set the default implementation for the sbdb function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.override_sbdb_implementation.html#xlnstorch.operators.override_sbdb_implementation" title="xlnstorch.operators.override_sbdb_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.override_sbdb_implementation</span></code></a></p></td>
+<td><p>Temporarily override the default sbdb implementation within a context.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.register_xlnsconf_implementation.html#xlnstorch.operators.register_xlnsconf_implementation" title="xlnstorch.operators.register_xlnsconf_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.register_xlnsconf_implementation</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.sbdb.html#xlnstorch.operators.sbdb" title="xlnstorch.operators.sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.sbdb</span></code></a></p></td>
 <td><p>Computes the Gaussian logarithm for the given inputs z and s.</p></td>
 </tr>
 </tbody>
@@ -276,6 +289,25 @@ operations. For the most part, these internal operator functions wrap the
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_minimum.html#xlnstorch.operators.lns_minimum" title="xlnstorch.operators.lns_minimum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_minimum</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.minimum.html#torch.minimum" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.minimum()</span></code></a> for parameter/return details.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="miscellaneous-operations">
+<h3>Miscellaneous Operations<a class="headerlink" href="#miscellaneous-operations" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_broadcast_to.html#xlnstorch.operators.lns_broadcast_to" title="xlnstorch.operators.lns_broadcast_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_broadcast_to</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.broadcast_to.html#torch.broadcast_to" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.broadcast_to()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_clone.html#xlnstorch.operators.lns_clone" title="xlnstorch.operators.lns_clone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_clone</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.clone.html#torch.clone" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.clone()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_squeeze.html#xlnstorch.operators.lns_squeeze" title="xlnstorch.operators.lns_squeeze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_squeeze</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.squeeze.html#torch.squeeze" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.squeeze()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.operators.lns_unsqueeze.html#xlnstorch.operators.lns_unsqueeze" title="xlnstorch.operators.lns_unsqueeze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operators.lns_unsqueeze</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.unsqueeze.html#torch.unsqueeze" title="(in PyTorch v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.unsqueeze()</span></code></a> for parameter/return details.</p></td>
 </tr>
 </tbody>
 </table>

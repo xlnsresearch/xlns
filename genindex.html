@@ -273,7 +273,11 @@
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_binary_cross_entropy_with_logits.html#xlnstorch.operators.lns_binary_cross_entropy_with_logits">lns_binary_cross_entropy_with_logits() (in module xlnstorch.operators)</a>
 </li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.lns_broadcast_to.html#xlnstorch.operators.lns_broadcast_to">lns_broadcast_to() (in module xlnstorch.operators)</a>
+</li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_celu.html#xlnstorch.operators.lns_celu">lns_celu() (in module xlnstorch.operators)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.lns_clone.html#xlnstorch.operators.lns_clone">lns_clone() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_conv1d.html#xlnstorch.operators.lns_conv1d">lns_conv1d() (in module xlnstorch.operators)</a>
 </li>
@@ -409,6 +413,8 @@
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_square.html#xlnstorch.operators.lns_square">lns_square() (in module xlnstorch.operators)</a>
 </li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.lns_squeeze.html#xlnstorch.operators.lns_squeeze">lns_squeeze() (in module xlnstorch.operators)</a>
+</li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_sub.html#xlnstorch.operators.lns_sub">lns_sub() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_sum.html#xlnstorch.operators.lns_sum">lns_sum() (in module xlnstorch.operators)</a>
@@ -422,6 +428,8 @@
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_threshold_.html#xlnstorch.operators.lns_threshold_">lns_threshold_() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.operators.lns_transpose.html#xlnstorch.operators.lns_transpose">lns_transpose() (in module xlnstorch.operators)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.lns_unsqueeze.html#xlnstorch.operators.lns_unsqueeze">lns_unsqueeze() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/optimizers.html#xlnstorch.optim.LNSAdadelta">LNSAdadelta (class in xlnstorch.optim)</a>
 </li>
@@ -507,11 +515,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/generated/xlnstorch.ones.html#xlnstorch.ones">ones() (in module xlnstorch)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/generated/xlnstorch.ones_like.html#xlnstorch.ones_like">ones_like() (in module xlnstorch)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/generated/xlnstorch.override_implementation.html#xlnstorch.override_implementation">override_implementation() (in module xlnstorch)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.override_sbdb_implementation.html#xlnstorch.operators.override_sbdb_implementation">override_sbdb_implementation() (in module xlnstorch.operators)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -521,10 +531,20 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/generated/xlnstorch.viz.plot_error_heatmap.html#xlnstorch.viz.plot_error_heatmap">plot_error_heatmap() (in module xlnstorch.viz)</a>
 </li>
-      <li><a href="xlnstorch/generated/xlnstorch.benchmark.Benchmark.post_forward.html#xlnstorch.benchmark.Benchmark.post_forward">post_forward() (xlnstorch.benchmark.Benchmark method)</a>
+      <li><a href="xlnstorch/generated/xlnstorch.viz.plot_precision_comparison.html#xlnstorch.viz.plot_precision_comparison">plot_precision_comparison() (in module xlnstorch.viz)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.viz.plot_precision_heatmap_grid.html#xlnstorch.viz.plot_precision_heatmap_grid">plot_precision_heatmap_grid() (in module xlnstorch.viz)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.viz.plot_spacing_heatmap.html#xlnstorch.viz.plot_spacing_heatmap">plot_spacing_heatmap() (in module xlnstorch.viz)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/generated/xlnstorch.viz.plot_staircase.html#xlnstorch.viz.plot_staircase">plot_staircase() (in module xlnstorch.viz)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.benchmark.Benchmark.post_forward.html#xlnstorch.benchmark.Benchmark.post_forward">post_forward() (xlnstorch.benchmark.Benchmark method)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.viz.precision_sweep_analysis.html#xlnstorch.viz.precision_sweep_analysis">precision_sweep_analysis() (in module xlnstorch.viz)</a>
+</li>
       <li><a href="xlnstorch/generated/xlnstorch.benchmark.BenchResult.print.html#xlnstorch.benchmark.BenchResult.print">print() (xlnstorch.benchmark.BenchResult method)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.benchmark.BenchResult.html#xlnstorch.benchmark.BenchResult.prof">prof (xlnstorch.benchmark.BenchResult attribute)</a>
@@ -541,9 +561,11 @@
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.randn.html#xlnstorch.randn">randn() (in module xlnstorch)</a>
 </li>
+      <li><a href="xlnstorch/generated/xlnstorch.randn_like.html#xlnstorch.randn_like">randn_like() (in module xlnstorch)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="xlnstorch/generated/xlnstorch.randn_like.html#xlnstorch.randn_like">randn_like() (in module xlnstorch)</a>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.register_xlnsconf_implementation.html#xlnstorch.operators.register_xlnsconf_implementation">register_xlnsconf_implementation() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.LNSTensor.requires_grad.html#xlnstorch.LNSTensor.requires_grad">requires_grad (xlnstorch.LNSTensor property)</a>
 </li>
@@ -562,6 +584,8 @@
       <li><a href="xlnstorch/generated/xlnstorch.operators.sbdb.html#xlnstorch.operators.sbdb">sbdb() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.set_default_implementation.html#xlnstorch.set_default_implementation">set_default_implementation() (in module xlnstorch)</a>
+</li>
+      <li><a href="xlnstorch/generated/xlnstorch.operators.set_default_sbdb_implementation.html#xlnstorch.operators.set_default_sbdb_implementation">set_default_sbdb_implementation() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/generated/xlnstorch.LNSTensor.shape.html#xlnstorch.LNSTensor.shape">shape (xlnstorch.LNSTensor property)</a>
 </li>
