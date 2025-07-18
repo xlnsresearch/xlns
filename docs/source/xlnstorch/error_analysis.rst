@@ -126,7 +126,7 @@ and shows how different precisions affect the representation of numbers.
     xlnstorch.viz.plot_staircase(ax, [4, 6, 8], -60, 60)
     plt.show()
 
-:func:`viz.plot_spacing_heatmap` vizualizes the spacing of representations of LNS
+:func:`viz.plot_spacing_heatmap` visualizes the spacing of representations of LNS
 numbers across different precisions. This helps understand how LNS numbers are
 distributed and how precision affects their representation.
 

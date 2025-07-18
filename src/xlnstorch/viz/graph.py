@@ -152,7 +152,7 @@ def make_autograd_graph(
         edge_attr: Dict[str, str] | None = None,
     ):
     """
-    Build (and return) a `graphviz.Digraph` object that vizualizes
+    Build (and return) a `graphviz.Digraph` object that visualizes
     the PyTorch autograd graph for the given variables.
 
     Parameters
