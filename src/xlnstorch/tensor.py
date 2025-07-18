@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS, get_precision_from_base, get_base_from_precision
+from .tensor_utils import FloatToLNS, LNSGetItemFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -109,6 +109,30 @@ class LNSTensor:
 
         return result
 
+    def _inplace_copy(self, lns) -> LNSTensor:
+        """
+        Copies the internal packed representation ``lns`` to the current
+        LNSTensor. This is used for inplace operations to handle gradients
+        correctly.
+
+        Parameters
+        ----------
+        lns : torch.Tensor
+            The packed representation to copy to the current LNSTensor.
+            Must have dtype ``float64`` and be a scalar tensor.
+
+        Returns
+        -------
+        LNSTensor
+            The current LNSTensor with the internal packed representation
+            updated to ``lns``.
+        """
+        self._lns = lns
+        if lns.requires_grad:
+            self.register_grad_hook()
+
+        return self
+
     def _track_operation(self, edge, index):
         """
         Registers a hook to track the operation that produced this output.
@@ -117,18 +141,25 @@ class LNSTensor:
         they are in LNS format, we must perform our custom LNS addition.
         """
 
+        # create variable that references the current internal representation.
+        # If we reference self._lns here gradients will not be tracked correctly
+        # for inplace operations (which modify self._lns)
+        curr_lns = self._lns
         def _edge_hook(grad_inputs, grad_outputs):
             if grad_inputs[index] is not None:
-                self._lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+                curr_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
 
         edge.node.register_hook(_edge_hook)
 
     def register_grad_hook(self):
 
-        self._lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
-
+        # create variable that references the current internal representation.
+        # If we reference self._lns here gradients will not be tracked correctly
+        # for inplace operations (which modify self._lns)
+        curr_lns = self._lns
+        curr_lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
         def _hook(grad):
-            return self._lns._lns_grad._lns
+            return curr_lns._lns_grad._lns
 
         self._hook_handle = self._lns.register_hook(_hook)
 
@@ -281,6 +312,20 @@ class LNSTensor:
         """
         return self._lns.requires_grad
 
+    @property
+    def grad_fn(self) -> torch._C.Function | None:
+        """
+        Returns the function that created this LNSTensor, if it was created
+        by an operation that has a gradient function.
+
+        Returns
+        -------
+        torch._C.Function or None
+            The gradient function that created this LNSTensor, or None if it
+            was created by a non-differentiable operation.
+        """
+        return self._lns.grad_fn
+
     def view(self, *shape: int) -> LNSTensor:
         """
         Returns a new tensor with the same data as this LNSTensor
@@ -349,18 +394,38 @@ class LNSTensor:
 
         Returns
         -------
-        An ```LNSTensor`` object broadcasted to the new shape ``shape``.
+        LNSTensor
+            An LNSTensor broadcasted to the new shape ``shape``.
         """
-        return lnstensor(self._lns.broadcast_to(shape), from_lns=True, b=self.base)
+        return torch.broadcast_to(self, shape)
+
+    def expand(self, *sizes: int) -> LNSTensor:
+        """
+        Expands ``self`` to the shape ``sizes``. Analogous to
+
+        https://docs.pytorch.org/docs/stable/generated/torch.Tensor.expand.html
+
+        Parameters
+        ----------
+        sizes : int
+            The new shape to expand to. If a dimension is set to -1, it will
+            be inferred from the size of the original tensor.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor with the expanded shape. The data is not copied,
+            but the view is adjusted to the new shape.
+        """
+        return torch.broadcast_to(self, sizes)
 
     def clone(self, *, memory_format=torch.preserve_format) -> LNSTensor:
         """
         Returns a copy of the LNSTensor with the same data and base.
         """
-        cloned_lns = self._lns.clone(memory_format=memory_format)
-        return lnstensor(cloned_lns, from_lns=True, b=self.base)
+        return torch.clone(self, memory_format=memory_format)
 
-    def squeeze(self, dim: Union[int, List[int]] | None = None) -> LNSTensor:
+    def squeeze(self, dim: int | List[int] | None = None) -> LNSTensor:
         """
         Returns a new LNSTensor with all specified dimensions of size
         1 removed. If no dimensions are specified, all dimensions of
@@ -377,7 +442,7 @@ class LNSTensor:
         LNSTensor
             A new LNSTensor with the specified dimensions removed.
         """
-        return lnstensor(self._lns.squeeze(dim), from_lns=True, b=self.base)
+        return torch.squeeze(self, dim)
 
     def unsqueeze(self, dim: int) -> LNSTensor:
         """
@@ -393,7 +458,7 @@ class LNSTensor:
         LNSTensor
             A new LNSTensor with the specified dimension added.
         """
-        return lnstensor(self._lns.unsqueeze(dim), from_lns=True, b=self.base)
+        return torch.unsqueeze(self, dim)
 
     def detach(self) -> LNSTensor:
         """
@@ -428,7 +493,7 @@ class LNSTensor:
 
     def __repr__(self) -> str:
          # indent the value string to match the length of "LNSTensor(value="
-        value_str = torch._tensor_str._tensor_str(self.value, 16)
+        value_str = _lns_tensor_str(self, 16)
         precision = get_precision_from_base(self.base.item())
 
         if precision is not None:
@@ -567,10 +632,12 @@ class LNSTensor:
         return torch.lt(self, other)
 
     def __getitem__(self, index):
-        return lnstensor(self._lns[index], from_lns=True, b=self.base)
+        result = LNSGetItemFunction.apply(self, index)
+        return lnstensor(result, from_lns=True, b=self.base)
 
     def __setitem__(self, index, value):
-        self._lns[index] = LNSTensor.get_internal_tensor(value, self.base)
+        # We must convert the indexing object to a suitable format for torch.index_put_.
+        torch.index_put_(self, make_index_tensors(index, self.shape), value)
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)

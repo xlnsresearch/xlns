@@ -265,7 +265,7 @@ def sort(x, dim=-1, descending=False, stable=False, *, out=None):
     result = LNSSortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy(result)
 
     return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
 
@@ -335,7 +335,7 @@ def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
     result = LNSKthvalueFunction.apply(x, k, dim, keepdim)
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy(result[0])
 
     return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
 
@@ -376,7 +376,7 @@ def maximum(x, y, *, out=None):
     result = LNSMaximumFunction.apply(x, y, x.base)
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -417,6 +417,6 @@ def minimum(x, y, *, out=None):
     result = LNSMinimumFunction.apply(x, y, x.base)
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)

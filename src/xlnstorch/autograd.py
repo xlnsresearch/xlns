@@ -89,7 +89,12 @@ class LNSFunction(torch.autograd.Function):
             # get the gradient edge for the output tensor.
             edge = torch.autograd.graph.get_gradient_edge(output)
 
+            j = 0
             for i in range(len(args)):
+
+                if not isinstance(args[i], (torch.Tensor, tensor_module.LNSTensor)):
+                    continue
+                j += 1
 
                 # only register hooks for LNSTensor inputs with gradients
                 if not (isinstance(args[i], tensor_module.LNSTensor) and args[i].requires_grad):
@@ -97,7 +102,7 @@ class LNSFunction(torch.autograd.Function):
 
                 # track operation by registering a hook on the input tensor
                 # to use custom addition logic each time it receives a gradient
-                args[i]._track_operation(edge, i)
+                args[i]._track_operation(edge, j - 1)
 
         return result
 

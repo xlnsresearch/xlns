@@ -2,7 +2,9 @@
 Utility functions for LNSTensor operations and autograd functions.
 """
 from __future__ import annotations
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import Any, Tuple, Sequence, TYPE_CHECKING
+import math
+import re
 import torch
 import xlns as xl
 
@@ -150,6 +152,37 @@ class LNSChangeBaseFunction(LNSFunction):
         return new_tensor, None, None
 
 
+class LNSGetItemFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, idx):
+        return x[idx]
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, idx = inputs
+        ctx.is_idx_tensor = torch.is_tensor(idx)
+
+        if ctx.is_idx_tensor:
+            ctx.save_for_backward(x, idx)
+        else:
+            ctx.save_for_backward(x)
+            ctx.idx = idx
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.is_idx_tensor:
+            x, idx = ctx.saved_tensors
+        else:
+            x, = ctx.saved_tensors
+            idx = ctx.idx
+
+        grad_x = torch.full_like(x, LNS_ZERO)
+        grad_x[idx] = grad_output
+
+        return grad_x, None
+
+
 def align_lnstensor_bases(
         *tensors: LNSTensor,
         base: torch.Tensor | None = None
@@ -235,3 +268,132 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
             converted_operands.append(tensor_module.lnstensor(operand, detach=False, b=base))
 
     return align_lnstensor_bases(*converted_operands, base=base)
+
+def make_index_tensors(
+        index: Any,
+        shape: torch.Size | Sequence[int]
+    ) -> Tuple[torch.Tensor, ...]:
+
+    flat_count = math.prod(shape)
+    labels = torch.arange(flat_count).reshape(shape)
+
+    selected = labels[index]
+
+    flat_idx = selected.reshape(-1)
+    coord_tuples = torch.unravel_index(flat_idx, shape)
+
+    return coord_tuples
+
+def _format_scientific(log10_val: torch.Tensor):
+    """
+    Format a logarithmic value in scientific notation.
+
+    Parameters
+    ----------
+    log10_val : torch.Tensor
+        The logarithmic value to format.
+    precision : int, optional
+        The number of decimal places for the mantissa.
+        Default is 2.
+
+    Returns
+    -------
+    str
+        The formatted scientific notation string.
+    """
+    exponent = torch.floor(log10_val).to(torch.int).item()
+    mantissa = torch.pow(10, log10_val % 1).item()
+
+    precision = torch._tensor_str.PRINT_OPTS.precision
+    if exponent >= 0:
+        return f"{mantissa:.{precision}f}e+{int(exponent)}"
+
+    return f"{mantissa:.{precision}f}e{int(exponent)}"
+
+def _lns_tensor_str(tensor: LNSTensor, indent: int) -> str:
+    """
+    Custom string representation for LNSTensor that handles large values
+    and scientific notation for overflow cases.
+
+    Parameters
+    ----------
+    tensor : LNSTensor
+        The LNSTensor to convert to string.
+    indent : int
+        The number of spaces to indent the value string.
+    overflow_precision : int, optional
+        The precision for scientific notation when values overflow.
+        Default is 2.
+
+    Returns
+    -------
+    str
+        The string representation of the LNSTensor value, with special handling
+        for large values and scientific notation for overflow cases."""
+
+    # store at the start as each call will recompute it
+    value = tensor.value
+
+    inf_mask = torch.isinf(value)
+    if not torch.any(inf_mask):
+        return torch._tensor_str._tensor_str(value, indent)
+
+    # instead of overflowing to inf, we can calculate the mantissa
+    # and exponent for scientific notation
+    log10_scale = math.log(10) / torch.log(tensor.base)
+    log10_values = (tensor._lns.to(torch.int64) >> 1) / log10_scale
+
+    if value.dim() == 0:
+        if torch.isinf(value):
+            sci_notation = _format_scientific(log10_values)
+            result_str = torch._tensor_str._tensor_str(value, indent)
+            result_str = result_str.replace('inf', sci_notation)
+            result_str = result_str.replace('-inf', '-' + sci_notation)
+
+    else:
+        required_prec = 0
+        flat_value = value.flatten()
+        flat_log10 = log10_values.flatten()
+
+        # calculate required precision for scientific notation
+        # to line up correctly with the original values
+        for i in range(flat_value.numel()):
+            if torch.isinf(flat_value[i]):
+                sci_str = _format_scientific(flat_log10[i])
+                required_prec = max(required_prec, len(sci_str) - 2)
+            else:
+                num_str = torch._tensor_str._tensor_str(flat_value[i], 0)
+                decimal_index = num_str.find('.')
+                required_prec = max(required_prec, len(num_str) - decimal_index)
+
+        # generate the string representation
+        original_prec = torch._tensor_str.PRINT_OPTS.precision
+        torch.set_printoptions(precision=required_prec)
+        result_str = torch._tensor_str._tensor_str(value, indent)
+        torch.set_printoptions(precision=original_prec)
+
+        # only look for spaces not all whitespace
+        inf_pattern = r'( *)(-?)inf'
+
+        def replacer(match):
+            nonlocal inf_counter
+            is_negative = match.group(2) == '-'
+
+            while inf_counter < len(flat_value):
+                if torch.isinf(flat_value[inf_counter]):
+                    if (is_negative and flat_value[inf_counter] < 0) or \
+                    (not is_negative and flat_value[inf_counter] > 0):
+
+                        sci_notation = _format_scientific(flat_log10[inf_counter])
+                        inf_counter += 1
+                        return (('-' if is_negative else '') + sci_notation).rjust(len(match.group(0)))
+
+                inf_counter += 1
+
+            # fallback incase there were no inf values
+            return match.group(0)
+
+        inf_counter = 0
+        result_str = re.sub(inf_pattern, replacer, result_str)
+
+    return result_str

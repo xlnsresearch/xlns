@@ -1,7 +1,6 @@
 from __future__ import annotations
-import math
 from decimal import Decimal, getcontext
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Dict, Any
 import torch
 from .. import LNSTensor, lnstensor
 
@@ -189,13 +188,12 @@ def plot_error_heatmap(
     Raises
     ------
     ImportError
-        If `matplotlib` or `numpy` is not installed, an ImportError is raised.
+        If `matplotlib` is not installed, an ImportError is raised.
     """
     try:
         import matplotlib.pyplot as plt
-        import numpy as np
     except ImportError:
-        raise ImportError("matplotlib and numpy are required for plotting error heatmaps")
+        raise ImportError("matplotlib is required for plotting error heatmaps")
 
     err_np = err.detach().cpu().numpy()
     xs_np = xs.detach().cpu().numpy()
@@ -239,3 +237,227 @@ def plot_error_heatmap(
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label("error (|float - exact|)")
     return ax
+
+def precision_sweep_analysis(
+        op: Callable,
+        ideal_op: Callable | None = None,
+        *,
+        precisions: List[int] = None,
+        x_range: Tuple[float, float] = (-1.0, 1.0),
+        y_range: Tuple[float, float] = None,
+        steps: int = 101,
+        device: torch.device | str = "cpu"
+    ) -> Dict[str, Any]:
+    """
+    Analyze how different precision levels affect operation accuracy.
+
+    Parameters
+    ----------
+    op : Callable
+        The operation to analyze (e.g., torch.mul, torch.add)
+    ideal_op : Callable, optional
+        A reference function that computes the exact result using Decimal.
+        If not provided, a default mapping from `op` to an ideal function
+        is used if available.
+    precisions : List[int], optional
+        List of precision values (f parameter) to test. 
+        Defaults to [4, 6, 8, 10, 12, 16, 20, 24]
+    x_range : Tuple[float, float]
+        Range of x values to test
+    y_range : Tuple[float, float], optional
+        Range of y values for binary operations
+    steps : int
+        Number of sample points per dimension
+    device : torch.device | str
+        Device for computations
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary containing error metrics for each precision level
+    """
+    if precisions is None:
+        precisions = [4, 6, 8, 10, 12, 16, 20, 24]
+
+    results = {}
+
+    for f in precisions:
+        if y_range is None:
+            # Unary operation
+            xs, err = make_error_grid(op, ideal_op, f=f, x_range=x_range,
+                                      steps=steps, device=device)
+            results[f] = {
+                'max_error': float(torch.max(err)),
+                'mean_error': float(torch.mean(err)),
+                'median_error': float(torch.median(err)),
+                'std_error': float(torch.std(err)),
+                'error_tensor': err,
+                'xs': xs
+            }
+
+        else:
+            # Binary operation
+            xs, ys, err = make_error_grid(op, ideal_op, f=f, x_range=x_range,
+                                          y_range=y_range, steps=steps, device=device)
+            results[f] = {
+                'max_error': float(torch.max(err)),
+                'mean_error': float(torch.mean(err)),
+                'median_error': float(torch.median(err)),
+                'std_error': float(torch.std(err)),
+                'error_tensor': err,
+                'xs': xs,
+                'ys': ys
+            }
+
+    return results
+
+def plot_precision_comparison(
+        results: Dict[int, Dict],
+        *,
+        ax=None,
+        metric: str = 'max_error',
+        log_scale: bool = True
+    ):
+    """
+    Plot how error metrics change with precision level.
+
+    Parameters
+    ----------
+    results : Dict[int, Dict]
+        Results from precision_sweep_analysis.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on.
+    metric : str
+        Which error metric to plot ('max_error', 'mean_error', etc.)
+    log_scale : bool
+        Whether to use log scale for y-axis.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes containing the plot.
+
+    Raises
+    ------
+    ImportError
+        If `matplotlib` is not installed, an ImportError is raised.
+    """
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        raise ImportError("matplotlib required for plotting")
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+    precisions = sorted(results.keys())
+    errors = [results[f][metric] for f in precisions]
+
+    ax.plot(precisions, errors, 'o-', linewidth=2, markersize=6)
+    ax.set_xlabel('Precision (f parameter)')
+    ax.set_ylabel(f'{metric.replace("_", " ").title()}')
+    ax.grid(True, alpha=0.3)
+
+    if log_scale:
+        ax.set_yscale('log')
+
+    ax.set_title(f'Error vs Precision: {metric.replace("_", " ").title()}')
+
+    return ax
+
+def plot_precision_heatmap_grid(
+        results: Dict[int, Dict],
+        *,
+        figsize: Tuple[int, int] = None,
+        cmap: str = 'viridis'
+    ):
+    """
+    Create a grid of heatmaps showing error patterns at different precisions.
+
+    Parameters
+    ----------
+    results : Dict[int, Dict]
+        Results from precision_sweep_analysis.
+    figsize : Tuple[int, int], optional
+        Size of the figure to create.
+    cmap : str, optional
+        Colormap to use for heatmaps. Default is 'viridis'.
+
+    Returns
+    -------
+    Tuple[matplotlib.figure.Figure, List[matplotlib.axes.Axes]]
+        The figure and list of axes containing the heatmaps.
+
+    Raises
+    ------
+    ImportError
+        If `matplotlib` is not installed, an ImportError is raised.
+    """
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        raise ImportError("matplotlib required for plotting")
+
+    precisions = sorted(results.keys())
+    n_precs = len(precisions)
+
+    # Determine grid layout
+    cols = min(4, n_precs)
+    rows = (n_precs + cols - 1) // cols
+
+    if figsize is None:
+        figsize = (4 * cols, 3 * rows)
+
+    fig, axes = plt.subplots(rows, cols, figsize=figsize)
+    if n_precs == 1:
+        axes = [axes]
+    elif rows == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
+
+    for i, f in enumerate(precisions):
+        ax = axes[i]
+        result = results[f]
+        err = result['error_tensor']
+
+        if 'ys' in result:
+            # Binary operation - 2D heatmap
+            xs, ys = result['xs'], result['ys']
+            xs_np = xs.detach().cpu().numpy()
+            ys_np = ys.detach().cpu().numpy()
+
+            im = ax.imshow(
+                err.detach().cpu().numpy().T,
+                extent=[xs_np.min(), xs_np.max(), ys_np.min(), ys_np.max()],
+                origin="lower",
+                aspect="auto",
+                cmap=cmap
+            )
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+        else:
+            # Unary operation - 1D stripe
+            xs = result['xs']
+            xs_np = xs.detach().cpu().numpy()
+            err_np = err.detach().cpu().numpy()
+
+            im = ax.imshow(
+                err_np[None, :],
+                extent=[xs_np.min(), xs_np.max(), 0, 1],
+                origin="lower",
+                aspect="auto",
+                cmap=cmap
+            )
+            ax.set_xlabel('x')
+            ax.set_yticks([])
+
+        ax.set_title(f'f={f} (max_err={result["max_error"]:.2e})')
+        plt.colorbar(im, ax=ax)
+
+    # Hide unused subplots
+    for i in range(n_precs, len(axes)):
+        axes[i].set_visible(False)
+
+    plt.tight_layout()
+    return fig, axes[:n_precs]

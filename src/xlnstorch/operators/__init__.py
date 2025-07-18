@@ -36,6 +36,11 @@ from .internal_lns_ops import (
     lns_maximum,
     lns_minimum,
 
+    lns_broadcast_to,
+    lns_clone,
+    lns_squeeze,
+    lns_unsqueeze,
+
     lns_mse_loss,
     lns_l1_loss,
     lns_binary_cross_entropy,
@@ -87,17 +92,28 @@ from .internal_lns_ops import (
     lns_conv2d,
     lns_conv3d,
 )
-from .arithmetic_ops import (
+from .addition_ops import (
     implement_sbdb,
+    set_default_sbdb_implementation,
+    override_sbdb_implementation,
+    register_xlnsconf_implementation,
     sbdb,
 )
-from . import comparison_ops # needed to register comparison ops
-from . import loss_ops # needed to register loss ops
-from . import activation_ops # needed to register activation ops
-from . import layer_ops # needed to register layer ops
+from . import arithmetic_ops
+from . import unary_ops
+from . import comparison_ops
+from . import loss_ops
+from . import activation_ops
+from . import layer_ops
+from . import misc_ops
+
+from . import implementations
 
 __all__ = [
     "implement_sbdb",
+    "set_default_sbdb_implementation",
+    "override_sbdb_implementation",
+    "register_xlnsconf_implementation",
     "sbdb",
 
     #  internal LNS operation functions
@@ -137,6 +153,11 @@ __all__ = [
     "lns_kthvalue",
     "lns_maximum",
     "lns_minimum",
+
+    "lns_broadcast_to",
+    "lns_clone",
+    "lns_squeeze",
+    "lns_unsqueeze",
 
     "lns_mse_loss",
     "lns_l1_loss",

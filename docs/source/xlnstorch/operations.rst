@@ -40,6 +40,9 @@ or define a new operation, you can use the following functions.
     format_lnstensor_operands
 
     operators.implement_sbdb
+    operators.set_default_sbdb_implementation
+    operators.override_sbdb_implementation
+    operators.register_xlnsconf_implementation
     operators.sbdb
 
 Internal Operations
@@ -101,6 +104,18 @@ Comparison Operations
     operators.lns_kthvalue
     operators.lns_maximum
     operators.lns_minimum
+
+Miscellaneous Operations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    operators.lns_broadcast_to
+    operators.lns_clone
+    operators.lns_squeeze
+    operators.lns_unsqueeze
 
 Loss Operations
 ~~~~~~~~~~~~~~~
