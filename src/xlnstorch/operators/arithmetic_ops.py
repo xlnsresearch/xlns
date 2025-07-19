@@ -388,13 +388,12 @@ class LNSSumFunction(LNSFunction):
     @staticmethod
     def setup_context(ctx, inputs, output):
         x, base, _, _ = inputs
-        ctx.save_for_backward(x)
-        ctx.base = base
+        ctx.save_for_backward(x, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        x, = ctx.saved_tensors
-        return torch.full_like(x, LNSTensor.get_internal_tensor(1.0, ctx.base).item()), None, None, None
+        x, base = ctx.saved_tensors
+        return torch.full_like(x, LNSTensor.get_internal_tensor(1.0, base).item()), None, None, None
 
 @implements(torch.sum, LNSSumFunction.forward, "default", default=True)
 def sum(x, dim=None, keepdim=False, *, out=None):
