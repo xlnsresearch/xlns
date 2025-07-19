@@ -1,5 +1,5 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
+from .. import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
 from ..operators import (
     lns_sub,
     lns_equal,
@@ -101,8 +101,7 @@ class LNSAdamax(LNSOptimizer):
             lr, beta1, beta2, eps, weight_decay = align_lnstensor_bases(
                 lr, beta1, beta2, eps, weight_decay, base=base)
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
-            one_minus_beta1 = lns_sub(one, beta1._lns, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
 
             for p in group["params"]:
 
@@ -148,7 +147,7 @@ class LNSAdamax(LNSOptimizer):
 
                 # 5. θ ← θ − γ*m / (sqrt(1 - b_1^t) * u)
                 t_tensor = torch.tensor(t, dtype=torch.int64)
-                one_minus_beta1_t = lns_sub(one, lns_pow(beta1._lns, t_tensor, base), base)
+                one_minus_beta1_t = lns_sub(LNS_ONE, lns_pow(beta1._lns, t_tensor, base), base)
                 denom = lns_mul(one_minus_beta1_t, inf_norm)
                 step_size = lns_mul(lr._lns, lns_div(exp_avg, denom, base))
                 p.data = lns_sub(p.data, step_size, base)

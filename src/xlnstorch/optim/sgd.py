@@ -1,5 +1,5 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases
+from .. import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
 from ..operators import (
     lns_equal,
     lns_sub,
@@ -129,7 +129,7 @@ class LNSSGD(LNSOptimizer):
                         state["momentum_buffer"] = buf
 
                     else:
-                        one_minus_tau = lns_sub(LNSTensor.get_internal_tensor(1.0, base), dampening._lns, base)
+                        one_minus_tau = lns_sub(LNS_ONE, dampening._lns, base)
                         buf = lns_add(
                             lns_mul(buf, momentum._lns),
                             lns_mul(grad, one_minus_tau),

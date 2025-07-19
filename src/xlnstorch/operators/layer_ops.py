@@ -444,7 +444,7 @@ class LNSConv1dFunction(LNSFunction):
 
                 for c_in in range(g_Cin):
                     for l_in in range(x.shape[-1] + 2*ctx.padding):
-                        grad = LNSTensor.get_internal_tensor(0, base)
+                        grad = LNS_ZERO.clone()
                         # Accumulate gradient over all relevant output channels and positions
                         for c_out in range(out_start, out_end):
                             w = weight[c_out, c_in, :]
@@ -474,7 +474,7 @@ class LNSConv1dFunction(LNSFunction):
             for c_out in range(out_start, out_end):
                 for c_in in range(g_Cin):
                     for k in range(K):
-                        grad = LNSTensor.get_internal_tensor(0, base)
+                        grad = LNS_ZERO.clone()
                         # Sum over all samples and locations
                         for n in range(N):
                             for l_out in range(L_out):
@@ -632,7 +632,7 @@ class LNSConv2dFunction(LNSFunction):
                 for c_in in range(g_Cin):
                     for h_in in range(H_pad):
                         for w_in in range(W_pad):
-                            grad = LNSTensor.get_internal_tensor(0, base)
+                            grad = LNS_ZERO.clone()
                             for c_out in range(out_start, out_end):
                                 w = weight[c_out, c_in, :, :]
                                 for k_h in range(K_H):
@@ -667,7 +667,7 @@ class LNSConv2dFunction(LNSFunction):
                 for c_in in range(g_Cin):
                     for k_h in range(K_H):
                         for k_w in range(K_W):
-                            grad = LNSTensor.get_internal_tensor(0, base)
+                            grad = LNS_ZERO.clone()
                             for n in range(N):
                                 for h_out in range(H_out):
                                     for w_out in range(W_out):
@@ -835,7 +835,7 @@ class LNSConv3dFunction(LNSFunction):
                     for d_in in range(D_pad):
                         for h_in in range(H_pad):
                             for w_in in range(W_pad):
-                                grad = LNSTensor.get_internal_tensor(0, base)
+                                grad = LNS_ZERO.clone()
                                 for c_out in range(out_start, out_end):
                                     wgt = weight[c_out, c_in, :, :, :]
                                     for k_d in range(K_D):
@@ -873,7 +873,7 @@ class LNSConv3dFunction(LNSFunction):
                     for k_d in range(K_D):
                         for k_h in range(K_H):
                             for k_w in range(K_W):
-                                grad = LNSTensor.get_internal_tensor(0, base)
+                                grad = LNS_ZERO.clone()
                                 for n in range(N):
                                     for d_out in range(D_out):
                                         for h_out in range(H_out):

@@ -1,5 +1,5 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
+from .. import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
 from ..operators import (
     lns_sub,
     lns_equal,
@@ -112,8 +112,6 @@ class LNSASGD(LNSOptimizer):
             lr, lambd, alpha, t0, weight_decay = align_lnstensor_bases(
                 lr, lambd, alpha, t0, weight_decay, base=base)
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -131,28 +129,28 @@ class LNSASGD(LNSOptimizer):
                 if len(state) == 0:
                     # First time we see this parameter
                     state["step"] = LNS_ZERO.clone()
-                    state["averaging_coef"] = one.clone()
+                    state["averaging_coef"] = LNS_ONE.clone()
                     state["averaged_param"] = p.data.clone()
 
                 # Retrieve running stats
-                step = lns_add(state["step"], one, base)
+                step = lns_add(state["step"], LNS_ONE, base)
                 averaging_coef = state["averaging_coef"]
                 averaged_param = state["averaged_param"]
 
                 # 1. learning-rate schedule
-                denom = lns_add(one, lns_mul(lambd._lns, lns_mul(lr._lns, step)), base)
+                denom = lns_add(LNS_ONE, lns_mul(lambd._lns, lns_mul(lr._lns, step)), base)
                 denom = lns_pow(denom, alpha.value, base)
                 current_lr = lns_div(lr._lns, denom, base)
 
                 # 2. update averaged parameter
-                decay = lns_sub(one, lns_mul(lambd._lns, current_lr), base)
+                decay = lns_sub(LNS_ONE, lns_mul(lambd._lns, current_lr), base)
                 p.data = lns_mul(p.data, decay)
                 p.data = lns_sub(p.data, lns_mul(grad, current_lr), base)
 
                 # 3. update averaged parameter
                 if lns_gt(step, t0._lns):
-                    denom = lns_maximum(one, lns_sub(step, t0._lns, base), base)
-                    averaging_coef = lns_div(one, denom, base)
+                    denom = lns_maximum(LNS_ONE, lns_sub(step, t0._lns, base), base)
+                    averaging_coef = lns_div(LNS_ONE, denom, base)
 
                 diff = lns_sub(p.data, averaged_param, base)
                 averaged_param = lns_add(averaged_param, lns_mul(diff, averaging_coef), base)
