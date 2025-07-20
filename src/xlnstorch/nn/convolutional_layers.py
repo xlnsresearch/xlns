@@ -100,7 +100,7 @@ class LNSConv1d(LNSModule):
         self.device = device
 
         sqrt_k = (groups / (in_channels * kernel_size)) ** 0.5
-        weight = rand(out_channels, in_channels / groups, kernel_size, device=device, f=weight_f, b=weight_b)
+        weight = rand(out_channels, in_channels // groups, kernel_size, device=device, f=weight_f, b=weight_b)
         self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
@@ -203,9 +203,9 @@ class LNSConv2d(LNSModule):
         self.padding_mode = padding_mode
         self.device = device
 
-        sqrt_k = (groups / (in_channels * kernel_size[0] * kernel_size[1])) ** 0.5
-        weight = rand(out_channels, in_channels / groups, kernel_size[0],
-                      kernel_size[1], device=device, f=weight_f, b=weight_b)
+        sqrt_k = (groups / (in_channels * self.kernel_size[0] * self.kernel_size[1])) ** 0.5
+        weight = rand(out_channels, in_channels // groups, self.kernel_size[0],
+                      self.kernel_size[1], device=device, f=weight_f, b=weight_b)
         self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
@@ -309,9 +309,9 @@ class LNSConv3d(LNSModule):
         self.padding_mode = padding_mode
         self.device = device
 
-        sqrt_k = (groups / (in_channels * kernel_size[0] * kernel_size[1] * kernel_size[2])) ** 0.5
-        weight = rand(out_channels, in_channels / groups, kernel_size[0], kernel_size[1],
-                      kernel_size[2], device=device, f=weight_f, b=weight_b)
+        sqrt_k = (groups / (in_channels * self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2])) ** 0.5
+        weight = rand(out_channels, in_channels // groups, self.kernel_size[0], self.kernel_size[1],
+                      self.kernel_size[2], device=device, f=weight_f, b=weight_b)
         self.register_parameter("weight", (weight * 2 - 1) * sqrt_k)
 
         if self.has_bias:
