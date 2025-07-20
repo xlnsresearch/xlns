@@ -301,6 +301,32 @@ lns_minimum = _create_lns_op_func('minimum', torch.minimum, signature=_build_sig
     ("base", "pk", torch.Tensor)],
     torch.Tensor,
 ))
+lns_max = _create_lns_op_func('max', torch.max, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("dim", "pk", int | Tuple[int], None),
+    ("keepdim", "pk", bool, False)],
+    torch.return_types.max | torch.Tensor,
+))
+lns_argmax = _create_lns_op_func('argmax', torch.argmax, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("dim", "pk", int, None),
+    ("keepdim", "pk", bool, False)],
+    torch.Tensor,
+))
+lns_min = _create_lns_op_func('min', torch.min, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("dim", "pk", int | Tuple[int], None),
+    ("keepdim", "pk", bool, False)],
+    torch.return_types.min | torch.Tensor,
+))
+lns_argmin = _create_lns_op_func('argmin', torch.argmin, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("dim", "pk", int, None),
+    ("keepdim", "pk", bool, False)],
+    torch.Tensor,
+))
 
 lns_broadcast_to = _create_lns_op_func('broadcast_to', torch.broadcast_to, signature=_build_signature([
     ("x", "pk", torch.Tensor),

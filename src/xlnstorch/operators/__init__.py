@@ -35,6 +35,10 @@ from .internal_lns_ops import (
     lns_kthvalue,
     lns_maximum,
     lns_minimum,
+    lns_max,
+    lns_argmax,
+    lns_min,
+    lns_argmin,
 
     lns_broadcast_to,
     lns_clone,
@@ -153,6 +157,10 @@ __all__ = [
     "lns_kthvalue",
     "lns_maximum",
     "lns_minimum",
+    "lns_max",
+    "lns_argmax",
+    "lns_min",
+    "lns_argmin",
 
     "lns_broadcast_to",
     "lns_clone",
