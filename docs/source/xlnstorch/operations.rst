@@ -203,3 +203,6 @@ support ``LNSTensor`` objects.
     operators.lns_conv1d
     operators.lns_conv2d
     operators.lns_conv3d
+    operators.lns_avg_pool1d
+    operators.lns_avg_pool2d
+    operators.lns_avg_pool3d

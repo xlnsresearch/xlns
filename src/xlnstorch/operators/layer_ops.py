@@ -1,5 +1,5 @@
 import warnings
-
+import math
 import torch
 from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from ..autograd import LNSFunction
@@ -8,6 +8,7 @@ from . import (
     lns_sum,
     lns_add,
     lns_matmul,
+    lns_div,
 )
 
 class LNSLinearFunction(LNSFunction):
@@ -910,5 +911,481 @@ def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     result = LNSConv3dFunction.apply(x, weight, bias, x.base, stride,
                                      padding, dilation, groups)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAvgPool1dFuncton(LNSFunction):
+
+    @staticmethod
+    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
+        if stride is None:
+            stride = kernel_size
+
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, L_in = x_packed.shape
+
+        if padding > 0:
+            x_padded = torch.nn.functional.pad(x_packed, (padding, padding), value=LNS_ZERO.item())
+        else:
+            x_padded = x_packed
+
+        if ceil_mode:
+            L_out = int(math.ceil((L_in + 2 * padding - kernel_size) / stride)) + 1
+        else:
+            L_out = (L_in + 2 * padding - kernel_size) // stride + 1
+
+        out = zeros(N, C, L_out, device=x.device, b=base)._lns
+        kernel_size_lns = LNSTensor.get_internal_tensor(kernel_size, base)
+
+        for n in range(N):
+            for c in range(C):
+                for l_out in range(L_out):
+                    start = l_out * stride
+                    end = start + kernel_size
+                    if end > x_padded.size(-1):
+                        break
+
+                    window = x_padded[n, c, start:end]
+                    sm = lns_sum(window, base)
+
+                    if count_include_pad:
+                        divisor = kernel_size_lns
+                    else:
+                        left_pad = max(0, padding - start)
+                        right_pad = max(0, end - (L_in + padding))
+                        valid_count = kernel_size - (left_pad + right_pad)
+                        divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                    out[n, c, l_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad = inputs
+        if stride is None:
+            stride = kernel_size
+        ctx.save_for_backward(x, base)
+        ctx.kernel_size = kernel_size
+        ctx.stride = stride
+        ctx.padding = padding
+        ctx.ceil_mode = ceil_mode
+        ctx.count_include_pad = count_include_pad
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, L_in = x.shape
+        L_out = grad_output.size(-1)
+
+        grad_x = zeros_like(x, b=base)._lns
+        kernel_size_lns = LNSTensor.get_internal_tensor(ctx.kernel_size, base)
+
+        for n in range(N):
+            for c in range(C):
+                for l_out in range(L_out):
+                    start = l_out * ctx.stride
+                    end = start + ctx.kernel_size
+
+                    if start >= L_in + 2 * ctx.padding:
+                        break
+
+                    if ctx.count_include_pad:
+                        divisor = kernel_size_lns
+                    else:
+                        left_pad = max(0, ctx.padding - start)
+                        right_pad = max(0, end - (L_in + ctx.padding))
+                        valid_count = ctx.kernel_size - (left_pad + right_pad)
+                        divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                    grad = grad_output[n, c, l_out]
+                    for i in range(ctx.kernel_size):
+                        idx = start + i - ctx.padding
+                        if 0 <= idx < L_in:
+                            grad_x[n, c, idx] = lns_add(grad_x[n, c, idx], lns_div(grad, divisor, base), base)
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None, None, None, None, None
+
+@implements(torch.nn.functional.avg_pool1d, LNSAvgPool1dFuncton.forward, "default", default=True)
+def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
+
+    kernel_size = kernel_size[0] if isinstance(kernel_size, (list, tuple)) else kernel_size
+    stride = stride[0] if isinstance(stride, (list, tuple)) else stride
+    padding = padding[0] if isinstance(padding, (list, tuple)) else padding
+
+    result = LNSAvgPool1dFuncton.apply(x, kernel_size, x.base, stride,
+                                       padding, ceil_mode, count_include_pad)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAvgPool2dFuncton(LNSFunction):
+
+    @staticmethod
+    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+        if stride is None:
+            stride = kernel_size
+
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride)
+        if isinstance(padding, int): padding = (padding, padding)
+        kernel_w, kernel_h = kernel_size
+        stride_h, stride_w = stride
+        pad_h, pad_w = padding
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, H_in, W_in = x_packed.shape
+
+        if pad_h > 0 or pad_w > 0:
+            x_padded = torch.nn.functional.pad(x_packed, (pad_w, pad_w, pad_h, pad_h), value=LNS_ZERO.item())
+        else:
+            x_padded = x_packed
+
+        if ceil_mode:
+            H_out = int(math.ceil((H_in + 2 * pad_h - kernel_h) / stride_h)) + 1
+            W_out = int(math.ceil((W_in + 2 * pad_w - kernel_w) / stride_w)) + 1
+        else:
+            H_out = (H_in + 2 * pad_h - kernel_h) // stride_h + 1
+            W_out = (W_in + 2 * pad_w - kernel_w) // stride_w + 1
+
+        out = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns
+        kernel_area_lns = LNSTensor.get_internal_tensor(kernel_h * kernel_w, base)
+
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    for w_out in range(W_out):
+                        h_start = h_out * stride_h
+                        h_end = h_start + kernel_h
+                        w_start = w_out * stride_w
+                        w_end = w_start + kernel_w
+                        if h_end > x_padded.size(-2) or w_end > x_padded.size(-1):
+                            continue
+
+                        window = x_padded[n, c, h_start:h_end, w_start:w_end]
+                        sm = lns_sum(window, base)
+
+                        if divisor_override is not None:
+                            divisor = divisor_override
+                        elif count_include_pad:
+                            divisor = kernel_area_lns
+                        else:
+                            left_pad = max(0, pad_w - w_start)
+                            right_pad = max(0, w_end - (W_in + pad_w))
+                            top_pad = max(0, pad_h - h_start)
+                            bot_pad = max(0, h_end - (H_in + pad_h))
+                            valid_h = kernel_h - (top_pad + bot_pad)
+                            valid_w = kernel_w - (left_pad + right_pad)
+                            valid_count = max(valid_h, 0) * max(valid_w, 0)
+                            divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                        out[n, c, h_out, w_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
+        if stride is None:
+            stride = kernel_size
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride)
+        if isinstance(padding, int): padding = (padding, padding)
+        if divisor_override is None:
+            ctx.divisor_override = False
+            ctx.save_for_backward(x, base)
+        else:
+            ctx.divisor_override = True
+            ctx.save_for_backward(x, divisor_override, base)
+        ctx.kernel_size = kernel_size
+        ctx.stride = stride
+        ctx.padding = padding
+        ctx.ceil_mode = ceil_mode
+        ctx.count_include_pad = count_include_pad
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.divisor_override:
+            x, divisor_override, base = ctx.saved_tensors
+        else:
+            x, base = ctx.saved_tensors
+
+        kernel_h, kernel_w = ctx.kernel_size
+        stride_h, stride_w = ctx.stride
+        pad_h, pad_w = ctx.padding
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, H_in, W_in = x.shape
+        H_out, W_out = grad_output.shape[-2:]
+
+        grad_x = zeros_like(x, b=base)._lns
+        kernel_area_lns = LNSTensor.get_internal_tensor(kernel_h * kernel_w, base)
+
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    for w_out in range(W_out):
+                        h_start = h_out * stride_h
+                        h_end = h_start + kernel_h
+                        w_start = w_out * stride_w
+                        w_end = w_start + kernel_w
+
+                        if ctx.divisor_override:
+                            divisor = divisor_override
+                        elif ctx.count_include_pad:
+                            divisor = kernel_area_lns
+                        else:
+                            left_pad = max(0, pad_w - w_start)
+                            right_pad = max(0, w_end - (W_in + pad_w))
+                            top_pad = max(0, pad_h - h_start)
+                            bot_pad = max(0, h_end - (H_in + pad_h))
+                            valid_h = kernel_h - (top_pad + bot_pad)
+                            valid_w = kernel_w - (left_pad + right_pad)
+                            valid_count = max(valid_h, 0) * max(valid_w, 0)
+                            divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                        grad = grad_output[n, c, h_out, w_out]
+                        for i in range(kernel_h):
+                            for j in range(kernel_w):
+                                h_idx = h_start + i - pad_h
+                                w_idx = w_start + j - pad_w
+                                if 0 <= h_idx < H_in and 0 <= w_idx < W_in:
+                                    grad_x[n, c, h_idx, w_idx] = lns_add(
+                                        grad_x[n, c, h_idx, w_idx],
+                                        lns_div(grad, divisor, base),
+                                        base
+                                    )
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.avg_pool2d, LNSAvgPool2dFuncton.forward, "default", default=True)
+def avg_pool2d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+
+    if divisor_override is not None:
+        x, divisor_override = format_lnstensor_operands(x, divisor_override)
+
+    result = LNSAvgPool2dFuncton.apply(x, kernel_size, x.base, stride, padding,
+                                       ceil_mode, count_include_pad, divisor_override)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAvgPool3dFuncton(LNSFunction):
+
+    @staticmethod
+    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+        if stride is None:
+            stride = kernel_size
+
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride, stride)
+        if isinstance(padding, int): padding = (padding, padding, padding)
+        kernel_d, kernel_w, kernel_h = kernel_size
+        stride_d, stride_h, stride_w = stride
+        pad_d, pad_h, pad_w = padding
+
+        if x.dim() == 4:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, D_in, H_in, W_in = x_packed.shape
+
+        if pad_d > 0 or pad_h > 0 or pad_w > 0:
+            x_padded = torch.nn.functional.pad(x_packed, (pad_w, pad_w, pad_h, pad_h, pad_d, pad_d), value=LNS_ZERO.item())
+        else:
+            x_padded = x_packed
+
+        if ceil_mode:
+            D_out = int(math.ceil((D_in + 2 * pad_d - kernel_d) / stride_d)) + 1
+            H_out = int(math.ceil((H_in + 2 * pad_h - kernel_h) / stride_h)) + 1
+            W_out = int(math.ceil((W_in + 2 * pad_w - kernel_w) / stride_w)) + 1
+        else:
+            D_out = (D_in + 2 * pad_d - kernel_d) // stride_d + 1
+            H_out = (H_in + 2 * pad_h - kernel_h) // stride_h + 1
+            W_out = (W_in + 2 * pad_w - kernel_w) // stride_w + 1
+
+        out = zeros(N, C, D_out, H_out, W_out, device=x.device, b=base)._lns
+        kernel_vol_lns = LNSTensor.get_internal_tensor(kernel_d * kernel_h * kernel_w, base)
+
+        for n in range(N):
+            for c in range(C):
+                for d_out in range(D_out):
+                    for h_out in range(H_out):
+                        for w_out in range(W_out):
+                            d_start = d_out * stride_d
+                            d_end = d_start + kernel_d
+                            h_start = h_out * stride_h
+                            h_end = h_start + kernel_h
+                            w_start = w_out * stride_w
+                            w_end = w_start + kernel_w
+                            if d_end > x_padded.size(-3) or h_end > x_padded.size(-2) or w_end > x_padded.size(-1):
+                                continue
+
+                            window = x_padded[n, c, d_start:d_end, h_start:h_end, w_start:w_end]
+                            sm = lns_sum(window, base)
+
+                            if divisor_override is not None:
+                                divisor = divisor_override
+                            elif count_include_pad:
+                                divisor = kernel_vol_lns
+                            else:
+                                front_pad = max(0, pad_d - d_start)
+                                back_pad = max(0, d_end - (D_in + pad_d))
+                                top_pad = max(0, pad_h - h_start)
+                                bot_pad = max(0, h_end - (H_in + pad_h))
+                                left_pad = max(0, pad_w - w_start)
+                                right_pad = max(0, w_end - (W_in + pad_w))
+                                valid_d = kernel_d - (front_pad + back_pad)
+                                valid_h = kernel_h - (top_pad + bot_pad)
+                                valid_w = kernel_w - (left_pad + right_pad)
+                                valid_count = max(valid_d, 0) * max(valid_h, 0) * max(valid_w, 0)
+                                divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                            out[n, c, d_out, h_out, w_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
+        if stride is None:
+            stride = kernel_size
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride, stride)
+        if isinstance(padding, int): padding = (padding, padding, padding)
+        if divisor_override is None:
+            ctx.divisor_override = False
+            ctx.save_for_backward(x, base)
+        else:
+            ctx.divisor_override = True
+            ctx.save_for_backward(x, divisor_override, base)
+        ctx.kernel_size = kernel_size
+        ctx.stride = stride
+        ctx.padding = padding
+        ctx.ceil_mode = ceil_mode
+        ctx.count_include_pad = count_include_pad
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.divisor_override:
+            x, divisor_override, base = ctx.saved_tensors
+        else:
+            x, base = ctx.saved_tensors
+
+        kernel_d, kernel_h, kernel_w = ctx.kernel_size
+        stride_d, stride_h, stride_w = ctx.stride
+        pad_d, pad_h, pad_w = ctx.padding
+
+        if x.dim() == 4:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, D_in, H_in, W_in = x.shape
+        D_out, H_out, W_out = grad_output.shape[-3:]
+
+        grad_x = zeros_like(x, b=base)._lns
+        kernel_vol_lns = LNSTensor.get_internal_tensor(kernel_d * kernel_h * kernel_w, base)
+
+        for n in range(N):
+            for c in range(C):
+                for d_out in range(D_out):
+                    for h_out in range(H_out):
+                        for w_out in range(W_out):
+                            d_start = d_out * stride_d
+                            d_end = d_start + kernel_d
+                            h_start = h_out * stride_h
+                            h_end = h_start + kernel_h
+                            w_start = w_out * stride_w
+                            w_end = w_start + kernel_w
+
+                            if ctx.divisor_override:
+                                divisor = divisor_override
+                            elif ctx.count_include_pad:
+                                divisor = kernel_vol_lns
+                            else:
+                                front_pad = max(0, pad_d - d_start)
+                                back_pad = max(0, d_end - (D_in + pad_d))
+                                top_pad = max(0, pad_h - h_start)
+                                bot_pad = max(0, h_end - (H_in + pad_h))
+                                left_pad = max(0, pad_w - w_start)
+                                right_pad = max(0, w_end - (W_in + pad_w))
+                                valid_d = kernel_d - (front_pad + back_pad)
+                                valid_h = kernel_h - (top_pad + bot_pad)
+                                valid_w = kernel_w - (left_pad + right_pad)
+                                valid_count = max(valid_d, 0) * max(valid_h, 0) * max(valid_w, 0)
+                                divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+
+                            grad = grad_output[n, c, d_out, h_out, w_out]
+                            for di in range(kernel_d):
+                                for hi in range(kernel_h):
+                                    for wi in range(kernel_w):
+                                        d_idx = d_start + di - pad_d
+                                        h_idx = h_start + hi - pad_h
+                                        w_idx = w_start + wi - pad_w
+                                        if 0 <= d_idx < D_in and 0 <= h_idx < H_in and 0 <= w_idx < W_in:
+                                            grad_x[n, c, d_idx, h_idx, w_idx] = lns_add(
+                                                grad_x[n, c, d_idx, h_idx, w_idx],
+                                                lns_div(grad, divisor, base),
+                                                base
+                                            )
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.avg_pool3d, LNSAvgPool3dFuncton.forward, "default", default=True)
+def avg_pool3d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+
+    if divisor_override is not None:
+        x, divisor_override = format_lnstensor_operands(x, divisor_override)
+
+    result = LNSAvgPool3dFuncton.apply(x, kernel_size, x.base, stride, padding,
+                                       ceil_mode, count_include_pad, divisor_override)
 
     return lnstensor(result, from_lns=True, b=x.base)

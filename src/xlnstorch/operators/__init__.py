@@ -95,6 +95,9 @@ from .internal_lns_ops import (
     lns_conv1d,
     lns_conv2d,
     lns_conv3d,
+    lns_avg_pool1d,
+    lns_avg_pool2d,
+    lns_avg_pool3d,
 )
 from .addition_ops import (
     implement_sbdb,
@@ -217,4 +220,7 @@ __all__ = [
     "lns_conv1d",
     "lns_conv2d",
     "lns_conv3d",
+    "lns_avg_pool1d",
+    "lns_avg_pool2d",
+    "lns_avg_pool3d",
 ]

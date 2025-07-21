@@ -702,3 +702,32 @@ lns_conv3d = _create_lns_op_func('conv3d', torch.nn.functional.conv3d, signature
     ("groups", "pk", int, 1)],
     torch.Tensor,
 ))
+lns_avg_pool1d = _create_lns_op_func('avg_pool1d', torch.nn.functional.avg_pool1d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("ceil_mode", "pk", bool, False),
+    ("count_include_pad", "pk", bool, True)],
+    torch.Tensor,
+))
+lns_avg_pool2d = _create_lns_op_func('avg_pool2d', torch.nn.functional.avg_pool2d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("ceil_mode", "pk", bool, False),
+    ("count_include_pad", "pk", bool, True),
+    ("divisor_override", "pk", torch.Tensor | None, None)],
+    torch.Tensor,
+))
+lns_avg_pool3d = _create_lns_op_func('avg_pool3d', torch.nn.functional.avg_pool3d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("ceil_mode", "pk", bool, False),
+    ("count_include_pad", "pk", bool, True),
+    ("divisor_override", "pk", torch.Tensor | None, None)],
+    torch.Tensor,
+))
