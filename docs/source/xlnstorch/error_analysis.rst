@@ -134,3 +134,31 @@ distributed and how precision affects their representation.
 
     xlnstorch.viz.plot_spacing_heatmap([3, 4, 5, 6, 7, 8], -5, 5, step=0.05, rows=2)
     plt.show()
+
+Distribution Analysis
+---------------------
+
+:func:`viz.plot_lns_error_heatmap`
+
+.. code-block:: python
+
+    xlnstorch.viz.plot_lns_error_heatmap(
+        f_range = [4, 6, 8, 10, 12, 14, 16, 18, 20],
+        low=-4.0,
+        high=4.0,
+        n_cols=3,
+        steps=3000
+    )
+    plt.show()
+
+:func:`plot_lns_distribution`
+
+.. code-block:: python
+
+    xlnstorch.viz.plot_lns_distribution(
+        f=8,
+        low=1.0,
+        high=10.0,
+        step_size=0.5,
+    )
+    plt.show()

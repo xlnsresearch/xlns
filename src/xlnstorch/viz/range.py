@@ -66,7 +66,7 @@ def plot_spacing_heatmap(
     """
     Create a heatmap showing a heatmap of the spacing differences
     for various LNS precisions.
-    
+
     Parameters
     ----------
     f_range : Tuple[int] | List[int] | int
