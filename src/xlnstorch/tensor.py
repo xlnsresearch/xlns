@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 import xlns as xl
 from . import LNS_ZERO, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS, LNSGetItemFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
+from .tensor_utils import FloatToLNS, LNSGetItemFunction, LNSToFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -381,10 +381,9 @@ class LNSTensor:
         """
         return self._lns.dim()
 
-    def to(self, device=None, non_blocking=False, copy=False, memory_format=torch.preserve_format):
-        return lnstensor(self._lns.to(
-            device=device, non_blocking=non_blocking, copy=copy, memory_format=memory_format
-            ), from_lns=True, b=self.base)
+    def to(self, device=None):
+        result = LNSToFunction.apply(self, device)
+        return lnstensor(result, from_lns=True, b=self.base)
 
     def broadcast_to(self, shape) -> LNSTensor:
         """

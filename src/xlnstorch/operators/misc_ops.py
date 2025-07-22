@@ -176,12 +176,14 @@ class LNSStackFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        _, *tensors = inputs
+        dim, *tensors = inputs
         ctx.save_for_backward(*tensors)
+        ctx.dim = dim
 
     @staticmethod
     def backward(ctx, grad_output):
-        return *[ones(t.shape) for t in ctx.saved_tensor], None
+        grad_tensor = grad_output.unbind(ctx.dim)
+        return (None, *grad_tensor)
 
 @implements(torch.stack, LNSStackFunction.forward, "default", default=True)
 def stack(tensors, dim=0):

@@ -183,6 +183,23 @@ class LNSGetItemFunction(LNSFunction):
         return grad_x, None
 
 
+class LNSToFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, device):
+        return x.to(device)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, _ = inputs
+        ctx.orig_device = x.device
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_x = grad_output.to(ctx.orig_device)
+        return grad_x, None
+
+
 def align_lnstensor_bases(
         *tensors: LNSTensor,
         base: torch.Tensor | None = None
