@@ -178,7 +178,22 @@ def build_lns_sequential(model, *, keep_containers=False):
             continue
 
         cls = _resolve_class(cls_name)
-        layer = cls(**arg_dict)
+        try:
+            layer = cls(**arg_dict)
+        except Exception as e:
+            # Check if this is an LNS layer or regular torch layer to provide better error message
+            if hasattr(xlns_nn, "LNS" + cls_name):
+                raise RuntimeError(
+                    f"Failed to instantiate LNS layer '{cls_name}' with arguments {arg_dict}. "
+                    f"This suggests an issue with the LNS implementation or argument compatibility. "
+                    f"Original error: {type(e).__name__}: {e}"
+                ) from e
+            else:
+                raise RuntimeError(
+                    f"Failed to instantiate torch.nn layer '{cls_name}' with arguments {arg_dict}. "
+                    f"This layer may not be supported in LNS conversion or has incompatible arguments. "
+                    f"Original error: {type(e).__name__}: {e}"
+                ) from e
 
         # torch modules with parameters are incompatible with LNS
         # here we use a sentinel to check this
