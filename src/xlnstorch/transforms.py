@@ -39,6 +39,9 @@ class ToLNSTensor:
         If True, all inputs are wrapped in an LNSTensor, even if they are not
         floating point. If False (default), only floating point inputs are
         wrapped.
+    device : str | torch.device, optional
+        The device on which the output LNSTensor should be allocated. If None,
+        it defaults to the current device.
 
     Raises
     ------
@@ -55,6 +58,7 @@ class ToLNSTensor:
             f: int | None = None,
             b: float | None = None,
             wrap_all: bool = False,
+            device: str | torch.device | None = None,
         ) -> None:
         if not _TV_AVAILABLE:
             raise ImportError(
@@ -64,6 +68,7 @@ class ToLNSTensor:
         self.f = f
         self.b = b
         self.wrap_all = wrap_all
+        self.device = torch.device(device) if device is not None else None
 
         # Lazily create the Compose the very first time the class is used
         if ToLNSTensor._PIPELINE is None:
@@ -94,6 +99,6 @@ class ToLNSTensor:
             tensor = ToLNSTensor._PIPELINE(img)
 
         if self.wrap_all or torch.is_floating_point(tensor):
-            return lnstensor(tensor, f=self.f, b=self.b)
+            return lnstensor(tensor, f=self.f, b=self.b).to(self.device)
         else:
-            return tensor
+            return tensor.to(self.device)

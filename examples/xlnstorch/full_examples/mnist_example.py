@@ -31,7 +31,8 @@ class LNSNet(xltorch.nn.LNSModule):
         return x
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
-train_transform = ToLNSTensor()
+device = "cpu"
+train_transform = ToLNSTensor(device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
@@ -39,7 +40,6 @@ batch_size = 128
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-device = "cpu"
 model = LNSNet().to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
 optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
@@ -56,9 +56,6 @@ for epoch in range(1, num_epochs + 1):
     train_total = 0
 
     for i, (data, target) in enumerate(train_loader):
-
-        # Convert data and target to the appropriate device
-        data, target = data.to(device), target.to(device)
 
         optimizer.zero_grad()
 
@@ -97,8 +94,6 @@ for epoch in range(1, num_epochs + 1):
 
         for data, target in test_loader:
 
-            data, target = data.to(device), target.to(device)
-
             outputs = model(data)
             loss = loss_func(outputs, target)
 
@@ -128,8 +123,6 @@ total = 0
 # Disable gradient calculation for final evaluation
 with torch.no_grad():
     for data, target in test_loader:
-
-        data, target = data.to(device), target.to(device)
 
         outputs = model(data)
         _, predicted = torch.max(outputs.value, dim=1)

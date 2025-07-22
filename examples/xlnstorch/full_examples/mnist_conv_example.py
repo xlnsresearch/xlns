@@ -5,15 +5,17 @@ from torchvision import datasets, transforms
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
+# Set addition sbdb implementation to lookup table for faster performance
+f = 8
 xltorch.operators.set_default_sbdb_implementation("tab")
-xltorch.operators.implementations.tab.get_table("tmp", f=8)
+xltorch.operators.implementations.tab.get_table("tmp", f=f)
 
 class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5, weight_f=8, bias_f=8)
-        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, weight_f=8, bias_f=8) # After conv layer, the input size is 32x24x24
+        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5, weight_f=f, bias_f=f)
+        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, weight_f=f, bias_f=f) # After conv layer, the input size is 32x24x24
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
@@ -35,7 +37,8 @@ class LNSNet(xltorch.nn.LNSModule):
         return x
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
-train_transform = ToLNSTensor(f=8)
+device = "cpu"
+train_transform = ToLNSTensor(f=f, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
@@ -43,7 +46,6 @@ batch_size = 1
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-device = "cpu"
 model = LNSNet().to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
 optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
@@ -60,9 +62,6 @@ for epoch in range(1, num_epochs + 1):
     train_total = 0
 
     for i, (data, target) in enumerate(train_loader):
-
-        # Convert data and target to the appropriate device
-        data, target = data.to(device), target.to(device)
 
         optimizer.zero_grad()
 
@@ -101,8 +100,6 @@ for epoch in range(1, num_epochs + 1):
 
         for data, target in test_loader:
 
-            data, target = data.to(device), target.to(device)
-
             outputs = model(data)
             loss = loss_func(outputs, target)
 
@@ -132,8 +129,6 @@ total = 0
 # Disable gradient calculation for final evaluation
 with torch.no_grad():
     for data, target in test_loader:
-
-        data, target = data.to(device), target.to(device)
 
         outputs = model(data)
         _, predicted = torch.max(outputs.value, dim=1)
