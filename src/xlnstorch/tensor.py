@@ -381,6 +381,11 @@ class LNSTensor:
         """
         return self._lns.dim()
 
+    def to(self, device=None, non_blocking=False, copy=False, memory_format=torch.preserve_format):
+        return lnstensor(self._lns.to(
+            device=device, non_blocking=non_blocking, copy=copy, memory_format=memory_format
+            ), from_lns=True, b=self.base)
+
     def broadcast_to(self, shape) -> LNSTensor:
         """
         Broadcasts ``self`` to the shape ``shape``. Analogous to

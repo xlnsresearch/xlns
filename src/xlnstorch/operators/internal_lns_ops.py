@@ -349,6 +349,11 @@ lns_unsqueeze = _create_lns_op_func('unsqueeze', torch.unsqueeze, signature=_bui
     ("dim", "pk", int)],
     torch.Tensor,
 ))
+lns_stack = _create_lns_op_func('stack', torch.stack, signature=_build_signature([
+    ("dim", "pk", int),
+    ("tensors", "*", Iterable[torch.Tensor])],
+    torch.Tensor,
+))
 
 lns_mse_loss = _create_lns_op_func('mse_loss', torch.nn.functional.mse_loss, signature=_build_signature([
     ("x", "pk", torch.Tensor),

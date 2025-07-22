@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Type, Callable
 import torch
 from . import LNSTensor, lnstensor
 
@@ -9,6 +9,15 @@ try:
     _TV_AVAILABLE = True
 except ImportError:
     _TV_AVAILABLE = False
+
+# Here we define a custom collate function for LNSTensor that can be used with DataLoader.
+def collate_lnstensor_fn(
+        batch,
+        *,
+        collate_fn_map: Dict[Type | Tuple[Type, ...], Callable] | None = None,
+    ):
+    return torch.stack(batch, 0)
+torch.utils.data._utils.collate.default_collate_fn_map.update({LNSTensor: collate_lnstensor_fn})
 
 class ToLNSTensor:
     """
@@ -85,6 +94,6 @@ class ToLNSTensor:
             tensor = ToLNSTensor._PIPELINE(img)
 
         if self.wrap_all or torch.is_floating_point(tensor):
-            return lnstensor(tensor, f=self.f, b=self.b, device=self.device)
+            return lnstensor(tensor, f=self.f, b=self.b)
         else:
             return tensor

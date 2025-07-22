@@ -1,8 +1,9 @@
 import time
 import torch
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import xlnstorch as xltorch
+from xlnstorch.transforms import ToLNSTensor
 
 xltorch.operators.set_default_sbdb_implementation("tab")
 xltorch.operators.implementations.tab.get_table("tmp", f=8)
@@ -34,21 +35,9 @@ class LNSNet(xltorch.nn.LNSModule):
         return x
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
-train_transform = transforms.ToTensor()
-raw_train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
-raw_test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
-
-# Convert the datasets into in-memory tensors as they are loaded on the fly by default.
-# Note: raw_train_dataset.data is of shape [60000, 28, 28] and is of type torch.uint8.
-# We unsqueeze to add a channel dimension and convert to float, scaling to [0,1].
-train_data = raw_train_dataset.data.unsqueeze(1).float() / 255.0
-train_targets = raw_train_dataset.targets
-test_data = raw_test_dataset.data.unsqueeze(1).float() / 255.0
-test_targets = raw_test_dataset.targets
-
-# Create TensorDatasets and DataLoaders based on the in-memory data.
-train_dataset = TensorDataset(train_data, train_targets)
-test_dataset = TensorDataset(test_data, test_targets)
+train_transform = ToLNSTensor(f=8)
+train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
+test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
 batch_size = 1
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -72,9 +61,8 @@ for epoch in range(1, num_epochs + 1):
 
     for i, (data, target) in enumerate(train_loader):
 
-        # Convert only data to LNSTensor, target remains a regular tensor
-        # since it is an integer tensor for classification.
-        data, target = xltorch.lnstensor(data.to(device), f=8), target.to(device)
+        # Convert data and target to the appropriate device
+        data, target = data.to(device), target.to(device)
 
         optimizer.zero_grad()
 
@@ -113,7 +101,7 @@ for epoch in range(1, num_epochs + 1):
 
         for data, target in test_loader:
 
-            data, target = xltorch.lnstensor(data.to(device)), target.to(device)
+            data, target = data.to(device), target.to(device)
 
             outputs = model(data)
             loss = loss_func(outputs, target)
@@ -145,7 +133,7 @@ total = 0
 with torch.no_grad():
     for data, target in test_loader:
 
-        data, target = xltorch.lnstensor(data.to(device)), target.to(device)
+        data, target = data.to(device), target.to(device)
 
         outputs = model(data)
         _, predicted = torch.max(outputs.value, dim=1)

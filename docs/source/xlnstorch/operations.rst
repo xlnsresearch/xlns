@@ -116,6 +116,7 @@ Miscellaneous Operations
     operators.lns_clone
     operators.lns_squeeze
     operators.lns_unsqueeze
+    operators.lns_stack
 
 Loss Operations
 ~~~~~~~~~~~~~~~
