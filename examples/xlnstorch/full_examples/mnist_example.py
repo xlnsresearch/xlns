@@ -2,8 +2,9 @@ import time
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
-from torchvision import datasets, transforms
+from torchvision import datasets
 import xlnstorch as xltorch
+from xlnstorch.transforms import ToLNSTensor
 
 class LNSNet(xltorch.nn.LNSModule):
 
@@ -30,7 +31,7 @@ class LNSNet(xltorch.nn.LNSModule):
         return x
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
-train_transform = transforms.ToTensor()
+train_transform = ToLNSTensor()
 raw_train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 raw_test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
@@ -70,7 +71,7 @@ for epoch in range(1, num_epochs + 1):
 
         # Convert only data to LNSTensor, target remains a regular tensor
         # since it is an integer tensor for classification.
-        data, target = xltorch.lnstensor(data.to(device)), target.to(device)
+        data, target = data.to(device), target.to(device)
 
         optimizer.zero_grad()
 
