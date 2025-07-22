@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import LNS_ZERO, get_default_implementation_key, get_implementation
+from . import LNS_ZERO, LNS_ONE, get_default_implementation_key, get_implementation
 from .tensor_utils import FloatToLNS, LNSGetItemFunction, LNSToFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
@@ -951,13 +951,14 @@ def zeros(
     properties. See `torch.zeros` for more details on the parameters.
     """
     result = lnstensor(
-        torch.zeros(*size, dtype=torch.float64, layout=layout,
-                    device=device, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.full(size, LNS_ZERO.item(), dtype=torch.float64,
+                   device=device, layout=layout,
+                   requires_grad=requires_grad),
+        f=f, b=b, from_lns=True,
     )
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy_(result)
 
     return result
 
@@ -982,9 +983,10 @@ def zeros_like(
         input = input._lns
 
     return lnstensor(
-        torch.zeros_like(input, dtype=torch.float64, device=device, layout=layout,
-                         requires_grad=requires_grad, memory_format=memory_format),
-        from_lns=False, f=f, b=b
+        torch.full_like(input, LNS_ZERO.item(), device=device, layout=layout, 
+                        dtype=torch.float64, memory_format=memory_format,
+                        requires_grad=requires_grad),
+        f=f, b=b, from_lns=True
     )
 
 def ones(
@@ -1001,13 +1003,14 @@ def ones(
     properties. See `torch.ones` for more details on the parameters.
     """
     result = lnstensor(
-        torch.ones(*size, dtype=torch.float64, layout=layout,
-                   device=device, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.full(size, LNS_ONE.item(), dtype=torch.float64,
+                   device=device, layout=layout,
+                   requires_grad=requires_grad),
+        f=f, b=b, from_lns=True,
     )
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy_(result)
 
     return result
 
@@ -1032,9 +1035,10 @@ def ones_like(
         input = input._lns
 
     return lnstensor(
-        torch.ones_like(input, dtype=torch.float64, device=device, layout=layout,
-                        memory_format=memory_format, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.full_like(input, LNS_ONE.item(), device=device, layout=layout, 
+                        dtype=torch.float64, memory_format=memory_format,
+                        requires_grad=requires_grad),
+        f=f, b=b, from_lns=True
     )
 
 def full(
@@ -1053,13 +1057,14 @@ def full(
     and properties. See `torch.full` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, fill_value, dtype=torch.float64, layout=layout,
-                   device=device, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.full(size, fill_value, dtype=torch.float64,
+                   device=device, layout=layout,
+                   requires_grad=requires_grad),
+        f=f, b=b, from_lns=False,
     )
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy_(result)
 
     return result
 
@@ -1085,9 +1090,10 @@ def full_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, fill_value, dtype=torch.float64, device=device, layout=layout,
-                        memory_format=memory_format, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.full_like(input, fill_value, device=device, layout=layout, 
+                        dtype=torch.float64, memory_format=memory_format,
+                        requires_grad=requires_grad),
+        f=f, b=b, from_lns=False
     )
 
 def rand(
@@ -1107,13 +1113,14 @@ def rand(
     properties. See `torch.rand` for more details on the parameters.
     """
     result = lnstensor(
-        torch.rand(size, generator=generator, dtype=torch.float64, layout=layout,
-                   device=device, pin_memory=pin_memory, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.rand(size, dtype=torch.float64, generator=generator,
+                   layout=layout, requires_grad=requires_grad,
+                   device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=False,
     )
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy_(result)
 
     return result
 
@@ -1124,6 +1131,7 @@ def rand_like(
         device=None,
         requires_grad=False,
         memory_format=torch.preserve_format,
+        pin_memory=False,
         f=None,
         b=None,
         ) -> LNSTensor:
@@ -1139,9 +1147,10 @@ def rand_like(
         input = input._lns
 
     return lnstensor(
-        torch.rand_like(input, dtype=torch.float64, device=device, layout=layout,
-                        memory_format=memory_format, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.rand_like(input, dtype=torch.float64, memory_format=memory_format,
+                   layout=layout, requires_grad=requires_grad,
+                   device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=False
     )
 
 def randn(
@@ -1161,13 +1170,14 @@ def randn(
     and properties. See `torch.rand` for more details on the parameters.
     """
     result = lnstensor(
-        torch.randn(size, generator=generator, dtype=torch.float64, layout=layout,
-                    device=device, pin_memory=pin_memory, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.randn(size, dtype=torch.float64, generator=generator,
+                    layout=layout, requires_grad=requires_grad,
+                    device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=False,
     )
 
     if out is not None:
-        out.copy_(result)
+        return out._inplace_copy_(result)
 
     return result
 
@@ -1178,6 +1188,7 @@ def randn_like(
         device=None,
         requires_grad=False,
         memory_format=torch.preserve_format,
+        pin_memory=False,
         f=None,
         b=None,
         ) -> LNSTensor:
@@ -1193,7 +1204,8 @@ def randn_like(
         input = input._lns
 
     return lnstensor(
-        torch.randn_like(input, dtype=torch.float64, device=device, layout=layout,
-                         memory_format=memory_format, requires_grad=requires_grad),
-        from_lns=False, f=f, b=b
+        torch.randn_like(input, dtype=torch.float64, memory_format=memory_format,
+                    layout=layout, requires_grad=requires_grad,
+                    device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=False
     )
