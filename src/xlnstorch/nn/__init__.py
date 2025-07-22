@@ -1,5 +1,6 @@
 from ._layer import (
     LNSModule,
+    LNSSequential,
 )
 from .linear_layers import (
     LNSIdentity,
@@ -22,6 +23,7 @@ from . import init
 
 __all__ = [
     "LNSModule",
+    "LNSSequential",
 
     "LNSIdentity",
     "LNSLinear",
