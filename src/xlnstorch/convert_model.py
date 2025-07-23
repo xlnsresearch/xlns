@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import inspect
 import torch.nn as nn
-from . import nn as xlns_nn
+import xlnstorch.nn as xlns_nn
 
 __all__ = [
     "parse_sequential",

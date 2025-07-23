@@ -9,8 +9,8 @@ import torch
 import xlns as xl
 
 # Import constants and base classes that don't cause circular imports
-from . import LNS_ZERO
-from .autograd import LNSFunction
+from xlnstorch import LNS_ZERO
+from xlnstorch.autograd import LNSFunction
 
 # Precomputed table of bases from precisions
 # base = 2^(2^(-f)) for f in [1, 40]

@@ -6,7 +6,7 @@ import time
 import numpy as np
 import torch
 from torch.profiler import profile, ProfilerActivity
-from .. import LNSTensor
+from xlnstorch import LNSTensor
 
 def _sync(dev: torch.device) -> None:
     """

@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from . import LNS_ZERO, LNS_ONE, get_default_implementation_key, get_implementation
-from .tensor_utils import FloatToLNS, LNSGetItemFunction, LNSToFunction, get_precision_from_base, get_base_from_precision, make_index_tensors, _lns_tensor_str
+from xlnstorch import LNS_ZERO, LNS_ONE, get_default_implementation_key, get_implementation
+import xlnstorch.tensor_utils as tensor_utils
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
 
@@ -80,7 +80,7 @@ class LNSTensor:
         if from_lns:
             self._lns: Tensor = data
         else:
-            self._lns: Tensor = FloatToLNS.apply(data, self.base)
+            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, self.base)
 
         self._lns.requires_grad_(requires_grad)
 
@@ -382,7 +382,7 @@ class LNSTensor:
         return self._lns.dim()
 
     def to(self, device=None):
-        result = LNSToFunction.apply(self, device)
+        result = tensor_utils.LNSToFunction.apply(self, device)
         return lnstensor(result, from_lns=True, b=self.base)
 
     def broadcast_to(self, shape) -> LNSTensor:
@@ -497,8 +497,8 @@ class LNSTensor:
 
     def __repr__(self) -> str:
          # indent the value string to match the length of "LNSTensor(value="
-        value_str = _lns_tensor_str(self, 16)
-        precision = get_precision_from_base(self.base.item())
+        value_str = tensor_utils._lns_tensor_str(self, 16)
+        precision = tensor_utils.get_precision_from_base(self.base.item())
 
         if precision is not None:
             info_str = f"prec={precision}"
@@ -636,12 +636,12 @@ class LNSTensor:
         return torch.lt(self, other)
 
     def __getitem__(self, index):
-        result = LNSGetItemFunction.apply(self, index)
+        result = tensor_utils.LNSGetItemFunction.apply(self, index)
         return lnstensor(result, from_lns=True, b=self.base)
 
     def __setitem__(self, index, value):
         # We must convert the indexing object to a suitable format for torch.index_put_.
-        torch.index_put_(self, make_index_tensors(index, self.shape), value)
+        torch.index_put_(self, tensor_utils.make_index_tensors(index, self.shape), value)
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)
@@ -845,7 +845,7 @@ def lnstensor(
     if f is not None and b is not None:
         raise ValueError("Cannot specify both `f` and `b`.")
     if f is not None:
-        base_val: Tensor = get_base_from_precision(f)
+        base_val: Tensor = tensor_utils.get_base_from_precision(f)
     elif b is not None:
         base_val = b
     else:

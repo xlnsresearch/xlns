@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import torch
 import math
-from .. import lnstensor
+from xlnstorch import lnstensor
 
 def plot_staircase(
         ax,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, Tuple, Type, Callable
 import torch
-from . import LNSTensor, lnstensor
+from xlnstorch import LNSTensor, lnstensor
 
 # optional import of torchvision.v2
 try:

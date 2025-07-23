@@ -1,8 +1,8 @@
 from typing import List, Tuple
 import torch
 import math
-from .. import LNSTensor, lnstensor, LNS_ZERO
-from ..tensor_utils import get_base_from_precision
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO
+import xlnstorch.tensor_utils as tensor_utils
 
 def plot_lns_error_heatmap(
         f_range: Tuple[int] | List[int] | int,
@@ -148,7 +148,7 @@ def plot_lns_distribution(
     if low >= high:
         raise ValueError("The 'low' value must be less than the 'high' value.")
 
-    base = get_base_from_precision(f)
+    base = tensor_utils.get_base_from_precision(f)
 
     bin_bounds = torch.arange(low, high + step_size / 2, step=step_size)
     n_bins = len(bin_bounds) - 1

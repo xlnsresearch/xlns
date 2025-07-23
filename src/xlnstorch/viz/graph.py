@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import Any, Dict, Iterable, List, Set
 import torch
-from .. import LNSTensor, lnstensor
+from xlnstorch import LNSTensor, lnstensor
 
 # This module is heavily based on pytorchviz. I have adapted it to
 # work with LNSTensor objects and to only import graphviz when
