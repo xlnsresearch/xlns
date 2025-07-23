@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch.operators import (
     lns_sub,
     lns_neg,
     lns_equal,

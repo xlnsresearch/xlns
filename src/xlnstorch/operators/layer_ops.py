@@ -1,8 +1,8 @@
 import warnings
 import math
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
+from xlnstorch.autograd import LNSFunction
 from . import (
     lns_mul,
     lns_sum,

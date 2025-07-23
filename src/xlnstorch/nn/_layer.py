@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import torch
-from .. import LNS_ZERO
+from xlnstorch import LNS_ZERO
 
 class LNSModule(torch.nn.Module):
     """

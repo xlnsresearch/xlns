@@ -3,8 +3,8 @@ import collections
 from itertools import repeat
 
 import torch
+from xlnstorch import rand
 from . import LNSModule
-from .. import rand
 
 def _pair(x):
     if isinstance(x,collections.abc.Iterable):

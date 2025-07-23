@@ -1,10 +1,13 @@
 import torch
 import contextlib
 from typing import Generator, Callable
-from .. import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
-from ..autograd import LNSFunction
-from ..tensor_utils import get_precision_from_base
-from . import lns_add, lns_neg
+from xlnstorch import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from xlnstorch.autograd import LNSFunction
+from xlnstorch.tensor_utils import get_precision_from_base
+from . import (
+    lns_add,
+    lns_neg,
+)
 
 # SBDB_FUNCS is a dictionary that contains different implementations
 # of the sbdb (Gaussian logarithm) function. Each implementation is

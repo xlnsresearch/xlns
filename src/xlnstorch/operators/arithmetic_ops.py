@@ -1,6 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from xlnstorch.autograd import LNSFunction
 from . import (
     lns_add,
     lns_mul,

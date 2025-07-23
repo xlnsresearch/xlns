@@ -3,7 +3,7 @@ import inspect
 from typing import Callable, Any, Iterable, Tuple
 
 import torch
-from .. import apply_lns_op
+from xlnstorch import apply_lns_op
 
 _KIND_MAP: dict[str, inspect._ParameterKind] = {
     "po": inspect.Parameter.POSITIONAL_ONLY,

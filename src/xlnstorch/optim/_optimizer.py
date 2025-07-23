@@ -1,5 +1,5 @@
 import torch
-from .. import LNS_ZERO
+from xlnstorch import LNS_ZERO
 
 class LNSOptimizer(torch.optim.Optimizer):
 
