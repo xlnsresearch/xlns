@@ -1,0 +1,157 @@
+from typing import Tuple
+import collections
+
+import torch
+from . import LNSModule
+
+def _pair(x):
+    if isinstance(x,collections.abc.Iterable):
+        return tuple(x)
+    return (x, x)
+
+def _triple(x):
+    if isinstance(x, collections.abc.Iterable):
+        return tuple(x)
+    return (x, x, x)
+
+class LNSAvgPool1d(LNSModule):
+    """
+    An LNS 1D average pooling layer that applies a
+    1D average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AvgPool1d`
+
+    Parameters
+    ----------
+    kernel_size : int
+        The size of the window to take the average over.
+    stride : int, optional
+        The stride of the window. Default is equal to `kernel_size`.
+    padding : int, optional
+        Implicit zero padding to be added on both sides of the input. Default is 0
+    ceil_mode : bool, optional
+        If True, will use ceil instead of floor to compute the output shape.
+        Default is False.
+    count_include_pad : bool, optional
+        If True, will include the zero-padding in the averaging calculation.
+        Default is True.
+    """
+
+    def __init__(
+            self,
+            kernel_size: int,
+            stride: int | None = None,
+            padding: int = 0,
+            ceil_mode: bool = False,
+            count_include_pad: bool = True
+        ):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.ceil_mode = ceil_mode
+        self.count_include_pad = count_include_pad
+
+    def forward(self, x):
+        return torch.nn.functional.avg_pool1d(
+            x, self.kernel_size, self.stride, self.padding,
+            self.ceil_mode, self.count_include_pad
+        )
+
+class LNSAvgPool2d(LNSModule):
+    """
+    An LNS 2D average pooling layer that applies a
+    2D average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AvgPool2d`
+
+    Parameters
+    ----------
+    kernel_size : int or tuple
+        The size of the window to take the average over.
+    stride : int or tuple, optional
+        The stride of the window. Default is equal to `kernel_size`.
+    padding : int or tuple, optional
+        Implicit zero padding to be added on both sides of the input. Default is 0
+    ceil_mode : bool, optional
+        If True, will use ceil instead of floor to compute the output shape.
+        Default is False.
+    count_include_pad : bool, optional
+        If True, will include the zero-padding in the averaging calculation.
+        Default is True.
+    divisor_override : int, optional
+        If specified, will use this value as the divisor instead of the kernel size.
+        Default is None, which means the divisor will be the kernel size.
+    """
+
+    def __init__(
+            self,
+            kernel_size: int | Tuple[int, int],
+            stride: int | Tuple[int, int] | None = None,
+            padding: int | Tuple[int, int] = 0,
+            ceil_mode: bool = False,
+            count_include_pad: bool = True,
+            divisor_override: int | None = None
+        ):
+        super().__init__()
+        self.kernel_size = _pair(kernel_size)
+        self.stride = _pair(stride)
+        self.padding = _pair(padding)
+        self.ceil_mode = ceil_mode
+        self.count_include_pad = count_include_pad
+        self.divisor_override = divisor_override
+
+    def forward(self, x):
+        return torch.nn.functional.avg_pool2d(
+            x, self.kernel_size, self.stride, self.padding,
+            self.ceil_mode, self.count_include_pad, self.divisor_override
+        )
+
+class LNSAvgPool3d(LNSModule):
+    """
+    An LNS 3D average pooling layer that applies a
+    3D average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AvgPool3d`
+
+    Parameters
+    ----------
+    kernel_size : int or tuple
+        The size of the window to take the average over.
+    stride : int or tuple, optional
+        The stride of the window. Default is equal to `kernel_size`.
+    padding : int or tuple, optional
+        Implicit zero padding to be added on both sides of the input. Default is 0
+    ceil_mode : bool, optional
+        If True, will use ceil instead of floor to compute the output shape.
+        Default is False.
+    count_include_pad : bool, optional
+        If True, will include the zero-padding in the averaging calculation.
+        Default is True.
+    divisor_override : int, optional
+        If specified, will use this value as the divisor instead of the kernel size.
+        Default is None, which means the divisor will be the kernel size.
+    """
+
+    def __init__(
+            self,
+            kernel_size: int | Tuple[int, int, int],
+            stride: int | Tuple[int, int, int] | None = None,
+            padding: int | Tuple[int, int, int] = 0,
+            ceil_mode: bool = False,
+            count_include_pad: bool = True,
+            divisor_override: int | None = None
+        ):
+        super().__init__()
+        self.kernel_size = _triple(kernel_size)
+        self.stride = _triple(stride)
+        self.padding = _triple(padding)
+        self.ceil_mode = ceil_mode
+        self.count_include_pad = count_include_pad
+        self.divisor_override = divisor_override
+
+    def forward(self, x):
+        return torch.nn.functional.avg_pool3d(
+            x, self.kernel_size, self.stride, self.padding,
+            self.ceil_mode, self.count_include_pad, self.divisor_override
+        )
