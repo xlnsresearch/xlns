@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="xlnstorch.nn.LNSModule" href="generated/xlnstorch.nn.LNSModule.html" />
-    <link rel="prev" title="xlnstorch.operators.lns_conv3d" href="generated/xlnstorch.operators.lns_conv3d.html" /> 
+    <link rel="prev" title="xlnstorch.operators.lns_avg_pool3d" href="generated/xlnstorch.operators.lns_avg_pool3d.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -61,12 +61,15 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSConv1d.html">xlnstorch.nn.LNSConv1d</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSConv2d.html">xlnstorch.nn.LNSConv2d</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSConv3d.html">xlnstorch.nn.LNSConv3d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool1d.html">xlnstorch.nn.LNSAvgPool1d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool2d.html">xlnstorch.nn.LNSAvgPool2d</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool3d.html">xlnstorch.nn.LNSAvgPool3d</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom-layers">Custom Layers</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="optimizers.html">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vizualization.html">Vizualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html">Visualization</a></li>
 </ul>
 </li>
 </ul>
@@ -167,6 +170,24 @@ denoted in the documentation.</p>
 </tr>
 </tbody>
 </table>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Pooling Layers</p></th>
+<th class="head"><p>Note</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool1d.html#xlnstorch.nn.LNSAvgPool1d" title="xlnstorch.nn.LNSAvgPool1d"><code class="xref py py-class docutils literal notranslate"><span class="pre">nn.LNSAvgPool1d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool2d.html#xlnstorch.nn.LNSAvgPool2d" title="xlnstorch.nn.LNSAvgPool2d"><code class="xref py py-class docutils literal notranslate"><span class="pre">nn.LNSAvgPool2d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool3d.html#xlnstorch.nn.LNSAvgPool3d" title="xlnstorch.nn.LNSAvgPool3d"><code class="xref py py-class docutils literal notranslate"><span class="pre">nn.LNSAvgPool3d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
+</tbody>
+</table>
 <div style="display: none;"><table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSModule.html#xlnstorch.nn.LNSModule" title="xlnstorch.nn.LNSModule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nn.LNSModule</span></code></a></p></td>
@@ -205,6 +226,15 @@ denoted in the documentation.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSConv3d.html#xlnstorch.nn.LNSConv3d" title="xlnstorch.nn.LNSConv3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nn.LNSConv3d</span></code></a></p></td>
 <td><p>An LNS 3D convolutional layer that applies a 3D convolution over the input tensor.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool1d.html#xlnstorch.nn.LNSAvgPool1d" title="xlnstorch.nn.LNSAvgPool1d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nn.LNSAvgPool1d</span></code></a></p></td>
+<td><p>An LNS 1D average pooling layer that applies a 1D average pooling operation over the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool2d.html#xlnstorch.nn.LNSAvgPool2d" title="xlnstorch.nn.LNSAvgPool2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nn.LNSAvgPool2d</span></code></a></p></td>
+<td><p>An LNS 2D average pooling layer that applies a 2D average pooling operation over the input tensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.nn.LNSAvgPool3d.html#xlnstorch.nn.LNSAvgPool3d" title="xlnstorch.nn.LNSAvgPool3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nn.LNSAvgPool3d</span></code></a></p></td>
+<td><p>An LNS 3D average pooling layer that applies a 3D average pooling operation over the input tensor.</p></td>
+</tr>
 </tbody>
 </table>
 </div><section id="custom-layers">
@@ -221,7 +251,7 @@ to PyTorch’s method of registering parameters.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="generated/xlnstorch.operators.lns_conv3d.html" class="btn btn-neutral float-left" title="xlnstorch.operators.lns_conv3d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/xlnstorch.operators.lns_avg_pool3d.html" class="btn btn-neutral float-left" title="xlnstorch.operators.lns_avg_pool3d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="generated/xlnstorch.nn.LNSModule.html" class="btn btn-neutral float-right" title="xlnstorch.nn.LNSModule" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

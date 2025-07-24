@@ -116,6 +116,7 @@ Miscellaneous Operations
     operators.lns_clone
     operators.lns_squeeze
     operators.lns_unsqueeze
+    operators.lns_stack
 
 Loss Operations
 ~~~~~~~~~~~~~~~
@@ -203,3 +204,6 @@ support ``LNSTensor`` objects.
     operators.lns_conv1d
     operators.lns_conv2d
     operators.lns_conv3d
+    operators.lns_avg_pool1d
+    operators.lns_avg_pool2d
+    operators.lns_avg_pool3d

@@ -1,11 +1,11 @@
 .. currentmodule:: xlnstorch
 
-.. _vizualization-doc:
+.. _visualization-doc:
 
-Vizualization
+Visualization
 =============
 
-The ``xlnstorch.viz`` submodule provides tools for vizualizing and analyzing
+The ``xlnstorch.viz`` submodule provides tools for visualizing and analyzing
 LNS operations and their numerical properties. This module includes functionality
 for creating error heatmaps, generating autograd graphs, and analyzing the
 precision characteristics of LNS arithmetic operations.
@@ -13,7 +13,7 @@ precision characteristics of LNS arithmetic operations.
 Quick Start
 -----------
 
-Here's a simple example of vizualizing the error characteristics of an LNS operation:
+Here's a simple example of visualizing the error characteristics of an LNS operation:
 
 .. code-block:: python
 
@@ -36,7 +36,7 @@ Here's a simple example of vizualizing the error characteristics of an LNS opera
     plot_error_heatmap(errors, xs, ys, ax=ax)
     plt.show()
 
-For vizualizing autograd graphs with LNS tensors:
+For visualizing autograd graphs with LNS tensors:
 
 .. code-block:: python
 
@@ -95,10 +95,10 @@ affect numerical accuracy for the same operation.
     viz.plot_precision_comparison
     viz.plot_precision_heatmap_grid
 
-Autograd vizualization
+Autograd visualization
 ----------------------
 
-The autograd vizualization tools provide insight into the computational graph
+The autograd visualization tools provide insight into the computational graph
 structure when using LNS tensors.
 
 .. autosummary::
@@ -110,7 +110,7 @@ structure when using LNS tensors.
 Dependencies
 ------------
 
-The vizualization module has optional dependencies:
+The visualization module has optional dependencies:
 
 - **matplotlib**: Required for the plotting functions.
 - **graphviz**: Required for ``make_autograd_graph``

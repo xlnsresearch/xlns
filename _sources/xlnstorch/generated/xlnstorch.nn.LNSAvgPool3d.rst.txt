@@ -1,0 +1,82 @@
+﻿xlnstorch.nn.LNSAvgPool3d
+=========================
+
+.. currentmodule:: xlnstorch.nn
+
+.. autoclass:: LNSAvgPool3d
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LNSAvgPool3d.__init__
+      ~LNSAvgPool3d.add_module
+      ~LNSAvgPool3d.apply
+      ~LNSAvgPool3d.bfloat16
+      ~LNSAvgPool3d.buffers
+      ~LNSAvgPool3d.children
+      ~LNSAvgPool3d.compile
+      ~LNSAvgPool3d.cpu
+      ~LNSAvgPool3d.cuda
+      ~LNSAvgPool3d.double
+      ~LNSAvgPool3d.eval
+      ~LNSAvgPool3d.extra_repr
+      ~LNSAvgPool3d.float
+      ~LNSAvgPool3d.forward
+      ~LNSAvgPool3d.get_buffer
+      ~LNSAvgPool3d.get_extra_state
+      ~LNSAvgPool3d.get_parameter
+      ~LNSAvgPool3d.get_submodule
+      ~LNSAvgPool3d.half
+      ~LNSAvgPool3d.ipu
+      ~LNSAvgPool3d.load_state_dict
+      ~LNSAvgPool3d.modules
+      ~LNSAvgPool3d.mtia
+      ~LNSAvgPool3d.named_buffers
+      ~LNSAvgPool3d.named_children
+      ~LNSAvgPool3d.named_modules
+      ~LNSAvgPool3d.named_parameters
+      ~LNSAvgPool3d.parameter_groups
+      ~LNSAvgPool3d.parameters
+      ~LNSAvgPool3d.register_backward_hook
+      ~LNSAvgPool3d.register_buffer
+      ~LNSAvgPool3d.register_forward_hook
+      ~LNSAvgPool3d.register_forward_pre_hook
+      ~LNSAvgPool3d.register_full_backward_hook
+      ~LNSAvgPool3d.register_full_backward_pre_hook
+      ~LNSAvgPool3d.register_load_state_dict_post_hook
+      ~LNSAvgPool3d.register_load_state_dict_pre_hook
+      ~LNSAvgPool3d.register_module
+      ~LNSAvgPool3d.register_parameter
+      ~LNSAvgPool3d.register_state_dict_post_hook
+      ~LNSAvgPool3d.register_state_dict_pre_hook
+      ~LNSAvgPool3d.requires_grad_
+      ~LNSAvgPool3d.set_extra_state
+      ~LNSAvgPool3d.set_submodule
+      ~LNSAvgPool3d.share_memory
+      ~LNSAvgPool3d.state_dict
+      ~LNSAvgPool3d.to
+      ~LNSAvgPool3d.to_empty
+      ~LNSAvgPool3d.train
+      ~LNSAvgPool3d.type
+      ~LNSAvgPool3d.xpu
+      ~LNSAvgPool3d.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LNSAvgPool3d.T_destination
+      ~LNSAvgPool3d.call_super_init
+      ~LNSAvgPool3d.dump_patches
+      ~LNSAvgPool3d.training
+   
+   

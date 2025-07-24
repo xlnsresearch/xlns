@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Precision Comparison" href="precision_comparison.html" />
-    <link rel="prev" title="Vizualization" href="vizualization.html" /> 
+    <link rel="prev" title="Visualization" href="visualization.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,18 +50,18 @@
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="optimizers.html">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="vizualization.html">Vizualization</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="vizualization.html#quick-start">Quick Start</a></li>
-<li class="toctree-l3 current"><a class="reference internal" href="vizualization.html#overview">Overview</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="visualization.html">Visualization</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="visualization.html#quick-start">Quick Start</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="visualization.html#overview">Overview</a><ul class="current">
 <li class="toctree-l4 current"><a class="current reference internal" href="#">Error Analysis</a></li>
 <li class="toctree-l4"><a class="reference internal" href="precision_comparison.html">Precision Comparison</a></li>
 <li class="toctree-l4"><a class="reference internal" href="autograd_graphs.html">Autograd Graph Visualization</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="vizualization.html#error-analysis-functions">Error Analysis Functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="vizualization.html#precision-comparison-functions">Precision Comparison Functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="vizualization.html#autograd-vizualization">Autograd vizualization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="vizualization.html#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html#error-analysis-functions">Error Analysis Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html#precision-comparison-functions">Precision Comparison Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html#autograd-visualization">Autograd visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
 </ul>
@@ -83,7 +83,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html">xlnstorch</a></li>
-          <li class="breadcrumb-item"><a href="vizualization.html">Vizualization</a></li>
+          <li class="breadcrumb-item"><a href="visualization.html">Visualization</a></li>
       <li class="breadcrumb-item active">Error Analysis</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/xlnstorch/error_analysis.rst.txt" rel="nofollow"> View page source</a>
@@ -200,10 +200,34 @@ and shows how different precisions affect the representation of numbers.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="generated/xlnstorch.viz.plot_spacing_heatmap.html#xlnstorch.viz.plot_spacing_heatmap" title="xlnstorch.viz.plot_spacing_heatmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">viz.plot_spacing_heatmap()</span></code></a> vizualizes the spacing of representations of LNS
+<p><a class="reference internal" href="generated/xlnstorch.viz.plot_spacing_heatmap.html#xlnstorch.viz.plot_spacing_heatmap" title="xlnstorch.viz.plot_spacing_heatmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">viz.plot_spacing_heatmap()</span></code></a> visualizes the spacing of representations of LNS
 numbers across different precisions. This helps understand how LNS numbers are
 distributed and how precision affects their representation.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xlnstorch</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_spacing_heatmap</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="distribution-analysis">
+<h2>Distribution Analysis<a class="headerlink" href="#distribution-analysis" title="Link to this heading"></a></h2>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">viz.plot_lns_error_heatmap()</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xlnstorch</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_lns_error_heatmap</span><span class="p">(</span>
+    <span class="n">f_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+    <span class="n">low</span><span class="o">=-</span><span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">high</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="mi">3000</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_lns_distribution()</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">xlnstorch</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_lns_distribution</span><span class="p">(</span>
+    <span class="n">f</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">low</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">high</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -214,7 +238,7 @@ distributed and how precision affects their representation.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="vizualization.html" class="btn btn-neutral float-left" title="Vizualization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="visualization.html" class="btn btn-neutral float-left" title="Visualization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="precision_comparison.html" class="btn btn-neutral float-right" title="Precision Comparison" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

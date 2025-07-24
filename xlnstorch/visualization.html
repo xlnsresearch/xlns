@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vizualization &mdash; xlns 1.0.5 documentation</title>
+  <title>Visualization &mdash; xlns 1.0.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
@@ -50,7 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="layers.html">Layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="optimizers.html">Optimizers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Vizualization</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Visualization</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#quick-start">Quick Start</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="error_analysis.html">Error Analysis</a></li>
@@ -71,7 +71,7 @@
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.viz.plot_precision_heatmap_grid.html">xlnstorch.viz.plot_precision_heatmap_grid</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#autograd-vizualization">Autograd vizualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#autograd-visualization">Autograd visualization</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="generated/xlnstorch.viz.graph.make_autograd_graph.html">xlnstorch.viz.graph.make_autograd_graph</a></li>
 </ul>
 </li>
@@ -97,9 +97,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html">xlnstorch</a></li>
-      <li class="breadcrumb-item active">Vizualization</li>
+      <li class="breadcrumb-item active">Visualization</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/xlnstorch/vizualization.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/xlnstorch/visualization.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -107,15 +107,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="vizualization">
-<span id="vizualization-doc"></span><h1>Vizualization<a class="headerlink" href="#vizualization" title="Link to this heading"></a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch.viz</span></code> submodule provides tools for vizualizing and analyzing
+  <section id="visualization">
+<span id="visualization-doc"></span><h1>Visualization<a class="headerlink" href="#visualization" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch.viz</span></code> submodule provides tools for visualizing and analyzing
 LNS operations and their numerical properties. This module includes functionality
 for creating error heatmaps, generating autograd graphs, and analyzing the
 precision characteristics of LNS arithmetic operations.</p>
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
-<p>Here’s a simple example of vizualizing the error characteristics of an LNS operation:</p>
+<p>Here’s a simple example of visualizing the error characteristics of an LNS operation:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xlnstorch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xltorch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">xlnstorch.viz</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_error_grid</span><span class="p">,</span> <span class="n">plot_error_heatmap</span>
@@ -136,7 +136,7 @@ precision characteristics of LNS arithmetic operations.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>For vizualizing autograd graphs with LNS tensors:</p>
+<p>For visualizing autograd graphs with LNS tensors:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">xlnstorch.viz.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_autograd_graph</span>
 
 <span class="c1"># Create some LNS tensors with gradients</span>
@@ -162,6 +162,7 @@ precision characteristics of LNS arithmetic operations.</p>
 <li class="toctree-l2"><a class="reference internal" href="error_analysis.html#error-grid-generation">Error Grid Generation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="error_analysis.html#error-visualization">Error Visualization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="error_analysis.html#range-analysis">Range Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="error_analysis.html#distribution-analysis">Distribution Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="precision_comparison.html">Precision Comparison</a><ul>
@@ -222,21 +223,21 @@ affect numerical accuracy for the same operation.</p>
 </tbody>
 </table>
 </section>
-<section id="autograd-vizualization">
-<h2>Autograd vizualization<a class="headerlink" href="#autograd-vizualization" title="Link to this heading"></a></h2>
-<p>The autograd vizualization tools provide insight into the computational graph
+<section id="autograd-visualization">
+<h2>Autograd visualization<a class="headerlink" href="#autograd-visualization" title="Link to this heading"></a></h2>
+<p>The autograd visualization tools provide insight into the computational graph
 structure when using LNS tensors.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.viz.graph.make_autograd_graph.html#xlnstorch.viz.graph.make_autograd_graph" title="xlnstorch.viz.graph.make_autograd_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">viz.graph.make_autograd_graph</span></code></a></p></td>
-<td><p>Build (and return) a <cite>graphviz.Digraph</cite> object that vizualizes the PyTorch autograd graph for the given variables.</p></td>
+<td><p>Build (and return) a <cite>graphviz.Digraph</cite> object that visualizes the PyTorch autograd graph for the given variables.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
-<p>The vizualization module has optional dependencies:</p>
+<p>The visualization module has optional dependencies:</p>
 <ul class="simple">
 <li><p><strong>matplotlib</strong>: Required for the plotting functions.</p></li>
 <li><p><strong>graphviz</strong>: Required for <code class="docutils literal notranslate"><span class="pre">make_autograd_graph</span></code></p></li>
