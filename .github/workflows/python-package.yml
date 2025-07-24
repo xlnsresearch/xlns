@@ -64,7 +64,7 @@ jobs:
 
     - name: Install xlns modules
       run: |
-        pip install -e . ./xlnstorch
+        pip install -v . ./xlnstorch
 
     - name: Run pytest on xlnstorch tests
       run: |

@@ -1,4 +1,4 @@
-import warnings
+import logging
 try:
     import torch
 except ModuleNotFoundError as e:
@@ -45,7 +45,7 @@ from .tensor import (
 try:
     from . import _C
 except ImportError as e:
-    warnings.warn("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
+    logging.info("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
 from . import operators
 from . import nn
 from . import optim
