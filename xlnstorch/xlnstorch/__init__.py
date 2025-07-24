@@ -1,3 +1,4 @@
+import warnings
 try:
     import torch
 except ModuleNotFoundError as e:
@@ -41,7 +42,10 @@ from .tensor import (
     randn,
     randn_like,
 )
-from . import _C
+try:
+    from . import _C
+except ImportError as e:
+    warnings.warn("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
 from . import operators
 from . import nn
 from . import optim
