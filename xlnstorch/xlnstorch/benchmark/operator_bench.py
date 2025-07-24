@@ -1,7 +1,7 @@
 from typing import Callable, Tuple, Dict
 import torch
 from xlnstorch import randn, randn_like
-from xlnstorch.benchmark import Benchmark
+from . import Benchmark
 
 class UnaryBench(Benchmark):
     """

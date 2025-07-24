@@ -1,0 +1,26 @@
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "wheel",
+    "torch>=2.0",
+    "ninja",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xlnstorch"
+version = "1.0.0"
+description = "A PyTorch backend for LNS experimentation"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["torch>=2.0"]
+
+[[tool.setuptools.ext-modules]]
+name = "xlnstorch._C"
+sources = ["xlnstorch/_C/float_to_lns.cpp"]
+language = "c++"
+extra-compile-args = ["-O3", "-std=c++17"]
+optional = true
+
+[tool.setuptools.cmdclass]
+build_ext = "xlnstorch._build_ext.OptionalBuildExtension"

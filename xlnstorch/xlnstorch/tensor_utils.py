@@ -101,7 +101,7 @@ class FloatToLNS(LNSFunction):
         packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
 
         return packed
-    
+
     @staticmethod
     def setup_context(ctx, inputs, output):
         _, base = inputs

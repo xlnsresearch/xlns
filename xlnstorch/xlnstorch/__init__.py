@@ -41,6 +41,7 @@ from .tensor import (
     randn,
     randn_like,
 )
+from . import _C
 from . import operators
 from . import nn
 from . import optim
