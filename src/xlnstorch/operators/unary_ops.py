@@ -1,6 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, implements
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, lnstensor, implements
+from xlnstorch.autograd import LNSFunction
 from . import lns_neg
 
 class LNSNegFunction(LNSFunction):
@@ -120,7 +120,7 @@ class LNSSignFunction(LNSFunction):
         return torch.where(
             torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO,
             torch.where(x_packed_sign == 1,
-                        LNSTensor.get_internal_tensor(-1.0, base), LNSTensor.get_internal_tensor(1.0, base)))
+                        LNS_NEG_ONE, LNS_ONE))
 
     @staticmethod
     def setup_context(ctx, inputs, output):

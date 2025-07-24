@@ -9,8 +9,8 @@ import torch
 import xlns as xl
 
 # Import constants and base classes that don't cause circular imports
-from . import LNS_ZERO
-from .autograd import LNSFunction
+from xlnstorch import LNS_ZERO
+from xlnstorch.autograd import LNSFunction
 
 # Precomputed table of bases from precisions
 # base = 2^(2^(-f)) for f in [1, 40]
@@ -180,6 +180,23 @@ class LNSGetItemFunction(LNSFunction):
         grad_x = torch.full_like(x, LNS_ZERO)
         grad_x[idx] = grad_output
 
+        return grad_x, None
+
+
+class LNSToFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, device):
+        return x.to(device)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, _ = inputs
+        ctx.orig_device = x.device
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_x = grad_output.to(ctx.orig_device)
         return grad_x, None
 
 

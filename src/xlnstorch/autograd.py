@@ -3,7 +3,7 @@ from collections import deque
 from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .tensor import LNSTensor
+    from xlnstorch.tensor import LNSTensor
 
 # Lazy import cache to avoid repeated imports
 _tensor_module = None

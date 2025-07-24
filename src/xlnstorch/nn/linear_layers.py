@@ -1,6 +1,6 @@
 import torch
+from xlnstorch import rand
 from . import LNSModule
-from .. import rand
 
 class LNSIdentity(LNSModule):
     """

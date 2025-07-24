@@ -42,6 +42,14 @@ Convolutional Layers               Note
 :class:`nn.LNSConv3d`
 ===============================    =====================
 
+===============================    =====================
+Pooling Layers                     Note
+===============================    =====================
+:class:`nn.LNSAvgPool1d`           No parameters
+:class:`nn.LNSAvgPool2d`           No parameters
+:class:`nn.LNSAvgPool3d`           No parameters
+===============================    =====================
+
 .. hide the autosummary table from the main page but still
 .. generate the stub files for the layers (this is a hack).
 
@@ -68,6 +76,10 @@ Convolutional Layers               Note
     nn.LNSConv1d
     nn.LNSConv2d
     nn.LNSConv3d
+
+    nn.LNSAvgPool1d
+    nn.LNSAvgPool2d
+    nn.LNSAvgPool3d
 
 .. raw:: html
 

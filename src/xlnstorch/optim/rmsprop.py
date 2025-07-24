@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch.operators import (
     lns_equal,
     lns_sub,
     lns_mul,
@@ -109,8 +109,7 @@ class LNSRMSprop(LNSOptimizer):
                 lr, alpha, eps, weight_decay, momentum, base=base
             )
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
-            one_minus_alpha = lns_sub(one, alpha._lns, base)
+            one_minus_alpha = lns_sub(LNS_ONE, alpha._lns, base)
 
             for p in group["params"]:
 

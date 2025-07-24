@@ -1,6 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, ones
+from xlnstorch.autograd import LNSFunction
 from . import (
     lns_sum,
 )
@@ -167,3 +167,28 @@ def index_put_(x, indices, values, accumulate=False):
     result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
 
     return x._inplace_copy(result)
+
+class LNSStackFunction(LNSFunction):
+
+    @staticmethod
+    def forward(dim, *tensors):
+        return torch.stack(tensors, dim=dim)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        dim, *tensors = inputs
+        ctx.save_for_backward(*tensors)
+        ctx.dim = dim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_tensor = grad_output.unbind(ctx.dim)
+        return (None, *grad_tensor)
+
+@implements(torch.stack, LNSStackFunction.forward, "default", default=True)
+def stack(tensors, dim=0):
+
+    tensors = format_lnstensor_operands(*tensors)
+    result = LNSStackFunction.apply(dim, *tensors)
+
+    return lnstensor(result, from_lns=True, b=tensors[0].base)

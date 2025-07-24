@@ -6,7 +6,11 @@ except ModuleNotFoundError as e:
         "See https://pytorch.org/get-started/locally for instructions."
     ) from e
 
+# These constants are independent of base so we can precompute
+# their internal representations.
 LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
+LNS_ONE = torch.tensor(0, dtype=torch.float64)
+LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
 
 from . import autograd
 
@@ -45,6 +49,8 @@ from . import benchmark
 
 __all__ = [
     "LNS_ZERO",
+    "LNS_ONE",
+    "LNS_NEG_ONE",
 
     "LNSTensor",
     "lnstensor",

@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch.operators import (
     lns_equal,
     lns_sub,
     lns_mul,
@@ -96,8 +96,7 @@ class LNSAdadelta(LNSOptimizer):
                 lr, rho, eps, weight_decay, base=base
             )
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
-            one_minus_rho = lns_sub(one, rho._lns, base)
+            one_minus_rho = lns_sub(LNS_ONE, rho._lns, base)
 
             for p in group["params"]:
 

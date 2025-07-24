@@ -1,5 +1,6 @@
 from ._layer import (
     LNSModule,
+    LNSSequential,
 )
 from .linear_layers import (
     LNSIdentity,
@@ -18,10 +19,16 @@ from .convolutional_layers import (
     LNSConv2d,
     LNSConv3d,
 )
+from .pooling_layers import (
+    LNSAvgPool1d,
+    LNSAvgPool2d,
+    LNSAvgPool3d,
+)
 from . import init
 
 __all__ = [
     "LNSModule",
+    "LNSSequential",
 
     "LNSIdentity",
     "LNSLinear",
@@ -36,4 +43,8 @@ __all__ = [
     "LNSConv1d",
     "LNSConv2d",
     "LNSConv3d",
+
+    "LNSAvgPool1d",
+    "LNSAvgPool2d",
+    "LNSAvgPool3d",
 ]

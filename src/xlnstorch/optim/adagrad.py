@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch.operators import (
     lns_equal,
     lns_sub,
     lns_mul,
@@ -122,15 +122,15 @@ class LNSAdagrad(LNSOptimizer):
                     state["step"] = LNS_ZERO.clone()
                     state["sum"] = torch.full_like(p, init_acc_val._lns)
 
-                state["step"] = lns_add(state["step"], LNSTensor.get_internal_tensor(1.0, base), base)
+                state["step"] = lns_add(state["step"], LNS_ONE, base)
                 step = state["step"] # t
 
                 # 2. step lr: γ' ← γ / (1 + (t − 1) * η)
                 if not lns_equal(lr_decay._lns, LNS_ZERO):
                     denom = lns_add(
-                        LNSTensor.get_internal_tensor(1.0, base),
+                        LNS_ONE,
                         lns_mul(lr_decay._lns, lns_sub(
-                            step, LNSTensor.get_internal_tensor(1.0, base), base)), base)
+                            step, LNS_ONE, base)), base)
                     lr_t = lns_div(lr._lns, denom, base)
 
                 else:

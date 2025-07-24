@@ -60,7 +60,7 @@ def demo_spacing_heatmaps():
 
     # Demo 2: Wide range analysis
     print("2. Wide range spacing analysis...")
-    
+
     axes = viz_range.plot_spacing_heatmap(
         f_range=[8, 12, 16],
         low=0.01,
@@ -94,7 +94,7 @@ def main():
     print("\n" + "=" * 50)
     print("Demo completed successfully!")
     print("\nGenerated files:")
-    print("  - staircase_precision_comparison.png") 
+    print("  - staircase_precision_comparison.png")
     print("  - spacing_heatmap_comparison.png")
     print("  - spacing_heatmap_widerange.png")
 

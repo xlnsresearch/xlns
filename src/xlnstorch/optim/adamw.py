@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch.operators import (
     lns_sub,
     lns_neg,
     lns_equal,
@@ -110,9 +110,8 @@ class LNSAdamW(LNSOptimizer):
             lr, beta1, beta2, eps, weight_decay = align_lnstensor_bases(
                 lr, beta1, beta2, eps, weight_decay, base=base)
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
-            one_minus_beta1 = lns_sub(one, beta1._lns, base)
-            one_minus_beta2 = lns_sub(one, beta2._lns, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
+            one_minus_beta2 = lns_sub(LNS_ONE, beta2._lns, base)
 
             for p in group["params"]:
 
@@ -165,8 +164,8 @@ class LNSAdamW(LNSOptimizer):
                 t_tensor = torch.tensor(t, dtype=torch.int64)
                 beta1_t = lns_pow(beta1._lns, t_tensor, base)
                 beta2_t = lns_pow(beta2._lns, t_tensor, base)
-                bias_corr1 = lns_sub(one, beta1_t, base)
-                bias_corr2 = lns_sub(one, beta2_t, base)
+                bias_corr1 = lns_sub(LNS_ONE, beta1_t, base)
+                bias_corr2 = lns_sub(LNS_ONE, beta2_t, base)
 
                 exp_avg_hat = lns_div(exp_avg, bias_corr1, base)
                 if amsgrad:

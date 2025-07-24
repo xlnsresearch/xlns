@@ -1,5 +1,6 @@
+from collections import OrderedDict
 import torch
-from .. import LNS_ZERO
+from xlnstorch import LNS_ZERO
 
 class LNSModule(torch.nn.Module):
     """
@@ -82,3 +83,31 @@ class LNSModule(torch.nn.Module):
                     else:
                         param.grad.requires_grad_(False)
                     param.grad.fill_(LNS_ZERO)
+
+class LNSSequential(torch.nn.Sequential, LNSModule):
+    pass
+    # This class doesn't need to implement any additional functionality
+    # beyond what is provided by torch.nn.Sequential and LNSModule.
+
+    # It inherits the behavior of both classes, allowing it to be used
+    # as a sequential container for LNS layers.
+
+    # The following commented-out code is an alternative implementation
+    # that could be used if needed, but it is not necessary for the current
+    # functionality of LNSSequential.
+
+    # def __init__(self, *args):
+    #     super().__init__()
+
+    #     if len(args) == 1 and isinstance(args[0], OrderedDict):
+    #         for key, module in args[0].items():
+    #             self.add_module(key, module)
+
+    #     else:
+    #         for idx, module in enumerate(args):
+    #             self.add_module(str(idx), module)
+
+    # def forward(self, input):
+    #     for module in self._modules.values():
+    #         input = module(input)
+    #     return input

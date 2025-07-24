@@ -1,5 +1,5 @@
 import torch
-from .. import LNSTensor, LNS_ZERO
+from xlnstorch import LNSTensor, LNS_ZERO
 
 __all__ = [
     "normal_",

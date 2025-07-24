@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch.operators import (
     lns_equal,
     lns_sub,
     lns_mul,
@@ -82,14 +82,13 @@ class LNSRAdam(LNSOptimizer):
                 lr, beta1, beta2, eps, weight_decay, base=base
             )
 
-            one = LNSTensor.get_internal_tensor(1.0, base)
             two = LNSTensor.get_internal_tensor(2.0, base)
             four = LNSTensor.get_internal_tensor(4.0, base)
             five = LNSTensor.get_internal_tensor(5.0, base)
 
-            one_minus_beta1 = lns_sub(one, beta1._lns, base)
-            one_minus_beta2 = lns_sub(one, beta2._lns, base)
-            rho_inf = lns_sub(lns_div(two, lns_sub(one, beta2._lns, base), base), one, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
+            one_minus_beta2 = lns_sub(LNS_ONE, beta2._lns, base)
+            rho_inf = lns_sub(lns_div(two, lns_sub(LNS_ONE, beta2._lns, base), base), LNS_ONE, base)
 
             for p in group["params"]:
 
@@ -141,13 +140,13 @@ class LNSRAdam(LNSOptimizer):
 
                 # 5. bias-corrected first moment: m'_t ← m_t / (1 - β_1^t)
                 beta1_pow = lns_pow(beta1._lns, t, base)
-                one_minus_beta1_pow = lns_sub(one, beta1_pow, base)
+                one_minus_beta1_pow = lns_sub(LNS_ONE, beta1_pow, base)
                 exp_avg_hat = lns_div(exp_avg, one_minus_beta1_pow, base)
 
                 # 6. ρ_t ← ρ_∞ - 2t*β_2^t / (1 - β_2^t)
                 t_lns = LNSTensor.get_internal_tensor(t, base)
                 beta2_pow = lns_pow(beta2._lns, t, base)
-                one_minus_beta2_pow = lns_sub(one, beta2_pow, base)
+                one_minus_beta2_pow = lns_sub(LNS_ONE, beta2_pow, base)
                 corr_term = lns_div(
                     lns_mul(two, lns_mul(t_lns, beta2_pow)),
                     one_minus_beta2_pow,

@@ -2,7 +2,7 @@ from __future__ import annotations
 from decimal import Decimal, getcontext
 from typing import Callable, Tuple, List, Dict, Any
 import torch
-from .. import LNSTensor, lnstensor
+from xlnstorch import LNSTensor, lnstensor
 
 def _to_dec(x: float | torch.Tensor | LNSTensor) -> Decimal:
     """Convert a float or tensor to an *exact* Decimal"""

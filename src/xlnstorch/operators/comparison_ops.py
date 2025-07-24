@@ -1,6 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros
+from xlnstorch.autograd import LNSFunction
 from . import (
     lns_sub,
     lns_abs,
@@ -11,6 +11,7 @@ from . import (
     lns_gt,
     lns_lt,
     lns_eq,
+    lns_div,
 )
 
 def _lns_equal(x, y):
@@ -420,3 +421,207 @@ def minimum(x, y, *, out=None):
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMaxFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+        x_packed_log = x_packed >> 1
+        x_packed_sign = x_packed & 1
+
+        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+
+        if dim is None:
+            flat_indices = torch.argmax(x_packed_logsign)
+            result = x.flatten()[flat_indices]
+
+            return result
+
+        indices_kept = torch.argmax(x_packed_logsign, dim=dim, keepdim=True)
+        result = torch.gather(x, dim, indices_kept)
+
+        if not keepdim:
+            indices = indices_kept.squeeze(dim)
+            result = result.squeeze(dim)
+        else:
+            indices = indices_kept
+
+        return torch.return_types.max((result, indices))
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        if dim is None:
+            ctx.save_for_backward(x, output, base)
+        else:
+            _, indices = output
+            ctx.save_for_backward(x, indices)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output, grad_indicies=None): # grad_indices is not used
+        if ctx.dim is None:
+            x, result, base = ctx.saved_tensors
+
+            max_values = torch.eq(x, result)
+            grad = lns_div(LNS_ONE, LNSTensor.get_internal_tensor(max_values.sum(), base), base)
+
+            return torch.where(max_values, grad, LNS_ZERO), None, None, None
+
+        x, indices = ctx.saved_tensors
+
+        grad_x = zeros(x.shape)._lns
+        if ctx.keepdim:
+            idx_expanded  = indices
+            grad_expanded = grad_output
+        else:
+            idx_expanded  = indices.unsqueeze(ctx.dim)
+            grad_expanded = grad_output.unsqueeze(ctx.dim)
+
+        grad_x.scatter_(ctx.dim,
+                        idx_expanded.expand(x.shape),
+                        grad_expanded.expand(x.shape))
+
+        return grad_x, None, None, None
+
+@implements(torch.max, LNSMaxFunction.forward, "default", default=True)
+def max(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSMaxFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+
+        if dim is None:
+            return out._inplace_copy(result)
+
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
+
+    if dim is None:
+        return lnstensor(result, from_lns=True, b=x.base)
+
+    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+
+def _lns_argmax(x, dim=None, keepdim=False):
+    x_packed = x.to(torch.int64)
+    x_packed_log = x_packed >> 1
+    x_packed_sign = x_packed & 1
+
+    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+    return torch.argmax(x_packed_logsign, dim=dim, keepdim=keepdim)
+
+@implements(torch.argmax, _lns_argmax, "default", default=True)
+def argmax(x, dim=None, keepdim=False, *, out=None):
+    result = _lns_argmax(x._lns, dim, keepdim)
+
+    if out is not None:
+        out.copy_(result)
+
+    return result
+
+class LNSMinFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+        x_packed_log = x_packed >> 1
+        x_packed_sign = x_packed & 1
+
+        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+
+        if dim is None:
+            flat_indices = torch.argmin(x_packed_logsign)
+            result = x.flatten()[flat_indices]
+
+            return result
+
+        indices_kept = torch.argmin(x_packed_logsign, dim=dim, keepdim=True)
+        result = torch.gather(x, dim, indices_kept)
+
+        if not keepdim:
+            indices = indices_kept.squeeze(dim)
+            result = result.squeeze(dim)
+        else:
+            indices = indices_kept
+
+        return torch.return_types.max((result, indices))
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        if dim is None:
+            ctx.save_for_backward(x, output, base)
+        else:
+            _, indices = output
+            ctx.save_for_backward(x, indices)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output, grad_indicies=None): # grad_indices is not used
+        if ctx.dim is None:
+            x, result, base = ctx.saved_tensors
+
+            min_values = torch.eq(x, result)
+            grad = lns_div(LNS_ONE, LNSTensor.get_internal_tensor(min_values.sum(), base), base)
+
+            return torch.where(min_values, grad, LNS_ZERO), None, None, None
+
+        x, indices = ctx.saved_tensors
+
+        grad_x = zeros(x.shape)._lns
+        if ctx.keepdim:
+            idx_expanded  = indices
+            grad_expanded = grad_output
+        else:
+            idx_expanded  = indices.unsqueeze(ctx.dim)
+            grad_expanded = grad_output.unsqueeze(ctx.dim)
+
+        grad_x.scatter_(ctx.dim,
+                        idx_expanded.expand(x.shape),
+                        grad_expanded.expand(x.shape))
+
+        return grad_x, None, None, None
+
+@implements(torch.min, LNSMinFunction.forward, "default", default=True)
+def min(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSMinFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+
+        if dim is None:
+            return out._inplace_copy(result)
+
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
+
+    if dim is None:
+        return lnstensor(result, from_lns=True, b=x.base)
+
+    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+
+def _lns_argmin(x, dim=None, keepdim=False):
+    x_packed = x.to(torch.int64)
+    x_packed_log = x_packed >> 1
+    x_packed_sign = x_packed & 1
+
+    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
+    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
+    return torch.argmin(x_packed_logsign, dim=dim, keepdim=keepdim)
+
+@implements(torch.argmin, _lns_argmin, "default", default=True)
+def argmin(x, dim=None, keepdim=False, *, out=None):
+    result = _lns_argmin(x._lns, dim, keepdim)
+
+    if out is not None:
+        out.copy_(result)
+
+    return result

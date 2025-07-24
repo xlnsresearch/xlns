@@ -10,6 +10,10 @@ from .range import (
     plot_staircase,
     plot_spacing_heatmap,
 )
+from .distribution import (
+    plot_lns_error_heatmap,
+    plot_lns_distribution,
+)
 
 __all__ = [
     "make_error_grid",
@@ -19,4 +23,6 @@ __all__ = [
     "plot_precision_heatmap_grid",
     "plot_staircase",
     "plot_spacing_heatmap",
+    "plot_lns_error_heatmap",
+    "plot_lns_distribution",
 ]

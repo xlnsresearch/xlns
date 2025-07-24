@@ -1,6 +1,6 @@
 import torch
-from .. import LNSTensor, lnstensor, LNS_ZERO, align_lnstensor_bases, zeros_like, full_like
-from ..operators import (
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, LNS_NEG_ONE, align_lnstensor_bases, zeros_like, full_like
+from xlnstorch.operators import (
     lns_sub,
     lns_mul,
     lns_neg,
@@ -120,13 +120,13 @@ class LNSRprop(LNSOptimizer):
                 grad_prod_sign = lns_sign(grad_prod, base)
 
                 # positive mask and clamp to Γ_max: η ← η * η_+
-                pos_mask = lns_eq(grad_prod_sign, LNSTensor.get_internal_tensor(1.0, base))
+                pos_mask = lns_eq(grad_prod_sign, LNS_ONE)
                 step_size_pos = lns_mul(step_size, eta_p._lns)
                 step_size_pos = lns_minimum(step_size_pos, step_max._lns, base)
                 step_size = torch.where(pos_mask, step_size_pos, step_size)
 
                 # negative mask and clamp to Γ_min: η ← η * η_-
-                neg_mask = lns_eq(grad_prod_sign, LNSTensor.get_internal_tensor(-1.0, base))
+                neg_mask = lns_eq(grad_prod_sign, LNS_NEG_ONE)
                 step_size_neg = lns_mul(step_size, eta_m._lns)
                 step_size_neg = lns_maximum(step_size_neg, step_min._lns, base)
                 step_size = torch.where(neg_mask, step_size_neg, step_size)

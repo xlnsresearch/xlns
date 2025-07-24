@@ -1,6 +1,6 @@
 import torch
-from .. import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
-from ..autograd import LNSFunction
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from xlnstorch.autograd import LNSFunction
 from . import (
     lns_add,
     lns_mul,
@@ -221,7 +221,7 @@ class LNSDivFunction(LNSFunction):
         grad_x = lns_div(grad_output, y, base)
         grad_y = lns_square(y, base)
         grad_y = lns_div(x, grad_y, base)
-        grad_y = lns_mul(grad_y, LNSTensor.get_internal_tensor(-1.0, base))
+        grad_y = lns_mul(grad_y, LNS_NEG_ONE)
         grad_y = lns_mul(grad_output, grad_y)
 
         return grad_x, grad_y, None
@@ -248,7 +248,7 @@ class LNSReciprocalFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base):
-        return lns_div(LNSTensor.get_internal_tensor(1.0, base), x, base)
+        return lns_div(LNS_ONE, x, base)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -261,7 +261,7 @@ class LNSReciprocalFunction(LNSFunction):
 
         grad_x = lns_square(x, base)
         grad_x = lns_reciprocal(grad_x, base)
-        grad_x = lns_mul(grad_x, LNSTensor.get_internal_tensor(-1.0, base))
+        grad_x = lns_mul(grad_x, LNS_NEG_ONE)
         grad_x = lns_mul(grad_output, grad_x)
 
         return grad_x, None
@@ -387,14 +387,13 @@ class LNSSumFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, base, _, _ = inputs
+        x, _, _, _ = inputs
         ctx.save_for_backward(x)
-        ctx.base = base
 
     @staticmethod
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
-        return torch.full_like(x, LNSTensor.get_internal_tensor(1.0, ctx.base).item()), None, None, None
+        return torch.full_like(x, LNS_ONE.item()), None, None, None
 
 @implements(torch.sum, LNSSumFunction.forward, "default", default=True)
 def sum(x, dim=None, keepdim=False, *, out=None):
@@ -672,7 +671,7 @@ class LNSTransposeFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         A, = ctx.saved_tensors
-        return torch.full_like(A, LNSTensor.get_internal_tensor(1.0, ctx.base).item()), None, None
+        return torch.full_like(A, LNS_ONE), None, None
 
 @implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
 def transpose(A, dim0, dim1):
