@@ -13,6 +13,13 @@ LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
 LNS_ONE = torch.tensor(0, dtype=torch.float64)
 LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
 
+try:
+    from . import _C
+    _C_AVAILABLE = True
+except ImportError as e:
+    logging.info("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
+    _C_AVAILABLE = False
+
 from . import autograd
 
 from .dispatch_table import (
@@ -42,10 +49,6 @@ from .tensor import (
     randn,
     randn_like,
 )
-try:
-    from . import _C
-except ImportError as e:
-    logging.info("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
 from . import operators
 from . import nn
 from . import optim
@@ -56,6 +59,7 @@ __all__ = [
     "LNS_ZERO",
     "LNS_ONE",
     "LNS_NEG_ONE",
+    "_C_AVAILABLE",
 
     "LNSTensor",
     "lnstensor",

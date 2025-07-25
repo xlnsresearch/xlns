@@ -9,7 +9,7 @@ import torch
 import xlns as xl
 
 # Import constants and base classes that don't cause circular imports
-from xlnstorch import LNS_ZERO
+from xlnstorch import LNS_ZERO, _C_AVAILABLE
 from xlnstorch.autograd import LNSFunction
 
 # Precomputed table of bases from precisions
@@ -86,21 +86,40 @@ def _get_tensor_module():
         _tensor_module = tensor
     return _tensor_module
 
+def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
+
+    log_base = torch.log(base)
+    log_data = torch.log(torch.abs(x)) / log_base
+    exponent = log_data.round().to(torch.int64)
+
+    sign_bit = (x < 0).to(torch.int64)
+    packed_int = (exponent << 1) | sign_bit
+    packed = packed_int.to(torch.float64)
+    packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
+
+    return packed
+
+def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
+    packed_grad_output = grad_output.to(torch.int64)
+
+    exponent = (packed_grad_output >> 1).to(torch.float64)
+    sign = torch.where((packed_grad_output & 1).bool(), -1.0, 1.0)
+
+    return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent))
+
+if _C_AVAILABLE:
+    import xlnstorch._C
+    float_to_lns_forward = xlnstorch._C.float_to_lns_forward
+    float_to_lns_backward = xlnstorch._C.float_to_lns_backward
+else:
+    float_to_lns_forward = _float_to_lns_forward_python
+    float_to_lns_backward = _float_to_lns_backward_python
 
 class FloatToLNS(LNSFunction):
 
     @staticmethod
     def forward(x, base):
-        log_base = torch.log(base)
-        log_data = torch.log(torch.abs(x)) / log_base
-        exponent = log_data.round().to(torch.int64)
-
-        sign_bit = (x < 0).to(torch.int64)
-        packed_int = (exponent << 1) | sign_bit
-        packed = packed_int.to(torch.float64)
-        packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
-
-        return packed
+        return float_to_lns_forward(x, base)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -110,12 +129,7 @@ class FloatToLNS(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         base, = ctx.saved_tensors
-        packed_grad_output = grad_output.to(torch.int64)
-
-        exponent = (packed_grad_output >> 1).to(torch.float64)
-        sign = torch.where((packed_grad_output & 1).bool(), -1.0, 1.0)
-
-        return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent)), None
+        return float_to_lns_backward(grad_output, base), None
 
 
 class LNSChangeBaseFunction(LNSFunction):
