@@ -73,7 +73,7 @@ torch::Tensor float_to_lns_backward(const torch::Tensor& grad_output, const torc
 
 }
 
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+void init_float_to_lns(py::module& m) {
     m.def("float_to_lns_forward", &float_to_lns_forward, "LNS packing forward pass");
     m.def("float_to_lns_backward", &float_to_lns_backward, "LNS packing backward pass");
 }

@@ -107,13 +107,39 @@ def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor)
 
     return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent))
 
+def _change_base_forward_python(x: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
+    packed_int = x.to(torch.int64)
+    sign_bit = packed_int & 1
+    exponent = (packed_int >> 1).to(torch.float64)
+
+    exponent_new = exponent * torch.log(old_base) / torch.log(new_base)
+    new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
+    new_tensor = new_packed_int.to(torch.float64)
+
+    return new_tensor
+
+def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
+    packed_int = grad_output.to(torch.int64)
+    sign_bit = packed_int & 1
+    exponent = (packed_int >> 1).to(torch.float64)
+
+    exponent_new = exponent * torch.log(new_base) / torch.log(old_base)
+    old_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
+    old_tensor = old_packed_int.to(torch.float64)
+
+    return old_tensor
+
 if _C_AVAILABLE:
     import xlnstorch._C
     float_to_lns_forward = xlnstorch._C.float_to_lns_forward
     float_to_lns_backward = xlnstorch._C.float_to_lns_backward
+    change_base_forward = xlnstorch._C.change_base_forward
+    change_base_backward = xlnstorch._C.change_base_backward
 else:
     float_to_lns_forward = _float_to_lns_forward_python
     float_to_lns_backward = _float_to_lns_backward_python
+    change_base_forward = _change_base_forward_python
+    change_base_backward = _change_base_backward_python
 
 class FloatToLNS(LNSFunction):
 
@@ -136,15 +162,7 @@ class LNSChangeBaseFunction(LNSFunction):
 
     @staticmethod
     def forward(tensor, old_base, new_base):
-        packed_int = tensor.to(torch.int64)
-        sign_bit = packed_int & 1
-        exponent = (packed_int >> 1).to(torch.float64)
-
-        exponent_new = exponent * torch.log(old_base) / torch.log(new_base)
-        new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-        new_tensor = new_packed_int.to(torch.float64)
-
-        return new_tensor
+        return change_base_forward(tensor, old_base, new_base)
 
     @staticmethod
     def setup_context(ctx, inputs, outputs):
@@ -154,16 +172,7 @@ class LNSChangeBaseFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         old_base, new_base = ctx.saved_tensors
-
-        packed_int = grad_output.to(torch.int64)
-        sign_bit = packed_int & 1
-        exponent = (packed_int >> 1).to(torch.float64)
-
-        exponent_new = exponent * torch.log(new_base) / torch.log(old_base)
-        new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-        new_tensor = new_packed_int.to(torch.float64)
-
-        return new_tensor, None, None
+        return change_base_backward(grad_output, old_base, new_base), None, None
 
 
 class LNSGetItemFunction(LNSFunction):
