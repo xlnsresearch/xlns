@@ -4,8 +4,9 @@ warning instead of a hard error.
 """
 import textwrap
 import warnings
+from pathlib import Path
 
-from torch.utils.cpp_extension import BuildExtension, include_paths
+from torch.utils.cpp_extension import CppExtension, BuildExtension, include_paths
 
 # The exact exception raised by a compiler/linker failure can vary
 # between setuptools versions, so we catch the whole family.
@@ -26,8 +27,9 @@ except ImportError:                          # setuptools < 68
 
 class OptionalBuildExtension(BuildExtension):
     """
-    BuildExtension that swallows compiler/linker errors for *optional*
-    extensions and tells the user what happened.
+    BuildExtension that Globs all *.cpp in xlnstorch/_C and
+    plugs them into ext.sources. If compilation/linking fails,
+    shows a warning instead of aborting the installation.
     """
 
     _BOX = """
@@ -56,11 +58,15 @@ class OptionalBuildExtension(BuildExtension):
             # swallow the error → installation continues
 
     def build_extensions(self):
-        # Get PyTorch include paths
-        torch_include = include_paths()
+        src_dir = Path(__file__).resolve().parent / "_C"
+        cpp_files = [str(p) for p in src_dir.glob("*.cpp")]
+
+        torch_includes = include_paths()
+
         for ext in self.extensions:
-            # include_dirs may be None or list, ensure it's a list
-            if ext.include_dirs is None:
-                ext.include_dirs = []
-            ext.include_dirs.extend(torch_include)
+            if ext.name == "xlnstorch._C": # only our extension
+                ext.sources = cpp_files
+            # add torch include directories to the extension
+            ext.include_dirs = list(ext.include_dirs or []) + torch_includes
+
         super().build_extensions()
