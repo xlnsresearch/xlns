@@ -201,7 +201,7 @@ class LNSAddFunction(LNSFunction):
     def backward(ctx, grad_output):
         return grad_output, grad_output, None
 
-@implements(torch.add, LNSAddFunction.forward, key='default', default=_C_AVAILABLE)
+@implements(torch.add, LNSAddFunction.forward, key='default', default=not _C_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
