@@ -19,11 +19,11 @@ const std::map<std::string, sbdb_fn_ptr> sbdb_funcs {
 torch::Tensor add_forward(
     const torch::Tensor& x,
     const torch::Tensor& y,
-    const torch::Tensor& base,
+    const torch::Tensor& base_t,
     const std::string& sbdb_key
 ) {
 
-    const double double_b = base.item<double>();
+    const double base = base_t.item<double>();
     auto it = sbdb_funcs.find(sbdb_key);
     TORCH_CHECK(it != sbdb_funcs.end(), "Unsupported sbdb_func: ", sbdb_key);
     sbdb_fn_ptr sbdb_func = it->second; 
@@ -45,7 +45,7 @@ torch::Tensor add_forward(
 
         using scalar_t = scalar_t;
 
-        auto kernel = [double_b, sbdb_func] (scalar_t a, scalar_t b) -> scalar_t {
+        auto kernel = [base, sbdb_func] (scalar_t a, scalar_t b) -> scalar_t {
 
             long long a_packed, b_packed;
             if constexpr (std::is_same_v<scalar_t,double>) {
@@ -74,12 +74,12 @@ torch::Tensor add_forward(
                 }
             }
 
-            long long max_operand = std::max(a_packed, b_packed);
+            const long long max_operand = std::max(a_packed, b_packed);
 
-            long long abs_diff = std::abs((a_packed >> 1) - (b_packed >> 1));
-            long long sign_diff = (a_packed ^ b_packed) & 1LL;
+            const long long abs_diff = std::abs((a_packed >> 1) - (b_packed >> 1));
+            const long long sign_diff = (a_packed ^ b_packed) & 1LL;
 
-            long long result = max_operand + sbdb_func(-abs_diff, sign_diff, double_b);
+            long long result = max_operand + sbdb_func(-abs_diff, sign_diff, base);
             return static_cast<scalar_t>(result);
 
         };

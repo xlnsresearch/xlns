@@ -19,7 +19,7 @@ dependencies = ["torch>=2.0"]
 name = "xlnstorch._C"
 sources = [] # will be filled by _build_ext.py at build time
 language = "c++"
-extra-compile-args = ["-O3", "-std=c++17"]
+extra-compile-args = ["-O3", "-std=c++17", "-ffast-math"]
 optional = true
 
 [tool.setuptools.cmdclass]
