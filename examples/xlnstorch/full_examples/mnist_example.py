@@ -1,17 +1,27 @@
 import time
-
+import argparse
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='MNIST training with LNS')
+parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
+parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
+args = parser.parse_args()
+
 class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = xltorch.nn.LNSLinear(784, 100)
-        self.fc2 = xltorch.nn.LNSLinear(100, 10)
+        self.fc1 = xltorch.nn.LNSLinear(784, 100,
+                                        weight_f=args.precision, bias_f=args.precision,
+                                        weight_b=args.base, bias_b=args.base)
+        self.fc2 = xltorch.nn.LNSLinear(100, 10,
+                                        weight_f=args.precision, bias_f=args.precision,
+                                        weight_b=args.base, bias_b=args.base)
 
         # Initialize the weights and biases of the linear layers
         # with normal distribution for weights and zeros for biases.
@@ -32,7 +42,7 @@ class LNSNet(xltorch.nn.LNSModule):
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
 device = "cpu"
-train_transform = ToLNSTensor(device=device)
+train_transform = ToLNSTensor(f=args.precision, b=args.base, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
