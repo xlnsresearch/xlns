@@ -2,9 +2,7 @@
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/cpu/Loops.h>
 
-// special “zero” value in LNS space.
-static constexpr long long LNS_ZERO_INT = (-(1LL << 53)) | 1LL;
-static constexpr double LNS_ZERO = static_cast<double>(LNS_ZERO_INT);
+#include "lns_constants.h"
 
 // pre-compute log(base1) / log(base2) once per call (cheaper than calling log inside the loop)
 inline double ratio_log_base(const torch::Tensor& base1, const torch::Tensor& base2) {
@@ -39,7 +37,7 @@ torch::Tensor float_to_lns_forward(const torch::Tensor& x, const torch::Tensor& 
         [inv_log_b](double v) -> double {
 
             if (v == 0.0) {
-                return LNS_ZERO;
+                return lns::zero;
             }
 
             long long e = llround(std::log(std::abs(v)) * inv_log_b);
@@ -69,7 +67,7 @@ torch::Tensor float_to_lns_backward(const torch::Tensor& grad_output, const torc
 
             long long p = static_cast<long long>(grad);
 
-            if ((p | 1LL) == LNS_ZERO_INT) {
+            if ((p | 1LL) == lns::zero_int) {
                 return 0.0;
             }
 
@@ -110,8 +108,8 @@ torch::Tensor change_base_forward(const torch::Tensor& x, const torch::Tensor& o
 
             long long p = static_cast<long long>(v);
 
-            if ((p | 1LL) == LNS_ZERO_INT) {
-                return LNS_ZERO;
+            if ((p | 1LL) == lns::zero_int) {
+                return lns::zero;
             }
 
             double exponent = static_cast<double>(p >> 1);
@@ -142,8 +140,8 @@ torch::Tensor change_base_backward(const torch::Tensor& grad_output, const torch
 
             long long p = static_cast<long long>(grad);
 
-            if ((p | 1LL) == LNS_ZERO_INT) {
-                return LNS_ZERO;
+            if ((p | 1LL) == lns::zero_int) {
+                return lns::zero;
             }
 
             double exponent = static_cast<double>(p >> 1);
