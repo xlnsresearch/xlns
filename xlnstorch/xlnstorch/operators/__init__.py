@@ -1,3 +1,5 @@
+from xlnstorch import _C_AVAILABLE
+
 from .internal_lns_ops import (
     lns_add,
     lns_sub,
@@ -115,6 +117,8 @@ from . import activation_ops
 from . import layer_ops
 from . import misc_ops
 
+if _C_AVAILABLE:
+    from . import _C
 from . import implementations
 
 __all__ = [
