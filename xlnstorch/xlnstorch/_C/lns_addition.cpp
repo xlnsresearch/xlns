@@ -3,18 +3,7 @@
 #include <ATen/native/cpu/Loops.h>
 
 #include "lns_constants.h"
-
-inline long long sbdb_ideal(long long z, long long s, double base) {
-    double power_term = std::pow(base, z);
-    double magnitude = std::abs(1.0 - 2.0 * s + power_term);
-    double log_term = std::log(magnitude) / std::log(base);
-    return std::llround(log_term) << 1;
-}
-
-using sbdb_fn_ptr = long long(*)(long long, long long, double);
-const std::map<std::string, sbdb_fn_ptr> sbdb_funcs {
-    {"ideal", &sbdb_ideal} 
-};
+#include "pointwise_ops.h"
 
 torch::Tensor add_forward(
     const torch::Tensor& x,
@@ -24,10 +13,6 @@ torch::Tensor add_forward(
 ) {
 
     const double base = base_t.item<double>();
-    auto it = sbdb_funcs.find(sbdb_key);
-    TORCH_CHECK(it != sbdb_funcs.end(), "Unsupported sbdb_func: ", sbdb_key);
-    sbdb_fn_ptr sbdb_func = it->second; 
-
     torch::ScalarType common_dtype = (x.scalar_type() == torch::kFloat64 || y.scalar_type() == torch::kFloat64)
         ? torch::kFloat64
         : torch::kLong;
@@ -45,7 +30,7 @@ torch::Tensor add_forward(
 
         using scalar_t = scalar_t;
 
-        auto kernel = [base, sbdb_func] (scalar_t a, scalar_t b) -> scalar_t {
+        auto kernel = [base] (scalar_t a, scalar_t b) -> scalar_t {
 
             long long a_packed, b_packed;
             if constexpr (std::is_same_v<scalar_t,double>) {
@@ -59,27 +44,7 @@ torch::Tensor add_forward(
                 b_packed = b;
             }
 
-            if ((a_packed | 1LL) == lns::zero_int) {
-                return b;
-            }
-            else if ((b_packed | 1LL) == lns::zero_int) {
-                return a;
-            }
-            else if ((a_packed ^ 1LL) == b_packed) {
-                if (std::is_same_v<scalar_t, double>) {
-                    return lns::zero;
-                }
-                else {
-                    return lns::zero_int;
-                }
-            }
-
-            const long long max_operand = std::max(a_packed, b_packed);
-
-            const long long abs_diff = std::abs((a_packed >> 1) - (b_packed >> 1));
-            const long long sign_diff = (a_packed ^ b_packed) & 1LL;
-
-            long long result = max_operand + sbdb_func(-abs_diff, sign_diff, base);
+            long long result = lns::add(a_packed, b_packed, base);
             return static_cast<scalar_t>(result);
 
         };

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LNS_CONSTANTS_H
+#define LNS_CONSTANTS_H
 
 namespace lns {
 
@@ -18,3 +19,5 @@ namespace lns {
     inline constexpr double neg_one = static_cast<double>(neg_one_int);
 
 }
+
+#endif // LNS_CONSTANTS_H
