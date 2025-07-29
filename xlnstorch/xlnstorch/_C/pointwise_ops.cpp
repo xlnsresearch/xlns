@@ -21,10 +21,20 @@ namespace sbdb {
 namespace lns {
 
     using sbdb_fn_ptr = long long(*)(long long, long long, double);
-    sbdb_fn_ptr default_sbdb_func = sbdb::ideal;
     const std::map<std::string, sbdb_fn_ptr> sbdb_funcs {
         {"ideal", &sbdb::ideal} 
     };
+
+    sbdb_fn_ptr default_sbdb_func = sbdb::ideal;
+    void set_default_sbdb_func(std::string sbdb_key) {
+        auto it = sbdb_funcs.find(sbdb_key);
+
+        if (it == sbdb_funcs.end())
+            default_sbdb_func = sbdb::ideal;
+
+        else
+            default_sbdb_func = it->second;
+    }
 
     long long add(long long x, long long y, double base) {
 
@@ -48,4 +58,8 @@ namespace lns {
         return lns::add(x, neg_y, base);
     }
 
+}
+
+void init_pointwise_ops(py::module& m) {
+    m.def("set_default_sbdb_func", &lns::set_default_sbdb_func, "Set the default SBDB function for C++ LNS operations");
 }

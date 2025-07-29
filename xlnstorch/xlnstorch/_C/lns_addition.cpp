@@ -8,8 +8,7 @@
 torch::Tensor add_forward(
     const torch::Tensor& x,
     const torch::Tensor& y,
-    const torch::Tensor& base_t,
-    const std::string& sbdb_key
+    const torch::Tensor& base_t
 ) {
 
     const double base = base_t.item<double>();

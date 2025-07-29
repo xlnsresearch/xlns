@@ -35,6 +35,10 @@ def set_default_sbdb_implementation(impl_key: str) -> None:
     global DEFAULT_SBDB_FUNC
     DEFAULT_SBDB_FUNC = impl_key
 
+    if _C_AVAILABLE:
+        import xlnstorch._C
+        xlnstorch._C.set_default_sbdb_implementation(impl_key)
+
 @contextlib.contextmanager
 def override_sbdb_implementation(impl_key: str) -> Generator[None, None, None]:
     """

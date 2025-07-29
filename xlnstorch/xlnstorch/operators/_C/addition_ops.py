@@ -13,7 +13,7 @@ class LNSAddCPPFunction(LNSFunction):
     @staticmethod
     def forward(x, y, base):
         if DEFAULT_SBDB_FUNC in SBDB_CPP_FUNCS:
-            return xlnstorch._C.add_forward(x, y, base, DEFAULT_SBDB_FUNC)
+            return xlnstorch._C.add_forward(x, y, base)
         return LNSAddFunction.forward(x, y, base)
 
     @staticmethod
