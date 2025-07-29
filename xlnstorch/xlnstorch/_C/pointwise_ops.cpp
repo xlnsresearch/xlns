@@ -58,6 +58,61 @@ namespace lns {
         return lns::add(x, neg_y, base);
     }
 
+    long long mul(long long x, long long y) {
+
+        if ((x | 1LL) == lns::zero_int || (y | 1LL) == lns::zero_int)
+            return lns::zero_int;
+
+        return (x + y - (y & 1)) ^ (y & 1);
+    }
+
+    long long div(long long x, long long y) {
+
+        if ((x | 1LL) == lns::zero_int)
+            return lns::zero_int;
+
+        if ((y | 1LL) == lns::zero_int)
+            throw std::runtime_error("Division by zero in LNS division operation");
+
+        return (x - y + (y & 1)) ^ (y & 1);
+    }
+
+    long long reciprocal(long long x) {
+        return lns::div(lns::one_int, x);
+    }
+
+    long long square(long long x) {
+        return lns::mul(x, x);
+    }
+
+    long long sqrt(long long x) {
+
+        if ((x | 1LL) == lns::zero_int)
+            return lns::zero_int;
+
+        return ((x & (-2)) / 2) & (-2);
+    }
+
+    long long pow(long long x, double n) {
+
+        if ((x | 1LL) == lns::zero_int)
+            return lns::zero_int;
+
+        if ((x & 1LL) && n < 0.0)
+            throw std::runtime_error("Negative exponent in LNS power operation");
+
+        return (static_cast<long long>((x & (-2)) * n)) & (-2);
+    }
+
+    long long pow(long long x, long long n) {
+
+        if ((x | 1LL) == lns::zero_int)
+            return lns::zero_int;
+
+        long long abs_result = ((x & (-2)) * n) & (-2);
+        return (n & 1LL) ? abs_result | (x & 1) : abs_result;
+    }
+
 }
 
 void init_pointwise_ops(py::module& m) {
