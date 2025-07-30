@@ -2,12 +2,13 @@
 #include <cmath>
 #include <string>
 #include <map>
+#include <cstdint>
 
 #include "lns_constants.h"
 
 namespace sbdb {
 
-    inline long long ideal(long long z, long long s, double base) {
+    inline int64_t ideal(int64_t z, int64_t s, double base) {
 
         double power_term = std::pow(base, z);
         double magnitude = std::abs(1.0 - 2.0 * s + power_term);
@@ -20,7 +21,7 @@ namespace sbdb {
 
 namespace lns {
 
-    using sbdb_fn_ptr = long long(*)(long long, long long, double);
+    using sbdb_fn_ptr = int64_t(*)(int64_t, int64_t, double);
     const std::map<std::string, sbdb_fn_ptr> sbdb_funcs {
         {"ideal", &sbdb::ideal} 
     };
@@ -36,29 +37,29 @@ namespace lns {
             default_sbdb_func = it->second;
     }
 
-    long long add(long long x, long long y, double base) {
+    int64_t add(int64_t x, int64_t y, double base) {
 
         if ((x | 1LL) == lns::zero_int) return y;
         else if ((y | 1LL) == lns::zero_int) return x;
         else if ((x ^ 1LL) == y) return lns::zero_int;
 
-        long long max_operand = std::max(x, y);
-        const long long abs_diff = std::abs((x >> 1) - (y >> 1));
-        const long long sign_diff = (x ^ y) & 1LL;
+        int64_t max_operand = std::max(x, y);
+        const int64_t abs_diff = std::abs((x >> 1) - (y >> 1));
+        const int64_t sign_diff = (x ^ y) & 1LL;
 
         return max_operand + default_sbdb_func(-abs_diff, sign_diff, base);
     }
 
-    long long neg(long long x) {
+    int64_t neg(int64_t x) {
         return x ^ 1LL;
     }
 
-    long long sub(long long x, long long y, double base) {
-        long long neg_y = lns::neg(y);
+    int64_t sub(int64_t x, int64_t y, double base) {
+        int64_t neg_y = lns::neg(y);
         return lns::add(x, neg_y, base);
     }
 
-    long long mul(long long x, long long y) {
+    int64_t mul(int64_t x, int64_t y) {
 
         if ((x | 1LL) == lns::zero_int || (y | 1LL) == lns::zero_int)
             return lns::zero_int;
@@ -66,7 +67,7 @@ namespace lns {
         return (x + y - (y & 1)) ^ (y & 1);
     }
 
-    long long div(long long x, long long y) {
+    int64_t div(int64_t x, int64_t y) {
 
         if ((x | 1LL) == lns::zero_int)
             return lns::zero_int;
@@ -77,15 +78,15 @@ namespace lns {
         return (x - y + (y & 1)) ^ (y & 1);
     }
 
-    long long reciprocal(long long x) {
+    int64_t reciprocal(int64_t x) {
         return lns::div(lns::one_int, x);
     }
 
-    long long square(long long x) {
+    int64_t square(int64_t x) {
         return lns::mul(x, x);
     }
 
-    long long sqrt(long long x) {
+    int64_t sqrt(int64_t x) {
 
         if ((x | 1LL) == lns::zero_int)
             return lns::zero_int;
@@ -93,7 +94,7 @@ namespace lns {
         return ((x & (-2)) / 2) & (-2);
     }
 
-    long long pow(long long x, double n) {
+    int64_t pow(int64_t x, double n) {
 
         if ((x | 1LL) == lns::zero_int)
             return lns::zero_int;
@@ -101,15 +102,15 @@ namespace lns {
         if ((x & 1LL) && n < 0.0)
             throw std::runtime_error("Negative exponent in LNS power operation");
 
-        return (static_cast<long long>((x & (-2)) * n)) & (-2);
+        return (static_cast<int64_t>((x & (-2)) * n)) & (-2);
     }
 
-    long long pow(long long x, long long n) {
+    int64_t pow(int64_t x, int64_t n) {
 
         if ((x | 1LL) == lns::zero_int)
             return lns::zero_int;
 
-        long long abs_result = ((x & (-2)) * n) & (-2);
+        int64_t abs_result = ((x & (-2)) * n) & (-2);
         return (n & 1LL) ? abs_result | (x & 1) : abs_result;
     }
 

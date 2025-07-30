@@ -1,6 +1,8 @@
 #include <torch/extension.h>
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/cpu/Loops.h>
+#include <cmath>
+#include <cstdint>
 
 #include "lns_constants.h"
 
@@ -40,8 +42,8 @@ torch::Tensor float_to_lns_forward(const torch::Tensor& x, const torch::Tensor& 
                 return lns::zero;
             }
 
-            long long e = llround(std::log(std::abs(v)) * inv_log_b);
-            long long s = (v < 0.0) ? 1LL : 0LL;
+            int64_t e = llround(std::log(std::abs(v)) * inv_log_b);
+            int64_t s = (v < 0.0) ? 1LL : 0LL;
 
             return static_cast<double>((e << 1) | s);
 
@@ -65,7 +67,7 @@ torch::Tensor float_to_lns_backward(const torch::Tensor& grad_output, const torc
         iter,
         [b](double grad) -> double {
 
-            long long p = static_cast<long long>(grad);
+            int64_t p = static_cast<int64_t>(grad);
 
             if ((p | 1LL) == lns::zero_int) {
                 return 0.0;
@@ -106,15 +108,15 @@ torch::Tensor change_base_forward(const torch::Tensor& x, const torch::Tensor& o
         iter,
         [ratio_log_b](double v) -> double {
 
-            long long p = static_cast<long long>(v);
+            int64_t p = static_cast<int64_t>(v);
 
             if ((p | 1LL) == lns::zero_int) {
                 return lns::zero;
             }
 
             double exponent = static_cast<double>(p >> 1);
-            long long exponent_new = llround(exponent * ratio_log_b);
-            long long sign_bit = p & 1LL;
+            int64_t exponent_new = llround(exponent * ratio_log_b);
+            int64_t sign_bit = p & 1LL;
 
             return static_cast<double>((exponent_new << 1) | sign_bit);
 
@@ -138,15 +140,15 @@ torch::Tensor change_base_backward(const torch::Tensor& grad_output, const torch
         iter,
         [ratio_log_b](double grad) -> double {
 
-            long long p = static_cast<long long>(grad);
+            int64_t p = static_cast<int64_t>(grad);
 
             if ((p | 1LL) == lns::zero_int) {
                 return lns::zero;
             }
 
             double exponent = static_cast<double>(p >> 1);
-            long long exponent_new = llround(exponent * ratio_log_b);
-            long long sign_bit = p & 1LL;
+            int64_t exponent_new = llround(exponent * ratio_log_b);
+            int64_t sign_bit = p & 1LL;
 
             return static_cast<double>((exponent_new << 1) | sign_bit);
 
