@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from xlnstorch import _C_AVAILABLE, LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
 from xlnstorch.autograd import LNSFunction
 from . import (
     lns_add,
@@ -395,7 +395,7 @@ class LNSSumFunction(LNSFunction):
         x, = ctx.saved_tensors
         return torch.full_like(x, LNS_ONE.item()), None, None, None
 
-@implements(torch.sum, LNSSumFunction.forward, "default", default=True)
+@implements(torch.sum, LNSSumFunction.forward, "default", default=not _C_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
 
     result = LNSSumFunction.apply(x, x.base, dim, keepdim)

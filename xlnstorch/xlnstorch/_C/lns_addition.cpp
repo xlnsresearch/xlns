@@ -1,7 +1,11 @@
 #include <torch/extension.h>
+#include <ATen/ATen.h>
+#include <ATen/Parallel.h>
 #include <ATen/native/TensorIterator.h>
 #include <ATen/native/cpu/Loops.h>
 #include <cstdint>
+#include <algorithm>
+#include <vector>
 
 #include "lns_constants.h"
 #include "pointwise_ops.h"
@@ -32,6 +36,195 @@ torch::Tensor add_forward(
 
 }
 
+
+static inline std::vector<int64_t> canonicalize_dims(
+    std::vector<int64_t> dims,
+    int64_t ndim
+) {
+
+    std::vector<int64_t> out;
+    out.reserve(dims.size());
+
+    for (int64_t dim : dims) {
+        dim = dim < 0 ? dim + ndim : dim;
+        TORCH_CHECK(dim >= 0 && dim < ndim,
+            "Dimension ", dim, " out of range for tensor of dim ", ndim);
+        out.push_back(dim);
+    }
+
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+    return out;
+
+}
+
+static inline std::vector<int64_t> reduced_sizes(
+    const torch::Tensor& in,
+    const std::vector<int64_t>& dims,
+    bool keepdim
+) {
+
+    std::vector<int64_t> sizes = in.sizes().vec();
+    if (keepdim) {
+        for (int64_t dim : dims) sizes[dim] = 1;
+    }
+    else {
+        for (auto it = dims.rbegin(); it != dims.rend(); ++it) {
+            sizes.erase(sizes.begin() + *it);
+        }
+    }
+
+    return sizes;
+
+}
+
+static torch::Tensor reduce_all(const torch::Tensor& in, const double base) {
+
+    const int64_t* src = in.data_ptr<int64_t>();
+    const int64_t N = in.numel();
+
+    constexpr int kUnroll = 4; // 4-way unrolling between lns_add calls
+    const int64_t grain = 1 << 13;  // ~8 k elements per thread
+
+    int64_t global_acc = at::parallel_reduce(
+        /*begin*/ int64_t{0},
+        /*end*/ N,
+        /*grain_size*/ grain,
+        /*identity*/ lns::zero_int,
+        /*body*/ [&](int64_t begin, int64_t end, int64_t /*identity*/) -> int64_t {
+            const int64_t* ptr = src + begin;
+            int64_t local = lns::zero_int;
+            int64_t len = end - begin;
+
+            int64_t i = 0;
+            for (; i <= len - kUnroll; i += kUnroll) {
+                int64_t t0 = ptr[i    ];
+                int64_t t1 = ptr[i + 1];
+                int64_t t2 = ptr[i + 2];
+                int64_t t3 = ptr[i + 3];
+
+                int64_t blk = lns::add(lns::add(t0, t1, base), lns::add(t2, t3, base), base);
+                local = lns::add(local, blk, base);
+            }
+
+            // tail
+            for (; i < len; ++i) {
+                local = lns::add(local, ptr[i], base);
+            }
+
+            return local;
+        },
+        /*reduce*/ [base](int64_t a, int64_t b) -> int64_t {
+            return lns::add(a, b, base);
+        });
+
+    return at::scalar_tensor(global_acc, in.options().dtype(torch::kFloat64));
+}
+
+static torch::Tensor reduce_dims(
+    const torch::Tensor& src,
+    const double base,
+    const std::vector<int64_t>& rdims,
+    bool keepdim
+) {
+
+    const int64_t ndim = src.dim();
+
+    // build a permutation that moves all reduction dims to the back
+    std::vector<int64_t> perm;
+    perm.reserve(ndim);
+
+    std::vector<int64_t> keep_dims;
+    keep_dims.reserve(ndim - rdims.size());
+
+    size_t r_it = 0;
+    for (int64_t dim = 0; dim < ndim; ++dim) {
+        if (r_it < rdims.size() && rdims[r_it] == dim) {
+            ++r_it; // reduction dim - handled later
+        }
+        else {
+            keep_dims.push_back(dim);
+            perm.push_back(dim); // keep dims first
+        }
+    }
+    perm.insert(perm.end(), rdims.begin(), rdims.end());
+
+    // permute so that the reduction block is contiguous
+    torch::Tensor permuted = (std::is_sorted(perm.begin(), perm.end()) &&
+                              perm.front() == 0 && perm.back() == ndim - 1)
+                              ? src // already in right order
+                              : src.permute(perm).contiguous();
+
+    int64_t outer_size = 1;
+    int64_t inner_size = 1;
+    for (int64_t d : keep_dims) outer_size *= src.size(d);
+    for (int64_t d : rdims) inner_size *= src.size(d);
+
+    // allocate output (with keepdim=true shape, squeeze later if needed)
+    torch::Tensor out = at::empty(reduced_sizes(src, rdims, /*keepdim=*/true), src.options());
+
+    constexpr int kUnroll = 4;
+    const int64_t grain = 1 << 10; // ~1k elements per thread
+
+    const int64_t* in_ptr  = permuted.data_ptr<int64_t>();
+    int64_t* out_ptr = out.data_ptr<int64_t>();
+
+    at::parallel_for(
+        /*begin*/ int64_t{0},
+        /*end*/ outer_size,
+        /*grain_size*/ grain,
+        /*body*/ [&](int64_t begin, int64_t end) {
+
+            for (int64_t idx = begin; idx < end; ++idx) {
+
+                const int64_t* block = in_ptr + idx * inner_size;
+                int64_t acc = lns::zero_int;
+
+                int64_t j = 0;
+                for (; j + kUnroll <= inner_size; j += kUnroll) {
+                    int64_t t0 = block[j + 0];
+                    int64_t t1 = block[j + 1];
+                    int64_t t2 = block[j + 2];
+                    int64_t t3 = block[j + 3];
+                    int64_t blk = lns::add(lns::add(t0, t1, base), lns::add(t2, t3, base), base);
+                    acc = lns::add(acc, blk, base);
+                }
+
+                // tail
+                for (; j < inner_size; ++j)
+                    acc = lns::add(acc, block[j], base);
+
+                out_ptr[idx] = acc;
+            }
+        });
+
+    return keepdim ? out.to(torch::kFloat64) : out.squeeze(rdims).to(torch::kFloat64);
+}
+
+torch::Tensor sum_forward(
+    const torch::Tensor& x,
+    const torch::Tensor& base_t,
+    const std::vector<int64_t>& dims = {},
+    bool keepdim = false
+) {
+
+    const double base = base_t.item<double>();
+    torch::Tensor src = x.is_contiguous() ? x : x.contiguous();
+
+    if (dims.empty()) {
+        return reduce_all(src, base);
+    }
+
+    std::vector<int64_t> rdims = canonicalize_dims(dims, src.dim());
+    if (rdims.empty()) {
+        return keepdim ? src.clone() : src;
+    }
+
+    return reduce_dims(src, base, rdims, keepdim);
+ 
+}
+
 void init_lns_addition(py::module& m) {
     m.def("add_forward", &add_forward, "LNS addition forward pass");
+    m.def("sum_forward", &sum_forward, "LNS summation forward pass");
 }
