@@ -34,7 +34,7 @@ torch::Tensor add_forward(
             return lns::add_vec(a, b, base);
         });
 
-    return out.to(torch::kFloat64);
+    return out;
 
 }
 
@@ -120,7 +120,7 @@ static torch::Tensor reduce_all(const torch::Tensor& in, const double base) {
             return lns::add(a, b, base);
         });
 
-    return at::scalar_tensor(global_acc, in.options().dtype(torch::kFloat64));
+    return at::scalar_tensor(global_acc, in.options());
 }
 
 static torch::Tensor reduce_dims(
@@ -178,7 +178,7 @@ static torch::Tensor reduce_dims(
 
     }
 
-    return keepdim ? out.to(torch::kFloat64) : out.squeeze(rdims).to(torch::kFloat64);
+    return keepdim ? out : out.squeeze(rdims);
 }
 
 torch::Tensor sum_forward(

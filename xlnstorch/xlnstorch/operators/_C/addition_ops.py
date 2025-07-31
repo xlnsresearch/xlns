@@ -14,7 +14,7 @@ class LNSAddCPPFunction(LNSFunction):
     def forward(x, y, base):
         if DEFAULT_SBDB_FUNC in SBDB_CPP_FUNCS:
             x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-            return xlnstorch._C.add_forward(x_packed, y_packed, base)
+            return xlnstorch._C.add_forward(x_packed, y_packed, base).to(torch.float64)
         return LNSAddFunction.forward(x, y, base)
 
     @staticmethod
@@ -47,7 +47,7 @@ class LNSSumCPPFunction(LNSFunction):
         x_packed = x.to(torch.int64)
         dim = [] if dim is None else ((dim,) if isinstance(dim, int) else dim)
 
-        return xlnstorch._C.sum_forward(x_packed, base, dim, keepdim)
+        return xlnstorch._C.sum_forward(x_packed, base, dim, keepdim).to(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
