@@ -5,37 +5,10 @@
 #include <cstdint>
 
 #include "lns_constants.h"
-
-namespace sbdb {
-
-    inline int64_t ideal(int64_t z, int64_t s, double base) {
-
-        double power_term = std::pow(base, z);
-        double magnitude = std::abs(1.0 - 2.0 * s + power_term);
-        double log_term = std::log(magnitude) / std::log(base);
-
-        return std::llround(log_term) << 1;
-    }
-
-}
+#include "pointwise_ops.h"
+#include "sbdb.h"
 
 namespace lns {
-
-    using sbdb_fn_ptr = int64_t(*)(int64_t, int64_t, double);
-    const std::map<std::string, sbdb_fn_ptr> sbdb_funcs {
-        {"ideal", &sbdb::ideal} 
-    };
-
-    sbdb_fn_ptr default_sbdb_func = sbdb::ideal;
-    void set_default_sbdb_func(std::string sbdb_key) {
-        auto it = sbdb_funcs.find(sbdb_key);
-
-        if (it == sbdb_funcs.end())
-            default_sbdb_func = sbdb::ideal;
-
-        else
-            default_sbdb_func = it->second;
-    }
 
     int64_t add(int64_t x, int64_t y, double base) {
 
@@ -43,11 +16,11 @@ namespace lns {
         else if ((y | 1LL) == lns::zero_int) return x;
         else if ((x ^ 1LL) == y) return lns::zero_int;
 
-        int64_t max_operand = std::max(x, y);
+        const int64_t max_operand = std::max(x, y);
         const int64_t abs_diff = std::abs((x >> 1) - (y >> 1));
         const int64_t sign_diff = (x ^ y) & 1LL;
 
-        return max_operand + default_sbdb_func(-abs_diff, sign_diff, base);
+        return max_operand + (&sbdb::default_entry)->scalar(-abs_diff, sign_diff, base);
     }
 
     int64_t neg(int64_t x) {
@@ -114,8 +87,4 @@ namespace lns {
         return (n & 1LL) ? abs_result | (x & 1) : abs_result;
     }
 
-}
-
-void init_pointwise_ops(py::module& m) {
-    m.def("set_default_sbdb_func", &lns::set_default_sbdb_func, "Set the default SBDB function for C++ LNS operations");
 }
