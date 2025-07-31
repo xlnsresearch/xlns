@@ -25,10 +25,13 @@ torch::Tensor add_forward(
         .add_input(y)
         .build();
 
-    at::native::cpu_kernel(
+    at::native::cpu_kernel_vec(
         iter,
         [base](int64_t a, int64_t b) -> int64_t {
             return lns::add(a, b, base);
+        },
+        [base](int64_vec_t a, int64_vec_t b) -> int64_vec_t {
+            return lns::add_vec(a, b, base);
         });
 
     return out.to(torch::kFloat64);
