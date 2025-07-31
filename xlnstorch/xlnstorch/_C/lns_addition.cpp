@@ -132,34 +132,9 @@ static torch::Tensor reduce_dims(
 
     const int64_t ndim = src.dim();
 
-    // build a permutation that moves all reduction dims to the back
-    std::vector<int64_t> perm;
-    perm.reserve(ndim);
-
-    std::vector<int64_t> keep_dims;
-    keep_dims.reserve(ndim - rdims.size());
-
-    size_t r_it = 0;
-    for (int64_t dim = 0; dim < ndim; ++dim) {
-        if (r_it < rdims.size() && rdims[r_it] == dim) {
-            ++r_it; // reduction dim - handled later
-        }
-        else {
-            keep_dims.push_back(dim);
-            perm.push_back(dim); // keep dims first
-        }
-    }
-    perm.insert(perm.end(), rdims.begin(), rdims.end());
-
-    // permute so that the reduction block is contiguous
-    torch::Tensor permuted = (std::is_sorted(perm.begin(), perm.end()) &&
-                              perm.front() == 0 && perm.back() == ndim - 1)
-                              ? src // already in right order
-                              : src.permute(perm).contiguous();
-
     // allocate output (with keepdim=true shape, squeeze later if needed)
     torch::Tensor out = at::empty(reduced_sizes(src, rdims, /*keepdim=*/true), src.options().dtype(torch::kInt64));
-    at::TensorIterator iter = at::meta::make_reduction(src, out, rdims, keepdim, torch::kInt64);
+    at::TensorIterator iter = at::meta::make_reduction(src, out, rdims, /*keepdim=*/true, torch::kInt64);
 
     if (iter.numel() == 0)
         out.fill_(lns::zero_int);
