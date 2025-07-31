@@ -9,7 +9,7 @@ class LNSConv1dCPPFunction(LNSFunction):
     def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
         x_packed = x.to(torch.int64)
         weight_packed = weight.to(torch.int64)
-        bias_packed = torch.full((weight.size(0),), LNS_ZERO.item(), dtype=torch.int64) if bias is None else bias.to(torch.int64)
+        bias_packed = bias.to(torch.int64) if bias is not None else None
 
         return xlnstorch._C.conv1d_forward(x_packed, weight_packed, bias_packed,
                                            base, stride, padding, dilation, groups)
