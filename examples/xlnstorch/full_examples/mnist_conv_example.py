@@ -7,8 +7,8 @@ from xlnstorch.transforms import ToLNSTensor
 
 # Set addition sbdb implementation to lookup table for faster performance
 f = 8
-xltorch.operators.set_default_sbdb_implementation("tab")
-xltorch.operators.implementations.tab.get_table("tmp", f=f)
+# xltorch.operators.set_default_sbdb_implementation("tab")
+# xltorch.operators.implementations.tab.get_table("tmp", f=f)
 
 class LNSNet(xltorch.nn.LNSModule):
 
@@ -42,7 +42,7 @@ train_transform = ToLNSTensor(f=f, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
-batch_size = 1
+batch_size = 16
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
@@ -66,6 +66,7 @@ for epoch in range(1, num_epochs + 1):
         optimizer.zero_grad()
 
         # Forward pass
+        batch_start = time.time()
         outputs = model(data)
         loss = loss_func(outputs, target)
 
@@ -79,9 +80,10 @@ for epoch in range(1, num_epochs + 1):
         train_total += target.size(0)
         batch_correct = (predicted == target).sum().item()
         train_correct += batch_correct
+        batch_end = time.time()
 
         # if (i + 1) % 10 == 0:
-        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct.")
+        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_end - batch_start):.2f}s).")
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

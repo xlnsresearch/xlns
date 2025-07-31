@@ -6,6 +6,8 @@
 
 namespace sbdb {
 
+    SbdbEntry default_entry = {&ideal, &ideal_vec};
+
     inline int64_t ideal(int64_t z, int64_t s, double base) {
 
         double power_term = std::pow(base, z);

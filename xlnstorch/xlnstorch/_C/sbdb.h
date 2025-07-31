@@ -1,3 +1,6 @@
+#ifndef XLNSTORCH_SBDB_H
+#define XLNSTORCH_SBDB_H
+
 #include <torch/extension.h>
 #include <ATen/cpu/vec/vec.h>
 #include <cstdint>
@@ -20,7 +23,7 @@ namespace sbdb {
     int64_t ideal(int64_t z, int64_t s, double base);
     int64_vec_t ideal_vec(int64_vec_t z, int64_vec_t s, double base);
 
-    SbdbEntry default_entry = {&ideal, &ideal_vec};
+    extern SbdbEntry default_entry;
     const std::map<std::string, SbdbEntry> funcs {
         {"ideal", {&ideal, &ideal_vec}}
     };
@@ -29,3 +32,5 @@ namespace sbdb {
 }
 
 void init_sbdb(py::module& m);
+
+#endif // XLNSTORCH_SBDB_H
