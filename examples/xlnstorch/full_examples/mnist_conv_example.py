@@ -6,7 +6,7 @@ import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
 # Set addition sbdb implementation to lookup table for faster performance
-f = 8
+f = 23
 # xltorch.operators.set_default_sbdb_implementation("tab")
 # xltorch.operators.implementations.tab.get_table("tmp", f=f)
 
@@ -17,8 +17,10 @@ class LNSNet(xltorch.nn.LNSModule):
         self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5, weight_f=f, bias_f=f)
         self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, weight_f=f, bias_f=f) # After conv layer, the input size is 32x24x24
 
-        # Initialize the weights and biases of the linear layers
-        # with normal distribution for weights and zeros for biases.
+        # Initialize the weights and biases of the layers with
+        # normal distribution for weights and zeros for biases.
+        xltorch.nn.init.normal_(self.conv.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.zeros_(self.conv.bias)
         xltorch.nn.init.normal_(self.fc.weight, mean=0.0, std=0.1)
         xltorch.nn.init.zeros_(self.fc.bias)
 
@@ -42,7 +44,7 @@ train_transform = ToLNSTensor(f=f, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
-batch_size = 16
+batch_size = 128
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
@@ -82,8 +84,8 @@ for epoch in range(1, num_epochs + 1):
         train_correct += batch_correct
         batch_end = time.time()
 
-        # if (i + 1) % 10 == 0:
-        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_end - batch_start):.2f}s).")
+        if (i + 1) % 10 == 0:
+            print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_end - batch_start):.2f}s).")
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

@@ -693,7 +693,7 @@ class LNSConv2dFunction(LNSFunction):
             grad_x = grad_x.squeeze(0)
         return grad_x, grad_weight, grad_bias, None, None, None, None, None
 
-@implements(torch.nn.functional.conv2d, LNSConv2dFunction.forward, "default", default=True)
+@implements(torch.nn.functional.conv2d, LNSConv2dFunction.forward, "default", default=not _C_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
