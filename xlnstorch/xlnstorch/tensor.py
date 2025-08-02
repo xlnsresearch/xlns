@@ -173,6 +173,17 @@ class LNSTensor:
 
         self._hook_handle = self._lns.register_hook(_hook)
 
+        if self._lns.is_leaf:
+
+            def _accumulate_hook(lns: Tensor):
+                grad_tensor = weak_grad_holder()
+                if grad_tensor is None:
+                    return None # should not happen, but just in case
+
+                lns.grad.copy_(grad_tensor._lns)
+
+            self._lns.register_post_accumulate_grad_hook(_accumulate_hook)
+
     def backward(self, gradient=None, retain_graph=None, create_graph=False, inputs=None):
         """
         Computes the gradients of the current LNSTensor with respect to the graph leaves.
