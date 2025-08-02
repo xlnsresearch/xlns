@@ -6,6 +6,8 @@ from torchvision import datasets
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
+# import psutil
+
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='MNIST training with LNS')
 parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
@@ -86,6 +88,7 @@ for epoch in range(1, num_epochs + 1):
 
         if (i + 1) % 10 == 0:
             print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct.")
+            # print(f"Memory usage: {psutil.Process().memory_info().rss / (1024 * 1024)} MB")
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

@@ -5,6 +5,8 @@ from torchvision import datasets, transforms
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
+# import psutil
+
 # Set addition sbdb implementation to lookup table for faster performance
 f = 23
 # xltorch.operators.set_default_sbdb_implementation("tab")
@@ -63,12 +65,13 @@ for epoch in range(1, num_epochs + 1):
     train_correct = 0
     train_total = 0
 
+    batch_group_start = time.time()
+
     for i, (data, target) in enumerate(train_loader):
 
         optimizer.zero_grad()
 
         # Forward pass
-        batch_start = time.time()
         outputs = model(data)
         loss = loss_func(outputs, target)
 
@@ -82,10 +85,12 @@ for epoch in range(1, num_epochs + 1):
         train_total += target.size(0)
         batch_correct = (predicted == target).sum().item()
         train_correct += batch_correct
-        batch_end = time.time()
 
         if (i + 1) % 10 == 0:
-            print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_end - batch_start):.2f}s).")
+            batch_group_end = time.time()
+            print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_group_end - batch_group_start):.2f}s).")
+            # print(f"Memory usage: {psutil.Process().memory_info().rss / (1024 * 1024)} MB")
+            batch_group_start = time.time()
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

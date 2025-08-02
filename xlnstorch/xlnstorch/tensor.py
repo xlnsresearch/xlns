@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Union, List, Tuple
-
+import weakref
 import math
 import numpy as np
 import torch
@@ -144,10 +144,15 @@ class LNSTensor:
         # create variable that references the current internal representation.
         # If we reference self._lns here gradients will not be tracked correctly
         # for inplace operations (which modify self._lns)
-        curr_lns = self._lns
+        weak_self_lns = weakref.ref(self._lns)
+
         def _edge_hook(grad_inputs, grad_outputs):
+            self_lns = weak_self_lns()
+            if self_lns is None:
+                return None # should not happen, but just in case
+
             if grad_inputs[index] is not None:
-                curr_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+                self_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
 
         edge.node.register_hook(_edge_hook)
 
@@ -156,10 +161,15 @@ class LNSTensor:
         # create variable that references the current internal representation.
         # If we reference self._lns here gradients will not be tracked correctly
         # for inplace operations (which modify self._lns)
-        curr_lns = self._lns
-        curr_lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
+        self._lns._lns_grad = zeros_like(self._lns, b=self.base, requires_grad=False)
+        weak_grad_holder = weakref.ref(self._lns._lns_grad)
+
         def _hook(grad):
-            return curr_lns._lns_grad._lns
+            grad_tensor = weak_grad_holder()
+            if grad_tensor is None:
+                return None # should not happen, but just in case
+
+            return grad_tensor._lns
 
         self._hook_handle = self._lns.register_hook(_hook)
 
