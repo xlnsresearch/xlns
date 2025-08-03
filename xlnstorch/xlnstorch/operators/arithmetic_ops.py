@@ -638,7 +638,7 @@ class LNSMatmulFunction(LNSFunction):
 
         return grad_A, grad_B, None
 
-@implements(torch.matmul, LNSMatmulFunction.forward, "default", default=True)
+@implements(torch.matmul, LNSMatmulFunction.forward, "default", default=not _C_AVAILABLE)
 def matmul(A, B, *, out=None):
 
     A, B = format_lnstensor_operands(A, B)

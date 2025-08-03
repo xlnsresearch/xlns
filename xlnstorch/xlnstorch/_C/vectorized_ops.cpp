@@ -41,4 +41,19 @@ namespace lns {
         // return result;
     }
 
+    int64_vec_t mul_vec(int64_vec_t x, int64_vec_t y) {
+
+        const int64_vec_t x_or_y_is_zero = (
+            (x | int64_vec_t(1)) == int64_vec_t(lns::zero_int)
+        ) | (
+            (y | int64_vec_t(1)) == int64_vec_t(lns::zero_int));
+
+        const int64_vec_t result = (x + y - (y & int64_vec_t(1))) ^ (y & int64_vec_t(1));
+        return int64_vec_t::blendv(
+            result,
+            int64_vec_t(lns::zero_int),
+            x_or_y_is_zero
+        );
+    }
+
 }

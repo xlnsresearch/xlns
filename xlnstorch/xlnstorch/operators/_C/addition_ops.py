@@ -68,3 +68,35 @@ def sum(x, dim=None, keepdim=False, *, out=None):
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMatmulCPPFunction(LNSFunction):
+
+    @staticmethod
+    def forward(A, B, base):
+        A_packed, B_packed = A.to(torch.int64), B.to(torch.int64)
+        return xlnstorch._C.matmul_forward(A_packed, B_packed, base).to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        A, B, base = inputs
+        ctx.save_for_backward(A, B, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        A, B, base = ctx.saved_tensors
+        grad_packed = grad_output.to(torch.int64)
+        A_packed, B_packed = A.to(torch.int64), B.to(torch.int64)
+
+        grad_A, grad_B = xlnstorch._C.matmul_backward(grad_packed, A_packed, B_packed, base)
+        return grad_A, grad_B, None
+
+@implements(torch.matmul, LNSMatmulCPPFunction.forward, "default_cpp", default=True)
+def matmul(A, B, *, out=None):
+
+    A, B = format_lnstensor_operands(A, B)
+    result = LNSMatmulCPPFunction.apply(A, B, A.base)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=A.base)
