@@ -389,11 +389,19 @@ static torch::Tensor reduce_like(
     const torch::Tensor& original_view,
     const torch::Tensor& base_t
 ) {
+    const int64_t gdim = grad_expanded.dim();
+    const int64_t odim = original_view.dim();
+    const int64_t offset = gdim - odim;
 
     std::vector<int64_t> reduce_dims;
-    for (int64_t d = 0; d < grad_expanded.dim(); ++d)
-        if (original_view.size(d) == 1 && grad_expanded.size(d) > 1)
+    for (int64_t d = 0; d < grad_expanded.dim(); ++d) {
+        int64_t o_d = d - offset;
+        int64_t o_size = (o_d >= 0) ? original_view.size(o_d) : 1;
+
+        if (o_size == 1 && grad_expanded.size(d) > 1)
             reduce_dims.push_back(d);
+
+    }
 
     if (reduce_dims.empty())
         return grad_expanded;
@@ -436,15 +444,15 @@ std::vector<torch::Tensor> matmul_backward(
     bool A_was_1d = A_.dim() == 1;
     bool B_was_1d = B_.dim() == 1;
 
-    torch::Tensor A_unsq = A_was_1d ? A_.unsqueeze(0) : A_;
-    torch::Tensor B_unsq = B_was_1d ? B_.unsqueeze(-1) : B_;
+    torch::Tensor A_ref = A_was_1d ? A_.unsqueeze(0)  : A_;
+    torch::Tensor B_ref = B_was_1d ? B_.unsqueeze(-1) : B_;
 
     torch::Tensor grad_out = grad_out_;
     if (A_was_1d) grad_out = grad_out.unsqueeze(-2);
     if (B_was_1d) grad_out = grad_out.unsqueeze(-1);
 
-    auto A_batch = A_unsq.sizes().slice(0, A_unsq.dim() - 2);
-    auto B_batch = B_unsq.sizes().slice(0, B_unsq.dim() - 2);
+    auto A_batch = A_ref.sizes().slice(0, A_ref.dim() - 2);
+    auto B_batch = B_ref.sizes().slice(0, B_ref.dim() - 2);
     std::vector<int64_t> batch_shape = at::infer_size(A_batch, B_batch);
 
     auto expand_to = [&](const torch::Tensor& t) {
@@ -454,20 +462,20 @@ std::vector<torch::Tensor> matmul_backward(
         return t.expand(s);
     };
 
-    A_unsq = expand_to(A_unsq);
-    B_unsq = expand_to(B_unsq);
-    grad_out = expand_to(grad_out);
+    torch::Tensor A_exp = expand_to(A_ref);
+    torch::Tensor B_exp = expand_to(B_ref);
+    torch::Tensor gout_exp = expand_to(grad_out);
 
-    torch::Tensor dA_exp = matmul_forward(grad_out, B_unsq.transpose(-2, -1).contiguous(), base_t);
-    torch::Tensor dB_exp = matmul_forward(A_unsq.transpose(-2, -1).contiguous(), grad_out, base_t);
+    torch::Tensor dA_exp = matmul_forward(gout_exp, B_exp.transpose(-2, -1).contiguous(), base_t);
+    torch::Tensor dB_exp = matmul_forward(A_exp.transpose(-2, -1).contiguous(), gout_exp, base_t);
 
-    torch::Tensor dA_unsq = reduce_like(dA_exp, A_unsq, base_t);
-    torch::Tensor dB_unsq = reduce_like(dB_exp, B_unsq, base_t);
+    torch::Tensor dA = reduce_like(dA_exp, A_ref, base_t);
+    torch::Tensor dB = reduce_like(dB_exp, B_ref, base_t);
 
-    if (A_was_1d) dA_unsq = dA_unsq.squeeze(0);
-    if (B_was_1d) dB_unsq = dB_unsq.squeeze(-1);
+    if (A_was_1d) dA = dA.squeeze(0);
+    if (B_was_1d) dB = dB.squeeze(-1);
 
-    return {dA_unsq, dB_unsq};
+    return {dA, dB};
 
 }
 
