@@ -1230,3 +1230,60 @@ def randn_like(
                     device=device, pin_memory=pin_memory),
         f=f, b=b, from_lns=False
     )
+
+def empty(
+        *size,
+        out=None,
+        layout=torch.strided,
+        device=None,
+        requires_grad=False,
+        memory_format=torch.preserve_format,
+        pin_memory=False,
+        f=None,
+        b=None
+) -> LNSTensor:
+    """
+    Returns an uninitialized LNSTensor with the specified shape and
+    properties. Note that the contents of the tensor comes from
+    torch.empty, so is uninitialized and may contain arbitrary values.
+    """
+    result = lnstensor(
+        torch.empty(*size, dtype=torch.float64, memory_format=memory_format,
+                    layout=layout, requires_grad=requires_grad,
+                    device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=True
+    )
+
+    if out is not None:
+        return out._inplace_copy_(result)
+
+    return result
+
+def empty_like(
+        input,
+        *,
+        layout=None,
+        device=None,
+        requires_grad=False,
+        memory_format=torch.preserve_format,
+        pin_memory=False,
+        f=None,
+        b=None
+):
+    """
+    Returns an uninitialized LNSTensor with the same shape and base
+    (unless otherwise specified) as the input tensor. Note that the
+    contents of the tensor comes from torch.empty_like, so is
+    uninitialized and may contain arbitrary values.
+    """
+    if isinstance(input, LNSTensor):
+        if f is None and b is None:
+            b = input.base
+        input = input._lns
+
+    return lnstensor(
+        torch.empty_like(input, dtype=torch.float64, memory_format=memory_format,
+                         layout=layout, requires_grad=requires_grad,
+                         device=device, pin_memory=pin_memory),
+        f=f, b=b, from_lns=True
+    )
