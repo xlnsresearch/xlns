@@ -48,6 +48,8 @@ from .tensor import (
     rand_like,
     randn,
     randn_like,
+    empty,
+    empty_like,
 )
 from . import operators
 from . import nn
@@ -73,6 +75,8 @@ __all__ = [
     "rand_like",
     "randn",
     "randn_like",
+    "empty",
+    "empty_like",
 
     "implements",
     "get_implementation",

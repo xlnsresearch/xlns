@@ -94,22 +94,3 @@ LNSTensor class reference
     LNSTensor.unsqueeze
     LNSTensor.detach
     LNSTensor.requires_grad_
-
-Creation Operations
-~~~~~~~~~~~~~~~~~~~
-
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    lnstensor
-    zeros
-    zeros_like
-    ones
-    ones_like
-    full
-    full_like
-    rand
-    rand_like
-    randn
-    randn_like
