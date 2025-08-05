@@ -21,22 +21,6 @@ the same way as PyTorch's built-in operations. For example,
     print(z)
     # LNSTensor(value=[4.0000, 6.0000], prec=23, requires_grad=False)
 
-Custom Operations
------------------
-
-If you want to implement your own custom implementation of an operation,
-or define a new operation, you can use the following functions.
-
-.. autosummary::
-    :toctree: generated
-    :nosignatures:
-
-    operators.implement_sbdb
-    operators.set_default_sbdb_implementation
-    operators.override_sbdb_implementation
-    operators.register_xlnsconf_implementation
-    operators.sbdb
-
 Internal Operations
 -------------------
 

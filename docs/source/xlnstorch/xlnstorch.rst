@@ -95,5 +95,11 @@ operation, you can use the following functions.
     get_default_implementation_key
     override_implementation
 
+    implements_sbdb
+    set_default_sbdb_implementation
+    override_sbdb_implementation
+    register_xlnsconf_implementation
+    sbdb
+
     align_lnstensor_bases
     format_lnstensor_operands

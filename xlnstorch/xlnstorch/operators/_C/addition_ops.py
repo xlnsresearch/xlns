@@ -1,7 +1,8 @@
 import torch
 import xlnstorch.csrc
 from xlnstorch import lnstensor, format_lnstensor_operands, implements, LNS_ONE
-from xlnstorch.operators.addition_ops import DEFAULT_SBDB_FUNC, LNSAddFunction
+from xlnstorch.sbdb_dispatch_table import DEFAULT_SBDB_FUNC
+from xlnstorch.operators.addition_ops import LNSAddFunction
 from xlnstorch.autograd import LNSFunction
 
 SBDB_CPP_FUNCS = [

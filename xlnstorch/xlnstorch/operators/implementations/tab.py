@@ -7,9 +7,9 @@ import os
 import warnings
 import torch
 import numpy as np
-from .. import implement_sbdb
-from ..addition_ops import sbdb_ideal
-from ...tensor_utils import get_base_from_precision
+from xlnstorch import implements_sbdb
+from xlnstorch.operators.addition_ops import sbdb_ideal
+from xlnstorch.tensor_utils import get_base_from_precision
 
 # constants for the tab implementation
 MAX_PREC = 23 # maximum precision for tables
@@ -61,7 +61,7 @@ def get_table(filestem: str, f=None, b=None):
         )
         tab_base = None
 
-@implement_sbdb("tab")
+@implements_sbdb("tab")
 def sbdb_ufunc_tab(z, s, base):
     if not initialized:
         raise RuntimeError("Tab ufunc implementation not initialized. Call `make_table` first.")

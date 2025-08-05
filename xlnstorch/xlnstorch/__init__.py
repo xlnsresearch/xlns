@@ -30,6 +30,13 @@ from .dispatch_table import (
     override_implementation,
     apply_lns_op
 )
+from .sbdb_dispatch_table import (
+    implements_sbdb,
+    set_default_sbdb_implementation,
+    override_sbdb_implementation,
+    register_xlnsconf_implementation,
+    sbdb,
+)
 from .autograd import LNSFunction
 from .tensor_utils import (
     align_lnstensor_bases,
@@ -84,6 +91,12 @@ __all__ = [
     "get_default_implementation_key",
     "override_implementation",
     "apply_lns_op",
+
+    "implements_sbdb",
+    "set_default_sbdb_implementation",
+    "override_sbdb_implementation",
+    "register_xlnsconf_implementation",
+    "sbdb",
 
     "LNSFunction",
     "align_lnstensor_bases",

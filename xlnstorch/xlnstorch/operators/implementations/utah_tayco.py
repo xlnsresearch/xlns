@@ -5,8 +5,8 @@ https://github.com/xlnsresearch/xlns/blob/main/src/xlnsconf/utah_tayco_ufunc.py
 """
 from enum import Enum
 import torch
-from ...tensor_utils import get_precision_from_base
-from .. import implement_sbdb
+from xlnstorch.tensor_utils import get_precision_from_base
+from xlnstorch import implements_sbdb
 
 class RoundingMode(Enum):
     FLOOR = 'floor'
@@ -152,7 +152,7 @@ def cotrans3_rnd(rnd, delta, da, db, xs):
     res[special] = cotrans2_rnd(rnd, delta, db, ys)
     return res
 
-@implement_sbdb("utah_tayco")
+@implements_sbdb("utah_tayco")
 def sbdb_ufunc_utah_tayco(z, s, base):
     """
     See https://ieeexplore.ieee.org/document/11038317 for the original
