@@ -31,14 +31,6 @@ or define a new operation, you can use the following functions.
     :toctree: generated
     :nosignatures:
 
-    implements
-    get_implementation
-    set_default_implementation
-    get_default_implementation_key
-    override_implementation
-    align_lnstensor_bases
-    format_lnstensor_operands
-
     operators.implement_sbdb
     operators.set_default_sbdb_implementation
     operators.override_sbdb_implementation

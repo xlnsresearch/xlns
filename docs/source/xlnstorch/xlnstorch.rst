@@ -60,3 +60,39 @@ Constants
     False, pure Python implementations are used as fallback. To find
     out why the C++ extension is not available, install the xlnstorch
     package with the ``--verbose`` flag to see the build logs.
+
+Custom Operations
+-----------------
+
+The ``xlnstorch`` package provides a set of analogous operations to
+PyTorch's built-in operations. These operations are registered with
+PyTorch's internal dispatch mechanism, so that they can be used in
+the same way as PyTorch's built-in operations. For example,
+
+.. code-block:: python
+
+    import xlnstorch as xltorch
+
+    x = xltorch.lnstensor([1.0, 2.0], f=23)
+    y = xltorch.lnstensor([3.0, 4.0], f=23)
+
+    z = torch.add(x, y)
+    print(z)
+    # LNSTensor(value=[4.0000, 6.0000], prec=23)
+
+If you want to implement your own custom implementation of an operation,
+define a new operation, or use an alternative implementation of an
+operation, you can use the following functions.
+
+.. autosummary::
+    :toctree: generated
+    :nosignatures:
+
+    implements
+    get_implementation
+    set_default_implementation
+    get_default_implementation_key
+    override_implementation
+
+    align_lnstensor_bases
+    format_lnstensor_operands
