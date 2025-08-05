@@ -37,7 +37,7 @@ from .sbdb_dispatch_table import (
     register_xlnsconf_implementation,
     sbdb,
 )
-from .autograd import LNSFunction
+from . import autograd
 from .tensor_utils import (
     align_lnstensor_bases,
     format_lnstensor_operands,
@@ -98,7 +98,6 @@ __all__ = [
     "register_xlnsconf_implementation",
     "sbdb",
 
-    "LNSFunction",
     "align_lnstensor_bases",
     "format_lnstensor_operands",
 ]

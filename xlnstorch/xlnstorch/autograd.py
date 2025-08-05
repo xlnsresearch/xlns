@@ -8,6 +8,13 @@ if TYPE_CHECKING:
 # Lazy import cache to avoid repeated imports
 _tensor_module = None
 
+__all__ = [
+    "LNSFunction",
+    "has_fanout",
+    "find_fanout",
+    "raise_fanout_error"
+]
+
 def _get_tensor_module():
     """Lazy import of tensor module to avoid circular imports."""
     global _tensor_module
