@@ -53,13 +53,14 @@ Constants
     is independent of base. It is defined to be
     :math:`\left( 0 \ll 1 \right) \mid 1 = 1`.
 
-.. data:: _C_AVAILABLE
+.. data:: CSRC_AVAILABLE
 
     A boolean flag indicating whether the C++ extension is available.
-    When True,  high-performance C++ implementations are used; when
+    When True, high-performance C++ implementations are used; when
     False, pure Python implementations are used as fallback. To find
     out why the C++ extension is not available, install the xlnstorch
-    package with the ``--verbose`` flag to see the build logs.
+    package with the ``--verbose`` flag to see the build logs. The
+    internal C++ functions can be accessed via the ``csrc`` submodule.
 
 Custom Operations
 -----------------

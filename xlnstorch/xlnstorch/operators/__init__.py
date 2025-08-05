@@ -1,4 +1,4 @@
-from xlnstorch import _C_AVAILABLE
+from xlnstorch import CSRC_AVAILABLE
 
 from .internal_lns_ops import (
     lns_add,
@@ -117,7 +117,7 @@ from . import activation_ops
 from . import layer_ops
 from . import misc_ops
 
-if _C_AVAILABLE:
+if CSRC_AVAILABLE:
     from . import _C
 from . import implementations
 

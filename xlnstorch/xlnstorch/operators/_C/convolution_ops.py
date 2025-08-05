@@ -1,5 +1,5 @@
 import torch
-import xlnstorch._C
+import xlnstorch.csrc
 from xlnstorch import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
@@ -11,7 +11,7 @@ class LNSConv1dCPPFunction(LNSFunction):
         weight_packed = weight.to(torch.int64)
         bias_packed = bias.to(torch.int64) if bias is not None else None
 
-        return xlnstorch._C.conv1d_forward(x_packed, weight_packed, bias_packed,
+        return xlnstorch.csrc.conv1d_forward(x_packed, weight_packed, bias_packed,
                                            base, stride, padding, dilation, groups).to(torch.float64)
 
     @staticmethod
@@ -31,7 +31,7 @@ class LNSConv1dCPPFunction(LNSFunction):
         weight_packed = weight.to(torch.int64)
         grad_packed = grad_output.to(torch.int64)
 
-        grads = xlnstorch._C.conv1d_backward(
+        grads = xlnstorch.csrc.conv1d_backward(
             grad_packed, x_packed, weight_packed, base, ctx.bias_defined,
             ctx.stride, ctx.padding, ctx.dilation, ctx.groups)
 
@@ -69,7 +69,7 @@ class LNSConv2dCPPFunction(LNSFunction):
         weight_packed = weight.to(torch.int64)
         bias_packed = bias.to(torch.int64) if bias is not None else None
 
-        return xlnstorch._C.conv2d_forward(x_packed, weight_packed, bias_packed, base,
+        return xlnstorch.csrc.conv2d_forward(x_packed, weight_packed, bias_packed, base,
                                            *stride, *padding, *dilation, groups).to(torch.float64)
 
     @staticmethod
@@ -96,7 +96,7 @@ class LNSConv2dCPPFunction(LNSFunction):
         if isinstance(ctx.dilation, int):
             ctx.dilation = (ctx.dilation, ctx.dilation)
 
-        grads = xlnstorch._C.conv2d_backward(
+        grads = xlnstorch.csrc.conv2d_backward(
             grad_packed, x_packed, weight_packed, base,
             ctx.bias_defined, *ctx.stride,
             *ctx.padding, *ctx.dilation, ctx.groups)
@@ -136,7 +136,7 @@ class LNSConv3dCPPFunction(LNSFunction):
         weight_packed = weight.to(torch.int64)
         bias_packed = bias.to(torch.int64) if bias is not None else None
 
-        return xlnstorch._C.conv3d_forward(x_packed, weight_packed, bias_packed, base,
+        return xlnstorch.csrc.conv3d_forward(x_packed, weight_packed, bias_packed, base,
                                            *stride, *padding, *dilation, groups).to(torch.float64)
 
     @staticmethod
@@ -163,7 +163,7 @@ class LNSConv3dCPPFunction(LNSFunction):
         if isinstance(ctx.dilation, int):
             ctx.dilation = (ctx.dilation, ctx.dilation, ctx.dilation)
 
-        grads = xlnstorch._C.conv3d_backward(
+        grads = xlnstorch.csrc.conv3d_backward(
             grad_packed, x_packed, weight_packed, base,
             ctx.bias_defined, *ctx.stride,
             *ctx.padding, *ctx.dilation, ctx.groups)

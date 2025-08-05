@@ -1,7 +1,7 @@
 import torch
 import contextlib
 from typing import Generator, Callable
-from xlnstorch import LNS_ZERO, _C_AVAILABLE, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 from xlnstorch.tensor_utils import get_precision_from_base
 from . import (
@@ -35,9 +35,9 @@ def set_default_sbdb_implementation(impl_key: str) -> None:
     global DEFAULT_SBDB_FUNC
     DEFAULT_SBDB_FUNC = impl_key
 
-    if _C_AVAILABLE:
-        import xlnstorch._C
-        xlnstorch._C.set_default_sbdb_implementation(impl_key)
+    if CSRC_AVAILABLE:
+        import xlnstorch.csrc
+        xlnstorch.csrc.set_default_sbdb_implementation(impl_key)
 
 @contextlib.contextmanager
 def override_sbdb_implementation(impl_key: str) -> Generator[None, None, None]:
@@ -205,7 +205,7 @@ class LNSAddFunction(LNSFunction):
     def backward(ctx, grad_output):
         return grad_output, grad_output, None
 
-@implements(torch.add, LNSAddFunction.forward, key='default', default=not _C_AVAILABLE)
+@implements(torch.add, LNSAddFunction.forward, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)

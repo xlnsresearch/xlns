@@ -1,5 +1,5 @@
 import torch
-import xlnstorch._C
+import xlnstorch.csrc
 from xlnstorch import lnstensor, format_lnstensor_operands, implements, LNS_ONE
 from xlnstorch.operators.addition_ops import DEFAULT_SBDB_FUNC, LNSAddFunction
 from xlnstorch.autograd import LNSFunction
@@ -14,7 +14,7 @@ class LNSAddCPPFunction(LNSFunction):
     def forward(x, y, base):
         if DEFAULT_SBDB_FUNC in SBDB_CPP_FUNCS:
             x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-            return xlnstorch._C.add_forward(x_packed, y_packed, base).to(torch.float64)
+            return xlnstorch.csrc.add_forward(x_packed, y_packed, base).to(torch.float64)
         return LNSAddFunction.forward(x, y, base)
 
     @staticmethod
@@ -47,7 +47,7 @@ class LNSSumCPPFunction(LNSFunction):
         x_packed = x.to(torch.int64)
         dim = [] if dim is None else ((dim,) if isinstance(dim, int) else dim)
 
-        return xlnstorch._C.sum_forward(x_packed, base, dim, keepdim).to(torch.float64)
+        return xlnstorch.csrc.sum_forward(x_packed, base, dim, keepdim).to(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -74,7 +74,7 @@ class LNSMatmulCPPFunction(LNSFunction):
     @staticmethod
     def forward(A, B, base):
         A_packed, B_packed = A.to(torch.int64), B.to(torch.int64)
-        return xlnstorch._C.matmul_forward(A_packed, B_packed, base).to(torch.float64)
+        return xlnstorch.csrc.matmul_forward(A_packed, B_packed, base).to(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -87,7 +87,7 @@ class LNSMatmulCPPFunction(LNSFunction):
         grad_packed = grad_output.to(torch.int64)
         A_packed, B_packed = A.to(torch.int64), B.to(torch.int64)
 
-        grad_A, grad_B = xlnstorch._C.matmul_backward(grad_packed, A_packed, B_packed, base)
+        grad_A, grad_B = xlnstorch.csrc.matmul_backward(grad_packed, A_packed, B_packed, base)
         return grad_A, grad_B, None
 
 @implements(torch.matmul, LNSMatmulCPPFunction.forward, "default_cpp", default=True)

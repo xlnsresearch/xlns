@@ -14,11 +14,11 @@ LNS_ONE = torch.tensor(0, dtype=torch.float64)
 LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
 
 try:
-    from . import _C
-    _C_AVAILABLE = True
+    from . import csrc
+    CSRC_AVAILABLE = True
 except ImportError as e:
     logging.info("xlnstorch c++ extension not found. Reverting to pure Python implementation.")
-    _C_AVAILABLE = False
+    CSRC_AVAILABLE = False
 
 from . import autograd
 
@@ -61,7 +61,7 @@ __all__ = [
     "LNS_ZERO",
     "LNS_ONE",
     "LNS_NEG_ONE",
-    "_C_AVAILABLE",
+    "CSRC_AVAILABLE",
 
     "LNSTensor",
     "lnstensor",

@@ -9,7 +9,7 @@ import torch
 import xlns as xl
 
 # Import constants and base classes that don't cause circular imports
-from xlnstorch import LNS_ZERO, _C_AVAILABLE
+from xlnstorch import LNS_ZERO, CSRC_AVAILABLE
 from xlnstorch.autograd import LNSFunction
 
 # Precomputed table of bases from precisions
@@ -129,12 +129,12 @@ def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tens
 
     return old_tensor
 
-if _C_AVAILABLE:
-    import xlnstorch._C
-    float_to_lns_forward = xlnstorch._C.float_to_lns_forward
-    float_to_lns_backward = xlnstorch._C.float_to_lns_backward
-    change_base_forward = xlnstorch._C.change_base_forward
-    change_base_backward = xlnstorch._C.change_base_backward
+if CSRC_AVAILABLE:
+    import xlnstorch.csrc
+    float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
+    float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
+    change_base_forward = xlnstorch.csrc.change_base_forward
+    change_base_backward = xlnstorch.csrc.change_base_backward
 else:
     float_to_lns_forward = _float_to_lns_forward_python
     float_to_lns_backward = _float_to_lns_backward_python

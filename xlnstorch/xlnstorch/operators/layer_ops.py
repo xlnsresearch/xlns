@@ -1,7 +1,7 @@
 import warnings
 import math
 import torch
-from xlnstorch import LNS_ZERO, _C_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
+from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from xlnstorch.autograd import LNSFunction
 from . import (
     lns_mul,
@@ -497,7 +497,7 @@ class LNSConv1dFunction(LNSFunction):
 
         return grad_x, grad_weight, grad_bias, None, None, None, None, None
 
-@implements(torch.nn.functional.conv1d, LNSConv1dFunction.forward, "default", default=not _C_AVAILABLE)
+@implements(torch.nn.functional.conv1d, LNSConv1dFunction.forward, "default", default=not CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
@@ -693,7 +693,7 @@ class LNSConv2dFunction(LNSFunction):
             grad_x = grad_x.squeeze(0)
         return grad_x, grad_weight, grad_bias, None, None, None, None, None
 
-@implements(torch.nn.functional.conv2d, LNSConv2dFunction.forward, "default", default=not _C_AVAILABLE)
+@implements(torch.nn.functional.conv2d, LNSConv2dFunction.forward, "default", default=not CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
@@ -901,7 +901,7 @@ class LNSConv3dFunction(LNSFunction):
             grad_x = grad_x.squeeze(0)
         return grad_x, grad_weight, grad_bias, None, None, None, None, None
 
-@implements(torch.nn.functional.conv3d, LNSConv3dFunction.forward, "default", default=not _C_AVAILABLE)
+@implements(torch.nn.functional.conv3d, LNSConv3dFunction.forward, "default", default=not CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
