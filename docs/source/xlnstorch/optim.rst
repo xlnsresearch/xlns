@@ -13,7 +13,7 @@ Overview
 All optimizers in xlnstorch follow the same interface as PyTorch optimizers but
 are specifically designed to handle LNSTensor parameters. They support:
 
-* LNSTensor and regular float learning rates and hyperparameters
+* LNS and floating point learning rates and hyperparameters
 * Automatic gradient handling for LNS arithmetic
 * Parameter groups from LNS layers using ``model.lns_parameters()``
 * Standard optimizer features like momentum, weight decay, and adaptive learning rates
@@ -25,27 +25,27 @@ Here's a basic example of using an LNS optimizer:
 
 .. code-block:: python
 
-    import torch
-    import xlnstorch as xltorch
+	import torch
+	import xlnstorch as xltorch
 
-    # Create model and data
-    model = xltorch.layers.LNSLinear(3, 3, bias=True)
-    input = xltorch.randn(3, requires_grad=True)
-    target = xltorch.lnstensor([1.0, 1.0, 1.0])
+	# Create model and data
+	model = xltorch.layers.LNSLinear(3, 3, bias=True)
+	input = xltorch.randn(3, requires_grad=True)
+	target = xltorch.lnstensor([1.0, 1.0, 1.0])
 
-    # Initialize optimizer with model parameters
-    optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1)
-    loss_fn = torch.nn.MSELoss(reduction='mean')
+	# Initialize optimizer with model parameters
+	optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1)
+	loss_fn = torch.nn.MSELoss(reduction='mean')
 
-    # Training loop
-    for i in range(20):
-        optimizer.zero_grad()
+	# Training loop
+	for i in range(20):
+	optimizer.zero_grad()
 
-        output = model(input)
-        loss = loss_fn(output, target)
+	output = model(input)
+	loss = loss_fn(output, target)
 
-        loss.backward()
-        optimizer.step()
+	loss.backward()
+	optimizer.step()
 
 Parameter Groups
 ----------------
@@ -56,12 +56,12 @@ dictionaries that contain both weights and biases in LNS format.
 
 .. code-block:: python
 
-    # Get parameter groups from a model
-    model = xltorch.layers.LNSLinear(10, 5, bias=True)
-    param_groups = model.lns_parameters()
+	# Get parameter groups from a model
+	model = xltorch.layers.LNSLinear(10, 5, bias=True)
+	param_groups = model.lns_parameters()
 
-    # Initialize optimizer with parameter groups
-    optimizer = xltorch.optim.LNSAdam(param_groups, lr=0.001)
+	# Initialize optimizer with parameter groups
+	optimizer = xltorch.optim.LNSAdam(param_groups, lr=0.001)
 
 Learning Rate and Hyperparameters
 ----------------------------------
@@ -73,12 +73,12 @@ converted to LNSTensors with the default base.
 
 .. code-block:: python
 
-    # Using float learning rate
-    optimizer1 = xltorch.optim.LNSAdam(params, lr=0.001)
+	# Using float learning rate
+	optimizer1 = xltorch.optim.LNSAdam(params, lr=0.001)
 
-    # Using LNSTensor learning rate
-    lr_tensor = xltorch.lnstensor(0.001)
-    optimizer2 = xltorch.optim.LNSAdam(params, lr=lr_tensor)
+	# Using LNSTensor learning rate
+	lr_tensor = xltorch.lnstensor(0.001)
+	optimizer2 = xltorch.optim.LNSAdam(params, lr=lr_tensor)
 
 Available Optimizers
 --------------------
@@ -106,9 +106,9 @@ Stochastic Gradient Descent (SGD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: xlnstorch.optim.LNSSGD
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 Adam Optimizers
 ~~~~~~~~~~~~~~~
@@ -116,37 +116,37 @@ Adam Optimizers
 .. _lnsadam:
 
 .. autoclass:: xlnstorch.optim.LNSAdam
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsadamw:
 
 .. autoclass:: xlnstorch.optim.LNSAdamW
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsadamax:
 
 .. autoclass:: xlnstorch.optim.LNSAdamax
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsnadam:
 
 .. autoclass:: xlnstorch.optim.LNSNAdam
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsradam:
 
 .. autoclass:: xlnstorch.optim.LNSRAdam
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 Adaptive Learning Rate Optimizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,23 +154,23 @@ Adaptive Learning Rate Optimizers
 .. _lnsadagrad:
 
 .. autoclass:: xlnstorch.optim.LNSAdagrad
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsadadelta:
 
 .. autoclass:: xlnstorch.optim.LNSAdadelta
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsrmsprop:
 
 .. autoclass:: xlnstorch.optim.LNSRMSprop
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 Other Optimizers
 ~~~~~~~~~~~~~~~~
@@ -178,13 +178,13 @@ Other Optimizers
 .. _lnsrprop:
 
 .. autoclass:: xlnstorch.optim.LNSRprop
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
 
 .. _lnsasgd:
 
 .. autoclass:: xlnstorch.optim.LNSASGD
-   :members:
-   :undoc-members:
-   :show-inheritance:
+	:members:
+	:undoc-members:
+	:show-inheritance:
