@@ -15,4 +15,4 @@ LNS arithmetic in machine learning models.
     xlnstorch.nn <nn>
     xlnstorch.optim <optim>
     xlnstorch.benchmark <benchmark>
-    Visualization <visualization>
+    xlnstorch.viz <viz>

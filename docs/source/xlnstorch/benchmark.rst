@@ -57,7 +57,7 @@ Benchmark Classes
     Container for benchmark results and metrics
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/benchmark
     :nosignatures:
 
     Benchmark
@@ -70,7 +70,7 @@ Pre-built Benchmarks
 The module includes ready-to-use benchmark classes for common operations:
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/benchmark
     :nosignatures:
 
     UnaryBench
@@ -188,7 +188,7 @@ API Reference
 For detailed API documentation, see the individual class and method documentation:
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/benchmark
 
     Benchmark.make_inputs
     Benchmark.forward

@@ -1,4 +1,4 @@
-.. currentmodule:: xlnstorch
+.. currentmodule:: xlnstorch.viz
 
 .. _visualization-doc:
 
@@ -62,9 +62,9 @@ The visualization module is organized into these main areas:
 .. toctree::
    :maxdepth: 2
 
-   error_analysis
-   precision_comparison  
-   autograd_graphs
+   viz/error_analysis
+   viz/precision_comparison  
+   viz/autograd_graphs
 
 Error Analysis Functions
 ------------------------
@@ -73,13 +73,13 @@ The error analysis tools help understand the numerical behavior of LNS operation
 compared to exact arithmetic.
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/viz
     :nosignatures:
 
-    viz.make_error_grid
-    viz.plot_error_heatmap
-    viz.plot_staircase
-    viz.plot_spacing_heatmap
+    make_error_grid
+    plot_error_heatmap
+    plot_staircase
+    plot_spacing_heatmap
 
 Precision Comparison Functions
 ------------------------------
@@ -88,12 +88,12 @@ The precision comparison tools allow you to analyze how different LNS configurat
 affect numerical accuracy for the same operation.
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/viz
     :nosignatures:
 
-    viz.precision_sweep_analysis
-    viz.plot_precision_comparison
-    viz.plot_precision_heatmap_grid
+    precision_sweep_analysis
+    plot_precision_comparison
+    plot_precision_heatmap_grid
 
 Autograd visualization
 ----------------------
@@ -102,10 +102,10 @@ The autograd visualization tools provide insight into the computational graph
 structure when using LNS tensors.
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/viz
     :nosignatures:
 
-    viz.graph.make_autograd_graph
+    graph.make_autograd_graph
 
 Dependencies
 ------------
