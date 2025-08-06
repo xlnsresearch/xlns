@@ -1,4 +1,4 @@
-.. currentmodule:: xlnstorch
+.. currentmodule:: xlnstorch.benchmark
 
 .. _benchmark-doc:
 
@@ -60,9 +60,9 @@ Benchmark Classes
     :toctree: generated
     :nosignatures:
 
-    benchmark.Benchmark
-    benchmark.BenchmarkRunner
-    benchmark.BenchResult
+    Benchmark
+    BenchmarkRunner
+    BenchResult
 
 Pre-built Benchmarks
 --------------------
@@ -73,13 +73,13 @@ The module includes ready-to-use benchmark classes for common operations:
     :toctree: generated
     :nosignatures:
 
-    benchmark.UnaryBench
-    benchmark.BinaryBench
+    UnaryBench
+    BinaryBench
 
 Creating Custom Benchmarks
 ---------------------------
 
-To create a custom benchmark, inherit from :class:`benchmark.Benchmark` and 
+To create a custom benchmark, inherit from :class:`Benchmark` and 
 implement the required methods:
 
 .. code-block:: python
@@ -190,11 +190,13 @@ For detailed API documentation, see the individual class and method documentatio
 .. autosummary::
     :toctree: generated
 
-    benchmark.Benchmark.make_inputs
-    benchmark.Benchmark.forward
-    benchmark.Benchmark.post_forward
-    benchmark.Benchmark.before_epoch
-    benchmark.Benchmark.after_epoch
-    benchmark.BenchmarkRunner.run
-    benchmark.BenchResult.print
-    benchmark.BenchResult.save_full_profile
+    Benchmark.make_inputs
+    Benchmark.forward
+    Benchmark.post_forward
+    Benchmark.before_epoch
+    Benchmark.after_epoch
+
+    BenchmarkRunner.run
+
+    BenchResult.print
+    BenchResult.save_full_profile
