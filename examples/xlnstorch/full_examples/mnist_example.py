@@ -54,7 +54,7 @@ test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 model = LNSNet().to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
-optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
+optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1, momentum=0.9)
 
 start = time.time()
 num_epochs = 5

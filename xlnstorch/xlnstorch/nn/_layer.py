@@ -43,7 +43,7 @@ class LNSModule(torch.nn.Module):
         super().register_parameter(name + "_lns", param._lns)
         super().register_buffer(name + "_base", param.base)
 
-    def parameter_groups(self):
+    def lns_parameters(self):
         """
         Returns a list of parameter groups for the module.
         Each group contains parameters and their corresponding base values.

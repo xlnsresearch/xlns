@@ -30,7 +30,7 @@ class LNSAdagrad(LNSOptimizer):
     -----------
     params : iterable
         An iterable of parameters to optimize or dicts defining parameter groups.
-        This should be obtained from a model's `parameter_groups()` method.
+        This should be obtained from a model's `lns_parameters()` method.
     lr : LNSTensor, float, optional
         Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.
     lr_decay : LNSTensor, float, optional

@@ -15,7 +15,7 @@ are specifically designed to handle LNSTensor parameters. They support:
 
 * LNSTensor and regular float learning rates and hyperparameters
 * Automatic gradient handling for LNS arithmetic
-* Parameter groups from LNS layers using ``model.parameter_groups()``
+* Parameter groups from LNS layers using ``model.lns_parameters()``
 * Standard optimizer features like momentum, weight decay, and adaptive learning rates
 
 Basic Usage
@@ -34,7 +34,7 @@ Here's a basic example of using an LNS optimizer:
     target = xltorch.lnstensor([1.0, 1.0, 1.0])
 
     # Initialize optimizer with model parameters
-    optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1)
+    optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1)
     loss_fn = torch.nn.MSELoss(reduction='mean')
 
     # Training loop
@@ -51,14 +51,14 @@ Parameter Groups
 ----------------
 
 LNS optimizers work with parameter groups obtained from LNS layers using the
-``parameter_groups()`` method. This method returns an iterable of parameter
+``lns_parameters()`` method. This method returns an iterable of parameter
 dictionaries that contain both weights and biases in LNS format.
 
 .. code-block:: python
 
     # Get parameter groups from a model
     model = xltorch.layers.LNSLinear(10, 5, bias=True)
-    param_groups = model.parameter_groups()
+    param_groups = model.lns_parameters()
 
     # Initialize optimizer with parameter groups
     optimizer = xltorch.optim.LNSAdam(param_groups, lr=0.001)
