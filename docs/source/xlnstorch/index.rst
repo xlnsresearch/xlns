@@ -12,7 +12,7 @@ LNS arithmetic in machine learning models.
     xlnstorch.LNSTensor <lnstensors>
     xlnstorch.autograd <autograd>
     xlnstorch.operators <operators>
-    Layers <layers>
+    xlnstorch.nn <nn>
     xlnstorch.optim <optim>
     Benchmarking <benchmark>
     Visualization <visualization>

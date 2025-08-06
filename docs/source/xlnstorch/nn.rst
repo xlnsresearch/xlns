@@ -1,4 +1,4 @@
-.. currentmodule:: xlnstorch
+.. currentmodule:: xlnstorch.nn
 
 .. _layers-doc:
 
@@ -19,78 +19,78 @@ denoted in the documentation.
 ===============================    =====================
 Linear Layers                      Note
 ===============================    =====================
-:class:`nn.LNSIdentity`            No parameters
-:class:`nn.LNSLinear`
-:class:`nn.LNSBilinear`
-:class:`nn.LNSLazyLinear`
+:class:`LNSIdentity`               No parameters
+:class:`LNSLinear`
+:class:`LNSBilinear`
+:class:`LNSLazyLinear`
 ===============================    =====================
 
 ===============================    =====================
 Dropout Layers                     Note
 ===============================    =====================
-:class:`nn.LNSDropout`             No parameters
-:class:`nn.LNSDropout1d`           No parameters
-:class:`nn.LNSDropout2d`           No parameters
-:class:`nn.LNSDropout3d`           No parameters
+:class:`LNSDropout`                No parameters
+:class:`LNSDropout1d`              No parameters
+:class:`LNSDropout2d`              No parameters
+:class:`LNSDropout3d`              No parameters
 ===============================    =====================
 
 ===============================    =====================
 Convolutional Layers               Note
 ===============================    =====================
-:class:`nn.LNSConv1d`
-:class:`nn.LNSConv2d`
-:class:`nn.LNSConv3d`
+:class:`LNSConv1d`
+:class:`LNSConv2d`
+:class:`LNSConv3d`
 ===============================    =====================
 
 ===============================    =====================
 Pooling Layers                     Note
 ===============================    =====================
-:class:`nn.LNSAvgPool1d`           No parameters
-:class:`nn.LNSAvgPool2d`           No parameters
-:class:`nn.LNSAvgPool3d`           No parameters
+:class:`LNSAvgPool1d`              No parameters
+:class:`LNSAvgPool2d`              No parameters
+:class:`LNSAvgPool3d`              No parameters
 ===============================    =====================
 
 .. hide the autosummary table from the main page but still
 .. generate the stub files for the layers (this is a hack).
+
+Custom Layers
+-------------
+
+To implement your own custom layers that support ``LNSTensor`` parameters,
+you can subclass the base layer class provided in this module :class:`LNSModule`.
+
+This base class is a subclass of the standard PyTorch ``torch.nn.Module`` and
+provides the method :func:`LNSModule.register_parameter` which is equivalent
+to PyTorch's method of registering parameters.
 
 .. raw:: html
 
     <div style="display: none;">
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/nn
     :nosignatures:
 
-    nn.LNSModule
+    LNSModule
 
-    nn.LNSIdentity
-    nn.LNSLinear
-    nn.LNSBilinear
-    nn.LNSLazyLinear
+    LNSIdentity
+    LNSLinear
+    LNSBilinear
+    LNSLazyLinear
 
-    nn.LNSDropout
-    nn.LNSDropout1d
-    nn.LNSDropout2d
-    nn.LNSDropout3d
+    LNSDropout
+    LNSDropout1d
+    LNSDropout2d
+    LNSDropout3d
 
-    nn.LNSConv1d
-    nn.LNSConv2d
-    nn.LNSConv3d
+    LNSConv1d
+    LNSConv2d
+    LNSConv3d
 
-    nn.LNSAvgPool1d
-    nn.LNSAvgPool2d
-    nn.LNSAvgPool3d
+    LNSAvgPool1d
+    LNSAvgPool2d
+    LNSAvgPool3d
 
 .. raw:: html
 
     </div>
-
-Custom Layers
--------------
-
-To implement your own custom layers that support ``LNSTensor`` parameters,
-you can subclass the base layer class provided in this module :class:`nn.LNSModule`.
-
-This base class is a subclass of the standard PyTorch ``torch.nn.Module`` and
-provides the method :func:`nn.LNSModule.register_parameter` which is equivalent
-to PyTorch's method of registering parameters.
