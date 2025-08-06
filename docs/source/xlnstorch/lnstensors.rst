@@ -82,15 +82,64 @@ LNSTensor class reference
     LNSTensor.shape
     LNSTensor.ndim
     LNSTensor.requires_grad
+    LNSTensor.grad_fn
 
+    LNSTensor.view
     LNSTensor.item
     LNSTensor.size
     LNSTensor.numel
     LNSTensor.backward
     LNSTensor.broadcast_to
+    LNSTensor.expand
+    LNSTensor.to
     LNSTensor.dim
     LNSTensor.clone
     LNSTensor.squeeze
     LNSTensor.unsqueeze
     LNSTensor.detach
     LNSTensor.requires_grad_
+
+    LNSTensor.add
+    LNSTensor.add_
+    LNSTensor.sub
+    LNSTensor.sub_
+    LNSTensor.mul
+    LNSTensor.mul_
+    LNSTensor.div
+    LNSTensor.div_
+    LNSTensor.pow
+    LNSTensor.pow_
+    LNSTensor.neg
+    LNSTensor.neg_
+    LNSTensor.abs
+    LNSTensor.abs_
+    LNSTensor.sqrt
+    LNSTensor.sqrt_
+    LNSTensor.square
+    LNSTensor.square_
+    LNSTensor.reciprocal
+    LNSTensor.reciprocal_
+    LNSTensor.sign
+    LNSTensor.sign_
+    LNSTensor.positive
+    LNSTensor.sum
+    LNSTensor.prod
+    LNSTensor.transpose
+    LNSTensor.equal
+    LNSTensor.eq
+    LNSTensor.ne
+    LNSTensor.ge
+    LNSTensor.gt
+    LNSTensor.le
+    LNSTensor.lt
+    LNSTensor.isclose
+    LNSTensor.allclose
+    LNSTensor.any
+    LNSTensor.all
+    LNSTensor.sort
+    LNSTensor.argsort
+    LNSTensor.kthvalue
+    LNSTensor.maximum
+    LNSTensor.minimum
+    LNSTensor.tanh
+    LNSTensor.sigmoid

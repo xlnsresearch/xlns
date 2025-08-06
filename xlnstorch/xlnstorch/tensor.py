@@ -347,6 +347,18 @@ class LNSTensor:
         """
         return self._lns.grad_fn
 
+    @property
+    def device(self) -> torch.device:
+        """
+        The ``torch.device`` where the LNSTensor is stored.
+
+        Returns
+        -------
+        torch.device
+            The device of the LNSTensor.
+        """
+        return self._lns.device
+
     def view(self, *shape: int) -> LNSTensor:
         """
         Returns a new tensor with the same data as this LNSTensor
@@ -403,6 +415,22 @@ class LNSTensor:
         return self._lns.dim()
 
     def to(self, device=None):
+        """
+        Converts the LNSTensor to a specified device. Analogous to
+
+        https://docs.pytorch.org/docs/stable/generated/torch.Tensor.to.html
+
+        Parameters
+        ----------
+        device : str, torch.device, optional
+            The device to which the LNSTensor should be moved. If not specified,
+            the LNSTensor will remain on the current device.
+
+        Returns
+        -------
+        LNSTensor
+            A new LNSTensor on the specified device with the same data and base.
+        """
         result = tensor_utils.LNSToFunction.apply(self, device)
         return lnstensor(result, from_lns=True, b=self.base)
 
@@ -447,6 +475,12 @@ class LNSTensor:
     def clone(self, *, memory_format=torch.preserve_format) -> LNSTensor:
         """
         Returns a copy of the LNSTensor with the same data and base.
+
+        Parameters
+        ----------
+        memory_format : torch.memory_format, optional
+            The desired memory format of the returned tensor. Defaults to
+            ``torch.preserve_format``.
         """
         return torch.clone(self, memory_format=memory_format)
 
