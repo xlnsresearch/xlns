@@ -1,6 +1,0 @@
-﻿xlnstorch.operators.override\_sbdb\_implementation
-==================================================
-
-.. currentmodule:: xlnstorch.operators
-
-.. autofunction:: override_sbdb_implementation

@@ -1,6 +1,0 @@
-﻿xlnstorch.operators.register\_xlnsconf\_implementation
-======================================================
-
-.. currentmodule:: xlnstorch.operators
-
-.. autofunction:: register_xlnsconf_implementation

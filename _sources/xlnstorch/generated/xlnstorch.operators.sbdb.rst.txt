@@ -1,6 +1,0 @@
-﻿xlnstorch.operators.sbdb
-========================
-
-.. currentmodule:: xlnstorch.operators
-
-.. autofunction:: sbdb
