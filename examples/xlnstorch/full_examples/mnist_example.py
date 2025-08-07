@@ -14,9 +14,9 @@ parser.add_argument('--precision', '-f', type=int, default=None, help='Precision
 parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
 args = parser.parse_args()
 
-args.precision = 10
-xltorch.set_default_sbdb_implementation("tab")
-xltorch.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+# args.precision = 10
+# xltorch.set_default_sbdb_implementation("tab")
+# xltorch.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class LNSNet(xltorch.nn.LNSModule):
 
