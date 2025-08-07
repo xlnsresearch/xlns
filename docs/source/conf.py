@@ -44,11 +44,16 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
+html_theme_options = {
+    "home_page_in_toc": True,
+    "max_navbar_depth": 2,
+}
 html_static_path = ['_static']
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable", None),
-    "torch": ("https://pytorch.org/docs/stable", None)
+    "torch": ("https://pytorch.org/docs/stable", None),
+    "torchvision": ("https://pytorch.org/vision/stable", None),
 }

@@ -1,24 +1,39 @@
 import time
+import argparse
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
 
+# import psutil
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='MNIST training with LNS')
+parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
+parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
+args = parser.parse_args()
+
 # Set addition sbdb implementation to lookup table for faster performance
-f = 8
-xltorch.operators.set_default_sbdb_implementation("tab")
-xltorch.operators.implementations.tab.get_table("tmp", f=f)
+# args.precision = 10
+# xltorch.set_default_sbdb_implementation("tab")
+# xltorch.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5, weight_f=f, bias_f=f)
-        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, weight_f=f, bias_f=f) # After conv layer, the input size is 32x24x24
+        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5,
+                                         weight_f=args.precision, bias_f=args.precision,
+                                         weight_b=args.base, bias_b=args.base)
+        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, # After conv layer, the input size is 32x24x24
+                                       weight_f=args.precision, bias_f=args.precision,
+                                       weight_b=args.base, bias_b=args.base)
 
-        # Initialize the weights and biases of the linear layers
-        # with normal distribution for weights and zeros for biases.
+        # Initialize the weights and biases of the layers with
+        # normal distribution for weights and zeros for biases.
+        xltorch.nn.init.normal_(self.conv.weight, mean=0.0, std=0.1)
+        xltorch.nn.init.zeros_(self.conv.bias)
         xltorch.nn.init.normal_(self.fc.weight, mean=0.0, std=0.1)
         xltorch.nn.init.zeros_(self.fc.bias)
 
@@ -38,17 +53,17 @@ class LNSNet(xltorch.nn.LNSModule):
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
 device = "cpu"
-train_transform = ToLNSTensor(f=f, device=device)
+train_transform = ToLNSTensor(f=args.precision, b=args.base, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
-batch_size = 1
+batch_size = 128
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader  = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 model = LNSNet().to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
-optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1, momentum=0.9)
+optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1, momentum=0.9)
 
 start = time.time()
 num_epochs = 5
@@ -60,6 +75,8 @@ for epoch in range(1, num_epochs + 1):
     running_train_loss = 0.0
     train_correct = 0
     train_total = 0
+
+    batch_group_start = time.time()
 
     for i, (data, target) in enumerate(train_loader):
 
@@ -80,8 +97,11 @@ for epoch in range(1, num_epochs + 1):
         batch_correct = (predicted == target).sum().item()
         train_correct += batch_correct
 
-        # if (i + 1) % 10 == 0:
-        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct.")
+        if (i + 1) % 10 == 0:
+            batch_group_end = time.time()
+            print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_group_end - batch_group_start):.2f}s).")
+            # print(f"Memory usage: {psutil.Process().memory_info().rss / (1024 * 1024)} MB")
+            batch_group_start = time.time()
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

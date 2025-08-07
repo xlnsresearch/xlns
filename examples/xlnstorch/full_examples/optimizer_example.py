@@ -5,8 +5,8 @@ input = xltorch.randn(3, requires_grad=True)
 target = xltorch.lnstensor([1.0, 1.0, 1.0])
 
 model = xltorch.nn.LNSLinear(3, 3, bias=True)
-# here we use the custom LNS optimizer method `model.parameter_groups()`
-optimizer = xltorch.optim.LNSSGD(model.parameter_groups(), lr=0.1)
+# here we use the custom LNS optimizer method `model.lns_parameters()`
+optimizer = xltorch.optim.LNSSGD(model.lns_parameters(), lr=0.1)
 loss_fn = torch.nn.MSELoss(reduction='mean') # we can use standard PyTorch loss classes
 
 for i in range(20):

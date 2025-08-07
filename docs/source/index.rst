@@ -10,7 +10,7 @@ Welcome to the XLNS project docs. Only the *xlnstorch* sub-package is
 documented right now; other modules will be added here later.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Packages
 
    xlnstorch/index
