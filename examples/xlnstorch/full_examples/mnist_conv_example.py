@@ -15,8 +15,9 @@ parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS
 args = parser.parse_args()
 
 # Set addition sbdb implementation to lookup table for faster performance
+# args.precision = 10
 # xltorch.set_default_sbdb_implementation("tab")
-# xltorch.operators.implementations.tab.get_table("tmp", f=f)
+# xltorch.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class LNSNet(xltorch.nn.LNSModule):
 
@@ -52,7 +53,7 @@ class LNSNet(xltorch.nn.LNSModule):
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
 device = "cpu"
-train_transform = ToLNSTensor(f=args.precision, device=device)
+train_transform = ToLNSTensor(f=args.precision, b=args.base, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 

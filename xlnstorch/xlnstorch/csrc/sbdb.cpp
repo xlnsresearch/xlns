@@ -38,10 +38,7 @@ void get_table(
         // tab::ez - scalar
         {
             const cnpy::NpyArray& arr = npzFile["tab::ez"];
-            auto opts = at::TensorOptions(at::kCPU).dtype(torch::kInt64);
-
-            tab::ez = torch::empty({}, opts);
-            std::copy_n(arr.data<int64_t>(), 1, tab::ez.data_ptr<int64_t>());
+            tab::ez = *arr.data<int64_t>();
         }
 
         // tab::sbdb - [2, N]
@@ -50,11 +47,10 @@ void get_table(
             const std::size_t rows = arr.shape[0];
             const std::size_t cols = arr.shape[1];
             const std::size_t numel = rows * cols;
+            tab::cols = cols;
 
-            auto opts = at::TensorOptions(at::kCPU).dtype(torch::kInt64);
-            tab::sbdb  = torch::empty({static_cast<long>(rows), static_cast<long>(cols)}, opts);
-
-            std::copy_n(arr.data<int64_t>(), numel, tab::sbdb.data_ptr<int64_t>());
+            tab::sbdb.resize(numel);
+            std::memcpy(tab::sbdb.data(), arr.data<int64_t>(), numel * sizeof(int64_t));
         }
 
         tab::initialized = true;
@@ -65,42 +61,30 @@ void get_table(
     if (tab::base >= max_base) {
         std::cout << "Creating ideal table as " << filename << '\n';
 
-        int64_t ez_val = sbdb::ideal(1, 1, tab::base);
-        tab::ez = torch::tensor(ez_val, torch::TensorOptions(at::kCPU).dtype(torch::kInt64));
+        tab::ez = sbdb::ideal(1, 1, tab::base);
 
-        auto opts = at::TensorOptions(at::kCPU).dtype(torch::kInt64);
-        torch::Tensor zrange = torch::arange(ez_val, 0, opts);
+        const int64_t first_z = tab::ez;
+        const int64_t last_z = -1;
+        tab::cols = static_cast<std::size_t>(-first_z);
 
-        const int64_t N = zrange.numel();
-        torch::Tensor sbt = torch::empty({N}, opts);
-        torch::Tensor dbt = torch::empty({N}, opts);
-
-        auto z_accessor = zrange.data_ptr<int64_t>();
-        auto sb_ptr = sbt.data_ptr<int64_t>();
-        auto db_ptr = dbt.data_ptr<int64_t>();
-
-        for (int64_t i = 0; i < N; ++i) {
-            const int64_t z = z_accessor[i];
-            sb_ptr[i] = sbdb::ideal(z, 0, tab::base);
-            db_ptr[i] = sbdb::ideal(z, 1, tab::base);
+        tab::sbdb.resize(2 * tab::cols);
+        std::size_t col = 0;
+        for (int64_t z = first_z; z <= last_z; ++z, ++col) {
+            tab::sbdb[0 * tab::cols + col] = sbdb::ideal(z, 0, tab::base);
+            tab::sbdb[1 * tab::cols + col] = sbdb::ideal(z, 1, tab::base);
         }
 
-        tab::sbdb = torch::stack({sbt, dbt}); // [2, N]
+        cnpy::npz_save(filename,
+                       "tab::ez",
+                       &tab::ez,
+                       {static_cast<std::size_t>(1)},
+                       "w");
 
-        cnpy::npz_save(
-            filename,
-            "tab::ez",
-            tab::ez.cpu().data_ptr<int64_t>(),
-            {static_cast<size_t>(tab::ez.numel())},
-            "w"
-        );
-        cnpy::npz_save(
-            filename,
-            "tab::sbdb",
-            tab::sbdb.cpu().data_ptr<int64_t>(),
-            {static_cast<size_t>(tab::sbdb.size(0)),
-                static_cast<size_t>(tab::sbdb.size(1))},
-            "a");
+        cnpy::npz_save(filename,
+                       "tab::sbdb",
+                       tab::sbdb.data(),
+                       {static_cast<std::size_t>(2), tab::cols},
+                       "a");
 
         tab::initialized = true;
         return;
@@ -142,12 +126,13 @@ namespace sbdb {
     inline int64_t tab(int64_t z, int64_t s, double base) {
 
         if (base == tab::base) {
-            const int64_t ez = tab::ez.item<int64_t>();
-
             int64_t idx = (z == 0 ? -1 : z);
-            idx = std::max(ez, idx);
+            idx = std::max(tab::ez, idx);
 
-            return tab::sbdb.index({s, idx}).item<int64_t>();
+            int64_t wrapped = (idx - tab::ez) % tab::cols;
+            if (wrapped < 0) wrapped += tab::cols;
+
+            return tab::sbdb[s * tab::cols + wrapped];
         }
 
         return sbdb::ideal(z, s, base);
@@ -171,22 +156,30 @@ namespace sbdb {
 
             return int64_vec_t::loadu(out_arr);
 
-            // vectorized version not working
-            // const int64_t ez_scalar = tab::ez.item<int64_t>();
-            // const int64_vec_t ez_vec(ez_scalar);
+            // vectorized version doesn't currently work
+            /*
+            int64_vec_t idx = int64_vec_t::blendv(z, int64_vec_t(-1), z == int64_vec_t(0));
+            idx = at::vec::maximum(idx, int64_vec_t(tab::ez));
+            int64_vec_t diff = idx - int64_vec_t(tab::ez);
 
-            // int64_vec_t idx = int64_vec_t::blendv(z, int64_vec_t(-1), z == int64_vec_t(0));
-            // idx = at::vec::maximum(idx, ez_vec);
+            constexpr int LANES = int64_vec_t::size();
+            alignas(64) int64_t diff_buf[LANES];
+            diff.store(diff_buf);
 
-            // const int64_t N = tab::sbdb.size(1);
-            // const int64_vec_t Nvec(N);
+            alignas(64) int64_t wrap_buf[LANES];
+            for (int i = 0; i < LANES; ++i) {
+                int64_t w = diff_buf[i] % int64_t(tab::cols);
+                if (w < 0) w += int64_t(tab::cols);
+                wrap_buf[i] = w;
+            }
+            int64_vec_t wrapped = int64_vec_t::loadu(wrap_buf);
 
-            // const int64_vec_t neg_mask = (idx < int64_vec_t(0));
-            // const int64_vec_t idx_pos = int64_vec_t::blendv(idx, idx + Nvec, neg_mask);
-            // int64_vec_t offsets = s * Nvec + idx_pos;
+            alignas(64) int64_t idx_buf[LANES];
+            int64_vec_t idx_vec = s * int64_vec_t(int64_t(tab::cols)) + wrapped;
+            idx_vec.store(idx_buf);
 
-            // const int64_t* base_ptr = tab::sbdb.data_ptr<int64_t>();
-            // return at::vec::gather(base_ptr, offsets);
+            return at::vec::gather(tab::sbdb.data(), idx_buf);
+            */
         }
 
         else {

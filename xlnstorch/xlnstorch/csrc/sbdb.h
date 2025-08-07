@@ -19,8 +19,9 @@ namespace tab {
     inline bool initialized = false;
     inline bool mismatch = false;
     inline double base = 0.0;
-    inline at::Tensor ez;
-    inline at::Tensor sbdb;
+    inline int64_t ez;
+    inline std::size_t cols = 0;
+    inline std::vector<int64_t> sbdb;
 }
 
 struct SbdbEntry {
