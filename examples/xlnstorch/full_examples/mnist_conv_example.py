@@ -1,4 +1,5 @@
 import time
+import argparse
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -7,8 +8,13 @@ from xlnstorch.transforms import ToLNSTensor
 
 # import psutil
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='MNIST training with LNS')
+parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
+parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
+args = parser.parse_args()
+
 # Set addition sbdb implementation to lookup table for faster performance
-f = 23
 # xltorch.set_default_sbdb_implementation("tab")
 # xltorch.operators.implementations.tab.get_table("tmp", f=f)
 
@@ -16,8 +22,12 @@ class LNSNet(xltorch.nn.LNSModule):
 
     def __init__(self):
         super().__init__()
-        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5, weight_f=f, bias_f=f)
-        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, weight_f=f, bias_f=f) # After conv layer, the input size is 32x24x24
+        self.conv = xltorch.nn.LNSConv2d(1, 32, kernel_size=5,
+                                         weight_f=args.precision, bias_f=args.precision,
+                                         weight_b=args.base, bias_b=args.base)
+        self.fc = xltorch.nn.LNSLinear(32 * 24 * 24, 10, # After conv layer, the input size is 32x24x24
+                                       weight_f=args.precision, bias_f=args.precision,
+                                       weight_b=args.base, bias_b=args.base)
 
         # Initialize the weights and biases of the layers with
         # normal distribution for weights and zeros for biases.
@@ -42,7 +52,7 @@ class LNSNet(xltorch.nn.LNSModule):
 
 # Set up MNIST datasets with basic transforms (converting images to tensors)
 device = "cpu"
-train_transform = ToLNSTensor(f=f, device=device)
+train_transform = ToLNSTensor(f=args.precision, device=device)
 train_dataset = datasets.MNIST('./data', train=True, download=True, transform=train_transform)
 test_dataset = datasets.MNIST('./data', train=False, download=True, transform=train_transform)
 
