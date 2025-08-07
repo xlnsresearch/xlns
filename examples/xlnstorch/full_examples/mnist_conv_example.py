@@ -9,7 +9,7 @@ from xlnstorch.transforms import ToLNSTensor
 
 # Set addition sbdb implementation to lookup table for faster performance
 f = 23
-# xltorch.operators.set_default_sbdb_implementation("tab")
+# xltorch.set_default_sbdb_implementation("tab")
 # xltorch.operators.implementations.tab.get_table("tmp", f=f)
 
 class LNSNet(xltorch.nn.LNSModule):

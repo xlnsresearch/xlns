@@ -6,7 +6,8 @@ from xlnstorch.operators.addition_ops import LNSAddFunction
 from xlnstorch.autograd import LNSFunction
 
 SBDB_CPP_FUNCS = [
-    "ideal"
+    "ideal",
+    "tab"
 ]
 
 class LNSAddCPPFunction(LNSFunction):

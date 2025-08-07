@@ -7,7 +7,7 @@ import os
 import warnings
 import torch
 import numpy as np
-from xlnstorch import implements_sbdb
+from xlnstorch import implements_sbdb, CSRC_AVAILABLE
 from xlnstorch.operators.addition_ops import sbdb_ideal
 from xlnstorch.tensor_utils import get_base_from_precision
 
@@ -21,16 +21,22 @@ _one = torch.tensor(1, dtype=torch.int64)
 _zero = torch.tensor(0, dtype=torch.int64)
 
 def get_table(filestem: str, f=None, b=None):
-    global initialized, tab_base, tab_ez, tab_sbdb, tab_mismatch
-    tab_mismatch = False
-
     if f is not None:
-        tab_base = get_base_from_precision(f)
+        base = get_base_from_precision(f)
     elif b is not None:
         if torch.is_tensor(b):
-            tab_base = b.detach().to(torch.float64)
+            base = b.detach().to(torch.float64)
         else:
-            tab_base = torch.tensor(b, dtype=torch.float64)
+            base = torch.tensor(b, dtype=torch.float64)
+
+    if CSRC_AVAILABLE:
+        import xlnstorch.csrc
+        xlnstorch.csrc.get_table(filestem, base.item())
+        return
+
+    global initialized, tab_base, tab_ez, tab_sbdb, tab_mismatch
+    tab_mismatch = False
+    tab_base = base
 
     filename = f"./{filestem}_{str(tab_base.item())[2:]}.npz"
 
