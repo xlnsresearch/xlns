@@ -14,5 +14,6 @@ LNS arithmetic in machine learning models.
     xlnstorch.operators <operators>
     xlnstorch.nn <nn>
     xlnstorch.optim <optim>
+    xlnstorch.transforms <transforms>
     xlnstorch.benchmark <benchmark>
     xlnstorch.viz <viz>
