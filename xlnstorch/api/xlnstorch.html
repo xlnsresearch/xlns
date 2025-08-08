@@ -1,0 +1,615 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>xlnstorch &#8212; xlns 1.0.5 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=c05c4e54"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/xlnstorch';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="xlnstorch.lnstensor" href="generated/xlnstorch.lnstensor.html" />
+    <link rel="prev" title="Python API" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">xlns 1.0.5 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../index.html">
+                    xlns documentation
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Packages</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">xlnstorch</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../getting_started/index.html">Getting Started</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/installation.html">installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started/quickstart.html">quickstart</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Python API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">xlnstorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lnstensors.html">xlnstorch.LNSTensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
+<li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/xlnstorch/api/xlnstorch.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>xlnstorch</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-creation-ops">Tensor Creation Ops</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ZERO"><code class="docutils literal notranslate"><span class="pre">LNS_ZERO</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_ONE</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_ONE</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.CSRC_AVAILABLE"><code class="docutils literal notranslate"><span class="pre">CSRC_AVAILABLE</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-operations">Custom Operations</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="xlnstorch">
+<h1>xlnstorch<a class="headerlink" href="#xlnstorch" title="Link to this heading">#</a></h1>
+<p>The xlnstorch package provides an LNSTensor class, analogous to PyTorch’s Tensor,
+which is designed to handle LNS arithmetic. The LNSTensor class is built on top
+of PyTorch’s Tensor, allowing it to leverage PyTorch’s features such as automatic
+differentiation, while also providing specialized methods for LNS operations.</p>
+<section id="tensor-creation-ops">
+<h2>Tensor Creation Ops<a class="headerlink" href="#tensor-creation-ops" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.lnstensor.html#xlnstorch.lnstensor" title="xlnstorch.lnstensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lnstensor</span></code></a></p></td>
+<td><p>Constructs an <a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSTensor</span></code></a> from some array-like <em>data</em>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.zeros.html#xlnstorch.zeros" title="xlnstorch.zeros"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zeros</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with zeros, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.zeros_like.html#xlnstorch.zeros_like" title="xlnstorch.zeros_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zeros_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with zeros, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.ones.html#xlnstorch.ones" title="xlnstorch.ones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ones</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with ones, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.ones_like.html#xlnstorch.ones_like" title="xlnstorch.ones_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ones_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with ones, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.full.html#xlnstorch.full" title="xlnstorch.full"><code class="xref py py-obj docutils literal notranslate"><span class="pre">full</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with <cite>fill_value</cite>, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.full_like.html#xlnstorch.full_like" title="xlnstorch.full_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">full_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with <cite>fill_value</cite>, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.rand.html#xlnstorch.rand" title="xlnstorch.rand"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rand</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a uniform distribution on the interval [0, 1], with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.rand_like.html#xlnstorch.rand_like" title="xlnstorch.rand_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rand_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a uniform distribution on the interval [0, 1], with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.randn.html#xlnstorch.randn" title="xlnstorch.randn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">randn</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a normal distribution with mean 0 and variance 1, with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.randn_like.html#xlnstorch.randn_like" title="xlnstorch.randn_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">randn_like</span></code></a></p></td>
+<td><p>Returns an LNSTensor filled with random numbers from a normal distribution with mean 0 and variance 1, with the same shape and properties as the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.empty.html#xlnstorch.empty" title="xlnstorch.empty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">empty</span></code></a></p></td>
+<td><p>Returns an uninitialized LNSTensor with the specified shape and properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.empty_like.html#xlnstorch.empty_like" title="xlnstorch.empty_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">empty_like</span></code></a></p></td>
+<td><p>Returns an uninitialized LNSTensor with the same shape and base (unless otherwise specified) as the input tensor.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="constants">
+<h2>Constants<a class="headerlink" href="#constants" title="Link to this heading">#</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.LNS_ZERO">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNS_ZERO</span></span><a class="headerlink" href="#xlnstorch.LNS_ZERO" title="Link to this definition">#</a></dt>
+<dd><p>A float64 scalar tensor representing zero in the LNS. This is a
+special value defined to be
+<span class="math notranslate nohighlight">\(\left( -2^{52} \ll 1 \right) \mid 1 = -9007199254740991\)</span>.
+It is independent of an LNS object’s base.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.LNS_ONE">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNS_ONE</span></span><a class="headerlink" href="#xlnstorch.LNS_ONE" title="Link to this definition">#</a></dt>
+<dd><p>A float64 scalar tensor representing one in the LNS. For any
+LNS base <span class="math notranslate nohighlight">\(B\)</span>, we have <span class="math notranslate nohighlight">\(\log_B(1) = 0\)</span>, so this value
+is independent of base. It is defined to be
+<span class="math notranslate nohighlight">\(\left( 0 \ll 1 \right) \mid 0 = 0\)</span>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.LNS_NEG_ONE">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNS_NEG_ONE</span></span><a class="headerlink" href="#xlnstorch.LNS_NEG_ONE" title="Link to this definition">#</a></dt>
+<dd><p>A float64 scalar tensor representing one in the LNS. For any
+LNS base <span class="math notranslate nohighlight">\(B\)</span>, we have <span class="math notranslate nohighlight">\(\log_B(1) = 0\)</span>, so this value
+is independent of base. It is defined to be
+<span class="math notranslate nohighlight">\(\left( 0 \ll 1 \right) \mid 1 = 1\)</span>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.CSRC_AVAILABLE">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">CSRC_AVAILABLE</span></span><a class="headerlink" href="#xlnstorch.CSRC_AVAILABLE" title="Link to this definition">#</a></dt>
+<dd><p>A boolean flag indicating whether the C++ extension is available.
+When True, high-performance C++ implementations are used; when
+False, pure Python implementations are used as fallback. To find
+out why the C++ extension is not available, install the xlnstorch
+package with the <code class="docutils literal notranslate"><span class="pre">--verbose</span></code> flag to see the build logs. The
+internal C++ functions can be accessed via the <code class="docutils literal notranslate"><span class="pre">csrc</span></code> submodule.</p>
+</dd></dl>
+
+</section>
+<section id="custom-operations">
+<h2>Custom Operations<a class="headerlink" href="#custom-operations" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch</span></code> package provides a set of analogous operations to
+PyTorch’s built-in operations. These operations are registered with
+PyTorch’s internal dispatch mechanism, so that they can be used in
+the same way as PyTorch’s built-in operations. For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">xlnstorch</span> <span class="k">as</span> <span class="nn">xltorch</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span> <span class="n">f</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">xltorch</span><span class="o">.</span><span class="n">lnstensor</span><span class="p">([</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="n">f</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="c1"># LNSTensor(value=[4.0000, 6.0000], prec=23)</span>
+</pre></div>
+</div>
+<p>If you want to implement your own custom implementation of an operation,
+define a new operation, or use an alternative implementation of an
+operation, you can use the following functions.</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.implements.html#xlnstorch.implements" title="xlnstorch.implements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implements</span></code></a></p></td>
+<td><p>A decorator to register a custom implementation for a given torch function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.get_implementation.html#xlnstorch.get_implementation" title="xlnstorch.get_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_implementation</span></code></a></p></td>
+<td><p>Get the implementation tuple for a given torch function and implementation key.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.set_default_implementation.html#xlnstorch.set_default_implementation" title="xlnstorch.set_default_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_implementation</span></code></a></p></td>
+<td><p>Set the default implementation for a given torch function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.get_default_implementation_key.html#xlnstorch.get_default_implementation_key" title="xlnstorch.get_default_implementation_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_implementation_key</span></code></a></p></td>
+<td><p>Get the default implementation key for a given torch function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.override_implementation.html#xlnstorch.override_implementation" title="xlnstorch.override_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">override_implementation</span></code></a></p></td>
+<td><p>Temporarily override the default implementation for a torch function within a context.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.implements_sbdb.html#xlnstorch.implements_sbdb" title="xlnstorch.implements_sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">implements_sbdb</span></code></a></p></td>
+<td><p>A decorator to register a custom sbdb implementation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.set_default_sbdb_implementation.html#xlnstorch.set_default_sbdb_implementation" title="xlnstorch.set_default_sbdb_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_sbdb_implementation</span></code></a></p></td>
+<td><p>Set the default implementation for the sbdb function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.override_sbdb_implementation.html#xlnstorch.override_sbdb_implementation" title="xlnstorch.override_sbdb_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">override_sbdb_implementation</span></code></a></p></td>
+<td><p>Temporarily override the default sbdb implementation within a context.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.register_xlnsconf_implementation.html#xlnstorch.register_xlnsconf_implementation" title="xlnstorch.register_xlnsconf_implementation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_xlnsconf_implementation</span></code></a></p></td>
+<td><p>Registers an implementation of the sbdb function using a ufunc from the xlnsconf packed.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.sbdb.html#xlnstorch.sbdb" title="xlnstorch.sbdb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sbdb</span></code></a></p></td>
+<td><p>Computes the Gaussian logarithm for the given inputs z and s.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.align_lnstensor_bases.html#xlnstorch.align_lnstensor_bases" title="xlnstorch.align_lnstensor_bases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_lnstensor_bases</span></code></a></p></td>
+<td><p>Aligns the bases of a sequence of LNSTensors to a common base.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.format_lnstensor_operands.html#xlnstorch.format_lnstensor_operands" title="xlnstorch.format_lnstensor_operands"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_lnstensor_operands</span></code></a></p></td>
+<td><p>Converts a variable number of operands to LNSTensor objects, aligning all operands to the base of the first operand that is an LNSTensor.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Python API</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="generated/xlnstorch.lnstensor.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">xlnstorch.lnstensor</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-creation-ops">Tensor Creation Ops</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ZERO"><code class="docutils literal notranslate"><span class="pre">LNS_ZERO</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_ONE</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_ONE</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.CSRC_AVAILABLE"><code class="docutils literal notranslate"><span class="pre">CSRC_AVAILABLE</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-operations">Custom Operations</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Mark G Arnold
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, xlnsresearch.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
