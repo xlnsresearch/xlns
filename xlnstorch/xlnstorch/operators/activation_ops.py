@@ -20,6 +20,7 @@ from . import (
     lns_abs,
     lns_eq,
     lns_tanh,
+    lns_max,
 )
 
 class LNSReLUFunction(LNSFunction):
@@ -377,12 +378,15 @@ class LNSLogSoftmaxFunction(LNSFunction):
     @staticmethod
     def forward(x, base, dim=None):
         x_packed = x.to(torch.int64)
+        m = lns_max(x_packed, base, dim=dim, keepdim=True)[0] # discard indices
 
-        exp_x = lns_exp(x_packed, base)
-        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
-        log_sum_exp_x = lns_log(sum_exp_x, base)
+        # subtract the max to prevent overflow (logsumexp trick)
+        x_sub_m = lns_sub(x_packed, m, base)
+        exp_x_sub_m = lns_exp(x_sub_m, base)
+        sum_exp_x_sub_m = lns_sum(exp_x_sub_m, base, dim=dim, keepdim=True)
+        log_sum_exp_x_sub_m = lns_log(sum_exp_x_sub_m, base)
 
-        result = lns_sub(x_packed, log_sum_exp_x, base)
+        result = lns_sub(x_sub_m, log_sum_exp_x_sub_m, base)
         return result.to(torch.float64)
 
     @staticmethod

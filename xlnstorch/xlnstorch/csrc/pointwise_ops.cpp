@@ -34,6 +34,20 @@ namespace lns {
 
     int64_t mul(int64_t x, int64_t y) {
 
+        // commented out overflow check
+        /*
+        if ((x | 1LL) == lns::zero_int || (y | 1LL) == lns::zero_int || 
+            ((x < 0) && (y < (std::numeric_limits<int64_t>::min() - x))))
+            return lns::zero_int;
+
+        return (x + y - (y & 1LL)) ^ (y & 1LL);
+
+        // underflow check
+        if (result < lns::zero_int) {
+            return lns::zero_int;
+        }
+        */
+
         if ((x | 1LL) == lns::zero_int || (y | 1LL) == lns::zero_int)
             return lns::zero_int;
 
