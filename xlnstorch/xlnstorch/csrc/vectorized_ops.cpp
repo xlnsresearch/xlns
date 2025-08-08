@@ -43,6 +43,25 @@ namespace lns {
 
     int64_vec_t mul_vec(int64_vec_t x, int64_vec_t y) {
 
+        // commented out overflow check
+        /*
+        const int64_vec_t x_or_y_is_zero_or_underflow = (
+            (x | int64_vec_t(1)) == int64_vec_t(lns::zero_int)
+        ) | (
+            (y | int64_vec_t(1)) == int64_vec_t(lns::zero_int)
+        ) | (
+            (x < int64_vec_t(0)) & (y < (int64_vec_t(std::numeric_limits<int64_t>::min()) - x))
+        );
+        const int64_vec_t result = (x + y - (y & int64_vec_t(1))) ^ (y & int64_vec_t(1));
+        return int64_vec_t::blendv(
+            result,
+            int64_vec_t(lns::zero_int),
+            x_or_y_is_zero_or_underflow
+        );
+
+        const int64_vec_t underflow_mask = (result < int64_vec_t(lns::zero_int));
+        */
+
         const int64_vec_t x_or_y_is_zero = (
             (x | int64_vec_t(1)) == int64_vec_t(lns::zero_int)
         ) | (

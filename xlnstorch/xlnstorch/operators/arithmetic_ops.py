@@ -26,6 +26,8 @@ class LNSMulFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
         result = (x_packed + y_packed - (y_packed & 1)) ^ (y_packed & 1)
 
+        # overflow check for reference
+        # torch.lt(x_packed, 0) & torch.lt(y_packed, -9223372036854775808 - x_packed)
         return torch.where(torch.eq(x_packed | 1, LNS_ZERO) | torch.eq(y_packed | 1, LNS_ZERO),
                              LNS_ZERO, result.to(torch.float64))
 
@@ -207,6 +209,8 @@ class LNSDivFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
         result = (x_packed - y_packed + (y_packed & 1)) ^ (y_packed & 1)
 
+        # overflow check for reference
+        # torch.gt(y_packed, 0) & torch.lt(x_packed, -9223372036854775808 + y_packed)
         return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, result.to(torch.float64))
 
     @staticmethod

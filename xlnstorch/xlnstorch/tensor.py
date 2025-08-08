@@ -921,7 +921,7 @@ def lnstensor(
     if isinstance(data, LNSTensor):
         input_data = data.lns
         from_lns = True
-        requires_grad = data.lns.requires_grad
+        requires_grad = data.lns.requires_grad or requires_grad
 
         if not torch.eq(data.base, base_tensor):
             with torch.no_grad():

@@ -47,7 +47,8 @@ exclude_patterns = []
 html_theme = 'sphinx_book_theme'
 html_theme_options = {
     "home_page_in_toc": True,
-    "max_navbar_depth": 2,
+    "max_navbar_depth": 3,
+    "show_navbar_depth": 3,
 }
 html_static_path = ['_static']
 
