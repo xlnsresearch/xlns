@@ -11,6 +11,7 @@ from .asgd import LNSASGD
 from .nadam import LNSNAdam
 from .radam import LNSRAdam
 from .signmul import LNSSignMul
+from .mul import LNSMul
 
 __all__ = [
     "LNSOptimizer",
@@ -27,4 +28,5 @@ __all__ = [
     "LNSNAdam",
     "LNSRAdam",
     "LNSSignMul",
+    "LNSMul",
 ]

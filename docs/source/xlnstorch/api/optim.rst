@@ -199,3 +199,10 @@ LNS Experimental Optimizers
 	:members:
 	:undoc-members:
 	:show-inheritance:
+
+.. _lnsmul:
+
+.. autoclass:: xlnstorch.optim.LNSMul
+	:members:
+	:undoc-members:
+	:show-inheritance:
