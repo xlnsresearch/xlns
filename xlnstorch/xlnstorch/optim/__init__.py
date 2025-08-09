@@ -10,6 +10,7 @@ from .adadelta import LNSAdadelta
 from .asgd import LNSASGD
 from .nadam import LNSNAdam
 from .radam import LNSRAdam
+from .signmul import LNSSignMul
 
 __all__ = [
     "LNSOptimizer",
@@ -25,4 +26,5 @@ __all__ = [
     "LNSASGD",
     "LNSNAdam",
     "LNSRAdam",
+    "LNSSignMul",
 ]
