@@ -14,7 +14,61 @@ def _as_lnstensor(x):
         return lnstensor(x)
 
 class LNSSignMul(LNSOptimizer):
-    """
+    r"""
+    Implements a simple sign multiplication algorithm for LNSTensor
+    parameters.
+
+    .. math::
+        \begin{aligned}
+            &\rule{120mm}{0.4pt}                                                \\
+            &\textbf{input} : \gamma \text{ (lr)},\;
+                              \theta_{0} \text{ (params)},\;
+                              f(\theta) \text{ (objective)},\;
+                              \textit{use_pow},\;                               \\
+            &\hspace{17mm}    \textit{maximize}                                 \\
+            &\textbf{initialize} :                                              \\
+            &\hspace{5mm}\alpha \; = \;
+                \begin{cases}
+                    2^{\gamma}, & \text{if } \textit{use_pow}                   \\
+                    1 + \gamma, & \text{otherwise}
+                \end{cases}
+                \quad\text{(primary multiplier)}                                \\
+            &\hspace{5mm}  \alpha^{-1} \; = \; 1 / \alpha
+                \quad\text{(inverse multiplier)}                                \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\
+            &\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+            &\hspace{5mm}\textbf{if } \textit{maximize}:                        \\
+            &\hspace{10mm} g_t \leftarrow
+                           -\nabla_{\theta} f_t \left(\theta_{t-1}\right)       \\
+            &\hspace{5mm}\textbf{else}:                                         \\
+            &\hspace{10mm} g_t \leftarrow
+                           \nabla_{\theta} f_t \left(\theta_{t-1}\right)        \\
+            &\hspace{5mm} S_t \leftarrow
+                          \operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                          \cdot
+                          \operatorname{sign} \left(g_t\right)                  \\
+            &\hspace{5mm} u_t \leftarrow
+                \begin{cases}
+                    \alpha^{-1}, & \text{if } S_t                               \\
+                    \alpha,      & \text{otherwise}
+                \end{cases}                                                     \\
+            &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\[-1.ex]
+            &\textbf{return } \theta_t                                          \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\
+        \end{aligned}
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `lns_parameters()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.
+    use_pow : bool, optional
+        If True, uses a power-based multiplier (default: False).
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
 
     def __init__(
