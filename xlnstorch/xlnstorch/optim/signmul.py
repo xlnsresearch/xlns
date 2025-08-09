@@ -43,14 +43,11 @@ class LNSSignMul(LNSOptimizer):
             &\hspace{5mm}\textbf{else}:                                         \\
             &\hspace{10mm} g_t \leftarrow
                            \nabla_{\theta} f_t \left(\theta_{t-1}\right)        \\
-            &\hspace{5mm} S_t \leftarrow
-                          \operatorname{sign} \bigl(\theta_{t-1}\bigr)
-                          \cdot
-                          \operatorname{sign} \left(g_t\right)                  \\
             &\hspace{5mm} u_t \leftarrow
                 \begin{cases}
-                    \alpha^{-1}, & \text{if } S_t                               \\
-                    \alpha,      & \text{otherwise}
+                    \alpha^{-1}, &\operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                                 = \operatorname{sign} \left(g_t\right)         \\
+                    \alpha,      &\text{otherwise}
                 \end{cases}                                                     \\
             &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
             &\rule{120mm}{0.4pt}                                                \\[-1.ex]
