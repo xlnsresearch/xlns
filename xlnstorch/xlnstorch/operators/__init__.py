@@ -41,6 +41,7 @@ from .internal_lns_ops import (
     lns_argmax,
     lns_min,
     lns_argmin,
+    lns_clamp,
 
     lns_broadcast_to,
     lns_clone,
@@ -163,6 +164,7 @@ __all__ = [
     "lns_argmax",
     "lns_min",
     "lns_argmin",
+    "lns_clamp",
 
     "lns_broadcast_to",
     "lns_clone",

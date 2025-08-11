@@ -99,6 +99,9 @@ Quick Reference
 * :ref:`LNSRMSprop <lnsrmsprop>` - RMSprop optimizer
 * :ref:`LNSRprop <lnsrprop>` - Resilient backpropagation algorithm
 * :ref:`LNSASGD <lnsasgd>` - Averaged Stochastic Gradient Descent
+* :ref:`LNSSignMul <lnssignmul>` - Sign-based multiplication optimizer (experimental)
+* :ref:`LNSSignMul <lnsmul>` - Simple multiplication optimizer (experimental)
+* :ref:`LNSSignMul <lnsmadam>` - Multiplicative Adam optimizer (experimental)
 
 .. _lnssgd:
 
@@ -185,6 +188,30 @@ Other Optimizers
 .. _lnsasgd:
 
 .. autoclass:: xlnstorch.optim.LNSASGD
+	:members:
+	:undoc-members:
+	:show-inheritance:
+
+LNS Experimental Optimizers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _lnssignmul:
+
+.. autoclass:: xlnstorch.optim.LNSSignMul
+	:members:
+	:undoc-members:
+	:show-inheritance:
+
+.. _lnsmul:
+
+.. autoclass:: xlnstorch.optim.LNSMul
+	:members:
+	:undoc-members:
+	:show-inheritance:
+
+.. _lnsmadam:
+
+.. autoclass:: xlnstorch.optim.LNSMadam
 	:members:
 	:undoc-members:
 	:show-inheritance:

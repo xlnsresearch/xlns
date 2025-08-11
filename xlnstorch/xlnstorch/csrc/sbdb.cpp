@@ -11,9 +11,21 @@
 #include "sbdb.h"
 
 static std::string decimal_suffix(double d) {
-    std::string s = std::to_string(d);
-    auto pos = s.find('.');
-    return pos == std::string::npos ? s : s.substr(pos + 1);
+    std::ostringstream oss;
+    oss << std::fixed
+        << std::setprecision(std::numeric_limits<double>::max_digits10)
+        << d;
+    std::string s = oss.str();
+
+    auto dot = s.find('.');
+    if (dot == std::string::npos)
+        return {};
+    std::string frac = s.substr(dot + 1);
+
+    while (!frac.empty() && frac.back() == '0')
+        frac.pop_back();
+
+    return frac;
 }
 
 double get_base_from_precision(int prec) {
