@@ -22,7 +22,81 @@ def _as_lnstensor(x):
         return lnstensor(x)
 
 class LNSMadam(LNSOptimizer):
-    """
+    r"""
+    Implements the Madam optimizer for LNSTensor parameters. See
+
+    - `LNS-Madam: Low-Precision Training in Logarithmic Number System using
+      Multiplicative Weight Update <https://arxiv.org/pdf/2106.13914>`__
+    - `Learning compositional functions via multiplicative weight updates
+      <https://arxiv.org/pdf/2006.14560>`__
+
+    for more details on the algorithm.
+
+    .. math::
+        \begin{aligned}
+            &\rule{130mm}{0.4pt}                                                \\
+            &\textbf{input} : \gamma \text{ (lr)},\;
+                              \beta \text{ (beta)},\;
+                              \epsilon \text{ (epsilon)},\;
+                              \mu \text{ (max perturbation)},\;                 \\
+            &\hspace{17mm}    \sigma \text{ (weight scale)},\;
+                              \theta_{0} \text{ (params)},\;
+                              f(\theta) \text{ (objective)},\;                  \\
+            &\hspace{17mm}    \textit{use_pow},\;
+                              \textit{maximize}                                 \\
+            &\textbf{initialize} : \sigma^{*} \leftarrow \sigma \cdot
+                                   \operatorname{RMS}\left(\theta_{0}\right)
+                                   \text{ (max weight)},\;                      \\
+            &\hspace{26mm}         v_0 \leftarrow 0 \text{ (second moment)}     \\[-1.ex]
+            &\rule{130mm}{0.4pt}                                                \\
+            &\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+            &\hspace{5mm} g_t \leftarrow
+                          \nabla_{\theta} f_t \left(\theta_{t-1}\right)         \\
+            &\hspace{5mm} \rho_t \leftarrow 1 - \beta^{t}                       \\
+            &\hspace{5mm} v_t \leftarrow (1 - \beta) g_t^2 + \beta v_{t-1}      \\
+            &\hspace{5mm} g^{*}_t \leftarrow g_t /
+                          \sqrt{v_t / \rho_t + \epsilon}                        \\
+            &\hspace{5mm} \chi_t \leftarrow \gamma
+                          \operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                          \operatorname{clamp_{\mu}} \bigl(g^{*}_t\bigr)        \\
+            &\hspace{5mm} \textbf{if } \textit{maximize}:                       \\
+            &\hspace{10mm} \chi_t \leftarrow -\chi_t                            \\
+            &\hspace{5mm} \textbf{if } \textit{use_pow}:                        \\
+            &\hspace{10mm} \theta_t \leftarrow \theta_{t-1} \cdot
+                           \exp \left(\chi_t\right)                             \\
+            &\hspace{5mm} \textbf{else}:                                        \\
+            &\hspace{10mm} \theta_t \leftarrow \theta_{t-1} \cdot
+                            \left(1 + \chi_t\right)                             \\
+            &\hspace{5mm} \theta_t \leftarrow
+                          \operatorname{clamp_{\sigma^{*}}}
+                          \left(\theta_t\right)                                 \\[-1.ex]
+            &\rule{130mm}{0.4pt}                                                \\[-1.ex]
+            &\textbf{return } \theta_t                                          \\[-1.ex]
+            &\rule{130mm}{0.4pt}                                                \\
+        \end{aligned}
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `lns_parameters()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.
+    beta : LNSTensor, float, optional
+        Coefficient used for computing the running average of the gradient (default: 0.999).
+        Must be a non-negative LNSTensor or float in the range (0.0, 1.0).
+    eps : LNSTensor, float, optional
+        Term added to the denominator for numerical stability (default: 1e-8).
+    p_scale : LNSTensor, float, optional
+        Scaling factor for the parameter update (default: 3.0). Must be a non-negative
+        LNSTensor or float.
+    g_bound : LNSTensor, float, optional
+        Bound for the gradient norm (default: 10.0). Must be a non-negative LNSTensor
+        or float.
+    use_pow : bool, optional
+        If True, uses a power-based multiplier (default: False).
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
 
     def __init__(
@@ -44,7 +118,7 @@ class LNSMadam(LNSOptimizer):
         if eps <= 0.0:
             raise ValueError(f"Invalid epsilon value: {eps}")
 
-        if not (0.0 < beta <= 1.0):
+        if not (0.0 < beta < 1.0):
             raise ValueError(f"Invalid beta value: {beta}")
 
         defaults = dict(
@@ -116,7 +190,6 @@ class LNSMadam(LNSOptimizer):
                     else:
                         exponent = lns_mul(lns_neg(lr._lns), lns_mul(g_normed, lns_sign(p, base)))
                     p.data = lns_mul(p.data, lns_exp(exponent, base))
-                    p.data = lns_clamp(p.data, lns_neg(max), max)
 
                 else:
                     if maximize:
@@ -124,6 +197,8 @@ class LNSMadam(LNSOptimizer):
                     else:
                         mul_term = lns_sub(LNS_ONE, lns_mul(lr._lns, lns_mul(g_normed, lns_sign(p, base))), base)
                     p.data = lns_mul(p.data, mul_term)
+
+                p.data = lns_clamp(p.data, lns_neg(max), max)
 
                 # update running stats
                 state['step'] = step
