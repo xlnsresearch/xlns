@@ -23,7 +23,7 @@ opt_mul = xltorch.optim.LNSMul(model_mul.lns_parameters(), lr=0.05, use_pow=Fals
 opt_mul_pow = xltorch.optim.LNSMul(model_mul_pow.lns_parameters(), lr=0.05, use_pow=True)
 loss_fn = torch.nn.MSELoss(reduction='mean')
 
-n_steps = 20
+n_steps = 200 
 loss_hist_sgd, loss_hist_mul, loss_hist_mul_pow = [], [], []
 
 for step in range(1, n_steps + 1):

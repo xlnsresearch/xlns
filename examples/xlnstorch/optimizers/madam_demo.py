@@ -23,7 +23,7 @@ opt_madam = xltorch.optim.LNSMadam(model_mul.lns_parameters(), lr=0.05, use_pow=
 opt_madam_pow = xltorch.optim.LNSMadam(model_mul_pow.lns_parameters(), lr=0.05, use_pow=True)
 loss_fn = torch.nn.MSELoss(reduction='mean')
 
-n_steps = 20
+n_steps = 200
 loss_hist_sgd, loss_hist_mul, loss_hist_mul_pow = [], [], []
 
 for step in range(1, n_steps + 1):
