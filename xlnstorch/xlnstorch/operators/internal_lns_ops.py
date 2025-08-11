@@ -327,6 +327,12 @@ lns_argmin = _create_lns_op_func('argmin', torch.argmin, signature=_build_signat
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_clamp = _create_lns_op_func('clamp', torch.clamp, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("min", "pk", torch.Tensor | None, None),
+    ("max", "pk", torch.Tensor | None, None)],
+    torch.Tensor,
+))
 
 lns_broadcast_to = _create_lns_op_func('broadcast_to', torch.broadcast_to, signature=_build_signature([
     ("x", "pk", torch.Tensor),

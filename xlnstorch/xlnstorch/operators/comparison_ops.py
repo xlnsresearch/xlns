@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros
+from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, ones
 from xlnstorch.autograd import LNSFunction
 from . import (
     lns_sub,
@@ -625,3 +625,63 @@ def argmin(x, dim=None, keepdim=False, *, out=None):
         out.copy_(result)
 
     return result
+
+class LNSClampFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, min=None, max=None):
+        x_packed = x.to(torch.int64)
+        result = x_packed.clone()
+
+        if min is not None:
+            min_packed = min.to(torch.int64)
+            lt_mask = lns_lt(result, min_packed)
+            result = torch.where(lt_mask, min_packed, result)
+
+        if max is not None:
+            max_packed = max.to(torch.int64)
+            gt_mask = lns_gt(result, max_packed)
+            result = torch.where(gt_mask, max_packed, result)
+
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, min, max = inputs
+        ctx.save_for_backward(x, min, max)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, min, max = ctx.saved_tensors
+        x_packed = x.to(torch.int64)
+
+        grad_x = grad_output.clone()
+
+        if min is not None:
+            min_packed = min.to(torch.int64)
+            lt_mask = lns_lt(x_packed, min_packed)
+            grad_x = torch.where(lt_mask, LNS_ZERO, grad_x)
+
+        if max is not None:
+            max_packed = max.to(torch.int64)
+            gt_mask = lns_gt(x_packed, max_packed)
+            grad_x = torch.where(gt_mask, LNS_ZERO, grad_x)
+
+        return grad_x, None, None
+
+@implements(torch.clamp, LNSClampFunction.forward, "default", default=True)
+def clamp(x, min=None, max=None, *, out=None):
+
+    if min is not None and max is not None:
+        x, min, max = format_lnstensor_operands(x, min, max)
+    elif min is not None:
+        x, min = format_lnstensor_operands(x, min)
+    elif max is not None:
+        x, max = format_lnstensor_operands(x, max)
+
+    result = LNSClampFunction.apply(x, min, max)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
