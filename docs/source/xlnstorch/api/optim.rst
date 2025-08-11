@@ -100,6 +100,8 @@ Quick Reference
 * :ref:`LNSRprop <lnsrprop>` - Resilient backpropagation algorithm
 * :ref:`LNSASGD <lnsasgd>` - Averaged Stochastic Gradient Descent
 * :ref:`LNSSignMul <lnssignmul>` - Sign-based multiplication optimizer (experimental)
+* :ref:`LNSSignMul <lnsmul>` - Simple multiplication optimizer (experimental)
+* :ref:`LNSSignMul <lnsmadam>` - Multiplicative Adam optimizer (experimental)
 
 .. _lnssgd:
 
