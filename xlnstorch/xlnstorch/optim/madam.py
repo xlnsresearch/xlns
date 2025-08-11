@@ -56,7 +56,7 @@ class LNSMadam(LNSOptimizer):
             &\hspace{5mm} v_t \leftarrow (1 - \beta) g_t^2 + \beta v_{t-1}      \\
             &\hspace{5mm} g^{*}_t \leftarrow g_t /
                           \sqrt{v_t / \rho_t + \epsilon}                        \\
-            &\hspace{5mm} \chi_t \leftarrow \gamma
+            &\hspace{5mm} \chi_t \leftarrow -\gamma
                           \operatorname{sign} \bigl(\theta_{t-1}\bigr)
                           \operatorname{clamp_{\mu}} \bigl(g^{*}_t\bigr)        \\
             &\hspace{5mm} \textbf{if } \textit{maximize}:                       \\
