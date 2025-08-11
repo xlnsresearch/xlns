@@ -696,7 +696,8 @@ class LNSTensor:
 
     def __setitem__(self, index, value):
         # We must convert the indexing object to a suitable format for torch.index_put_.
-        torch.index_put_(self, tensor_utils.make_index_tensors(index, self.shape), value)
+        lnstensor_value = lnstensor(value, b=self.base)
+        torch.index_put_(self, tensor_utils.make_index_tensors(index, self.shape), lnstensor_value)
 
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)
