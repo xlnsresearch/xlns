@@ -40,6 +40,7 @@
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/optim';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -388,6 +389,21 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lns-experimental-optimizers">LNS Experimental Optimizers</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSSignMul"><code class="docutils literal notranslate"><span class="pre">LNSSignMul</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSSignMul.step"><code class="docutils literal notranslate"><span class="pre">LNSSignMul.step()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMul"><code class="docutils literal notranslate"><span class="pre">LNSMul</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMul.step"><code class="docutils literal notranslate"><span class="pre">LNSMul.step()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMadam"><code class="docutils literal notranslate"><span class="pre">LNSMadam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMadam.step"><code class="docutils literal notranslate"><span class="pre">LNSMadam.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -492,6 +508,9 @@ converted to LNSTensors with the default base.</p>
 <li><p><a class="reference internal" href="#lnsrmsprop"><span class="std std-ref">LNSRMSprop</span></a> - RMSprop optimizer</p></li>
 <li><p><a class="reference internal" href="#lnsrprop"><span class="std std-ref">LNSRprop</span></a> - Resilient backpropagation algorithm</p></li>
 <li><p><a class="reference internal" href="#lnsasgd"><span class="std std-ref">LNSASGD</span></a> - Averaged Stochastic Gradient Descent</p></li>
+<li><p><a class="reference internal" href="#lnssignmul"><span class="std std-ref">LNSSignMul</span></a> - Sign-based multiplication optimizer (experimental)</p></li>
+<li><p><a class="reference internal" href="#lnsmul"><span class="std std-ref">LNSSignMul</span></a> - Simple multiplication optimizer (experimental)</p></li>
+<li><p><a class="reference internal" href="#lnsmadam"><span class="std std-ref">LNSSignMul</span></a> - Multiplicative Adam optimizer (experimental)</p></li>
 </ul>
 </section>
 <section id="stochastic-gradient-descent-sgd">
@@ -860,6 +879,205 @@ Must be a non-negative LNSTensor or float.</p></li>
 </dd></dl>
 
 </section>
+<section id="lns-experimental-optimizers">
+<h3>LNS Experimental Optimizers<a class="headerlink" href="#lns-experimental-optimizers" title="Link to this heading">#</a></h3>
+<dl class="py class" id="lnssignmul">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSSignMul">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optim.</span></span><span class="sig-name descname"><span class="pre">LNSSignMul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_pow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSSignMul" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements a simple sign multiplication algorithm for LNSTensor
+parameters.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+    &amp;\rule{120mm}{0.4pt}                                                \\
+    &amp;\textbf{input} : \gamma \text{ (lr)},\;
+                      \theta_{0} \text{ (params)},\;
+                      f(\theta) \text{ (objective)},\;
+                      \textit{use_pow},\;                               \\
+    &amp;\hspace{17mm}    \textit{maximize}                                 \\
+    &amp;\textbf{initialize} :                                              \\
+    &amp;\hspace{5mm}\alpha \; = \;
+        \begin{cases}
+            2^{\gamma}, &amp; \text{if } \textit{use_pow}                   \\
+            1 + \gamma, &amp; \text{otherwise}
+        \end{cases}
+        \quad\text{(primary multiplier)}                                \\
+    &amp;\hspace{5mm}  \alpha^{-1} \; = \; 1 / \alpha
+        \quad\text{(inverse multiplier)}                                \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\
+    &amp;\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+    &amp;\hspace{5mm}\textbf{if } \textit{maximize}:                        \\
+    &amp;\hspace{10mm} g_t \leftarrow
+                   -\nabla_{\theta} f_t \left(\theta_{t-1}\right)       \\
+    &amp;\hspace{5mm}\textbf{else}:                                         \\
+    &amp;\hspace{10mm} g_t \leftarrow
+                   \nabla_{\theta} f_t \left(\theta_{t-1}\right)        \\
+    &amp;\hspace{5mm} u_t \leftarrow
+        \begin{cases}
+            \alpha^{-1}, &amp;\operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                         = \operatorname{sign} \left(g_t\right)         \\
+            \alpha,      &amp;\text{otherwise}
+        \end{cases}                                                     \\
+    &amp;\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\[-1.ex]
+    &amp;\textbf{return } \theta_t                                          \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\
+\end{aligned}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>lns_parameters()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>use_pow</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, uses a power-based multiplier (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSSignMul.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSSignMul.step" title="Link to this definition">#</a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsmul">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSMul">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optim.</span></span><span class="sig-name descname"><span class="pre">LNSMul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_pow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSMul" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements a simple multiplication algorithm for LNSTensor
+parameters.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+    &amp;\rule{120mm}{0.4pt}                                                \\
+    &amp;\textbf{input} : \gamma \text{ (lr)},\;
+                      \theta_{0} \text{ (params)},\;
+                      f(\theta) \text{ (objective)},\;
+                      \textit{use_pow},\;                               \\
+    &amp;\hspace{17mm}    \textit{maximize}                                 \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\
+    &amp;\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+    &amp;\hspace{5mm} g_t \leftarrow
+                  \nabla_{\theta} f_t \left(\theta_{t-1}\right)         \\
+    &amp;\hspace{5mm} \textbf{if } \textit{use_pow}:                        \\
+    &amp;\hspace{10mm} u_t \leftarrow
+                   2 ^ {-\gamma g_t
+                        \operatorname{sign} \bigl(\theta_{t-1}\bigr)}   \\
+    &amp;\hspace{10mm} \textbf{if } \textit{maximize}:                      \\
+    &amp;\hspace{15mm} u_t \leftarrow 1 / u_t                               \\
+    &amp;\hspace{5mm} \textbf{else}:                                        \\
+    &amp;\hspace{10mm} u_t \leftarrow
+                   1 + \gamma \lvert g_t \rvert                         \\
+    &amp;\hspace{10mm} \textbf{if }
+                   \left(\operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                   \neq \operatorname{sign} \left(g_t\right)\right)
+                   \oplus \textit{maximize}:                            \\
+    &amp;\hspace{15mm} u_t \leftarrow 1 / u_t                               \\
+    &amp;\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\[-1.ex]
+    &amp;\textbf{return } \theta_t                                          \\[-1.ex]
+    &amp;\rule{120mm}{0.4pt}                                                \\
+\end{aligned}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>lns_parameters()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>use_pow</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, uses a power-based multiplier (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSMul.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSMul.step" title="Link to this definition">#</a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="lnsmadam">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSMadam">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.optim.</span></span><span class="sig-name descname"><span class="pre">LNSMadam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g_bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_pow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSMadam" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LNSOptimizer</span></code></p>
+<p>Implements the Madam optimizer for LNSTensor parameters. See</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://arxiv.org/pdf/2106.13914">LNS-Madam: Low-Precision Training in Logarithmic Number System using
+Multiplicative Weight Update</a></p></li>
+<li><p><a class="reference external" href="https://arxiv.org/pdf/2006.14560">Learning compositional functions via multiplicative weight updates</a></p></li>
+</ul>
+<p>for more details on the algorithm.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+    &amp;\rule{130mm}{0.4pt}                                                \\
+    &amp;\textbf{input} : \gamma \text{ (lr)},\;
+                      \beta \text{ (beta)},\;
+                      \epsilon \text{ (epsilon)},\;
+                      \mu \text{ (max perturbation)},\;                 \\
+    &amp;\hspace{17mm}    \sigma \text{ (weight scale)},\;
+                      \theta_{0} \text{ (params)},\;
+                      f(\theta) \text{ (objective)},\;                  \\
+    &amp;\hspace{17mm}    \textit{use_pow},\;
+                      \textit{maximize}                                 \\
+    &amp;\textbf{initialize} : \sigma^{*} \leftarrow \sigma \cdot
+                           \operatorname{RMS}\left(\theta_{0}\right)
+                           \text{ (max weight)},\;                      \\
+    &amp;\hspace{26mm}         v_0 \leftarrow 0 \text{ (second moment)}     \\[-1.ex]
+    &amp;\rule{130mm}{0.4pt}                                                \\
+    &amp;\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+    &amp;\hspace{5mm} g_t \leftarrow
+                  \nabla_{\theta} f_t \left(\theta_{t-1}\right)         \\
+    &amp;\hspace{5mm} \rho_t \leftarrow 1 - \beta^{t}                       \\
+    &amp;\hspace{5mm} v_t \leftarrow (1 - \beta) g_t^2 + \beta v_{t-1}      \\
+    &amp;\hspace{5mm} g^{*}_t \leftarrow g_t /
+                  \sqrt{v_t / \rho_t + \epsilon}                        \\
+    &amp;\hspace{5mm} \chi_t \leftarrow -\gamma
+                  \operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                  \operatorname{clamp_{\mu}} \bigl(g^{*}_t\bigr)        \\
+    &amp;\hspace{5mm} \textbf{if } \textit{maximize}:                       \\
+    &amp;\hspace{10mm} \chi_t \leftarrow -\chi_t                            \\
+    &amp;\hspace{5mm} \textbf{if } \textit{use_pow}:                        \\
+    &amp;\hspace{10mm} \theta_t \leftarrow \theta_{t-1} \cdot
+                   \exp \left(\chi_t\right)                             \\
+    &amp;\hspace{5mm} \textbf{else}:                                        \\
+    &amp;\hspace{10mm} \theta_t \leftarrow \theta_{t-1} \cdot
+                    \left(1 + \chi_t\right)                             \\
+    &amp;\hspace{5mm} \theta_t \leftarrow
+                  \operatorname{clamp_{\sigma^{*}}}
+                  \left(\theta_t\right)                                 \\[-1.ex]
+    &amp;\rule{130mm}{0.4pt}                                                \\[-1.ex]
+    &amp;\textbf{return } \theta_t                                          \\[-1.ex]
+    &amp;\rule{130mm}{0.4pt}                                                \\
+\end{aligned}\end{split}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<em>iterable</em>) – An iterable of parameters to optimize or dicts defining parameter groups.
+This should be obtained from a model’s <cite>lns_parameters()</cite> method.</p></li>
+<li><p><strong>lr</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.</p></li>
+<li><p><strong>beta</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Coefficient used for computing the running average of the gradient (default: 0.999).
+Must be a non-negative LNSTensor or float in the range (0.0, 1.0).</p></li>
+<li><p><strong>eps</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Term added to the denominator for numerical stability (default: 1e-8).</p></li>
+<li><p><strong>p_scale</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Scaling factor for the parameter update (default: 3.0). Must be a non-negative
+LNSTensor or float.</p></li>
+<li><p><strong>g_bound</strong> (<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><em>LNSTensor</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – Bound for the gradient norm (default: 10.0). Must be a non-negative LNSTensor
+or float.</p></li>
+<li><p><strong>use_pow</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, uses a power-based multiplier (default: False).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, optimizes the parameters for maximization instead of minimization (default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="xlnstorch.optim.LNSMadam.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.optim.LNSMadam.step" title="Link to this definition">#</a></dt>
+<dd><p>Performs a single optimization step.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 </section>
 
@@ -966,6 +1184,21 @@ Must be a non-negative LNSTensor or float.</p></li>
 </li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSASGD"><code class="docutils literal notranslate"><span class="pre">LNSASGD</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSASGD.step"><code class="docutils literal notranslate"><span class="pre">LNSASGD.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lns-experimental-optimizers">LNS Experimental Optimizers</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSSignMul"><code class="docutils literal notranslate"><span class="pre">LNSSignMul</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSSignMul.step"><code class="docutils literal notranslate"><span class="pre">LNSSignMul.step()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMul"><code class="docutils literal notranslate"><span class="pre">LNSMul</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMul.step"><code class="docutils literal notranslate"><span class="pre">LNSMul.step()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMadam"><code class="docutils literal notranslate"><span class="pre">LNSMadam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.optim.LNSMadam.step"><code class="docutils literal notranslate"><span class="pre">LNSMadam.step()</span></code></a></li>
 </ul>
 </li>
 </ul>
