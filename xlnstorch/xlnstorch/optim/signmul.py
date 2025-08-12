@@ -124,7 +124,12 @@ class LNSSignMul(LNSOptimizer):
 
                 grad = p.grad
 
-                same_sign = lns_eq(lns_sign(grad, base), lns_sign(p, base))
-                mul_update = torch.where(same_sign ^ maximize, inv_mul_term._lns, mul_term._lns)
+                grad_sign = lns_sign(grad, base)
+                p_sign = lns_sign(p, base)
 
+                mul_update = torch.where(
+                    lns_eq(grad, LNS_ZERO), LNS_ONE,
+                    torch.where(lns_eq(grad_sign, p_sign) ^ maximize,
+                    inv_mul_term._lns, mul_term._lns
+                ))
                 p.data = lns_mul(p.data, mul_update)
