@@ -168,6 +168,7 @@ Miscellaneous Operations
     lns_squeeze
     lns_unsqueeze
     lns_stack
+    lns_cat
 
 Loss Operations
 ~~~~~~~~~~~~~~~
