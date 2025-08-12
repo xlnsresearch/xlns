@@ -45,6 +45,7 @@ class LNSSignMul(LNSOptimizer):
                            \nabla_{\theta} f_t \left(\theta_{t-1}\right)        \\
             &\hspace{5mm} u_t \leftarrow
                 \begin{cases}
+                    1,           &g_t = 0                                       \\
                     \alpha^{-1}, &\operatorname{sign} \bigl(\theta_{t-1}\bigr)
                                  = \operatorname{sign} \left(g_t\right)         \\
                     \alpha,      &\text{otherwise}
