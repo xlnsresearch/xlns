@@ -1272,7 +1272,7 @@ def empty(
         layout=torch.strided,
         device=None,
         requires_grad=False,
-        memory_format=torch.preserve_format,
+        memory_format=torch.contiguous_format,
         pin_memory=False,
         f=None,
         b=None
