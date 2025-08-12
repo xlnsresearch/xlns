@@ -4,6 +4,11 @@ from xlnstorch.operators import (
     lns_mul,
     lns_sign,
     lns_eq,
+    lns_sqrt,
+    lns_div,
+    lns_sum,
+    lns_neg,
+    lns_clamp,
 )
 from . import LNSOptimizer
 
@@ -25,16 +30,20 @@ class LNSSignMul(LNSOptimizer):
                               \theta_{0} \text{ (params)},\;
                               f(\theta) \text{ (objective)},\;
                               \textit{use_pow},\;                               \\
-            &\hspace{17mm}    \textit{maximize}                                 \\
+            &\hspace{17mm}    \textit{maximize},\;
+                              \sigma \text{ (weight scale)}                     \\
             &\textbf{initialize} :                                              \\
             &\hspace{5mm}\alpha \; = \;
                 \begin{cases}
                     2^{\gamma}, & \text{if } \textit{use_pow}                   \\
                     1 + \gamma, & \text{otherwise}
                 \end{cases}
-                \quad\text{(primary multiplier)}                                \\
+                \quad\text{(primary multiplier)},                               \\
             &\hspace{5mm}  \alpha^{-1} \; = \; 1 / \alpha
-                \quad\text{(inverse multiplier)}                                \\[-1.ex]
+                \quad\text{(inverse multiplier)},                               \\
+            &\hspace{5mm} \sigma^{*} \leftarrow \sigma \cdot
+                          \operatorname{RMS}\left(\theta_{0}\right)
+                          \text{ (max weight)}                                  \\[-1.ex]
             &\rule{120mm}{0.4pt}                                                \\
             &\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
             &\hspace{5mm}\textbf{if } \textit{maximize}:                        \\
@@ -50,7 +59,10 @@ class LNSSignMul(LNSOptimizer):
                                  = \operatorname{sign} \left(g_t\right)         \\
                     \alpha,      &\text{otherwise}
                 \end{cases}                                                     \\
-            &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
+            &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\
+            &\hspace{5mm} \theta_t \leftarrow
+                          \operatorname{clamp_{\sigma^{*}}}
+                          \left(\theta_t\right)                                 \\[-1.ex]
             &\rule{120mm}{0.4pt}                                                \\[-1.ex]
             &\textbf{return } \theta_t                                          \\[-1.ex]
             &\rule{120mm}{0.4pt}                                                \\
@@ -73,6 +85,7 @@ class LNSSignMul(LNSOptimizer):
             self,
             params,
             lr=0.01,
+            p_scale=10.0,
             use_pow=False,
             *,
             maximize=False
@@ -83,6 +96,7 @@ class LNSSignMul(LNSOptimizer):
 
         defaults = dict(
             lr=_as_lnstensor(lr),
+            p_scale=_as_lnstensor(p_scale),
             use_pow=use_pow,
             maximize=maximize
         )
@@ -110,13 +124,14 @@ class LNSSignMul(LNSOptimizer):
 
         for group in self.param_groups:
             lr = group["lr"]
+            p_scale = group["p_scale"]
             mul_term = group["mul_term"]
             inv_mul_term = group["inv_mul_term"]
             maximize = group["maximize"]
             base = group["base"]
 
             # Align the parameters to the base of the group.
-            lr, mul_term, inv_mul_term = align_lnstensor_bases(lr, mul_term, inv_mul_term, base=base)
+            lr, p_scale, mul_term, inv_mul_term = align_lnstensor_bases(lr, p_scale, mul_term, inv_mul_term, base=base)
 
             for p in group["params"]:
 
@@ -124,6 +139,17 @@ class LNSSignMul(LNSOptimizer):
                     continue
 
                 grad = p.grad
+
+                state = self.state[p]
+                if len(state) == 0:
+                    # First time we see this parameter
+                    rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p), base),
+                                           LNSTensor.get_internal_tensor(p.numel(), base),
+                                           base), base)
+                    state['max'] = lns_mul(p_scale._lns, rms)
+
+                # retrieve running stats
+                max = state['max']
 
                 grad_sign = lns_sign(grad, base)
                 p_sign = lns_sign(p, base)
@@ -134,3 +160,6 @@ class LNSSignMul(LNSOptimizer):
                     inv_mul_term._lns, mul_term._lns
                 ))
                 p.data = lns_mul(p.data, mul_update)
+                p.data = lns_clamp(p.data, lns_neg(max), max)
+
+        return loss
