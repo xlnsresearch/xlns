@@ -3,6 +3,57 @@ from . import LNSModule
 from xlnstorch import rand, zeros
 
 class LNSRNN(LNSModule):
+    r"""
+    An LNS multi-layer Elman RNN.
+
+    See also: :py:class:`torch.nn.RNN`
+
+    Parameters
+    ----------
+    input_size : int
+        The number of expected features in the input tensor.
+    hidden_size : int
+        The number of features in the hidden state.
+    num_layers : int, optional
+        The number of recurrent layers to stack. Default: 1.
+    nonlinearity : str, optional
+        The nonlinearity to use. Either 'tanh' or 'relu'. Default: 'tanh'.
+    bias : bool, optional
+        If True, adds a learnable bias to the layer. Default: True.
+    batch_first : bool, optional
+        If True, the input and output tensors are provided as (batch, seq, feature).
+        If False, they are provided as (seq, batch, feature). Default: False.
+    dropout : float, optional
+        If non-zero, introduces a dropout layer on the outputs of each RNN layer except the
+        last layer. Default: 0.0.
+    bidirectional : bool, optional
+        If True, becomes a bidirectional RNN. Default: False.
+
+    Attributes
+    ----------
+    weight_ih_l{k} : LNSTensor
+        The input-hidden weights of the kth layer with shape
+        :math:`(\text{hidden_size}, \text{num_directions} \cdot \text{hidden_size})`.
+    weight_hh_l{k} : LNSTensor
+        The hidden-hidden weights of the kth layer with shape
+        :math:`(\text{hidden_size}, \text{hidden_size})`.
+    bias_ih_l{k} : LNSTensor, optional
+        The input-hidden bias of the kth layer with shape
+        :math:`(\text{num_directions} \cdot \text{hidden_size})`.
+    bias_hh_l{k} : LNSTensor, optional
+        The hidden-hidden bias of the kth layer with shape
+        :math:`(\text{hidden_size})`.
+
+    Notes
+    -----
+    The weights and biases are initialized with random values uniformly
+    distributed between :math:`-\sqrt{k}` and :math:`\sqrt{k}`, where
+    :math:`k = \frac{1}{\text{hidden_size}}`.
+
+    Bidirectional RNNs have two sets of weights and biases for each layer.
+    The backward direction weights and biases are suffixed with `_reverse`
+    and have the same shapes as the forward direction weights and biases.
+    """
 
     def __init__(
             self,
@@ -120,6 +171,44 @@ class LNSRNN(LNSModule):
         return output, h_n
 
 class LNSRNNCell(LNSModule):
+    r"""
+    An LNS Elman RNN cell.
+
+    See also: :py:class:`torch.nn.RNNCell`
+
+    Parameters
+    ----------
+    input_size : int
+        Number of expected features in the input tensor $x_t$.
+    hidden_size : int
+        Number of features in the hidden state $h_t$.
+    bias : bool, optional
+        If ``True``, adds learnable bias terms. Default: ``True``.
+    nonlinearity : str, optional
+        Non-linear activation to apply. Either ``'tanh'`` or ``'relu'``.
+        Default: ``'tanh'``.
+
+    Attributes
+    ----------
+    weight_ih : LNSTensor
+        The input-hidden weights with shape
+        :math:`(\text{hidden_size}, \text{input_size})`.
+    weight_hh : LNSTensor
+        The hidden-hidden weights with shape
+        :math:`(\text{hidden_size}, \text{hidden_size})`.
+    bias_ih : LNSTensor, optional
+        The input-hidden bias with shape
+        :math:`(\text{hidden_size})`.
+    bias_hh : LNSTensor, optional
+        The hidden-hidden bias with shape
+        :math:`(\text{hidden_size})`.
+
+    Notes
+    -----
+    The weights and biases are initialized with random values uniformly
+    distributed between :math:`-\sqrt{k}` and :math:`\sqrt{k}`, where
+    :math:`k = \frac{1}{\text{hidden_size}}`.
+    """
 
     def __init__(
             self,
