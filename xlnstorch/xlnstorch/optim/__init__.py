@@ -13,6 +13,7 @@ from .radam import LNSRAdam
 from .signmul import LNSSignMul
 from .mul import LNSMul
 from .madam import LNSMadam
+from .hybridmul import LNSHybridMul
 
 __all__ = [
     "LNSOptimizer",
@@ -31,4 +32,5 @@ __all__ = [
     "LNSSignMul",
     "LNSMul",
     "LNSMadam",
+    "LNSHybridMul",
 ]
