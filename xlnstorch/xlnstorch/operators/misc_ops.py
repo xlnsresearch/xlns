@@ -217,3 +217,33 @@ def cat(tensors, dim=0):
     result = LNSCatFunction.apply(dim, *tensors)
 
     return lnstensor(result, from_lns=True, b=tensors[0].base)
+
+class LNSWhereFunction(LNSFunction):
+
+    @staticmethod
+    def forward(condition, x, y):
+        return torch.where(condition, x, y).to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        condition, _, _ = inputs
+        ctx.save_for_backward(condition)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        condition, = ctx.saved_tensors
+
+        grad_x = torch.where(condition, grad_output, LNS_ZERO)
+        grad_y = torch.where(condition, LNS_ZERO, grad_output)
+        return None, grad_x, grad_y
+
+@implements(torch.where, LNSWhereFunction.forward, "default", default=True)
+def where(condition, x, y, *, out=None):
+
+    x, y = format_lnstensor_operands(x, y)
+    result = LNSWhereFunction.apply(condition, x, y)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
