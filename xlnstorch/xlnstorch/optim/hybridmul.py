@@ -25,6 +25,42 @@ class LNSHybridMul(LNSOptimizer):
     parameters. This optimizer uses a heuristic to decide between
     using a standard multiplicative update, a sign-based update
     or a gradient descent-like update.
+
+    .. math::
+        \begin{aligned}
+            &\rule{120mm}{0.4pt}                                                \\
+            &\textbf{input} : \gamma \text{ (lr)},\;
+                              \theta_{0} \text{ (params)},\;
+                              f(\theta) \text{ (objective)}                     \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\
+            &\textbf{for } t = 1 \textbf{ to } \ldots \textbf{ do}              \\
+            &\hspace{5mm} g_t \leftarrow
+                          \nabla_{\theta} f_t \left(\theta_{t-1}\right)         \\
+            &\hspace{5mm} \textbf{if }
+                           \operatorname{sign} \bigl(\theta_{t-1}\bigr)
+                           = \operatorname{sign} \left(g_t\right)
+                           \lor \lvert g_t \rvert < \gamma
+                           \lor \lvert \theta_{t-1} \rvert < \gamma:            \\
+            &\hspace{10mm} u_t \leftarrow
+                           1 / \left(1 + \gamma \lvert g_t \rvert \right)       \\
+            &\hspace{5mm} \textbf{else}:                                        \\
+            &\hspace{10mm} u_t \leftarrow
+                           \max \left( 2 ^ {\gamma},
+                           1 +  \gamma \cdot \lvert g_t /
+                           \theta_{t-1} \rvert \right)                          \\
+            &\hspace{5mm} \theta_t \leftarrow \theta_{t-1} \cdot u_t            \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\[-1.ex]
+            &\textbf{return } \theta_t                                          \\[-1.ex]
+            &\rule{120mm}{0.4pt}                                                \\
+        \end{aligned}
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `lns_parameters()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.01). Must be a non-negative LNSTensor or float.
     """
 
     def __init__(

@@ -102,6 +102,7 @@ Quick Reference
 * :ref:`LNSSignMul <lnssignmul>` - Sign-based multiplication optimizer (experimental)
 * :ref:`LNSMul <lnsmul>` - Simple multiplication optimizer (experimental)
 * :ref:`LNSMadam <lnsmadam>` - Multiplicative Adam optimizer (experimental)
+* :ref:`LNSHybridMul <lnshybridmul>` - Hybrid multiplication optimizer (experimental)
 
 .. _lnssgd:
 
@@ -195,6 +196,11 @@ Other Optimizers
 LNS Experimental Optimizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+	Note that for all multiplicative optimizers below, weights
+	should be initialized to non-zero values as multiplicative
+	updates cannot change a zero weight.
+
 .. _lnssignmul:
 
 .. autoclass:: xlnstorch.optim.LNSSignMul
@@ -212,6 +218,13 @@ LNS Experimental Optimizers
 .. _lnsmadam:
 
 .. autoclass:: xlnstorch.optim.LNSMadam
+	:members:
+	:undoc-members:
+	:show-inheritance:
+
+.. _lnshybridmul:
+
+.. autoclass:: xlnstorch.optim.LNSHybridMul
 	:members:
 	:undoc-members:
 	:show-inheritance:
