@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>xlnstorch.operators.lns_mse_loss &#8212; xlns 1.0.5 documentation</title>
+    <title>xlnstorch.operators.lns_cat &#8212; xlns 1.0.5 documentation</title>
   
   
   
@@ -40,11 +40,11 @@
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/operators/xlnstorch.operators.lns_mse_loss';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/operators/xlnstorch.operators.lns_cat';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="xlnstorch.operators.lns_l1_loss" href="xlnstorch.operators.lns_l1_loss.html" />
-    <link rel="prev" title="xlnstorch.operators.lns_cat" href="xlnstorch.operators.lns_cat.html" />
+    <link rel="next" title="xlnstorch.operators.lns_mse_loss" href="xlnstorch.operators.lns_mse_loss.html" />
+    <link rel="prev" title="xlnstorch.operators.lns_stack" href="xlnstorch.operators.lns_stack.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -232,7 +232,7 @@
       
       
       
-      <li><a href="../../../../_sources/xlnstorch/api/generated/operators/xlnstorch.operators.lns_mse_loss.rst" target="_blank"
+      <li><a href="../../../../_sources/xlnstorch/api/generated/operators/xlnstorch.operators.lns_cat.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -316,7 +316,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>xlnstorch.operators.lns_mse_loss</h1>
+    <h1>xlnstorch.operators.lns_cat</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -326,7 +326,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.operators.lns_mse_loss"><code class="docutils literal notranslate"><span class="pre">lns_mse_loss()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.operators.lns_cat"><code class="docutils literal notranslate"><span class="pre">lns_cat()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -338,22 +338,17 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="xlnstorch-operators-lns-mse-loss">
-<h1>xlnstorch.operators.lns_mse_loss<a class="headerlink" href="#xlnstorch-operators-lns-mse-loss" title="Link to this heading">#</a></h1>
+  <section id="xlnstorch-operators-lns-cat">
+<h1>xlnstorch.operators.lns_cat<a class="headerlink" href="#xlnstorch-operators-lns-cat" title="Link to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="xlnstorch.operators.lns_mse_loss">
-<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_mse_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_average</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_mse_loss" title="Link to this definition">#</a></dt>
-<dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.mse_loss.html#torch.nn.functional.mse_loss" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.mse_loss()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
+<dt class="sig sig-object py" id="xlnstorch.operators.lns_cat">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_cat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">tensors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_cat" title="Link to this definition">#</a></dt>
+<dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.cat.html#torch.cat" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.cat()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
-<li><p><strong>y</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
-<li><p><strong>base</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
-<li><p><strong>size_average</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
-<li><p><strong>reduce</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
-<li><p><strong>reduction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
-<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>dim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+<li><p><strong>tensors</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -376,20 +371,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="xlnstorch.operators.lns_cat.html"
+       href="xlnstorch.operators.lns_stack.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">xlnstorch.operators.lns_cat</p>
+        <p class="prev-next-title">xlnstorch.operators.lns_stack</p>
       </div>
     </a>
     <a class="right-next"
-       href="xlnstorch.operators.lns_l1_loss.html"
+       href="xlnstorch.operators.lns_mse_loss.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">xlnstorch.operators.lns_l1_loss</p>
+        <p class="prev-next-title">xlnstorch.operators.lns_mse_loss</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -409,7 +404,7 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.operators.lns_mse_loss"><code class="docutils literal notranslate"><span class="pre">lns_mse_loss()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.operators.lns_cat"><code class="docutils literal notranslate"><span class="pre">lns_cat()</span></code></a></li>
 </ul>
   </nav></div>
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>xlnstorch.nn.LNSAvgPool3d &#8212; xlns 1.0.5 documentation</title>
+    <title>xlnstorch.nn.LNSRNNCell &#8212; xlns 1.0.5 documentation</title>
   
   
   
@@ -40,11 +40,12 @@
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/nn/xlnstorch.nn.LNSAvgPool3d';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNNCell';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="xlnstorch.nn.LNSRNN" href="xlnstorch.nn.LNSRNN.html" />
-    <link rel="prev" title="xlnstorch.nn.LNSAvgPool2d" href="xlnstorch.nn.LNSAvgPool2d.html" />
+    <link rel="next" title="Optimizers" href="../../optim.html" />
+    <link rel="prev" title="xlnstorch.nn.LNSRNN" href="xlnstorch.nn.LNSRNN.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -232,7 +233,7 @@
       
       
       
-      <li><a href="../../../../_sources/xlnstorch/api/generated/nn/xlnstorch.nn.LNSAvgPool3d.rst" target="_blank"
+      <li><a href="../../../../_sources/xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNNCell.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -316,7 +317,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>xlnstorch.nn.LNSAvgPool3d</h1>
+    <h1>xlnstorch.nn.LNSRNNCell</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -326,8 +327,12 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSAvgPool3d"><code class="docutils literal notranslate"><span class="pre">LNSAvgPool3d</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSAvgPool3d.__init__"><code class="docutils literal notranslate"><span class="pre">LNSAvgPool3d.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.weight_ih"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.weight_ih</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.weight_hh"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.weight_hh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.bias_ih"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.bias_ih</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.bias_hh"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.bias_hh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.__init__"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -341,42 +346,87 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="xlnstorch-nn-lnsavgpool3d">
-<h1>xlnstorch.nn.LNSAvgPool3d<a class="headerlink" href="#xlnstorch-nn-lnsavgpool3d" title="Link to this heading">#</a></h1>
+  <section id="xlnstorch-nn-lnsrnncell">
+<h1>xlnstorch.nn.LNSRNNCell<a class="headerlink" href="#xlnstorch-nn-lnsrnncell" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="xlnstorch.nn.LNSAvgPool3d">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.nn.</span></span><span class="sig-name descname"><span class="pre">LNSAvgPool3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ceil_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_include_pad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divisor_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSAvgPool3d" title="Link to this definition">#</a></dt>
-<dd><p>An LNS 3D average pooling layer that applies a
-3D average pooling operation over the input tensor.</p>
-<p>See also: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.AvgPool3d.html#torch.nn.AvgPool3d" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.AvgPool3d</span></code></a></p>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.nn.</span></span><span class="sig-name descname"><span class="pre">LNSRNNCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell" title="Link to this definition">#</a></dt>
+<dd><p>An LNS Elman RNN cell.</p>
+<p>See also: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.RNNCell.html#torch.nn.RNNCell" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.RNNCell</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a>) – The size of the window to take the average over.</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>, </em><em>optional</em>) – The stride of the window. Default is equal to <cite>kernel_size</cite>.</p></li>
-<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>, </em><em>optional</em>) – Implicit zero padding to be added on both sides of the input. Default is 0</p></li>
-<li><p><strong>ceil_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, will use ceil instead of floor to compute the output shape.
-Default is False.</p></li>
-<li><p><strong>count_include_pad</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, will include the zero-padding in the averaging calculation.
-Default is True.</p></li>
-<li><p><strong>divisor_override</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – If specified, will use this value as the divisor instead of the kernel size.
-Default is None, which means the divisor will be the kernel size.</p></li>
+<li><p><strong>input_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Number of expected features in the input tensor $x_t$.</p></li>
+<li><p><strong>hidden_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Number of features in the hidden state $h_t$.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds learnable bias terms. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>nonlinearity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – Non-linear activation to apply. Either <code class="docutils literal notranslate"><span class="pre">'tanh'</span></code> or <code class="docutils literal notranslate"><span class="pre">'relu'</span></code>.
+Default: <code class="docutils literal notranslate"><span class="pre">'tanh'</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell.weight_ih">
+<span class="sig-name descname"><span class="pre">weight_ih</span></span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell.weight_ih" title="Link to this definition">#</a></dt>
+<dd><p>The input-hidden weights with shape
+<span class="math notranslate nohighlight">\((\text{hidden_size}, \text{input_size})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell.weight_hh">
+<span class="sig-name descname"><span class="pre">weight_hh</span></span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell.weight_hh" title="Link to this definition">#</a></dt>
+<dd><p>The hidden-hidden weights with shape
+<span class="math notranslate nohighlight">\((\text{hidden_size}, \text{hidden_size})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell.bias_ih">
+<span class="sig-name descname"><span class="pre">bias_ih</span></span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell.bias_ih" title="Link to this definition">#</a></dt>
+<dd><p>The input-hidden bias with shape
+<span class="math notranslate nohighlight">\((\text{hidden_size})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a>, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell.bias_hh">
+<span class="sig-name descname"><span class="pre">bias_hh</span></span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell.bias_hh" title="Link to this definition">#</a></dt>
+<dd><p>The hidden-hidden bias with shape
+<span class="math notranslate nohighlight">\((\text{hidden_size})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a>, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>The weights and biases are initialized with random values uniformly
+distributed between <span class="math notranslate nohighlight">\(-\sqrt{k}\)</span> and <span class="math notranslate nohighlight">\(\sqrt{k}\)</span>, where
+<span class="math notranslate nohighlight">\(k = \frac{1}{\text{hidden_size}}\)</span>.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="xlnstorch.nn.LNSAvgPool3d.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ceil_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_include_pad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divisor_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSAvgPool3d.__init__" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNNCell.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSRNNCell.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>)</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.13)"><em>Tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>)</p></li>
-<li><p><strong>ceil_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
-<li><p><strong>count_include_pad</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
-<li><p><strong>divisor_override</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>input_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+<li><p><strong>hidden_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
+<li><p><strong>nonlinearity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -385,7 +435,7 @@ Default is None, which means the divisor will be the kernel size.</p></li>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.nn.LNSAvgPool3d.__init__" title="xlnstorch.nn.LNSAvgPool3d.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(kernel_size[, stride, padding, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.nn.LNSRNNCell.__init__" title="xlnstorch.nn.LNSRNNCell.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(input_size, hidden_size[, bias, ...])</p></td>
 <td><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(name, module)</p></td>
@@ -424,7 +474,7 @@ Default is None, which means the divisor will be the kernel size.</p></li>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>()</p></td>
 <td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">float</span></code> datatype.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(x)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(x[, hx])</p></td>
 <td><p>Define the computation performed at every call.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_buffer</span></code>(target)</p></td>
@@ -578,20 +628,20 @@ Default is None, which means the divisor will be the kernel size.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="xlnstorch.nn.LNSAvgPool2d.html"
+       href="xlnstorch.nn.LNSRNN.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">xlnstorch.nn.LNSAvgPool2d</p>
+        <p class="prev-next-title">xlnstorch.nn.LNSRNN</p>
       </div>
     </a>
     <a class="right-next"
-       href="xlnstorch.nn.LNSRNN.html"
+       href="../../optim.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">xlnstorch.nn.LNSRNN</p>
+        <p class="prev-next-title">Optimizers</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -611,8 +661,12 @@ Default is None, which means the divisor will be the kernel size.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSAvgPool3d"><code class="docutils literal notranslate"><span class="pre">LNSAvgPool3d</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSAvgPool3d.__init__"><code class="docutils literal notranslate"><span class="pre">LNSAvgPool3d.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.weight_ih"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.weight_ih</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.weight_hh"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.weight_hh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.bias_ih"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.bias_ih</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.bias_hh"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.bias_hh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNNCell.__init__"><code class="docutils literal notranslate"><span class="pre">LNSRNNCell.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
