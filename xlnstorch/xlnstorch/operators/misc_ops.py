@@ -192,3 +192,28 @@ def stack(tensors, dim=0):
     result = LNSStackFunction.apply(dim, *tensors)
 
     return lnstensor(result, from_lns=True, b=tensors[0].base)
+
+class LNSCatFunction(LNSFunction):
+
+    @staticmethod
+    def forward(dim, *tensors):
+        return torch.cat(tensors, dim=dim)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        dim, *tensors = inputs
+        ctx.sizes = [t.size(dim) for t in tensors]
+        ctx.dim = dim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_tensors = torch.split(grad_output, ctx.sizes, dim=ctx.dim)
+        return (None, *grad_tensors)
+
+@implements(torch.cat, LNSCatFunction.forward, "default", default=True)
+def cat(tensors, dim=0):
+
+    tensors = format_lnstensor_operands(*tensors)
+    result = LNSCatFunction.apply(dim, *tensors)
+
+    return lnstensor(result, from_lns=True, b=tensors[0].base)

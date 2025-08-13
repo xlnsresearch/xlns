@@ -48,6 +48,7 @@ from .internal_lns_ops import (
     lns_squeeze,
     lns_unsqueeze,
     lns_stack,
+    lns_cat,
 
     lns_mse_loss,
     lns_l1_loss,
@@ -171,6 +172,7 @@ __all__ = [
     "lns_squeeze",
     "lns_unsqueeze",
     "lns_stack",
+    "lns_cat",
 
     "lns_mse_loss",
     "lns_l1_loss",

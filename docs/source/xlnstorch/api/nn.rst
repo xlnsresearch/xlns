@@ -50,6 +50,13 @@ Pooling Layers                     Note
 :class:`LNSAvgPool3d`              No parameters
 ===============================    =====================
 
+===============================    =====================
+Recurrent Layers                   Note
+===============================    =====================
+:class:`LNSRNN`
+:class:`LNSRNNCell`
+===============================    =====================
+
 .. hide the autosummary table from the main page but still
 .. generate the stub files for the layers (this is a hack).
 
@@ -90,6 +97,9 @@ to PyTorch's method of registering parameters.
     LNSAvgPool1d
     LNSAvgPool2d
     LNSAvgPool3d
+
+    LNSRNN
+    LNSRNNCell
 
 .. raw:: html
 
