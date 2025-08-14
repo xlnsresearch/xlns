@@ -29,15 +29,22 @@ def get_table(filestem: str, f=None, b=None):
         else:
             base = torch.tensor(b, dtype=torch.float64)
 
-    if CSRC_AVAILABLE:
-        import xlnstorch.csrc
-        xlnstorch.csrc.get_table(filestem, base.item())
-
     global initialized, tab_base, tab_ez, tab_sbdb, tab_mismatch
     tab_mismatch = False
     tab_base = base
 
     filename = f"./{filestem}_{str(tab_base.item())[2:]}.npz"
+
+    if CSRC_AVAILABLE:
+        import xlnstorch.csrc
+        ez, sbdb = xlnstorch.csrc.get_table(filename, base.item())
+
+        if ez is not None and sbdb is not None:
+            tab_ez = ez
+            tab_sbdb = sbdb
+            initialized = True
+
+        return
 
     if os.path.isfile(filename):
         print(f"Loading table from {filename}")
