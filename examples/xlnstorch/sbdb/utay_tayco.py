@@ -5,7 +5,7 @@ import xlnsconf.utah_tayco_ufunc
 import matplotlib.pyplot as plt
 
 # see https://github.com/xlnsresearch/xlns/blob/main/src/xlnsconf/utah_tayco_ufunc.py
-xltorch.operators.register_xlnsconf_implementation(
+xltorch.register_xlnsconf_implementation(
     xlnsconf.utah_tayco_ufunc.sbdb_ufunc_utah_tayco,
     "utah_tayco_conf"
 )
@@ -28,15 +28,15 @@ bench = BinaryBench(torch.add, shape, lns=True, device="cpu")
 runner = BenchmarkRunner(bench, warmup=warmup, iters=iters)
 
 
-with xltorch.operators.override_sbdb_implementation("ideal"):
+with xltorch.override_sbdb_implementation("ideal"):
     ideal_result = runner.run()
     ideal_xs, ideal_ys, ideal_err = make_heatmap()
 
-with xltorch.operators.override_sbdb_implementation("utah_tayco"):
+with xltorch.override_sbdb_implementation("utah_tayco"):
     tayco_torch_result = runner.run()
     tayco_torch_xs, tayco_torch_ys, tayco_torch_err = make_heatmap()
 
-with xltorch.operators.override_sbdb_implementation("utah_tayco_conf"):
+with xltorch.override_sbdb_implementation("utah_tayco_conf"):
     tayco_conf_result = runner.run()
     tayco_conf_xs, tayco_conf_ys, tayco_conf_err = make_heatmap()
 

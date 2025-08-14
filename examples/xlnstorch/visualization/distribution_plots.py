@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-import xlnstorch.viz.range as viz_range
+import xlnstorch.viz as viz
 
 def demo_lns_error_heatmaps():
     """
@@ -12,7 +12,7 @@ def demo_lns_error_heatmaps():
     # Demo 1: Multiple precision comparison
     print("1. Comparing LNS error heatmaps for multiple precisions...")
 
-    axes = viz_range.plot_lns_error_heatmap(
+    axes = viz.plot_lns_error_heatmap(
         f_range=[4, 6, 8, 10, 12, 14, 16, 18, 20],
         low=-5,
         high=5,

@@ -29,7 +29,7 @@ Here's a basic example of using an LNS optimizer:
 	import xlnstorch as xltorch
 
 	# Create model and data
-	model = xltorch.layers.LNSLinear(3, 3, bias=True)
+	model = xltorch.nn.LNSLinear(3, 3, bias=True)
 	input = xltorch.randn(3, requires_grad=True)
 	target = xltorch.lnstensor([1.0, 1.0, 1.0])
 
@@ -57,7 +57,7 @@ dictionaries that contain both weights and biases in LNS format.
 .. code-block:: python
 
 	# Get parameter groups from a model
-	model = xltorch.layers.LNSLinear(10, 5, bias=True)
+	model = xltorch.nn.LNSLinear(10, 5, bias=True)
 	param_groups = model.lns_parameters()
 
 	# Initialize optimizer with parameter groups
