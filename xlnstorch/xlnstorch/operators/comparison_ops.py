@@ -12,6 +12,7 @@ from . import (
     lns_lt,
     lns_eq,
     lns_div,
+    lns_sum_to_size,
 )
 
 def _lns_equal(x, y):
@@ -181,7 +182,7 @@ def lt(x, y, *, out=None):
 
 def _lns_isclose(x, y, base, rtol, atol):
     abs_diff = lns_abs(lns_sub(x, y, base))
-    eps = lns_add(atol, lns_mul(rtol, lns_abs(y)), base)
+    eps = lns_add(atol, lns_mul(rtol, lns_abs(y), base), base)
     return lns_le(abs_diff, eps)
 
 @implements(torch.isclose, _lns_isclose, "default", default=True)
@@ -360,7 +361,7 @@ class LNSMaximumFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
         x_y_equal = lns_eq(x_packed, y_packed)
-        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base))
+        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base), base)
 
         grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
             lns_gt(x_packed, y_packed), grad_output, LNS_ZERO
@@ -368,6 +369,9 @@ class LNSMaximumFunction(LNSFunction):
         grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
             lns_gt(y_packed, x_packed), grad_output, LNS_ZERO
         ))
+
+        grad_x = lns_sum_to_size(grad_x, base, x.shape)
+        grad_y = lns_sum_to_size(grad_y, base, y.shape)
 
         return grad_x, grad_y, None
 
@@ -401,7 +405,7 @@ class LNSMinimumFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
         x_y_equal = lns_eq(x_packed, y_packed)
-        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base))
+        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base), base)
 
         grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
             lns_lt(x_packed, y_packed), grad_output, LNS_ZERO
@@ -409,6 +413,9 @@ class LNSMinimumFunction(LNSFunction):
         grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
             lns_lt(y_packed, x_packed), grad_output, LNS_ZERO
         ))
+
+        grad_x = lns_sum_to_size(grad_x, base, x.shape)
+        grad_y = lns_sum_to_size(grad_y, base, y.shape)
 
         return grad_x, grad_y, None
 

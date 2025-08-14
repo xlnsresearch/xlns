@@ -1,4 +1,5 @@
 from xlnstorch import CSRC_AVAILABLE, set_default_implementation
+import torch
 
 from .internal_lns_ops import (
     lns_add,
@@ -105,6 +106,49 @@ from .internal_lns_ops import (
     lns_avg_pool2d,
     lns_avg_pool3d,
 )
+
+def lns_sum_to_size(tensor: torch.Tensor, base: torch.Tensor, target_size: torch.Size) -> torch.Tensor:
+    """
+    Sum-reduce a tensor to a target size by summing over excess dimensions.
+
+    Parameters
+    ----------
+    tensor : LNSTensor
+        The input LNSTensor to be reduced.
+    target_size : torch.Size
+        The desired target size after reduction.
+
+    Returns
+    -------
+    LNSTensor
+        The reduced LNSTensor with the specified target size.
+
+    Raises
+    ------
+    ValueError
+        If the target size is not compatible with the input tensor size.
+    """
+    if list(tensor.shape) == list(target_size):
+        return tensor
+
+    tensor_shape = list(tensor.shape)
+    tgt_shape = list(target_size)
+    if tensor.dim() > len(tgt_shape):
+        tgt_shape = [1] * (tensor.dim() - len(tgt_shape)) + tgt_shape
+
+    # reduce dimensions that were broadcasted
+    leading = tensor.dim() - len(tgt_shape)
+    if leading > 0:
+        tensor = lns_sum(tensor, base, dim=tuple(range(leading)), keepdim=False)
+        tensor_shape = tensor_shape[leading:]
+
+    # reduce dimensions where target size is 1 but tensor has a larger size
+    reduce_dims = [i for i, (ts, gs) in enumerate(zip(tensor_shape, tgt_shape)) if gs == 1 and ts != 1]
+    if reduce_dims:
+        tensor = lns_sum(tensor, base, dim=tuple(reduce_dims), keepdim=True)
+
+    return tensor.reshape(target_size)
+
 from . import addition_ops
 from . import arithmetic_ops
 from . import unary_ops
@@ -142,6 +186,7 @@ def toggle_cpp_implementations(use_cpp: bool) -> None:
 
 __all__ = [
     "toggle_cpp_implementations",
+    "lns_sum_to_size",
 
     "implement_sbdb",
     "set_default_sbdb_implementation",

@@ -146,7 +146,7 @@ class LNSDropoutFunction(LNSFunction):
         x_packed = x.to(torch.int64)
 
         mask = LNSTensor.get_internal_tensor(torch.bernoulli(torch.full_like(x, 1 - p)), base)
-        result = lns_mul(x_packed, mask)
+        result = lns_mul(x_packed, mask, base)
 
         return result.to(torch.float64)
 
@@ -161,7 +161,7 @@ class LNSDropoutFunction(LNSFunction):
         output, base = ctx.saved_tensors
 
         grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None, None
 
@@ -197,7 +197,7 @@ class LNSDropout1dFunction(LNSFunction):
         ).expand_as(x)
         mask = LNSTensor.get_internal_tensor(mask_flt, base)
 
-        result = lns_mul(x_packed, mask)
+        result = lns_mul(x_packed, mask, base)
         return result.to(torch.float64)
 
     @staticmethod
@@ -211,7 +211,7 @@ class LNSDropout1dFunction(LNSFunction):
         output, base = ctx.saved_tensors
 
         grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None, None
 
@@ -250,7 +250,7 @@ class LNSDropout2dFunction(LNSFunction):
         ).expand_as(x)
         mask = LNSTensor.get_internal_tensor(mask_flt, base)
 
-        result = lns_mul(x_packed, mask)
+        result = lns_mul(x_packed, mask, base)
         return result.to(torch.float64)
 
     @staticmethod
@@ -264,7 +264,7 @@ class LNSDropout2dFunction(LNSFunction):
         output, base = ctx.saved_tensors
 
         grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None, None
 
@@ -311,7 +311,7 @@ class LNSDropout3dFunction(LNSFunction):
         ).expand_as(x)
         mask = LNSTensor.get_internal_tensor(mask_flt, base)
 
-        result = lns_mul(x_packed, mask)
+        result = lns_mul(x_packed, mask, base)
         return result.to(torch.float64)
 
     @staticmethod
@@ -325,7 +325,7 @@ class LNSDropout3dFunction(LNSFunction):
         output, base = ctx.saved_tensors
 
         grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None, None
 
@@ -391,7 +391,7 @@ class LNSConv1dFunction(LNSFunction):
                         end = start + K * dilation
                         inp_slice = inp_group[:, start:end:dilation]
                         # Element-wise multiply and sum across in_channels and kernel size
-                        out[n, c_out, l] = lns_sum(lns_mul(inp_slice, weight_packed[c_out]), base)
+                        out[n, c_out, l] = lns_sum(lns_mul(inp_slice, weight_packed[c_out], base), base)
                         if bias is not None:
                             out[n, c_out, l] = lns_add(out[n, c_out, l], bias[c_out], base)
 
@@ -456,7 +456,7 @@ class LNSConv1dFunction(LNSFunction):
                                     l_out = l_out_nom // ctx.stride
                                     if l_out >= 0 and l_out < L_out:
                                         # Chain rule for gradients through conv
-                                        grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], w[k]), base)
+                                        grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], w[k], base), base)
                         grad_x_padded[n, in_start + c_in, l_in] = grad
 
         # Remove padding to match input shape, as in forward
@@ -482,7 +482,7 @@ class LNSConv1dFunction(LNSFunction):
                                 l_in = l_out * ctx.stride + k * ctx.dilation
                                 inp_padded = x_padded[n, in_start + c_in, :]
                                 if ctx.padding <= l_in < inp_padded.size(0) - ctx.padding:
-                                    grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], inp_padded[l_in]), base)
+                                    grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], inp_padded[l_in], base), base)
                         grad_weight[c_out, c_in, k] = grad
 
         # Compute bias gradient by summing grad_output along batch and time (output length)
@@ -569,7 +569,7 @@ class LNSConv2dFunction(LNSFunction):
                             w_end = w_start + K_W * dil_w
                             # Extract appropriate input window
                             inp_slice = inp_group[:, h_start:h_end:dil_h, w_start:w_end:dil_w] # shape [g_Cin, K_H, K_W]
-                            out[n, c_out, h, w] = lns_sum(lns_mul(inp_slice, weight_packed[c_out]), base)
+                            out[n, c_out, h, w] = lns_sum(lns_mul(inp_slice, weight_packed[c_out], base), base)
                             if bias is not None:
                                 out[n, c_out, h, w] = lns_add(out[n, c_out, h, w], bias[c_out], base)
 
@@ -647,7 +647,7 @@ class LNSConv2dFunction(LNSFunction):
                                             if (0 <= h_out < H_out) and (0 <= w_out < W_out):
                                                 grad = lns_add(
                                                     grad,
-                                                    lns_mul(grad_output[n, c_out, h_out, w_out], w[k_h, k_w]),
+                                                    lns_mul(grad_output[n, c_out, h_out, w_out], w[k_h, k_w], base),
                                                     base,
                                                 )
                             grad_x_padded[n, in_start + c_in, h_in, w_in] = grad
@@ -678,7 +678,7 @@ class LNSConv2dFunction(LNSFunction):
                                         if (0 <= h_in < inp_padded.size(0)) and (0 <= w_in < inp_padded.size(1)):
                                             grad = lns_add(
                                                 grad,
-                                                lns_mul(grad_output[n, c_out, h_out, w_out], inp_padded[h_in, w_in]),
+                                                lns_mul(grad_output[n, c_out, h_out, w_out], inp_padded[h_in, w_in], base),
                                                 base,
                                             )
                             grad_weight[c_out, c_in, k_h, k_w] = grad
@@ -771,7 +771,7 @@ class LNSConv3dFunction(LNSFunction):
                                     w_start:w_end:dil_w
                                 ]  # [g_Cin, K_D, K_H, K_W]
                                 out[n, c_out, d, h, w] = lns_sum(
-                                    lns_mul(inp_slice, weight_packed[c_out]), base
+                                    lns_mul(inp_slice, weight_packed[c_out], base), base
                                 )
                                 if bias is not None:
                                     out[n, c_out, d, h, w] = lns_add(
@@ -852,7 +852,7 @@ class LNSConv3dFunction(LNSFunction):
                                                     if (0 <= d_out < D_out) and (0 <= h_out < H_out) and (0 <= w_out < W_out):
                                                         grad = lns_add(
                                                             grad,
-                                                            lns_mul(grad_output[n, c_out, d_out, h_out, w_out], wgt[k_d, k_h, k_w]),
+                                                            lns_mul(grad_output[n, c_out, d_out, h_out, w_out], wgt[k_d, k_h, k_w], base),
                                                             base
                                                         )
                                 grad_x_padded[n, in_start + c_in, d_in, h_in, w_in] = grad
@@ -886,7 +886,7 @@ class LNSConv3dFunction(LNSFunction):
                                                 if (0 <= d_in < D_pad) and (0 <= h_in < H_pad) and (0 <= w_in < W_pad):
                                                     grad = lns_add(
                                                         grad,
-                                                        lns_mul(grad_output[n, c_out, d_out, h_out, w_out], inp_padded[d_in, h_in, w_in]),
+                                                        lns_mul(grad_output[n, c_out, d_out, h_out, w_out], inp_padded[d_in, h_in, w_in], base),
                                                         base
                                                     )
                                 grad_weight[c_out, c_in, k_d, k_h, k_w] = grad

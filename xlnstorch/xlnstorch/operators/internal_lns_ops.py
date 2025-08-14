@@ -114,7 +114,8 @@ lns_sub = _create_lns_op_func('sub', torch.sub, signature=_build_signature([
 ))
 lns_mul = _create_lns_op_func('mul', torch.mul, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("y", "pk", torch.Tensor)],
+    ("y", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
     torch.Tensor,
 ))
 lns_div = _create_lns_op_func('div', torch.div, signature=_build_signature([
@@ -368,7 +369,8 @@ lns_cat = _create_lns_op_func('cat', torch.cat, signature=_build_signature([
 lns_where = _create_lns_op_func('where', torch.where, signature=_build_signature([
     ("condition", "pk", torch.Tensor),
     ("x", "pk", torch.Tensor),
-    ("y", "pk", torch.Tensor)],
+    ("y", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor)],
     torch.Tensor,
 ))
 

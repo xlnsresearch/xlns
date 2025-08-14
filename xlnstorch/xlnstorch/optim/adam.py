@@ -126,7 +126,7 @@ class LNSAdam(LNSOptimizer):
 
                 # 2. weight decay: g ← g + λθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 state = self.state[p]
                 if len(state) == 0:
@@ -145,16 +145,16 @@ class LNSAdam(LNSOptimizer):
 
                 # 3. m_t ← β_1*m_{t-1} + (1 − β_1)*g
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns),
-                    lns_mul(grad, one_minus_beta1),
+                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(grad, one_minus_beta1, base),
                     base
                 )
 
                 # 4. v_t ← β_2*v_{t-1} + (1 − β_2)*g^2
-                grad_squared = lns_mul(grad, grad)
+                grad_squared = lns_mul(grad, grad, base)
                 exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns),
-                    lns_mul(grad_squared, one_minus_beta2),
+                    lns_mul(exp_avg_sq, beta2._lns, base),
+                    lns_mul(grad_squared, one_minus_beta2, base),
                     base
                 )
 
@@ -178,7 +178,7 @@ class LNSAdam(LNSOptimizer):
 
                 # 6. θ ← θ − γ*m' / (sqrt(v') + ε)
                 denom = lns_add(lns_sqrt(denom_sq, base), eps._lns, base)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base))
+                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base), base)
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["exp_avg"] = exp_avg

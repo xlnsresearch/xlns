@@ -124,7 +124,7 @@ class LNSASGD(LNSOptimizer):
                     grad = lns_neg(grad)
 
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -138,14 +138,14 @@ class LNSASGD(LNSOptimizer):
                 averaged_param = state["averaged_param"]
 
                 # 1. learning-rate schedule
-                denom = lns_add(LNS_ONE, lns_mul(lambd._lns, lns_mul(lr._lns, step)), base)
+                denom = lns_add(LNS_ONE, lns_mul(lambd._lns, lns_mul(lr._lns, step, base), base), base)
                 denom = lns_pow(denom, alpha.value, base)
                 current_lr = lns_div(lr._lns, denom, base)
 
                 # 2. update averaged parameter
-                decay = lns_sub(LNS_ONE, lns_mul(lambd._lns, current_lr), base)
-                p.data = lns_mul(p.data, decay)
-                p.data = lns_sub(p.data, lns_mul(grad, current_lr), base)
+                decay = lns_sub(LNS_ONE, lns_mul(lambd._lns, current_lr, base), base)
+                p.data = lns_mul(p.data, decay, base)
+                p.data = lns_sub(p.data, lns_mul(grad, current_lr, base), base)
 
                 # 3. update averaged parameter
                 if lns_gt(step, t0._lns):
@@ -153,7 +153,7 @@ class LNSASGD(LNSOptimizer):
                     averaging_coef = lns_div(LNS_ONE, denom, base)
 
                 diff = lns_sub(p.data, averaged_param, base)
-                averaged_param = lns_add(averaged_param, lns_mul(diff, averaging_coef), base)
+                averaged_param = lns_add(averaged_param, lns_mul(diff, averaging_coef, base), base)
 
                 state["step"] = step
                 state["averaging_coef"] = averaging_coef

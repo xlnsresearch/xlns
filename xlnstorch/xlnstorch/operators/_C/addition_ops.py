@@ -2,6 +2,7 @@ import torch
 import xlnstorch.csrc
 from xlnstorch import lnstensor, format_lnstensor_operands, implements, LNS_ONE
 from xlnstorch.sbdb_dispatch_table import DEFAULT_SBDB_FUNC
+from xlnstorch.operators import lns_sum_to_size
 from xlnstorch.operators.addition_ops import LNSAddFunction
 from xlnstorch.autograd import LNSFunction
 
@@ -21,11 +22,17 @@ class LNSAddCPPFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        pass
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        return grad_output, grad_output, None
+        x, y, base = ctx.saved_tensors
+
+        grad_x = lns_sum_to_size(grad_output, base, x.shape)
+        grad_y = lns_sum_to_size(grad_output, base, y.shape)
+
+        return grad_x, grad_y, None
 
 @implements(torch.add, LNSAddCPPFunction.forward, key='default_cpp', default=True)
 def add(x, y, *, alpha=1, out=None):

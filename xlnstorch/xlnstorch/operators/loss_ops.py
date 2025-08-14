@@ -34,7 +34,7 @@ class LNSMSELossFunction(LNSFunction):
 
         if weight is not None:
             weight = weight.to(torch.int64)
-            squared_errors = lns_mul(squared_errors, weight)
+            squared_errors = lns_mul(squared_errors, weight, base)
 
         if reduction == 'none':
             return squared_errors.to(torch.float64)
@@ -73,8 +73,8 @@ class LNSMSELossFunction(LNSFunction):
             x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
             grad = lns_sub(x_packed, y_packed, base=base)
-            grad = lns_mul(grad, LNSTensor.get_internal_tensor(2.0, base))
-            grad = lns_mul(grad, weight)
+            grad = lns_mul(grad, LNSTensor.get_internal_tensor(2.0, base), base)
+            grad = lns_mul(grad, weight, base)
 
             if ctx.reduction == 'mean':
                 weight_sum = lns_sum(weight, base)
@@ -85,7 +85,7 @@ class LNSMSELossFunction(LNSFunction):
             x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
             grad = lns_sub(x_packed, y_packed, base=base)
-            grad = lns_mul(grad, LNSTensor.get_internal_tensor(2.0, base))
+            grad = lns_mul(grad, LNSTensor.get_internal_tensor(2.0, base), base)
 
             if ctx.reduction == 'mean':
                 num_elements = x.numel()
@@ -163,17 +163,17 @@ class LNSBCELossFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
         log_x = lns_log(x_packed, base)
-        pos_log_prob = lns_mul(y_packed, log_x)
+        pos_log_prob = lns_mul(y_packed, log_x, base)
 
         x2 = lns_sub(LNS_ONE, x_packed, base)
         log_x2 = lns_log(x2, base)
         y2 = lns_sub(LNS_ONE, y_packed, base)
-        neg_log_prob = lns_mul(y2, log_x2)
+        neg_log_prob = lns_mul(y2, log_x2, base)
 
         loss = lns_add(pos_log_prob, neg_log_prob, base)
         if weight is not None:
             weight = weight.to(torch.int64)
-            loss = lns_mul(loss, weight)
+            loss = lns_mul(loss, weight, base)
         loss = lns_neg(loss)
 
         if reduction == 'none':
@@ -218,11 +218,11 @@ class LNSBCELossFunction(LNSFunction):
             term2 = lns_div(y_packed, x_packed, base)
 
             grad_x = lns_sub(term1, term2, base)
-            grad_x = lns_mul(grad_x, weight)
+            grad_x = lns_mul(grad_x, weight, base)
 
             grad_y = lns_div(x_packed, one_minus_x, base)
             grad_y = lns_log(grad_y, base)
-            grad_y = lns_mul(grad_y, weight)
+            grad_y = lns_mul(grad_y, weight, base)
             grad_y = lns_neg(grad_y)
 
             if ctx.reduction == 'mean':
@@ -272,17 +272,17 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
         sigmoid_x = lns_sigmoid(x_packed, base)
         log_sigmoid_x = lns_log(sigmoid_x, base)
-        pos_log_prob = lns_mul(y_packed, log_sigmoid_x)
+        pos_log_prob = lns_mul(y_packed, log_sigmoid_x, base)
 
         sigmoid_x2 = lns_sub(LNS_ONE, sigmoid_x, base)
         log_sigmoid_x2 = lns_log(sigmoid_x2, base)
         y2 = lns_sub(LNS_ONE, y_packed, base)
-        neg_log_prob = lns_mul(y2, log_sigmoid_x2)
+        neg_log_prob = lns_mul(y2, log_sigmoid_x2, base)
 
         loss = lns_add(pos_log_prob, neg_log_prob, base)
         if weight is not None:
             weight = weight.to(torch.int64)
-            loss = lns_mul(loss, weight)
+            loss = lns_mul(loss, weight, base)
         loss = lns_neg(loss)
 
         if reduction == 'none':
@@ -323,9 +323,9 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
             sigmoid_x = lns_sigmoid(x_packed, base)
             grad_x = lns_sub(sigmoid_x, y_packed, base)
-            grad_x = lns_mul(grad_x, weight)
+            grad_x = lns_mul(grad_x, weight, base)
 
-            grad_y = lns_mul(x_packed, weight)
+            grad_y = lns_mul(x_packed, weight, base)
             grad_y = lns_neg(grad_y)
 
             if ctx.reduction == 'mean':
@@ -375,7 +375,7 @@ class LNSNLLLossFunction(LNSFunction):
         if weight is not None:
             weight = weight.to(torch.int64)
             sample_weights = weight[y]
-            nll = lns_mul(nll, sample_weights)
+            nll = lns_mul(nll, sample_weights, base)
 
         loss = lns_neg(nll)
 
@@ -445,15 +445,15 @@ class LNSNLLLossFunction(LNSFunction):
 
         if ctx.reduction == 'none':
             if grad_x.dim() == 1:
-                grad_x = lns_mul(grad_x, grad_output)
+                grad_x = lns_mul(grad_x, grad_output, base)
 
             else:
                 batch_size = y.size(0)
                 indices = torch.arange(batch_size)
-                grad_x[indices, y] = lns_mul(grad_x[indices, y], grad_output)
+                grad_x[indices, y] = lns_mul(grad_x[indices, y], grad_output, base)
 
         else:
-            grad_x = lns_mul(grad_x, grad_output)
+            grad_x = lns_mul(grad_x, grad_output, base)
 
         return grad_x, None, None, None, None, None, None, None
 
@@ -477,17 +477,17 @@ class PoissonNLLLossFunction(LNSFunction):
 
         if log_input:
             exp_x = lns_exp(x_packed, base)
-            loss = lns_sub(exp_x, lns_mul(y_packed, x_packed), base)
+            loss = lns_sub(exp_x, lns_mul(y_packed, x_packed, base), base)
         else:
             log_x = lns_log(lns_add(x_packed, eps_packed, base), base)
-            loss = lns_sub(x_packed, lns_mul(y_packed, log_x), base)
+            loss = lns_sub(x_packed, lns_mul(y_packed, log_x, base), base)
 
         if full:
             y_clamped = torch.where(lns_gt(y_packed, LNS_ONE), y_packed, LNS_ONE)
 
             two_pi = LNSTensor.get_internal_tensor(math.tau, base)
-            stirling_term1 = lns_mul(y_clamped, lns_log(y_clamped, base))
-            stirling_term3 = lns_mul(lns_log(lns_mul(two_pi, y_clamped), base), LNSTensor.get_internal_tensor(0.5, base))
+            stirling_term1 = lns_mul(y_clamped, lns_log(y_clamped, base), base)
+            stirling_term3 = lns_mul(lns_log(lns_mul(two_pi, y_clamped, base), base), LNSTensor.get_internal_tensor(0.5, base), base)
             stirling = lns_add(lns_sub(stirling_term1, y_clamped, base), stirling_term3, base)
 
             loss = lns_add(loss, stirling, base)
@@ -538,8 +538,8 @@ class PoissonNLLLossFunction(LNSFunction):
             num_elements = x.numel()
             grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
 
-        grad_x = lns_mul(grad_x, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
 
         return grad_x, grad_y, None, None, None, None, None, None, None
 
@@ -593,7 +593,7 @@ class LNSHingeEmbeddingLossFunction(LNSFunction):
             num_elements = x.numel()
             grad_x = lns_div(grad_x, LNSTensor.get_internal_tensor(num_elements, base), base)
 
-        grad_x = lns_mul(grad_x, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
 
         return grad_x, None, None, None, None, None, None
 
@@ -612,9 +612,9 @@ class LNSKLDivLossFunction(LNSFunction):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
 
         if log_target:
-            loss = lns_mul(lns_exp(y_packed, base), lns_sub(y_packed, x_packed, base))
+            loss = lns_mul(lns_exp(y_packed, base), lns_sub(y_packed, x_packed, base), base)
         else:
-            loss = lns_mul(y_packed, lns_sub(lns_log(y_packed, base), x_packed, base))
+            loss = lns_mul(y_packed, lns_sub(lns_log(y_packed, base), x_packed, base), base)
 
         if reduction == 'none':
             return loss.to(torch.float64)
@@ -650,7 +650,7 @@ class LNSKLDivLossFunction(LNSFunction):
         if ctx.log_target:
             exp_y = lns_exp(y_packed, base)
             grad_x = lns_neg(exp_y)
-            grad_y = lns_mul(exp_y, lns_add(lns_sub(y_packed, x_packed, base), LNS_ONE, base))
+            grad_y = lns_mul(exp_y, lns_add(lns_sub(y_packed, x_packed, base), LNS_ONE, base), base)
         else:
             grad_x = lns_neg(y_packed)
             grad_y = lns_add(lns_sub(lns_log(y_packed, base), x_packed, base), LNS_ONE, base)
@@ -665,8 +665,8 @@ class LNSKLDivLossFunction(LNSFunction):
             grad_x = lns_div(grad_x, num_elements, base)
             grad_y = lns_div(grad_y, num_elements, base)
 
-        grad_x = lns_mul(grad_x, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
 
         return grad_x, grad_y, None, None, None, None, None
 
@@ -685,7 +685,7 @@ class LNSMarginRankingLossFunction(LNSFunction):
         x1_packed, x2_packed, y_packed = x1.to(torch.int64), x2.to(torch.int64), y.to(torch.int64)
 
         loss = lns_sub(x1_packed, x2_packed, base)
-        loss = lns_mul(loss, y_packed)
+        loss = lns_mul(loss, y_packed, base)
         loss = lns_sub(margin, loss, base)
         loss = lns_maximum(LNS_ZERO, loss, base)
 
@@ -714,7 +714,7 @@ class LNSMarginRankingLossFunction(LNSFunction):
         x1_packed, x2_packed, y_packed, margin_packed = x1.to(torch.int64), x2.to(torch.int64), y.to(torch.int64), margin.to(torch.int64)
 
         loss = lns_sub(x1_packed, x2_packed, base)
-        loss = lns_mul(loss, y_packed)
+        loss = lns_mul(loss, y_packed, base)
         loss = lns_sub(margin, loss, base)
         gt_zero_mask = lns_gt(loss, LNS_ZERO)
 
@@ -728,9 +728,9 @@ class LNSMarginRankingLossFunction(LNSFunction):
             grad_x2 = lns_div(grad_x2, num_elements, base)
             grad_y = lns_div(grad_y, num_elements, base)
 
-        grad_x1 = lns_mul(grad_x1, grad_output)
-        grad_x2 = lns_mul(grad_x2, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
+        grad_x1 = lns_mul(grad_x1, grad_output, base)
+        grad_x2 = lns_mul(grad_x2, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
 
         return grad_x1, grad_x2, grad_y, None, None, None, None, None
 
@@ -796,9 +796,9 @@ class LNSGaussianNLLLossFunction(LNSFunction):
             grad_y = lns_div(grad_y, num_elements, base)
             grad_var = lns_div(grad_var, num_elements, base)
 
-        grad_x = lns_mul(grad_x, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
-        grad_var = lns_mul(grad_var, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
+        grad_var = lns_mul(grad_var, grad_output, base)
 
         return grad_x, grad_y, grad_var, None, None, None, None
 
@@ -820,7 +820,7 @@ class LNSHuberLossFunction(LNSFunction):
 
         abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
         l1_term = lns_sub(abs_diff, lns_div(delta_packed, two, base), base)
-        l1_term = lns_mul(l1_term, delta_packed)
+        l1_term = lns_mul(l1_term, delta_packed, base)
 
         l2_term = lns_square(lns_sub(x_packed, y_packed, base), base)
         l2_term = lns_div(l2_term, two, base)
@@ -828,7 +828,7 @@ class LNSHuberLossFunction(LNSFunction):
         loss = torch.where(lns_lt(abs_diff, delta_packed), l2_term, l1_term)
         if weight is not None:
             weight = weight.to(torch.int64)
-            loss = lns_mul(loss, weight)
+            loss = lns_mul(loss, weight, base)
 
         if reduction == 'none':
             return loss.to(torch.float64)
@@ -865,7 +865,7 @@ class LNSHuberLossFunction(LNSFunction):
 
         l2_loss_grad_x = lns_sub(x_packed, y_packed, base)
         l2_loss_grad_y = lns_neg(l2_loss_grad_x)
-        l1_loss_grad_x = lns_mul(lns_sign(lns_sub(x_packed, y_packed, base), base), delta_packed)
+        l1_loss_grad_x = lns_mul(lns_sign(lns_sub(x_packed, y_packed, base), base), delta_packed, base)
         l1_loss_grad_y = lns_neg(l1_loss_grad_x)
 
         abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
@@ -880,14 +880,14 @@ class LNSHuberLossFunction(LNSFunction):
 
             abs_diff = lns_abs(lns_sub(x_packed, y_packed, base))
             l1_term = lns_sub(abs_diff, lns_div(delta_packed, two, base), base)
-            l1_term = lns_mul(l1_term, delta_packed)
+            l1_term = lns_mul(l1_term, delta_packed, base)
 
             l2_term = lns_square(lns_sub(x_packed, y_packed, base), base)
             l2_term = lns_div(l2_term, two, base)
 
             grad_w = torch.where(lns_lt(abs_diff, delta_packed), l2_term, l1_term)
-            grad_x = lns_mul(grad_x, weight)
-            grad_y = lns_mul(grad_y, weight)
+            grad_x = lns_mul(grad_x, weight, base)
+            grad_y = lns_mul(grad_y, weight, base)
 
         else:
             grad_w = None
@@ -899,8 +899,8 @@ class LNSHuberLossFunction(LNSFunction):
             if grad_w is not None:
                 grad_w = lns_div(grad_w, LNSTensor.get_internal_tensor(num_elements, base), base)
 
-        grad_x = lns_mul(grad_x, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
 
         return grad_x, grad_y, None, None, None, grad_w
 
@@ -928,7 +928,7 @@ class LNSSmoothL1LossFunction(LNSFunction):
         l1_term = lns_sub(abs_diff, lns_div(beta_packed, two, base), base)
 
         l2_term = lns_square(lns_sub(x_packed, y_packed, base), base)
-        l2_term = lns_div(l2_term, lns_mul(two, beta_packed), base)
+        l2_term = lns_div(l2_term, lns_mul(two, beta_packed, base), base)
 
         loss = torch.where(lns_lt(abs_diff, beta_packed), l2_term, l1_term)
 
@@ -971,8 +971,8 @@ class LNSSmoothL1LossFunction(LNSFunction):
             grad_x = lns_div(grad_x, num_elements, base)
             grad_y = lns_div(grad_y, num_elements, base)
 
-        grad_x = lns_mul(grad_x, grad_output)
-        grad_y = lns_mul(grad_y, grad_output)
+        grad_x = lns_mul(grad_x, grad_output, base)
+        grad_y = lns_mul(grad_y, grad_output, base)
 
         return grad_x, grad_y, None, None, None, None, None
     

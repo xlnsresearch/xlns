@@ -143,10 +143,10 @@ class LNSSignMul(LNSOptimizer):
                 state = self.state[p]
                 if len(state) == 0:
                     # First time we see this parameter
-                    rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p), base),
+                    rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p, base), base),
                                            LNSTensor.get_internal_tensor(p.numel(), base),
                                            base), base)
-                    state['max'] = lns_mul(p_scale._lns, rms)
+                    state['max'] = lns_mul(p_scale._lns, rms, base)
 
                 # retrieve running stats
                 max = state['max']
@@ -159,7 +159,7 @@ class LNSSignMul(LNSOptimizer):
                     torch.where(lns_eq(grad_sign, p_sign) ^ maximize,
                     inv_mul_term._lns, mul_term._lns
                 ))
-                p.data = lns_mul(p.data, mul_update)
+                p.data = lns_mul(p.data, mul_update, base)
                 p.data = lns_clamp(p.data, lns_neg(max), max)
 
         return loss

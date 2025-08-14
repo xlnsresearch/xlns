@@ -108,10 +108,12 @@ class LNSHybridMul(LNSOptimizer):
                 small_values = lns_lt(lns_abs(grad), lr._lns) | lns_lt(lns_abs(p.data), lr._lns)
                 mul_mask = same_sign | small_values
 
-                lr_mul_grad = lns_mul(lr._lns, lns_abs(grad))
+                lr_mul_grad = lns_mul(lr._lns, lns_abs(grad), base)
                 mul_update = lns_add(LNS_ONE, lr_mul_grad, base)
                 gd_update = lns_add(LNS_ONE, lns_div(lr_mul_grad, lns_abs(p), base), base)
                 mul_term = torch.where(mul_mask, lns_reciprocal(mul_update, base),
                                        lns_maximum(signmul_term._lns, gd_update, base))
 
-            p.data = lns_mul(p.data, mul_term)
+            p.data = lns_mul(p.data, mul_term, base)
+
+        return loss

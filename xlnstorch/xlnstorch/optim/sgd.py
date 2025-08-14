@@ -118,7 +118,7 @@ class LNSSGD(LNSOptimizer):
 
                 # 1. weight_decay: g ← g + λθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 # 2. momentum buffering: b ← μb + (1 - τ)g
                 if not lns_equal(momentum._lns, LNS_ZERO):
@@ -131,21 +131,21 @@ class LNSSGD(LNSOptimizer):
                     else:
                         one_minus_tau = lns_sub(LNS_ONE, dampening._lns, base)
                         buf = lns_add(
-                            lns_mul(buf, momentum._lns),
-                            lns_mul(grad, one_minus_tau),
+                            lns_mul(buf, momentum._lns, base),
+                            lns_mul(grad, one_minus_tau, base),
                             base
                         )
                         state["momentum_buffer"] = buf
 
                     # 3a. nesterov momentum: g ← g + μb
                     if nesterov:
-                        grad = lns_add(grad, lns_mul(buf, momentum._lns), base)
+                        grad = lns_add(grad, lns_mul(buf, momentum._lns, base), base)
                     # 3b. classical momentum: g ← b 
                     else:
                         grad = buf
 
                 # 4. parameter update: θ ← θ ± γg
-                delta = lns_mul(grad, lr._lns)
+                delta = lns_mul(grad, lr._lns, base)
                 p.data = lns_sub(p.data, delta, base)
 
         return loss
