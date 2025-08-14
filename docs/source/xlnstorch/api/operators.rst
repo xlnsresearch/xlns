@@ -12,6 +12,28 @@ them to be used in the same way as PyTorch's built-in operations.
 These operations can be accessed via the traditional PyTorch mechanism,
 such as ``torch.add()`` or ``torch.matmul()``.
 
+C++ Implementations
+-------------------
+
+For operations that are computationally intensive, we provide C++ implementations
+that can be used to accelerate the computation. These implementations are
+available if the package is built with C++ extensions enabled and are enabled
+by default. You can toggle the use of C++ implementations with the following function:
+
+.. code-block:: python
+
+    from xlnstorch.operators import toggle_cpp_implementations
+
+    toggle_cpp_implementations(True) # enable C++ implementations
+    toggle_cpp_implementations(False) # disable C++ implementations
+
+Currently, there are C++ implementations for the following operations:
+
+- Addition
+- Summation
+- Matrix Multiplication
+- Convolution functions
+
 Custom SBDB functions
 ---------------------
 

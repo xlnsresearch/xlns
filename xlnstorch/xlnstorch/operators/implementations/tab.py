@@ -32,7 +32,6 @@ def get_table(filestem: str, f=None, b=None):
     if CSRC_AVAILABLE:
         import xlnstorch.csrc
         xlnstorch.csrc.get_table(filestem, base.item())
-        return
 
     global initialized, tab_base, tab_ez, tab_sbdb, tab_mismatch
     tab_mismatch = False
