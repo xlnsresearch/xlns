@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union, List, Tuple
+from typing import Any, Union, List, Type
 import weakref
 import math
 import numpy as np
@@ -550,6 +550,111 @@ class LNSTensor:
             self.register_grad_hook()
         return self
 
+    def numpy(self, *, force=False) -> np.ndarray:
+        """
+        Converts the LNSTensor to a NumPy array.
+        """
+        if force:
+            return self.value.resolve_neg().numpy()
+
+        return self.value.numpy()
+
+    def xlns(
+            self,
+            dtype: Type | None = None,
+            array: bool = False,
+            use_xlnsud: bool = False,
+            use_xlnsnpv: bool = False,
+        ) -> xl.xlns | xl.xlnsud | xl.xlnsv | xl.xlnsb | xl.xlnsnp | xl.xlnsnpv | xl.xlnsnpb:
+        """
+        Converts the LNSTensor to an xlns type. If no ``dtype`` is
+        provided, the most suitable type is inferred.
+
+        Parameters
+        ----------
+        dtype : type, optional
+            The desired xlns type. Must be one of
+            ``xl.xlns``, ``xl.xlnsud``, ``xl.xlnsv``, ``xl.xlnsb``,
+            ``xl.xlnsnp``, ``xl.xlnsnpv``, or ``xl.xlnsnpb``. If
+            ``None``, defaults to the most suitable type based
+            on the base and number of elements.
+        array : bool, optional
+            If ``True``, and dtype is ``None``, chooses an xlns
+            array type (e.g. ``xl.xlnsnp``) rather than a scalar
+            type (eg. ``xl.xlns``) even if the LNSTensor has only
+            one element. Defaults to ``False``.
+        use_xlnsud : bool, optional
+            If ``True``, and dtype is ``None``, uses ``xl.xlnsud``
+            rather than ``xl.xlns`` when inferring the type for
+            an LNSTensor with 1 element and base ``xl.xlnsB``.
+        use_xlnsnpv : bool, optional
+            If ``True``, and dtype is ``None``, uses ``xl.xlnsnpv``
+            rather than ``xl.xlnsnpb`` when inferring the type for
+            an LNSTensor with base having a defined precision.
+        """
+        assert dtype is None or dtype in _xlns_types
+
+        if dtype is None:
+            if self.numel() == 1 and not array:
+                if self.base.item() == xl.xlnsB:
+                    if use_xlnsud:
+                        dtype = xl.xlnsud
+                    else:
+                        dtype = xl.xlns
+                elif tensor_utils.get_precision_from_base(self.base) is not None:
+                    dtype = xl.xlnsv
+                else:
+                    dtype = xl.xlnsb
+
+            else:
+                if self.base.item() == xl.xlnsB:
+                    dtype = xl.xlnsnp
+                elif tensor_utils.get_precision_from_base(self.base) is not None:
+                    if use_xlnsnpv:
+                        dtype = xl.xlnsnpv
+                    else:
+                        dtype = xl.xlnsnpb
+                else:
+                    dtype = xl.xlnsnpb
+
+        lns_packed = self._lns.to(torch.int64).numpy()
+
+        if dtype == xl.xlns:
+            res = xl.xlns(0)
+            res.x = lns_packed.item() >> 1
+            res.s = False if self >= 0.0 else True
+
+        elif dtype == xl.xlnsud:
+            res = xl.xlnsud(0)
+            res.x = lns_packed.item() >> 1
+            res.s = False if self >= 0.0 else True
+
+        elif dtype == xl.xlnsv:
+            res = xl.xlnsv(0, setF=tensor_utils.get_precision_from_base(self.base))
+            res.x = lns_packed.item() >> 1
+            res.s = False if self >= 0.0 else True
+
+        elif dtype == xl.xlnsb:
+            res = xl.xlnsb(0, self.base.item())
+            res.x = lns_packed.item() >> 1
+            res.s = False if self >= 0.0 else True
+
+        elif dtype == xl.xlnsnp:
+            res = xl.xlnsnp(0)
+            res.nd = np.where(lns_packed == LNS_ZERO.item(), xl.XLNS_MIN_INT, lns_packed)
+
+        elif dtype == xl.xlnsnpv:
+            res = xl.xlnsnp(0)
+            lns_full_prec = lnstensor(self, b=xl.xlnsB)._lns.to(torch.int64).numpy()
+            res.nd = np.where(lns_packed == LNS_ZERO.item(), xl.XLNS_MIN_INT, lns_full_prec)
+            res = xl.xlnsnpv(res, setF=tensor_utils.get_precision_from_base(self.base))
+
+        elif dtype == xl.xlnsnpb:
+            res = xl.xlnsnpb(0, self.base.item())
+            res.nd = lns_packed
+
+        return res
+
     def __repr__(self) -> str:
          # indent the value string to match the length of "LNSTensor(value="
         value_str = tensor_utils._lns_tensor_str(self, 16)
@@ -979,7 +1084,7 @@ def lnstensor(
 
         packed_int = (np.int64(np.round(log_part)) << 1) | data_s
         input_data = torch.tensor(
-            np.where(data.nd == -2**53, LNS_ZERO, packed_int),
+            np.where(data.nd == xl.XLNS_MIN_INT, LNS_ZERO, packed_int),
             dtype=torch.float64
         )
         from_lns = True
