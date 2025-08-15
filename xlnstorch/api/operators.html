@@ -167,6 +167,7 @@
 </details></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Python API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch.html">xlnstorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensor_utils.html">xlnstorch.tensor_utils</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lnstensors.html">xlnstorch.LNSTensor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">xlnstorch.operators</a></li>
@@ -327,6 +328,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#c-implementations">C++ Implementations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-sbdb-functions">Custom SBDB functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tab">Tab</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#utah-tayco">Utah-Tayco</a></li>
@@ -360,6 +362,26 @@ are registered with PyTorch’s internal dispatch mechanism, allowing
 them to be used in the same way as PyTorch’s built-in operations.
 These operations can be accessed via the traditional PyTorch mechanism,
 such as <code class="docutils literal notranslate"><span class="pre">torch.add()</span></code> or <code class="docutils literal notranslate"><span class="pre">torch.matmul()</span></code>.</p>
+<section id="c-implementations">
+<h2>C++ Implementations<a class="headerlink" href="#c-implementations" title="Link to this heading">#</a></h2>
+<p>For operations that are computationally intensive, we provide C++ implementations
+that can be used to accelerate the computation. These implementations are
+available if the package is built with C++ extensions enabled and are enabled
+by default. You can toggle the use of C++ implementations with the following function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xlnstorch.operators</span> <span class="kn">import</span> <span class="n">toggle_cpp_implementations</span>
+
+<span class="n">toggle_cpp_implementations</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># enable C++ implementations</span>
+<span class="n">toggle_cpp_implementations</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># disable C++ implementations</span>
+</pre></div>
+</div>
+<p>Currently, there are C++ implementations for the following operations:</p>
+<ul class="simple">
+<li><p>Addition</p></li>
+<li><p>Summation</p></li>
+<li><p>Matrix Multiplication</p></li>
+<li><p>Convolution functions</p></li>
+</ul>
+</section>
 <section id="custom-sbdb-functions">
 <h2>Custom SBDB functions<a class="headerlink" href="#custom-sbdb-functions" title="Link to this heading">#</a></h2>
 <p>In LNS, numbers are represented by their logarithms. To implement addition
@@ -575,6 +597,9 @@ operations. For the most part, these internal operator functions wrap the
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_cat.html#xlnstorch.operators.lns_cat" title="xlnstorch.operators.lns_cat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_cat</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.cat.html#torch.cat" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.cat()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_where.html#xlnstorch.operators.lns_where" title="xlnstorch.operators.lns_where"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_where</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.where.html#torch.where" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.where()</span></code></a> for parameter/return details.</p></td>
 </tr>
 </tbody>
 </table>
@@ -817,6 +842,7 @@ support <code class="docutils literal notranslate"><span class="pre">LNSTensor</
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#c-implementations">C++ Implementations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-sbdb-functions">Custom SBDB functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tab">Tab</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#utah-tayco">Utah-Tayco</a></li>

@@ -166,6 +166,7 @@
 </details></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../../index.html">Python API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../../xlnstorch.html">xlnstorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../tensor_utils.html">xlnstorch.tensor_utils</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../lnstensors.html">xlnstorch.LNSTensor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3 current active"><a class="reference internal" href="../../operators.html">xlnstorch.operators</a></li>
@@ -342,13 +343,14 @@ document.write(`
 <h1>xlnstorch.operators.lns_mul<a class="headerlink" href="#xlnstorch-operators-lns-mul" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="xlnstorch.operators.lns_mul">
-<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_mul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_mul" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.operators.</span></span><span class="sig-name descname"><span class="pre">lns_mul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.operators.lns_mul" title="Link to this definition">#</a></dt>
 <dd><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.mul.html#torch.mul" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.mul()</span></code></a> for parameter/return details. Typically, torch.Tensor arguments are the equivalent internal representations of LNStensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
 <li><p><strong>y</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
+<li><p><strong>base</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>Tensor</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

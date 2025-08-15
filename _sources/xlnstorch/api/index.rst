@@ -5,6 +5,7 @@ Python API
     :maxdepth: 1
 
     xlnstorch <xlnstorch>
+    xlnstorch.tensor_utils <tensor_utils>
     xlnstorch.LNSTensor <lnstensors>
     xlnstorch.autograd <autograd>
     xlnstorch.operators <operators>
