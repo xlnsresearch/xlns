@@ -193,6 +193,14 @@ lns_mean = _create_lns_op_func('mean', torch.mean, signature=_build_signature([
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_var = _create_lns_op_func('var', torch.var, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("correction", "pk", torch.Tensor),
+    ("dim", "pk", int | Tuple[int], None),
+    ("keepdim", "pk", bool, False)],
+    torch.Tensor,
+))
 lns_matmul = _create_lns_op_func('matmul', torch.matmul, signature=_build_signature([
     ("A", "pk", torch.Tensor),
     ("B", "pk", torch.Tensor),
