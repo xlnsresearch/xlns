@@ -1,7 +1,7 @@
 import warnings
 import math
 import torch
-from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, CSRC_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from xlnstorch.autograd import LNSFunction
 from . import (
     lns_mul,
@@ -9,6 +9,11 @@ from . import (
     lns_add,
     lns_matmul,
     lns_div,
+    lns_mean,
+    lns_var,
+    lns_sub,
+    lns_neg,
+    lns_sqrt,
 )
 
 class LNSLinearFunction(LNSFunction):
@@ -1387,5 +1392,156 @@ def avg_pool3d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_in
 
     result = LNSAvgPool3dFuncton.apply(x, kernel_size, x.base, stride, padding,
                                        ceil_mode, count_include_pad, divisor_override)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSBatchNormFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, running_mean, running_var, momentum, eps, base, weight=None, bias=None, training=False):
+
+        red_dims = tuple(i for i in range(x.dim()) if i != 1)
+
+        if training:
+            batch_mean = lns_mean(x, base, dim=red_dims, keepdim=True)
+            batch_var = lns_var(x, base, LNS_ZERO, dim=red_dims, keepdim=True)
+            batch_var_corrected = lns_var(x, base, LNS_ONE, dim=red_dims, keepdim=True)
+
+            with torch.no_grad():
+
+                one_minus_momentum = lns_sub(LNS_ONE, momentum, base)
+
+                new_running_mean = lns_add(
+                    lns_mul(one_minus_momentum, running_mean, base),
+                    lns_mul(momentum, batch_mean.squeeze(), base), base)
+                running_mean.copy_(new_running_mean)
+
+                new_running_var = lns_add(
+                    lns_mul(one_minus_momentum, running_var, base),
+                    lns_mul(momentum, batch_var_corrected.squeeze(), base), base)
+                running_var.copy_(new_running_var)
+
+            mean = batch_mean
+            var = batch_var
+
+        else:
+
+            mean = running_mean.view(1, -1, *([1] * (x.dim() - 2)))
+            var = running_var.view(1, -1, *([1] * (x.dim() - 2)))
+
+        var_eps = lns_add(var, eps, base)
+        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base), base)
+
+        x_centered = lns_sub(x, mean, base)
+        x_hat = lns_mul(x_centered, inv_std, base)
+
+        if weight is not None:
+            y = lns_mul(x_hat, weight.view(1, -1, *([1] * (x.dim() - 2))), base)
+        else:
+            y = x_hat
+
+        if bias is not None:
+            y = lns_add(y, bias.view(1, -1, *([1] * (x.dim() - 2))), base)
+
+        return y.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, running_mean, running_var, _, eps, base, weight, bias, training = inputs
+
+        ctx.red_dims = tuple(i for i in range(x.dim()) if i != 1)
+        ctx.training = training
+
+        if training:
+            mean = lns_mean(x, base, dim=ctx.red_dims, keepdim=True)
+            var = lns_var(x, base, LNS_ONE, dim=ctx.red_dims, keepdim=True)
+
+        else:
+            mean = running_mean.view(1, -1, *([1] * (x.dim() - 2)))
+            var = running_var.view(1, -1, *([1] * (x.dim() - 2)))
+
+        ctx.save_for_backward(x, weight, bias, mean, var, eps, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, weight, bias, mean, var, eps, base = ctx.saved_tensors
+
+        var_eps = lns_add(var, eps, base)
+        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base), base)
+        x_centered = lns_sub(x, mean, base)
+        x_hat = lns_mul(x_centered, inv_std, base)
+
+        grad_x = grad_weight = grad_bias = None
+
+        if bias is not None:
+            grad_bias = lns_sum(grad_output, base, dim=ctx.red_dims, keepdim=False)
+
+        if weight is not None:
+            grad_y_wrt_x_hat = lns_mul(grad_output, weight.view(1, -1, *([1] * (x.dim() - 2))), base)
+            grad_weight = lns_sum(lns_mul(grad_output, x_hat, base),
+                                  base, dim=ctx.red_dims, keepdim=False)
+        else:
+            grad_y_wrt_x_hat = grad_output
+
+        if ctx.training:
+            N = 1
+            for dim in ctx.red_dims:
+                N *= x.shape[dim]
+            n_elems = LNSTensor.get_internal_tensor(N, base)
+
+            var_eps = lns_add(var, eps, base)
+            inv_std_cubed = lns_mul(inv_std, lns_mul(inv_std, inv_std, base), base)
+            neg_half = LNSTensor.get_internal_tensor(-0.5, base)
+
+            grad_var = lns_sum(lns_mul(
+                lns_mul(grad_y_wrt_x_hat, x_centered, base),
+                lns_mul(neg_half, inv_std_cubed, base),
+            base), base, dim=ctx.red_dims, keepdim=True)
+
+            neg_inv_std = lns_neg(inv_std)
+            grad_mean_term1 = lns_sum(lns_mul(grad_y_wrt_x_hat, neg_inv_std, base),
+                                      base, dim=ctx.red_dims, keepdim=True)
+
+            neg_two = LNSTensor.get_internal_tensor(-2.0, base)
+            neg_two_over_N = lns_div(neg_two, n_elems, base)
+            sum_x_centered = lns_sum(x_centered, base, dim=ctx.red_dims, keepdim=True)
+            grad_mean_term2 = lns_mul(lns_mul(grad_var, neg_two_over_N, base),
+                                       sum_x_centered, base)
+
+            grad_mean = lns_add(grad_mean_term1, grad_mean_term2, base)
+
+            two = LNSTensor.get_internal_tensor(2.0, base)
+            two_over_N = lns_div(two, n_elems, base)
+            one_over_N = lns_div(LNS_ONE, n_elems, base)
+
+            grad_x_term1 = lns_mul(grad_y_wrt_x_hat, inv_std, base)
+            grad_x_term2 = lns_mul(lns_mul(grad_var, two_over_N, base),
+                                   x_centered, base)
+            grad_x_term3 = lns_mul(grad_mean, one_over_N, base)
+
+            grad_x = lns_add(grad_x_term1, lns_add(grad_x_term2, grad_x_term3, base), base)
+
+        else:
+            grad_x = lns_mul(grad_y_wrt_x_hat, inv_std, base)
+
+        return grad_x.to(torch.float64), None, None, None, None, None, grad_weight, grad_bias, None
+
+@implements(torch.nn.functional.batch_norm, LNSBatchNormFunction.forward, "default", default=True)
+def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
+
+    if weight is not None and bias is not None:
+        x, running_mean_cpy, running_var_cpy, weight, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
+    elif weight is not None:
+        x, running_mean_cpy, running_var_cpy, weight, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, momentum, eps)
+    elif bias is not None:
+        x, running_mean_cpy, running_var_cpy, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, bias, momentum, eps)
+    else:
+        x, running_mean_cpy, running_var_cpy, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, momentum, eps)
+
+    result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy, momentum, eps, x.base, weight, bias, training)
+
+    if training:
+        running_mean._inplace_copy(running_mean_cpy._lns)
+        running_var._inplace_copy(running_var_cpy._lns)
 
     return lnstensor(result, from_lns=True, b=x.base)

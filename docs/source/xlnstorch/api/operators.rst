@@ -284,3 +284,4 @@ support ``LNSTensor`` objects.
     lns_avg_pool1d
     lns_avg_pool2d
     lns_avg_pool3d
+    lns_batch_norm

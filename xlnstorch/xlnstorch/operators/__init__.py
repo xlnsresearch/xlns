@@ -107,6 +107,7 @@ from .internal_lns_ops import (
     lns_avg_pool1d,
     lns_avg_pool2d,
     lns_avg_pool3d,
+    lns_batch_norm,
 )
 
 def lns_sum_to_size(tensor: torch.Tensor, base: torch.Tensor, target_size: torch.Size) -> torch.Tensor:
@@ -302,4 +303,5 @@ __all__ = [
     "lns_avg_pool1d",
     "lns_avg_pool2d",
     "lns_avg_pool3d",
+    "lns_batch_norm",
 ]
