@@ -1395,6 +1395,287 @@ def avg_pool3d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_in
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSAdaptiveAvgPool1dFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, output_size, base):
+        if isinstance(output_size, int):
+            output_size = (output_size,)
+
+        assert len(output_size) == 1, "AdaptiveAvgPool1d only supports a single output length"
+        L_out = output_size[0]
+
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, L_in = x_packed.shape
+
+        out = zeros(N, C, L_out, device=x.device, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for l_out in range(L_out):
+                    start = int(math.floor(l_out * L_in / L_out))
+                    end = int(math.ceil((l_out + 1) * L_in / L_out))
+                    window = x_packed[n, c, start:end]
+
+                    sm = lns_sum(window, base)
+                    divisor = LNSTensor.get_internal_tensor(max(end - start, 1), base)
+
+                    out[n, c, l_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, output_size, base = inputs
+        ctx.save_for_backward(x, base)
+        ctx.output_size = output_size
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        if isinstance(ctx.output_size, int):
+            L_out = ctx.output_size
+        else:
+            L_out = ctx.output_size[0]
+
+        if x.dim() == 2:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, L_in = x.shape
+        grad_x = zeros_like(x, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for l_out in range(L_out):
+                    start = int(math.floor(l_out * L_in / L_out))
+                    end = int(math.ceil((l_out + 1) * L_in / L_out))
+                    divisor = LNSTensor.get_internal_tensor(max(end - start, 1), base)
+                    grad = lns_div(grad_output[n, c, l_out], divisor, base)
+                    for idx in range(start, end):
+                        grad_x[n, c, idx] = lns_add(grad_x[n, c, idx], grad, base)
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.adaptive_avg_pool1d, LNSAdaptiveAvgPool1dFunction.forward, "default", default=True)
+def adaptive_avg_pool1d(x, output_size):
+
+    result = LNSAdaptiveAvgPool1dFunction.apply(x, output_size, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAdaptiveAvgPool2dFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, output_size, base):
+        if isinstance(output_size, int):
+            H_out, W_out = output_size, output_size
+        else:
+            assert len(output_size) == 2, "output_size must be int or tuple of length 2"
+            H_out, W_out = output_size
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, H_in, W_in = x_packed.shape
+        out = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    h_start = int(math.floor(h_out * H_in / H_out))
+                    h_end = int(math.ceil((h_out + 1) * H_in / H_out))
+                    for w_out in range(W_out):
+                        w_start = int(math.floor(w_out * W_in / W_out))
+                        w_end = int(math.ceil((w_out + 1) * W_in / W_out))
+
+                        window = x_packed[n, c, h_start:h_end, w_start:w_end]
+                        sm = lns_sum(window, base)
+                        divisor = LNSTensor.get_internal_tensor(
+                            max((h_end - h_start) * (w_end - w_start), 1), base
+                        )
+
+                        out[n, c, h_out, w_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, output_size, base = inputs
+        ctx.save_for_backward(x, base)
+        ctx.output_size = output_size
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        if isinstance(ctx.output_size, int):
+            H_out, W_out = ctx.output_size, ctx.output_size
+        else:
+            H_out, W_out = ctx.output_size
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, H_in, W_in = x.shape
+        grad_x = zeros_like(x, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    h_start = int(math.floor(h_out * H_in / H_out))
+                    h_end = int(math.ceil((h_out + 1) * H_in / H_out))
+                    for w_out in range(W_out):
+                        w_start = int(math.floor(w_out * W_in / W_out))
+                        w_end = int(math.ceil((w_out + 1) * W_in / W_out))
+
+                        divisor = LNSTensor.get_internal_tensor(
+                            max((h_end - h_start) * (w_end - w_start), 1), base
+                        )
+                        grad = lns_div(grad_output[n, c, h_out, w_out], divisor, base)
+
+                        for i in range(h_start, h_end):
+                            for j in range(w_start, w_end):
+                                grad_x[n, c, i, j] = lns_add(grad_x[n, c, i, j], grad, base)
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.adaptive_avg_pool2d, LNSAdaptiveAvgPool2dFunction.forward, "default", default=True)
+def adaptive_avg_pool2d(x, output_size):
+
+    result = LNSAdaptiveAvgPool2dFunction.apply(x, output_size, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSAdaptiveAvgPool3dFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, output_size, base):
+        if isinstance(output_size, int):
+            D_out, H_out, W_out = output_size, output_size, output_size
+        else:
+            assert len(output_size) == 3, "output_size must be int or tuple of length 3"
+            D_out, H_out, W_out = output_size
+
+        if x.dim() == 4:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, D_in, H_in, W_in = x_packed.shape
+        out = zeros(N, C, D_out, H_out, W_out, device=x.device, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for d_out in range(D_out):
+                    d_start = int(math.floor(d_out * D_in / D_out))
+                    d_end = int(math.ceil((d_out + 1) * D_in / D_out))
+                    for h_out in range(H_out):
+                        h_start = int(math.floor(h_out * H_in / H_out))
+                        h_end = int(math.ceil((h_out + 1) * H_in / H_out))
+                        for w_out in range(W_out):
+                            w_start = int(math.floor(w_out * W_in / W_out))
+                            w_end = int(math.ceil((w_out + 1) * W_in / W_out))
+
+                            window = x_packed[n, c, d_start:d_end, h_start:h_end, w_start:w_end]
+                            sm = lns_sum(window, base)
+                            divisor = LNSTensor.get_internal_tensor(
+                                max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1), base
+                            )
+                            out[n, c, d_out, h_out, w_out] = lns_div(sm, divisor, base)
+
+        if squeeze_batch:
+            out = out.squeeze(0)
+
+        return out.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, output_size, base = inputs
+        ctx.save_for_backward(x, base)
+        ctx.output_size = output_size
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        if isinstance(ctx.output_size, int):
+            D_out, H_out, W_out = ctx.output_size, ctx.output_size, ctx.output_size
+        else:
+            D_out, H_out, W_out = ctx.output_size
+
+        if x.dim() == 4:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, D_in, H_in, W_in = x.shape
+        grad_x = zeros_like(x, b=base)._lns
+
+        for n in range(N):
+            for c in range(C):
+                for d_out in range(D_out):
+                    d_start = int(math.floor(d_out * D_in / D_out))
+                    d_end = int(math.ceil((d_out + 1) * D_in / D_out))
+                    for h_out in range(H_out):
+                        h_start = int(math.floor(h_out * H_in / H_out))
+                        h_end = int(math.ceil((h_out + 1) * H_in / H_out))
+                        for w_out in range(W_out):
+                            w_start = int(math.floor(w_out * W_in / W_out))
+                            w_end = int(math.ceil((w_out + 1) * W_in / W_out))
+
+                            divisor = LNSTensor.get_internal_tensor(
+                                max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1), base
+                            )
+                            grad = lns_div(grad_output[n, c, d_out, h_out, w_out], divisor, base)
+
+                            for di in range(d_start, d_end):
+                                for hi in range(h_start, h_end):
+                                    for wi in range(w_start, w_end):
+                                        grad_x[n, c, di, hi, wi] = lns_add(
+                                            grad_x[n, c, di, hi, wi], grad, base
+                                        )
+
+        if squeeze_batch:
+            grad_x = grad_x.squeeze(0)
+
+        return grad_x, None, None
+
+@implements(torch.nn.functional.adaptive_avg_pool3d, LNSAdaptiveAvgPool3dFunction.forward, "default", default=True)
+def adaptive_avg_pool3d(x, output_size):
+
+    result = LNSAdaptiveAvgPool3dFunction.apply(x, output_size, x.base)
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSBatchNormFunction(LNSFunction):
 
     @staticmethod

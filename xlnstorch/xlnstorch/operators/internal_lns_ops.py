@@ -770,6 +770,21 @@ lns_avg_pool3d = _create_lns_op_func('avg_pool3d', torch.nn.functional.avg_pool3
     ("divisor_override", "pk", torch.Tensor | None, None)],
     torch.Tensor,
 ))
+lns_adaptive_avg_pool1d = _create_lns_op_func('adaptive_avg_pool1d', torch.nn.functional.adaptive_avg_pool1d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("output_size", "pk", int | Tuple[int])],
+    torch.Tensor,
+))
+lns_adaptive_avg_pool2d = _create_lns_op_func('adaptive_avg_pool2d', torch.nn.functional.adaptive_avg_pool2d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("output_size", "pk", int | Tuple[int, int])],
+    torch.Tensor,
+))
+lns_adaptive_avg_pool3d = _create_lns_op_func('adaptive_avg_pool3d', torch.nn.functional.adaptive_avg_pool3d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("output_size", "pk", int | Tuple[int, int, int])],
+    torch.Tensor,
+))
 lns_batch_norm = _create_lns_op_func('batch_norm', torch.nn.functional.batch_norm, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("running_mean", "pk", torch.Tensor),
