@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import xlns
 
 # see https://github.com/xlnsresearch/xlns/blob/main/src/xlnsconf/tab_ufunc.py
-xltorch.operators.register_xlnsconf_implementation(
+xltorch.register_xlnsconf_implementation(
     xlnsconf.tab_ufunc.sbdb_ufunc_tab,
     "tab_conf"
 )
@@ -33,15 +33,15 @@ xltorch.operators.implementations.tab.get_table("tmp", f=f)
 bench = BinaryBench(torch.add, shape, lns=True, device="cpu")
 runner = BenchmarkRunner(bench, warmup=warmup, iters=iters)
 
-with xltorch.operators.override_sbdb_implementation("ideal"):
+with xltorch.override_sbdb_implementation("ideal"):
     ideal_result = runner.run()
     ideal_xs, ideal_ys, ideal_err = make_heatmap()
 
-with xltorch.operators.override_sbdb_implementation("tab"):
+with xltorch.override_sbdb_implementation("tab"):
     table_torch_result = runner.run()
     table_torch_xs, table_torch_ys, table_torch_err = make_heatmap()
 
-with xltorch.operators.override_sbdb_implementation("tab_conf"):
+with xltorch.override_sbdb_implementation("tab_conf"):
     table_conf_result = runner.run()
     table_conf_xs, table_conf_ys, table_conf_err = make_heatmap()
 

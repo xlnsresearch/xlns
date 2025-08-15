@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <tuple>
 
 #include "cnpy.h" // see https://github.com/rogersce/cnpy
 #include "sbdb.h"
@@ -32,8 +33,28 @@ double get_base_from_precision(int prec) {
     return std::pow(2.0, std::pow(2.0, -prec));
 }
 
-void get_table(
-    const std::string &filestem,
+std::tuple<torch::Tensor, torch::Tensor> make_tensors() {
+    const auto opts = torch::TensorOptions()
+                            .dtype(torch::kInt64)
+                            .device(torch::kCPU);
+
+    torch::Tensor tab_ez_tensor = torch::from_blob(
+        &tab::ez,
+        {1},
+        [](void*) {},
+        opts);
+
+    torch::Tensor tab_sbdb_tensor = torch::from_blob(
+        tab::sbdb.data(),
+        {2, static_cast<long>(tab::cols)},
+        [](void*) {},
+        opts);
+
+    return {tab_ez_tensor, tab_sbdb_tensor};
+}
+
+std::tuple<torch::Tensor, torch::Tensor> get_table(
+    const std::string &filename,
     const double base
 ) {
 
@@ -41,21 +62,19 @@ void get_table(
     tab::mismatch = false;
     tab::base = base;
 
-    const std::string filename = "./" + filestem + "_" + decimal_suffix(tab::base) + ".npz";
-
     if (std::filesystem::exists(filename)) {
         std::cout << "Loading table from " << filename << '\n';
         cnpy::npz_t npzFile = cnpy::npz_load(filename);
 
         // tab::ez - scalar
         {
-            const cnpy::NpyArray& arr = npzFile["tab::ez"];
+            const cnpy::NpyArray& arr = npzFile["tab_ez"];
             tab::ez = *arr.data<int64_t>();
         }
 
         // tab::sbdb - [2, N]
         {
-            const cnpy::NpyArray& arr = npzFile["tab::sbdb"];
+            const cnpy::NpyArray& arr = npzFile["tab_sbdb"];
             const std::size_t rows = arr.shape[0];
             const std::size_t cols = arr.shape[1];
             const std::size_t numel = rows * cols;
@@ -66,7 +85,7 @@ void get_table(
         }
 
         tab::initialized = true;
-        return;
+        return make_tensors();
     }
 
     const double max_base = get_base_from_precision(tab::MAX_PREC);
@@ -87,19 +106,19 @@ void get_table(
         }
 
         cnpy::npz_save(filename,
-                       "tab::ez",
+                       "tab_ez",
                        &tab::ez,
                        {static_cast<std::size_t>(1)},
                        "w");
 
         cnpy::npz_save(filename,
-                       "tab::sbdb",
+                       "tab_sbdb",
                        tab::sbdb.data(),
                        {static_cast<std::size_t>(2), tab::cols},
                        "a");
 
         tab::initialized = true;
-        return;
+        return make_tensors();
     }
 
     std::cerr << "Warning: Table for base " << tab::base
@@ -107,6 +126,8 @@ void get_table(
               << tab::MAX_PREC << std::endl;
     tab::base = 0.0;
     tab::initialized = false;
+
+    return {torch::Tensor(), torch::Tensor()};
 }
 
 namespace sbdb {

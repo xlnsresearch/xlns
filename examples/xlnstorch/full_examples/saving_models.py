@@ -21,7 +21,7 @@ input = xlt.full((10,), fill_value=0.5)
 target = xlt.lnstensor([1.])
 
 model = TestModel()
-optimizer = xlt.optim.LNSSGD(model.parameter_groups(), lr=0.1)
+optimizer = xlt.optim.LNSSGD(model.lns_parameters(), lr=0.1)
 loss_fn = torch.nn.MSELoss(reduction='mean')
 
 for _ in range(20):

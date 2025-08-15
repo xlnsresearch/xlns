@@ -112,7 +112,7 @@ class LNSMul(LNSOptimizer):
                 grad = p.grad
 
                 if use_pow:
-                    mul_term = lns_mul(lns_neg(lr._lns), lns_mul(grad, lns_sign(p, base)))
+                    mul_term = lns_mul(lns_neg(lr._lns), lns_mul(grad, lns_sign(p, base), base), base)
                     if maximize:
                         mul_term = lns_neg(mul_term)
                     mul_term = lns_pow(
@@ -122,9 +122,11 @@ class LNSMul(LNSOptimizer):
                     )
 
                 else:
-                    mul_term = lns_add(LNS_ONE, lns_mul(lr._lns, lns_abs(grad)), base)
+                    mul_term = lns_add(LNS_ONE, lns_mul(lr._lns, lns_abs(grad), base), base)
                     diff_sign = lns_ne(lns_sign(grad, base), lns_sign(p, base))
                     mul_term = torch.where(diff_sign ^ maximize, mul_term,
                                            lns_reciprocal(mul_term, base))
 
-            p.data = lns_mul(p.data, mul_term)
+            p.data = lns_mul(p.data, mul_term, base)
+
+        return loss

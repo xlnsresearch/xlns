@@ -10,6 +10,7 @@ from . import (
     lns_pow,
     lns_matmul,
     lns_sum,
+    lns_sum_to_size,
 )
 
 class LNSMulFunction(LNSFunction):
@@ -22,7 +23,7 @@ class LNSMulFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, y):
+    def forward(x, y, base):
         x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
         result = (x_packed + y_packed - (y_packed & 1)) ^ (y_packed & 1)
 
@@ -33,23 +34,26 @@ class LNSMulFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, y = inputs
-        ctx.save_for_backward(x, y)
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        x, y = ctx.saved_tensors
+        x, y, base = ctx.saved_tensors
 
-        grad_x = lns_mul(grad_output, y)
-        grad_y = lns_mul(grad_output, x)
+        grad_x = lns_mul(grad_output, y, base)
+        grad_y = lns_mul(grad_output, x, base)
 
-        return grad_x, grad_y
+        grad_x = lns_sum_to_size(grad_x, base, x.shape)
+        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+
+        return grad_x, grad_y, None
 
 @implements(torch.mul, LNSMulFunction.forward, key='default', default=True)
 def mul(x, y, *, out=None):
 
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMulFunction.apply(x, y)
+    result = LNSMulFunction.apply(x, y, x.base)
 
     if out is not None:
         return out._inplace_copy(result)
@@ -66,7 +70,7 @@ class LNSSquareFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base):
-        return lns_mul(x, x)
+        return lns_mul(x, x, base)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -77,8 +81,8 @@ class LNSSquareFunction(LNSFunction):
     def backward(ctx, grad_output):
         x, base = ctx.saved_tensors
 
-        grad_x = lns_mul(x, LNSTensor.get_internal_tensor(2.0, base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(x, LNSTensor.get_internal_tensor(2.0, base), base)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None
 
@@ -117,7 +121,7 @@ class LNSSqrtFunction(LNSFunction):
     def backward(ctx, grad_output):
         sqrt_x, base = ctx.saved_tensors
 
-        grad_x = lns_mul(sqrt_x, LNSTensor.get_internal_tensor(2.0, base))
+        grad_x = lns_mul(sqrt_x, LNSTensor.get_internal_tensor(2.0, base), base)
         grad_x = lns_div(grad_output, grad_x, base)
 
         return grad_x, None
@@ -165,8 +169,8 @@ class LNSPowFunction(LNSFunction):
         x, n, base = ctx.saved_tensors
 
         grad_x = lns_pow(x, n - 1, base)
-        grad_x = lns_mul(grad_x, LNSTensor.get_internal_tensor(n, base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_x, LNSTensor.get_internal_tensor(n, base), base)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None, None
 
@@ -225,8 +229,11 @@ class LNSDivFunction(LNSFunction):
         grad_x = lns_div(grad_output, y, base)
         grad_y = lns_square(y, base)
         grad_y = lns_div(x, grad_y, base)
-        grad_y = lns_mul(grad_y, LNS_NEG_ONE)
-        grad_y = lns_mul(grad_output, grad_y)
+        grad_y = lns_mul(grad_y, LNS_NEG_ONE, base)
+        grad_y = lns_mul(grad_output, grad_y, base)
+
+        grad_x = lns_sum_to_size(grad_x, base, x.shape)
+        grad_y = lns_sum_to_size(grad_y, base, y.shape)
 
         return grad_x, grad_y, None
 
@@ -265,8 +272,8 @@ class LNSReciprocalFunction(LNSFunction):
 
         grad_x = lns_square(x, base)
         grad_x = lns_reciprocal(grad_x, base)
-        grad_x = lns_mul(grad_x, LNS_NEG_ONE)
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = lns_mul(grad_x, LNS_NEG_ONE, base)
+        grad_x = lns_mul(grad_output, grad_x, base)
 
         return grad_x, None
 
@@ -297,12 +304,13 @@ class LNSExpFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        ctx.save_for_backward(output)
+        _, base = inputs
+        ctx.save_for_backward(output, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        exp_x, = ctx.saved_tensors
-        return lns_mul(grad_output, exp_x), None
+        exp_x, base = ctx.saved_tensors
+        return lns_mul(grad_output, exp_x, base), None
 
 @implements(torch.exp, LNSExpFunction.forward, key='default', default=True)
 def exp(x, *, out=None):
@@ -368,7 +376,7 @@ class LNSProdFunction(LNSFunction):
 
             out = flat[0]
             for i in range(1, flat.numel()):
-                out = lns_mul(out, flat[i])
+                out = lns_mul(out, flat[i], base)
 
             if keepdim:
                 out = out.reshape([1] * x.dim())
@@ -387,7 +395,7 @@ class LNSProdFunction(LNSFunction):
 
         out = transposed[..., 0]
         for i in range(1, transposed.shape[-1]):
-            out = lns_mul(out, transposed[..., i])
+            out = lns_mul(out, transposed[..., i], base)
 
         # re-insert the reduced axes
         if keepdim:
@@ -425,7 +433,7 @@ class LNSProdFunction(LNSFunction):
                 grad_output = grad_output.unsqueeze(d)
 
         grad_output = grad_output.expand_as(x)
-        grad_x = lns_mul(grad_output, ratio)
+        grad_x = lns_mul(grad_output, ratio, base)
 
         return grad_x, None, None, None
 
@@ -497,7 +505,8 @@ class LNSMatmulFunction(LNSFunction):
         for k in range(K_A):
             term = lns_mul(
                 A[..., :, k].unsqueeze(-1), # (..., M, 1)
-                B[..., k, :].unsqueeze(-2)) # (..., 1, N)
+                B[..., k, :].unsqueeze(-2), # (..., 1, N)
+                base)
             result = lns_add(result, term, base)
 
         if prepended_A:

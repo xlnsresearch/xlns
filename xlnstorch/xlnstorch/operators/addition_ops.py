@@ -4,6 +4,7 @@ from xlnstorch.autograd import LNSFunction
 from . import (
     lns_add,
     lns_neg,
+    lns_sum_to_size,
 )
 
 @implements_sbdb('ideal', default=True)
@@ -55,11 +56,17 @@ class LNSAddFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        pass # no context needed for this operation
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
 
     @staticmethod
     def backward(ctx, grad_output):
-        return grad_output, grad_output, None
+        x, y, base = ctx.saved_tensors
+
+        grad_x = lns_sum_to_size(grad_output, base, x.shape)
+        grad_y = lns_sum_to_size(grad_output, base, y.shape)
+
+        return grad_x, grad_y, None
 
 @implements(torch.add, LNSAddFunction.forward, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
@@ -92,12 +99,18 @@ class LNSSubFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        pass # no context needed for this operation
+        x, y, base = inputs
+        ctx.save_for_backward(x, y, base)
 
     @staticmethod
     def backward(ctx, grad_output):
+        x, y, base = ctx.saved_tensors
         grad_y = lns_neg(grad_output)
-        return grad_output, grad_y, None
+
+        grad_x = lns_sum_to_size(grad_output, base, x.shape)
+        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+
+        return grad_x, grad_y, None
 
 @implements(torch.sub, LNSSubFunction.forward, key="default", default=True)
 def sub(x, y, *, alpha=1, out=None):

@@ -130,7 +130,7 @@ class LNSAdagrad(LNSOptimizer):
                     denom = lns_add(
                         LNS_ONE,
                         lns_mul(lr_decay._lns, lns_sub(
-                            step, LNS_ONE, base)), base)
+                            step, LNS_ONE, base), base), base)
                     lr_t = lns_div(lr._lns, denom, base)
 
                 else:
@@ -138,17 +138,17 @@ class LNSAdagrad(LNSOptimizer):
 
                 # 3. weight decay: g_t ← g_t + λ*θ_{t-1}
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 # 4. Accumulator update: s_t ← s_{t-1} + g_t^2
                 s_prev = state["sum"]
-                s_t = lns_add(s_prev, lns_mul(grad, grad), base)
+                s_t = lns_add(s_prev, lns_mul(grad, grad, base), base)
                 state["sum"] = s_t
 
                 # 5. Parameter update: θ_t ← θ_{t-1} ± γ' * g_t / (sqrt(s_t) + ε)
                 sqrt_s_t = lns_sqrt(s_t, base)
                 denom = lns_add(sqrt_s_t, eps._lns, base)
-                delta = lns_div(lns_mul(grad, lr_t), denom, base)
+                delta = lns_div(lns_mul(grad, lr_t, base), denom, base)
                 p.data = lns_sub(p.data, delta, base)
 
         return loss

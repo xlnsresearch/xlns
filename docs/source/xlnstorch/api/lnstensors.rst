@@ -99,6 +99,9 @@ LNSTensor class reference
     LNSTensor.detach
     LNSTensor.requires_grad_
 
+    LNSTensor.numpy
+    LNSTensor.xlns
+
     LNSTensor.add
     LNSTensor.add_
     LNSTensor.sub

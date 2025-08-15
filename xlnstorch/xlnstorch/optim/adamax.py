@@ -116,7 +116,7 @@ class LNSAdamax(LNSOptimizer):
 
                 # 2. weight decay: g ← g + λθ
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 state = self.state[p]
                 if len(state) == 0:
@@ -133,14 +133,14 @@ class LNSAdamax(LNSOptimizer):
 
                 # 3. m_t ← β_1*m_{t-1} + (1 − β_1)*g
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns),
-                    lns_mul(grad, one_minus_beta1),
+                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(grad, one_minus_beta1, base),
                     base
                 )
 
                 # 4. u_t ← max(β_2*u_{t-1}, |g_t| + ε)
                 inf_norm = lns_maximum(
-                    lns_mul(inf_norm, beta2._lns),
+                    lns_mul(inf_norm, beta2._lns, base),
                     lns_add(lns_abs(grad), eps._lns, base),
                     base
                 )
@@ -148,8 +148,8 @@ class LNSAdamax(LNSOptimizer):
                 # 5. θ ← θ − γ*m / (sqrt(1 - b_1^t) * u)
                 t_tensor = torch.tensor(t, dtype=torch.int64)
                 one_minus_beta1_t = lns_sub(LNS_ONE, lns_pow(beta1._lns, t_tensor, base), base)
-                denom = lns_mul(one_minus_beta1_t, inf_norm)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg, denom, base))
+                denom = lns_mul(one_minus_beta1_t, inf_norm, base)
+                step_size = lns_mul(lr._lns, lns_div(exp_avg, denom, base), base)
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["exp_avg"] = exp_avg

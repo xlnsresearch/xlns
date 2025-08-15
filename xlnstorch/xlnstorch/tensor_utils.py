@@ -2,7 +2,8 @@
 Utility functions for LNSTensor operations and autograd functions.
 """
 from __future__ import annotations
-from typing import Any, Tuple, Sequence, TYPE_CHECKING
+from typing import Any, Tuple, List, Sequence, TYPE_CHECKING
+from contextlib import nullcontext
 import math
 import re
 import torch
@@ -20,6 +21,9 @@ from xlnstorch.autograd import LNSFunction
 # Create tensor of precision values f from 1 to 40
 PRECISION_VALUES = torch.arange(1, 41, dtype=torch.float64)
 PRECISION_BASES = torch.pow(2.0, torch.pow(2.0, -PRECISION_VALUES))
+
+OVF_MAX = None
+OVF_MIN = None
 
 def get_base_from_precision(f: int) -> torch.Tensor:
     """
@@ -77,6 +81,7 @@ if TYPE_CHECKING:
 
 # Lazy import cache to avoid repeated imports
 _tensor_module = None
+_operator_module = None
 
 def _get_tensor_module():
     """Lazy import of tensor module to avoid circular imports."""
@@ -85,6 +90,13 @@ def _get_tensor_module():
         from . import tensor
         _tensor_module = tensor
     return _tensor_module
+
+def _get_operator_module():
+    global _operator_module
+    if _operator_module is None:
+        from . import operators
+        _operator_module = operators
+    return _operator_module
 
 def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
 
@@ -221,6 +233,115 @@ class LNSToFunction(LNSFunction):
     def backward(ctx, grad_output):
         grad_x = grad_output.to(ctx.orig_device)
         return grad_x, None
+
+
+class LNSOverflowFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, max=None, min=None):
+        # import here to avoid circular imports
+        tensor_module = _get_tensor_module()
+        ops = _get_operator_module()
+
+        result = x.to(torch.int64)
+
+        if max is not None:
+            max_packed = tensor_module.LNSTensor.get_internal_tensor(max, base)
+            result = torch.where(ops.lns_gt(ops.lns_abs(result), max_packed),
+                                 ops.lns_sign(result, base) * max_packed, result)
+
+        if min is not None:
+            min_packed = tensor_module.LNSTensor.get_internal_tensor(min, base)
+            result = torch.where(ops.lns_lt(ops.lns_abs(result), min_packed),
+                                 LNS_ZERO, result)
+
+        return result.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, max, min = inputs
+        ctx.save_for_backward(x, base)
+        ctx.max = max
+        ctx.min = min
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+        tensor_module = _get_tensor_module()
+        ops = _get_operator_module()
+
+        x_packed, grad_x = x.to(torch.int64), grad_output.to(torch.int64)
+
+        if ctx.max is not None:
+            max_packed = tensor_module.LNSTensor.get_internal_tensor(ctx.max, base)
+            grad_x = torch.where(ops.lns_gt(ops.lns_abs(x_packed), max_packed), LNS_ZERO, grad_x)
+
+        if ctx.min is not None:
+            min_packed = tensor_module.LNSTensor.get_internal_tensor(ctx.min, base)
+            grad_x = torch.where(ops.lns_lt(ops.lns_abs(x_packed), min_packed), LNS_ZERO, grad_x)
+
+        return grad_x, None, None, None
+
+def set_overflow_limits(max: float = None, min: float = None):
+    """
+    Set global overflow limits for the handle_overflow function.
+
+    Parameters
+    ----------
+    max : float, optional
+        Maximum representable value in LNS. Values exceeding this will be
+        clamped to this maximum. If None, no maximum limit is set.
+    min : float, optional
+        Minimum representable value in LNS. Values below this will be
+        clamped to zero. If None, no minimum limit is set.
+    """
+    global OVF_MAX, OVF_MIN
+
+    if max is not None:
+        OVF_MAX = max
+
+    if min is not None:
+        OVF_MIN = min
+
+def handle_overflow(*tensors: LNSTensor, inplace=False, no_grad=False) -> List[LNSTensor]:
+    """
+    Handle overflow for a variable number of LNSTensors based on global overflow limits.
+
+    Parameters
+    ----------
+    tensors : LNSTensor
+        Variable number of LNSTensor objects to check for overflow.
+    inplace : bool, optional
+        If True, modifies the input tensors in place. Default is False.
+    no_grad : bool, optional
+        If True, disables gradient tracking during overflow handling. Default is False.
+    """
+    tensor_module = _get_tensor_module()
+    handled_tensors = []
+
+    with torch.no_grad() if no_grad else nullcontext():
+
+        for tensor in tensors:
+            handled_tensors.append(LNSOverflowFunction.apply(tensor, tensor.base, OVF_MAX, OVF_MIN))
+
+    if inplace:
+
+        for i in range(len(tensors)):
+            if no_grad:
+                tensors[i]._lns.data.copy_(handled_tensors[i].data)
+            else:
+                tensors[i]._inplace_copy(handled_tensors[i])
+
+        if len(tensors) == 1:
+            return tensors[0]
+        return tensors
+
+    for i in range(len(tensors)):
+        handled_tensors[i] = tensor_module.lnstensor(handled_tensors[i], from_lns=True, b=tensors[i].base)
+
+    if len(handled_tensors) == 1:
+        return handled_tensors[0]
+    return handled_tensors
 
 
 def align_lnstensor_bases(

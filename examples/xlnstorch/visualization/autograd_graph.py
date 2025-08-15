@@ -72,3 +72,6 @@ def demo_autograd_visualization():
     print(f"  x.grad: {x.grad}")
     print(f"  w1.grad: {w1.grad}")
     print(f"  w2.grad: {w2.grad}")
+
+if __name__ == "__main__":
+    demo_autograd_visualization()

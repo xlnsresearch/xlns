@@ -116,25 +116,25 @@ class LNSRprop(LNSOptimizer):
                 step_size = state["step_size"]
 
                 # 1. Element-wise sign comparison of grads
-                grad_prod = lns_mul(prev_grad, grad)
+                grad_prod = lns_mul(prev_grad, grad, base)
                 grad_prod_sign = lns_sign(grad_prod, base)
 
                 # positive mask and clamp to Γ_max: η ← η * η_+
                 pos_mask = lns_eq(grad_prod_sign, LNS_ONE)
-                step_size_pos = lns_mul(step_size, eta_p._lns)
+                step_size_pos = lns_mul(step_size, eta_p._lns, base)
                 step_size_pos = lns_minimum(step_size_pos, step_max._lns, base)
                 step_size = torch.where(pos_mask, step_size_pos, step_size)
 
                 # negative mask and clamp to Γ_min: η ← η * η_-
                 neg_mask = lns_eq(grad_prod_sign, LNS_NEG_ONE)
-                step_size_neg = lns_mul(step_size, eta_m._lns)
+                step_size_neg = lns_mul(step_size, eta_m._lns, base)
                 step_size_neg = lns_maximum(step_size_neg, step_min._lns, base)
                 step_size = torch.where(neg_mask, step_size_neg, step_size)
                 grad = torch.where(neg_mask, LNS_ZERO, grad) # when flipped signs, ignore grad
 
                 # 2. Parameter update: θ ← θ - sign(g_t) * η_t
                 grad_sign = lns_sign(grad, base)
-                delta = lns_mul(step_size, grad_sign)
+                delta = lns_mul(step_size, grad_sign, base)
                 p.data = lns_sub(p.data, delta, base)
 
                 state["step_size"] = step_size

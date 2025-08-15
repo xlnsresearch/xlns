@@ -110,7 +110,7 @@ class LNSAdadelta(LNSOptimizer):
                     grad = lns_neg(grad)
 
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -123,10 +123,10 @@ class LNSAdadelta(LNSOptimizer):
                 acc_delta = state["acc_delta"] # E[Δ^2]
 
                 # 1. square average: v_t ← ρ v_{t-1} + (1-ρ) g_t^2
-                grad_sq = lns_mul(grad, grad)
+                grad_sq = lns_mul(grad, grad, base)
                 square_avg = lns_add(
-                    lns_mul(square_avg, rho._lns),
-                    lns_mul(grad_sq, one_minus_rho),
+                    lns_mul(square_avg, rho._lns, base),
+                    lns_mul(grad_sq, one_minus_rho, base),
                     base
                 )
 
@@ -134,18 +134,18 @@ class LNSAdadelta(LNSOptimizer):
                 numer = lns_add(acc_delta, eps._lns, base)
                 denom = lns_add(square_avg, eps._lns, base)
                 rms_ratio = lns_sqrt(lns_div(numer, denom, base), base)
-                delta = lns_mul(rms_ratio, grad)
+                delta = lns_mul(rms_ratio, grad, base)
 
                 # 3. accumulate delta: u_t ← ρ u_{t-1} + (1-ρ) Δx_t^2
-                delta_sq = lns_mul(delta, delta)
+                delta_sq = lns_mul(delta, delta, base)
                 acc_delta = lns_add(
-                    lns_mul(acc_delta, rho._lns),
-                    lns_mul(delta_sq, one_minus_rho),
+                    lns_mul(acc_delta, rho._lns, base),
+                    lns_mul(delta_sq, one_minus_rho, base),
                     base
                 )
 
                 # 4. Parameter update: θ ← θ - η * Δx_t
-                step = lns_mul(delta, lr._lns)
+                step = lns_mul(delta, lr._lns, base)
                 p.data = lns_sub(p.data, step, base)
 
                 state["square_avg"] = square_avg

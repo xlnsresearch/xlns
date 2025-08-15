@@ -123,7 +123,7 @@ class LNSRMSprop(LNSOptimizer):
                     grad = lns_neg(grad)
 
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns), base)
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -138,10 +138,10 @@ class LNSRMSprop(LNSOptimizer):
                 buf = state["momentum_buffer"]
 
                 # 1. square_avg: v_t ← α v_{t-1} + (1-α) * g_t²
-                grad_sq = lns_mul(grad, grad)
+                grad_sq = lns_mul(grad, grad, base)
                 square_avg = lns_add(
-                    lns_mul(square_avg, alpha._lns), # α v_{t-1}
-                    lns_mul(grad_sq, one_minus_alpha), # (1-α) g_t²
+                    lns_mul(square_avg, alpha._lns, base), # α v_{t-1}
+                    lns_mul(grad_sq, one_minus_alpha, base), # (1-α) g_t²
                     base
                 )
 
@@ -150,11 +150,11 @@ class LNSRMSprop(LNSOptimizer):
                 # v'_t = v_t - (g_avg) ^ 2
                 if centered:
                     grad_avg = lns_add(
-                        lns_mul(grad_avg, alpha._lns), # α g_avg
-                        lns_mul(grad, one_minus_alpha), # (1-α) * g_t
+                        lns_mul(grad_avg, alpha._lns, base), # α g_avg
+                        lns_mul(grad, one_minus_alpha, base), # (1-α) * g_t
                         base
                     )
-                    avg_sq = lns_mul(grad_avg, grad_avg)
+                    avg_sq = lns_mul(grad_avg, grad_avg, base)
                     denom = lns_sub(square_avg, avg_sq, base)
 
                 else:
@@ -167,15 +167,15 @@ class LNSRMSprop(LNSOptimizer):
                 if not lns_equal(momentum._lns, LNS_ZERO):
                     # b_t ← μ b_{t-1} + g_t / denom
                     buf_div = lns_div(grad, denom, base)
-                    buf = lns_add(lns_mul(buf, momentum._lns), buf_div, base)
+                    buf = lns_add(lns_mul(buf, momentum._lns, base), buf_div, base)
 
                     # θ ← θ - γ * b_t
-                    delta = lns_mul(buf, lr._lns)
+                    delta = lns_mul(buf, lr._lns, base)
 
                 else:
                     # θ ← θ - γ * g_t / denom
                     step_dir = lns_div(grad, denom, base)
-                    delta = lns_mul(step_dir, lr._lns)
+                    delta = lns_mul(step_dir, lr._lns, base)
 
                 # 4. parameter update: θ ← θ - γ * b_t
                 p.data = lns_sub(p.data, delta, base)

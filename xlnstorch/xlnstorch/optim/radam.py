@@ -106,11 +106,11 @@ class LNSRAdam(LNSOptimizer):
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
                     if decoupled_weight_decay:
                         # θ ← θ − γ λ θ
-                        wd_step = lns_mul(lr._lns, weight_decay._lns)
-                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step), base)
+                        wd_step = lns_mul(lr._lns, weight_decay._lns, base)
+                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step, base), base)
                     else:
                         # g ← g + λ θ
-                        grad = lns_add(grad, lns_mul(weight_decay._lns, p.data), base)
+                        grad = lns_add(grad, lns_mul(weight_decay._lns, p.data, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -127,14 +127,14 @@ class LNSRAdam(LNSOptimizer):
                 # m_t ← β_1*m_{t-1} + (1-β_1)*g_t
                 # v_t ← β_2*v_{t-1} + (1-β_2)*g_t^2
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns),
-                    lns_mul(grad, one_minus_beta1),
+                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(grad, one_minus_beta1, base),
                     base
                 )
-                grad_sq = lns_mul(grad, grad)
+                grad_sq = lns_mul(grad, grad, base)
                 exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns),
-                    lns_mul(grad_sq, one_minus_beta2),
+                    lns_mul(exp_avg_sq, beta2._lns, base),
+                    lns_mul(grad_sq, one_minus_beta2, base),
                     base
                 )
 
@@ -148,7 +148,7 @@ class LNSRAdam(LNSOptimizer):
                 beta2_pow = lns_pow(beta2._lns, t, base)
                 one_minus_beta2_pow = lns_sub(LNS_ONE, beta2_pow, base)
                 corr_term = lns_div(
-                    lns_mul(two, lns_mul(t_lns, beta2_pow)),
+                    lns_mul(two, lns_mul(t_lns, beta2_pow, base), base),
                     one_minus_beta2_pow,
                     base
                 )
@@ -163,14 +163,14 @@ class LNSRAdam(LNSOptimizer):
                         base
                     )
                     # r_t ← sqrt((ρ_t−4)(ρ_t−2)ρ_∞ / ((ρ_∞−4)(ρ_∞−2)ρ_t))
-                    r_t_num = lns_mul(rho_inf, lns_mul(lns_sub(rho_t, four, base), lns_sub(rho_t, two, base)))
-                    r_t_den = lns_mul(rho_t, lns_mul(lns_sub(rho_inf, four, base), lns_sub(rho_inf, two, base)))
+                    r_t_num = lns_mul(rho_inf, lns_mul(lns_sub(rho_t, four, base), lns_sub(rho_t, two, base), base), base)
+                    r_t_den = lns_mul(rho_t, lns_mul(lns_sub(rho_inf, four, base), lns_sub(rho_inf, two, base), base), base)
                     r_t = lns_sqrt(lns_div(r_t_num, r_t_den, base), base)
                     # step ← γ * m'_t * l_t * r_t
-                    step = lns_mul(lr._lns, lns_mul(exp_avg_hat, lns_mul(l_t, r_t)))
+                    step = lns_mul(lr._lns, lns_mul(exp_avg_hat, lns_mul(l_t, r_t, base), base), base)
                 else:
                     # step ← γ * m'_t
-                    step = lns_mul(lr._lns, exp_avg_hat)
+                    step = lns_mul(lr._lns, exp_avg_hat, base)
 
                 # 8. Update parameters: θ ← θ − step
                 p.data = lns_sub(p.data, step, base)

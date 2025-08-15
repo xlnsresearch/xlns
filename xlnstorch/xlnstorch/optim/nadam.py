@@ -136,11 +136,11 @@ class LNSNAdam(LNSOptimizer):
                 if not lns_equal(weight_decay._lns, LNS_ZERO):
                     if decoupled_weight_decay:
                         # θ ← θ − γ λ θ
-                        wd_step = lns_mul(lr._lns, weight_decay._lns)
-                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step), base)
+                        wd_step = lns_mul(lr._lns, weight_decay._lns, base)
+                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step, base), base)
                     else:
                         # g ← g + λ θ
-                        grad = lns_add(grad, lns_mul(weight_decay._lns, p.data), base)
+                        grad = lns_add(grad, lns_mul(weight_decay._lns, p.data, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -158,34 +158,34 @@ class LNSNAdam(LNSOptimizer):
                 # 3. compute μ_t and μ_{t+1}
                 pow_t = lns_pow(point_nine_six, t * momentum_decay.value, base)
                 pow_next = lns_pow(point_nine_six, (t + 1) * momentum_decay.value, base)
-                mu = lns_mul(beta1._lns, lns_sub(LNS_ONE, lns_mul(half, pow_t), base))
-                mu_next = lns_mul(beta1._lns, lns_sub(LNS_ONE, lns_mul(half, pow_next), base))
+                mu = lns_mul(beta1._lns, lns_sub(LNS_ONE, lns_mul(half, pow_t, base), base), base)
+                mu_next = lns_mul(beta1._lns, lns_sub(LNS_ONE, lns_mul(half, pow_next, base), base), base)
 
                 # 4. first and second moments:
                 # m_t ← β_1*m_{t-1} + (1 − β_1)*g_t
                 # v_t ← β_2*v_{t-1} + (1 − β_2)*g_t^2
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns),
-                    lns_mul(grad, one_minus_beta1),
+                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(grad, one_minus_beta1, base),
                     base
                 )
-                grad_sq = lns_mul(grad, grad)
+                grad_sq = lns_mul(grad, grad, base)
                 exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns),
-                    lns_mul(grad_sq, one_minus_beta2),
+                    lns_mul(exp_avg_sq, beta2._lns, base),
+                    lns_mul(grad_sq, one_minus_beta2, base),
                     base
                 )
 
                 # 5. calculate next mu product: Π_{t+1}
-                mu_product = lns_mul(mu_product, mu)
-                mu_product_next = lns_mul(mu_product, mu_next)
+                mu_product = lns_mul(mu_product, mu, base)
+                mu_product_next = lns_mul(mu_product, mu_next, base)
                 one_minus_mu_product = lns_sub(LNS_ONE, mu_product, base)
                 one_minus_mu_product_next = lns_sub(LNS_ONE, mu_product_next, base)
 
                 # 6. bias correction: m'_t = m_t / (1 − Π_{t+1})
-                term1 = lns_div(lns_mul(mu_next, exp_avg), one_minus_mu_product_next, base)
+                term1 = lns_div(lns_mul(mu_next, exp_avg, base), one_minus_mu_product_next, base)
                 one_minus_mu_t = lns_sub(LNS_ONE, mu, base)
-                term2 = lns_div(lns_mul(one_minus_mu_t, grad), one_minus_mu_product, base)
+                term2 = lns_div(lns_mul(one_minus_mu_t, grad, base), one_minus_mu_product, base)
                 exp_avg_hat = lns_add(term1, term2, base)
 
                 # 7. bias correction: v'_t = v_t / (1 − β_2^t)
@@ -194,7 +194,7 @@ class LNSNAdam(LNSOptimizer):
 
                 # 8. Update parameters: θ ← θ − γ*m' / (sqrt(v') + ε)
                 denom = lns_add(lns_sqrt(exp_avg_sq_hat, base), eps._lns, base)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base))
+                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base), base)
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["step"] = t
