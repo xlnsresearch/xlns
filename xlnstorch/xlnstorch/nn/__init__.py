@@ -19,6 +19,11 @@ from .convolutional_layers import (
     LNSConv2d,
     LNSConv3d,
 )
+from .normalization_layers import (
+    LNSBatchNorm1d,
+    LNSBatchNorm2d,
+    LNSBatchNorm3d,
+)
 from .pooling_layers import (
     LNSAvgPool1d,
     LNSAvgPool2d,
@@ -47,6 +52,10 @@ __all__ = [
     "LNSConv1d",
     "LNSConv2d",
     "LNSConv3d",
+
+    "LNSBatchNorm1d",
+    "LNSBatchNorm2d",
+    "LNSBatchNorm3d",
 
     "LNSAvgPool1d",
     "LNSAvgPool2d",

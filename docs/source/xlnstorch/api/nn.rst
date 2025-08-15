@@ -43,6 +43,14 @@ Convolutional Layers               Note
 ===============================    =====================
 
 ===============================    =====================
+Normalization Layers               Note
+===============================    =====================
+:class:`LNSBatchNorm1d`
+:class:`LNSBatchNorm2d`
+:class:`LNSBatchNorm3d`
+===============================    =====================
+
+===============================    =====================
 Pooling Layers                     Note
 ===============================    =====================
 :class:`LNSAvgPool1d`              No parameters
@@ -93,6 +101,10 @@ to PyTorch's method of registering parameters.
     LNSConv1d
     LNSConv2d
     LNSConv3d
+
+    LNSBatchNorm1d
+    LNSBatchNorm2d
+    LNSBatchNorm3d
 
     LNSAvgPool1d
     LNSAvgPool2d

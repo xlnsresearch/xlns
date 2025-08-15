@@ -1529,14 +1529,7 @@ class LNSBatchNormFunction(LNSFunction):
 @implements(torch.nn.functional.batch_norm, LNSBatchNormFunction.forward, "default", default=True)
 def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
 
-    if weight is not None and bias is not None:
-        x, running_mean_cpy, running_var_cpy, weight, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
-    elif weight is not None:
-        x, running_mean_cpy, running_var_cpy, weight, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, momentum, eps)
-    elif bias is not None:
-        x, running_mean_cpy, running_var_cpy, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, bias, momentum, eps)
-    else:
-        x, running_mean_cpy, running_var_cpy, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, momentum, eps)
+    x, running_mean_cpy, running_var_cpy, weight, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
 
     result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy, momentum, eps, x.base, weight, bias, training)
 

@@ -383,7 +383,9 @@ def align_lnstensor_bases(
     aligned_tensors = []
     for tensor in tensors:
 
-        if torch.eq(tensor.base, new_base):
+        if tensor is None:
+            aligned_tensors.append(None)
+        elif torch.eq(tensor.base, new_base):
             aligned_tensors.append(tensor)
         else:
             aligned_tensor = LNSChangeBaseFunction.apply(tensor, tensor.base, new_base)
@@ -425,6 +427,8 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
     for operand in operands:
         if isinstance(operand, tensor_module.LNSTensor):
             converted_operands.append(operand)
+        elif operand is None:
+            converted_operands.append(None)
         else:
             converted_operands.append(tensor_module.lnstensor(operand, detach=False, b=base))
 
