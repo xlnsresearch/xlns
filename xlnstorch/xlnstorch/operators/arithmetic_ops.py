@@ -786,13 +786,14 @@ class LNSTransposeFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        A, _, _ = inputs
-        ctx.save_for_backward(A)
+        _, dim0, dim1 = inputs
+        ctx.dim0 = dim0
+        ctx.dim1 = dim1
 
     @staticmethod
     def backward(ctx, grad_output):
-        A, = ctx.saved_tensors
-        return torch.full_like(A, LNS_ONE), None, None
+        grad_x = torch.transpose(grad_output, ctx.dim0, ctx.dim1)
+        return grad_x, None, None
 
 @implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
 def transpose(A, dim0, dim1):
