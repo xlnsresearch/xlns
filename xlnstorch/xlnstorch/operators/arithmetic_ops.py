@@ -447,6 +447,82 @@ def prod(x, dim=None, keepdim=False, *, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSMeanFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+
+        if dim is None:
+            dims = None
+        else:
+            if isinstance(dim, int):
+                dims = (dim,)
+            else:
+                dims = tuple(dim)
+            # canonicalise negative indices
+            dims = tuple(d % x.dim() for d in dims)
+
+        if dims is None:
+            n_elem = x.numel()
+        else:
+            n_elem = 1
+            for d in dims:
+                n_elem *= x.shape[d]
+
+        total = lns_sum(x_packed, base, dims, keepdim)
+        return lns_div(total, LNSTensor.get_internal_tensor(n_elem, base), base)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        ctx.save_for_backward(x, base)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        if ctx.dim is None:
+            dims = None
+        else:
+            if isinstance(ctx.dim, int):
+                dims = (ctx.dim,)
+            else:
+                dims = tuple(ctx.dim)
+            # canonicalise negative indices
+            dims = tuple(d % x.dim() for d in dims)
+
+        if dims is None:
+            n_elem = x.numel()
+        else:
+            n_elem = 1
+            for d in dims:
+                n_elem *= x.shape[d]
+
+        grad_x = lns_div(grad_output, LNSTensor.get_internal_tensor(n_elem, base), base)
+        if dims is None:
+            grad_x = grad_x.expand(x.shape)
+
+        else:
+            if not ctx.keepdim:
+                for d in sorted(dims):
+                    grad_x = grad_x.unsqueeze(d)
+            grad_x = grad_x.expand(x.shape)
+
+        return grad_x, None, None, None
+
+@implements(torch.mean, LNSMeanFunction.forward, "default", default=True)
+def mean(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSMeanFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSMatmulFunction(LNSFunction):
     """
     Matrix multiplication uses the lns addition and

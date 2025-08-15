@@ -150,6 +150,7 @@ Arithmetic Operations
     lns_positive
     lns_sum
     lns_prod
+    lns_mean
     lns_matmul
     lns_transpose
 
