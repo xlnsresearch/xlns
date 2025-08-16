@@ -56,6 +56,9 @@ Pooling Layers                     Note
 :class:`LNSAvgPool1d`              No parameters
 :class:`LNSAvgPool2d`              No parameters
 :class:`LNSAvgPool3d`              No parameters
+:class:`LNSAdaptiveAvgPool1d`      No parameters
+:class:`LNSAdaptiveAvgPool2d`      No parameters
+:class:`LNSAdaptiveAvgPool3d`      No parameters
 ===============================    =====================
 
 ===============================    =====================
@@ -109,6 +112,9 @@ to PyTorch's method of registering parameters.
     LNSAvgPool1d
     LNSAvgPool2d
     LNSAvgPool3d
+    LNSAdaptiveAvgPool1d
+    LNSAdaptiveAvgPool2d
+    LNSAdaptiveAvgPool3d
 
     LNSRNN
     LNSRNNCell

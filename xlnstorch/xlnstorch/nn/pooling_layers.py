@@ -155,3 +155,63 @@ class LNSAvgPool3d(LNSModule):
             x, self.kernel_size, self.stride, self.padding,
             self.ceil_mode, self.count_include_pad, self.divisor_override
         )
+
+class LNSAdaptiveAvgPool1d(LNSModule):
+    """
+    An LNS 1D adaptive average pooling layer that applies a
+    1D adaptive average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AdaptiveAvgPool1d`
+
+    Parameters
+    ----------
+    output_size : int, tuple
+        The target output size.
+    """
+
+    def __init__(self, output_size: int):
+        super().__init__()
+        self.output_size = output_size
+
+    def forward(self, x):
+        return torch.nn.functional.adaptive_avg_pool1d(x, self.output_size)
+
+class LNSAdaptiveAvgPool2d(LNSModule):
+    """
+    An LNS 2D adaptive average pooling layer that applies a
+    2D adaptive average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AdaptiveAvgPool2d`
+
+    Parameters
+    ----------
+    output_size : int, tuple
+        The target output size.
+    """
+
+    def __init__(self, output_size: int):
+        super().__init__()
+        self.output_size = output_size
+
+    def forward(self, x):
+        return torch.nn.functional.adaptive_avg_pool2d(x, self.output_size)
+
+class LNSAdaptiveAvgPool3d(LNSModule):
+    """
+    An LNS 3D adaptive average pooling layer that applies a
+    3D adaptive average pooling operation over the input tensor.
+
+    See also: :py:class:`torch.nn.AdaptiveAvgPool3d`
+
+    Parameters
+    ----------
+    output_size : int, tuple
+        The target output size.
+    """
+
+    def __init__(self, output_size: int):
+        super().__init__()
+        self.output_size = output_size
+
+    def forward(self, x):
+        return torch.nn.functional.adaptive_avg_pool3d(x, self.output_size)

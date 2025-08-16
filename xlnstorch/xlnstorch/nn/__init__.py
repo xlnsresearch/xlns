@@ -28,6 +28,9 @@ from .pooling_layers import (
     LNSAvgPool1d,
     LNSAvgPool2d,
     LNSAvgPool3d,
+    LNSAdaptiveAvgPool1d,
+    LNSAdaptiveAvgPool2d,
+    LNSAdaptiveAvgPool3d,
 )
 from .recurrent_layers import (
     LNSRNN,
@@ -60,6 +63,9 @@ __all__ = [
     "LNSAvgPool1d",
     "LNSAvgPool2d",
     "LNSAvgPool3d",
+    "LNSAdaptiveAvgPool1d",
+    "LNSAdaptiveAvgPool2d",
+    "LNSAdaptiveAvgPool3d",
 
     "LNSRNN",
     "LNSRNNCell",
