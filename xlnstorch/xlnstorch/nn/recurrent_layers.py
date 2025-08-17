@@ -28,6 +28,14 @@ class LNSRNN(LNSModule):
         last layer. Default: 0.0.
     bidirectional : bool, optional
         If True, becomes a bidirectional RNN. Default: False.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -65,6 +73,10 @@ class LNSRNN(LNSModule):
             batch_first: bool = False,
             dropout: float = 0.0,
             bidirectional: bool = False,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
     ):
         super().__init__()
 
@@ -87,14 +99,14 @@ class LNSRNN(LNSModule):
                 layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(hidden_size, layer_input_size)
-                weight_hh = rand(hidden_size, hidden_size)
+                weight_ih = rand(hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
+                weight_hh = rand(hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
                 if bias:
-                    bias_ih = rand(hidden_size)
-                    bias_hh = rand(hidden_size)
+                    bias_ih = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_hh = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -187,6 +199,14 @@ class LNSRNNCell(LNSModule):
     nonlinearity : str, optional
         Non-linear activation to apply. Either ``'tanh'`` or ``'relu'``.
         Default: ``'tanh'``.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -216,6 +236,10 @@ class LNSRNNCell(LNSModule):
             hidden_size: int,
             bias: bool = True,
             nonlinearity: str = 'tanh',
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
         ):
         super().__init__()
 
@@ -228,15 +252,15 @@ class LNSRNNCell(LNSModule):
         self.nonlinearity = nonlinearity
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-        weight_ih = rand(hidden_size, input_size)
-        weight_hh = rand(hidden_size, hidden_size)
+        weight_ih = rand(hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
+        weight_hh = rand(hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
 
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(hidden_size)
-            bias_hh = rand(hidden_size)
+            bias_ih = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_hh = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
         else:
@@ -290,6 +314,14 @@ class LNSLSTM(LNSModule):
         last layer. Default: 0.0.
     bidirectional : bool, optional
         If True, becomes a bidirectional LSTM. Default: False.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -328,6 +360,10 @@ class LNSLSTM(LNSModule):
             batch_first: bool = False,
             dropout: float = 0.0,
             bidirectional: bool = False,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
     ):
         super().__init__()
 
@@ -346,14 +382,14 @@ class LNSLSTM(LNSModule):
                 layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(4 * hidden_size, layer_input_size)
-                weight_hh = rand(4 * hidden_size, hidden_size)
+                weight_ih = rand(4 * hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
+                weight_hh = rand(4 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
                 if bias:
-                    bias_ih = rand(4 * hidden_size)
-                    bias_hh = rand(4 * hidden_size)
+                    bias_ih = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_hh = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -456,6 +492,14 @@ class LNSLSTMCell(LNSModule):
         Number of features in the hidden state $h_t$.
     bias : bool, optional
         If ``True``, adds learnable bias terms. Default: ``True``.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -483,7 +527,11 @@ class LNSLSTMCell(LNSModule):
             self,
             input_size: int,
             hidden_size: int,
-            bias: bool = True
+            bias: bool = True,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
         ):
         super().__init__()
         self.input_size = input_size
@@ -492,14 +540,14 @@ class LNSLSTMCell(LNSModule):
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
 
-        weight_ih = rand(4 * hidden_size, input_size)
-        weight_hh = rand(4 * hidden_size, hidden_size)
+        weight_ih = rand(4 * hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
+        weight_hh = rand(4 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(4 * hidden_size)
-            bias_hh = rand(4 * hidden_size)
+            bias_ih = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_hh = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
         else:
@@ -565,6 +613,14 @@ class LNSGRU(LNSModule):
         last layer. Default: 0.0.
     bidirectional : bool, optional
         If True, becomes a bidirectional GRU. Default: False.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -603,6 +659,10 @@ class LNSGRU(LNSModule):
             batch_first: bool = False,
             dropout: float = 0.0,
             bidirectional: bool = False,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
     ):
         super().__init__()
 
@@ -621,14 +681,14 @@ class LNSGRU(LNSModule):
                 layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(3 * hidden_size, layer_input_size)
-                weight_hh = rand(3 * hidden_size, hidden_size)
+                weight_ih = rand(3 * hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
+                weight_hh = rand(3 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
                 if bias:
-                    bias_ih = rand(3 * hidden_size)
-                    bias_hh = rand(3 * hidden_size)
+                    bias_ih = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_hh = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -723,6 +783,14 @@ class LNSGRUCell(LNSModule):
         Number of features in the hidden state $h_t$.
     bias : bool, optional
         If True, adds learnable bias terms. Default: True.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
     ----------
@@ -750,7 +818,11 @@ class LNSGRUCell(LNSModule):
             self,
             input_size: int,
             hidden_size: int,
-            bias: bool = True
+            bias: bool = True,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
         ):
         super().__init__()
         self.input_size = input_size
@@ -759,14 +831,14 @@ class LNSGRUCell(LNSModule):
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
 
-        weight_ih = rand(3 * hidden_size, input_size)
-        weight_hh = rand(3 * hidden_size, hidden_size)
+        weight_ih = rand(3 * hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
+        weight_hh = rand(3 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(3 * hidden_size)
-            bias_hh = rand(3 * hidden_size)
+            bias_ih = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_hh = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
 
