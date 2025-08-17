@@ -130,8 +130,6 @@ static torch::Tensor reduce_dims(
     bool keepdim
 ) {
 
-    const int64_t ndim = src.dim();
-
     // allocate output (with keepdim=true shape, squeeze later if needed)
     torch::Tensor out = at::empty(reduced_sizes(src, rdims, /*keepdim=*/true), src.options().dtype(torch::kInt64));
     at::TensorIterator iter = at::meta::make_reduction(src, out, rdims, /*keepdim=*/true, torch::kInt64);

@@ -157,8 +157,6 @@ std::vector<torch::Tensor> conv1d_backward(
     const int64_t* go_ptr = grad_output.data_ptr<int64_t>();
 
     int64_t* gi_ptr = grad_input.data_ptr<int64_t>();
-    int64_t* gw_ptr = grad_weight.data_ptr<int64_t>();
-    int64_t* gb_ptr = bias_defined ? grad_bias.data_ptr<int64_t>() : nullptr;
 
     const int64_t in_stride_N = Cin * Lin;
     const int64_t in_stride_C = Lin;
@@ -168,12 +166,6 @@ std::vector<torch::Tensor> conv1d_backward(
 
     const int64_t go_stride_N = Cout * Lout;
     const int64_t go_stride_C = Lout;
-
-    const int64_t gi_stride_N = in_stride_N;
-    const int64_t gi_stride_C = in_stride_C;
-
-    const int64_t gw_stride_Cout = w_stride_Cout;
-    const int64_t gw_stride_Cin = w_stride_Cin;
 
     const int64_t work_items = N * Cout;
     const int64_t grain = 16; // good default; change if needed
@@ -233,8 +225,6 @@ std::vector<torch::Tensor> conv1d_backward(
             }
 
             // reduction - add thread-local results to global tensors
-
-            const int64_t W = weight.numel();
 
             #pragma omp critical
             {
@@ -439,8 +429,6 @@ std::vector<torch::Tensor> conv2d_backward(
     const int64_t* go_ptr = grad_output.data_ptr<int64_t>();
 
     int64_t* gi_ptr = grad_input.data_ptr<int64_t>();
-    int64_t* gw_ptr = grad_weight.data_ptr<int64_t>();
-    int64_t* gb_ptr = bias_defined ? grad_bias.data_ptr<int64_t>() : nullptr;
 
     const int64_t in_stride_N = Cin * Hin * Win;
     const int64_t in_stride_C = Hin * Win;
@@ -765,8 +753,6 @@ std::vector<torch::Tensor> conv3d_backward(
     const int64_t* go_ptr = grad_output .data_ptr<int64_t>();
 
     int64_t* gi_ptr = grad_input .data_ptr<int64_t>();
-    int64_t* gw_ptr = grad_weight.data_ptr<int64_t>();
-    int64_t* gb_ptr = bias_defined ? grad_bias.data_ptr<int64_t>() : nullptr;
 
     const int64_t in_stride_N = Cin * Din * Hin * Win;
     const int64_t in_stride_C = Din * Hin * Win;

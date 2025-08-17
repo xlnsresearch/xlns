@@ -416,8 +416,6 @@ std::vector<torch::Tensor> matmul_backward(
     const torch::Tensor& base_t
 ) {
 
-    const double base = base_t.item<double>();
-
     if (A_.dim() == 1 && B_.dim() == 1) {
         TORCH_CHECK(grad_out_.dim() == 0, "grad_out for dot product must be a scalar");
 
