@@ -271,7 +271,7 @@ class LNSWhereFunction(LNSFunction):
         grad_x = lns_sum_to_size(grad_x, base, x.shape)
         grad_y = lns_sum_to_size(grad_y, base, y.shape)
 
-        return None, grad_x, grad_y
+        return None, grad_x, grad_y, None
 
 @implements(torch.where, LNSWhereFunction.forward, "default", default=True)
 def where(condition, x, y, *, out=None):
