@@ -248,7 +248,7 @@ class LNSOverflowFunction(LNSFunction):
         if max is not None:
             max_packed = tensor_module.LNSTensor.get_internal_tensor(max, base)
             result = torch.where(ops.lns_gt(ops.lns_abs(result), max_packed),
-                                 ops.lns_sign(result, base) * max_packed, result)
+                                 ops.lns_mul(ops.lns_sign(result, base), max_packed, base), result)
 
         if min is not None:
             min_packed = tensor_module.LNSTensor.get_internal_tensor(min, base)
