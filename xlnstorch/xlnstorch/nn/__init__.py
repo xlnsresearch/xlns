@@ -35,6 +35,8 @@ from .pooling_layers import (
 from .recurrent_layers import (
     LNSRNN,
     LNSRNNCell,
+    LNSLSTM,
+    LNSLSTMCell,
 )
 from . import init
 
@@ -69,4 +71,6 @@ __all__ = [
 
     "LNSRNN",
     "LNSRNNCell",
+    "LNSLSTM",
+    "LNSLSTMCell",
 ]
