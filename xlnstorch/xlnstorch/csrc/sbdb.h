@@ -17,11 +17,10 @@ using sbdb_vec_fn_ptr = int64_vec_t(*)(int64_vec_t, int64_vec_t, double);
 namespace tab {
     const int MAX_PREC = 23;
     inline bool initialized = false;
-    inline bool mismatch = false;
     inline double base = 0.0;
     inline int64_t ez;
     inline std::size_t cols = 0;
-    inline std::vector<int64_t> sbdb;
+    inline int64_t* sbdb;
 }
 
 struct SbdbEntry {

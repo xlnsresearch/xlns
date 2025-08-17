@@ -35,17 +35,6 @@ def get_table(filestem: str, f=None, b=None):
 
     filename = f"./{filestem}_{str(tab_base.item())[2:]}.npz"
 
-    if CSRC_AVAILABLE:
-        import xlnstorch.csrc
-        ez, sbdb = xlnstorch.csrc.get_table(filename, base.item())
-
-        if ez is not None and sbdb is not None:
-            tab_ez = ez
-            tab_sbdb = sbdb
-            initialized = True
-
-        return
-
     if os.path.isfile(filename):
         print(f"Loading table from {filename}")
         tablefile = np.load(filename)
@@ -53,6 +42,10 @@ def get_table(filestem: str, f=None, b=None):
         tab_sbdb = torch.tensor(tablefile['tab_sbdb'], dtype=torch.int64)
         tablefile.close()
         initialized = True
+
+        if CSRC_AVAILABLE:
+            import xlnstorch.csrc
+            xlnstorch.csrc.get_table(tab_ez, tab_sbdb, tab_base)
 
     elif tab_base >= get_base_from_precision(MAX_PREC):
         print(f"Creating ideal table as {filename}")
@@ -65,6 +58,10 @@ def get_table(filestem: str, f=None, b=None):
 
         np.savez(filename, tab_ez=tab_ez.numpy(), tab_sbdb=tab_sbdb.numpy())
         initialized = True
+
+        if CSRC_AVAILABLE:
+            import xlnstorch.csrc
+            xlnstorch.csrc.get_table(tab_ez, tab_sbdb, tab_base)
 
     else:
         warnings.warn(
