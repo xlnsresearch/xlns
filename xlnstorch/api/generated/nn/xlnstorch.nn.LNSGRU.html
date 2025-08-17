@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>xlnstorch.nn.LNSRNN &#8212; xlns 1.0.5 documentation</title>
+    <title>xlnstorch.nn.LNSGRU &#8212; xlns 1.0.5 documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNN';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/nn/xlnstorch.nn.LNSGRU';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="xlnstorch.nn.LNSRNNCell" href="xlnstorch.nn.LNSRNNCell.html" />
-    <link rel="prev" title="xlnstorch.nn.LNSAdaptiveAvgPool3d" href="xlnstorch.nn.LNSAdaptiveAvgPool3d.html" />
+    <link rel="next" title="xlnstorch.nn.LNSGRUCell" href="xlnstorch.nn.LNSGRUCell.html" />
+    <link rel="prev" title="xlnstorch.nn.LNSLSTMCell" href="xlnstorch.nn.LNSLSTMCell.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -234,7 +234,7 @@
       
       
       
-      <li><a href="../../../../_sources/xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNN.rst" target="_blank"
+      <li><a href="../../../../_sources/xlnstorch/api/generated/nn/xlnstorch.nn.LNSGRU.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -318,7 +318,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>xlnstorch.nn.LNSRNN</h1>
+    <h1>xlnstorch.nn.LNSGRU</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -328,8 +328,8 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNN"><code class="docutils literal notranslate"><span class="pre">LNSRNN</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNN.__init__"><code class="docutils literal notranslate"><span class="pre">LNSRNN.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSGRU"><code class="docutils literal notranslate"><span class="pre">LNSGRU</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSGRU.__init__"><code class="docutils literal notranslate"><span class="pre">LNSGRU.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -343,26 +343,25 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="xlnstorch-nn-lnsrnn">
-<h1>xlnstorch.nn.LNSRNN<a class="headerlink" href="#xlnstorch-nn-lnsrnn" title="Link to this heading">#</a></h1>
+  <section id="xlnstorch-nn-lnsgru">
+<h1>xlnstorch.nn.LNSGRU<a class="headerlink" href="#xlnstorch-nn-lnsgru" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNN">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.nn.</span></span><span class="sig-name descname"><span class="pre">LNSRNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSRNN" title="Link to this definition">#</a></dt>
-<dd><p>An LNS multi-layer Elman RNN.</p>
-<p>See also: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.RNN</span></code></a></p>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSGRU">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.nn.</span></span><span class="sig-name descname"><span class="pre">LNSGRU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSGRU" title="Link to this definition">#</a></dt>
+<dd><p>An LNS multi-layer gated recurrent unit (GRU) RNN.</p>
+<p>See also: <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.GRU.html#torch.nn.GRU" title="(in PyTorch v2.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.GRU</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The number of expected features in the input tensor.</p></li>
 <li><p><strong>hidden_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The number of features in the hidden state.</p></li>
 <li><p><strong>num_layers</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of recurrent layers to stack. Default: 1.</p></li>
-<li><p><strong>nonlinearity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – The nonlinearity to use. Either ‘tanh’ or ‘relu’. Default: ‘tanh’.</p></li>
 <li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, adds a learnable bias to the layer. Default: True.</p></li>
 <li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, the input and output tensors are provided as (batch, seq, feature).
 If False, they are provided as (seq, batch, feature). Default: False.</p></li>
-<li><p><strong>dropout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – If non-zero, introduces a dropout layer on the outputs of each RNN layer except the
+<li><p><strong>dropout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>optional</em>) – If non-zero, introduces a dropout layer on the outputs of each GRU layer except the
 last layer. Default: 0.0.</p></li>
-<li><p><strong>bidirectional</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, becomes a bidirectional RNN. Default: False.</p></li>
+<li><p><strong>bidirectional</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, becomes a bidirectional GRU. Default: False.</p></li>
 <li><p><strong>weight_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of fractional exponent bits for the weights. mutually exclusive with <code class="docutils literal notranslate"><span class="pre">weight_b</span></code>.</p></li>
 <li><p><strong>weight_b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em>, </em><em>optional</em>) – The explicit logarithm base for the weights; mutually exclusive with <code class="docutils literal notranslate"><span class="pre">weight_f</span></code>.</p></li>
 <li><p><strong>bias_f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><em>optional</em>) – The number of fractional exponent bits for the biases. mutually exclusive with <code class="docutils literal notranslate"><span class="pre">bias_b</span></code>.</p></li>
@@ -374,7 +373,9 @@ last layer. Default: 0.0.</p></li>
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">weight_ih_l{k}</span></span></dt>
 <dd><p>The input-hidden weights of the kth layer with shape
-<span class="math notranslate nohighlight">\((\text{hidden_size}, \text{num_directions} \cdot \text{hidden_size})\)</span>.</p>
+<span class="math notranslate nohighlight">\((3 \cdot \text{hidden_size}, \text{layer_input_size})\)</span>,
+where layer_input_size is input_size for layer 0, else
+<span class="math notranslate nohighlight">\(\text{num_directions} \cdot \text{hidden_size}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
@@ -386,7 +387,7 @@ last layer. Default: 0.0.</p></li>
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">weight_hh_l{k}</span></span></dt>
 <dd><p>The hidden-hidden weights of the kth layer with shape
-<span class="math notranslate nohighlight">\((\text{hidden_size}, \text{hidden_size})\)</span>.</p>
+<span class="math notranslate nohighlight">\((3 \cdot \text{hidden_size}, \text{hidden_size})\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
@@ -398,7 +399,7 @@ last layer. Default: 0.0.</p></li>
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">bias_ih_l{k}</span></span></dt>
 <dd><p>The input-hidden bias of the kth layer with shape
-<span class="math notranslate nohighlight">\((\text{num_directions} \cdot \text{hidden_size})\)</span>.</p>
+<span class="math notranslate nohighlight">\((3 \cdot \text{hidden_size})\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a>, optional</p>
@@ -410,7 +411,7 @@ last layer. Default: 0.0.</p></li>
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">bias_hh_l{k}</span></span></dt>
 <dd><p>The hidden-hidden bias of the kth layer with shape
-<span class="math notranslate nohighlight">\((\text{hidden_size})\)</span>.</p>
+<span class="math notranslate nohighlight">\((3 \cdot \text{hidden_size})\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a>, optional</p>
@@ -422,12 +423,12 @@ last layer. Default: 0.0.</p></li>
 <p>The weights and biases are initialized with random values uniformly
 distributed between <span class="math notranslate nohighlight">\(-\sqrt{k}\)</span> and <span class="math notranslate nohighlight">\(\sqrt{k}\)</span>, where
 <span class="math notranslate nohighlight">\(k = \frac{1}{\text{hidden_size}}\)</span>.</p>
-<p>Bidirectional RNNs have two sets of weights and biases for each layer.
+<p>Bidirectional GRUs have two sets of weights and biases for each layer.
 The backward direction weights and biases are suffixed with <cite>_reverse</cite>
 and have the same shapes as the forward direction weights and biases.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="xlnstorch.nn.LNSRNN.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinearity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tanh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSRNN.__init__" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="xlnstorch.nn.LNSGRU.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidirectional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.nn.LNSGRU.__init__" title="Link to this definition">#</a></dt>
 <dd><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -435,7 +436,6 @@ and have the same shapes as the forward direction weights and biases.</p>
 <li><p><strong>input_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
 <li><p><strong>hidden_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
 <li><p><strong>num_layers</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
-<li><p><strong>nonlinearity</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
 <li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
 <li><p><strong>batch_first</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
 <li><p><strong>dropout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>)</p></li>
@@ -452,7 +452,7 @@ and have the same shapes as the forward direction weights and biases.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.nn.LNSRNN.__init__" title="xlnstorch.nn.LNSRNN.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(input_size, hidden_size[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.nn.LNSGRU.__init__" title="xlnstorch.nn.LNSGRU.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(input_size, hidden_size[, ...])</p></td>
 <td><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(name, module)</p></td>
@@ -491,7 +491,7 @@ and have the same shapes as the forward direction weights and biases.</p>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>()</p></td>
 <td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">float</span></code> datatype.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(x[, h0])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(x[, hx])</p></td>
 <td><p>Define the computation performed at every call.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_buffer</span></code>(target)</p></td>
@@ -645,20 +645,20 @@ and have the same shapes as the forward direction weights and biases.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="xlnstorch.nn.LNSAdaptiveAvgPool3d.html"
+       href="xlnstorch.nn.LNSLSTMCell.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">xlnstorch.nn.LNSAdaptiveAvgPool3d</p>
+        <p class="prev-next-title">xlnstorch.nn.LNSLSTMCell</p>
       </div>
     </a>
     <a class="right-next"
-       href="xlnstorch.nn.LNSRNNCell.html"
+       href="xlnstorch.nn.LNSGRUCell.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">xlnstorch.nn.LNSRNNCell</p>
+        <p class="prev-next-title">xlnstorch.nn.LNSGRUCell</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -678,8 +678,8 @@ and have the same shapes as the forward direction weights and biases.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNN"><code class="docutils literal notranslate"><span class="pre">LNSRNN</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSRNN.__init__"><code class="docutils literal notranslate"><span class="pre">LNSRNN.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSGRU"><code class="docutils literal notranslate"><span class="pre">LNSGRU</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.nn.LNSGRU.__init__"><code class="docutils literal notranslate"><span class="pre">LNSGRU.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
