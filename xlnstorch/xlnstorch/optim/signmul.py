@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE
 from xlnstorch.operators import (
     lns_mul,
     lns_sign,
@@ -11,12 +11,6 @@ from xlnstorch.operators import (
     lns_clamp,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSSignMul(LNSOptimizer):
     r"""
@@ -95,24 +89,27 @@ class LNSSignMul(LNSOptimizer):
             raise ValueError(f"Invalid learning rate: {lr}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            p_scale=_as_lnstensor(p_scale),
+            lr=lr,
+            p_scale=p_scale,
             use_pow=use_pow,
             maximize=maximize
         )
         super(LNSSignMul, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "p_scale")
 
         # precompute 1 + lr and 1 / (1 + lr)
         for group in self.param_groups:
-            lr_ = group["lr"]
+            base = group["base"]
+            lr_ = lnstensor(group["lr"], from_lns=True, b=base)
             use_pow_ = group["use_pow"]
 
             if use_pow_:
-                group["mul_term"] = 2.0 ** lr_
+                mul_term = 2.0 ** lr_
             else:
-                group["mul_term"] = 1.0 + lr_
+                mul_term = 1.0 + lr_
 
-            group["inv_mul_term"] = 1.0 / group["mul_term"]
+            group["mul_term"] = mul_term._lns
+            group["inv_mul_term"] = (1.0 / mul_term)._lns
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -130,9 +127,6 @@ class LNSSignMul(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, p_scale, mul_term, inv_mul_term = align_lnstensor_bases(lr, p_scale, mul_term, inv_mul_term, base=base)
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -146,7 +140,7 @@ class LNSSignMul(LNSOptimizer):
                     rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p, base), base),
                                            LNSTensor.get_internal_tensor(p.numel(), base),
                                            base), base)
-                    state['max'] = lns_mul(p_scale._lns, rms, base)
+                    state['max'] = lns_mul(p_scale, rms, base)
 
                 # retrieve running stats
                 max = state['max']
@@ -157,7 +151,7 @@ class LNSSignMul(LNSOptimizer):
                 mul_update = torch.where(
                     lns_eq(grad, LNS_ZERO), LNS_ONE,
                     torch.where(lns_eq(grad_sign, p_sign) ^ maximize,
-                    inv_mul_term._lns, mul_term._lns
+                    inv_mul_term, mul_term
                 ))
                 p.data = lns_mul(p.data, mul_update, base)
                 p.data = lns_clamp(p.data, lns_neg(max), max)

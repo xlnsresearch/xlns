@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch import LNSTensor, lnstensor, LNS_ONE
 from xlnstorch.operators import (
     lns_mul,
     lns_sign,
@@ -11,12 +11,6 @@ from xlnstorch.operators import (
     lns_reciprocal,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSMul(LNSOptimizer):
     r"""
@@ -81,11 +75,12 @@ class LNSMul(LNSOptimizer):
             raise ValueError(f"Invalid learning rate: {lr}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
+            lr=lr,
             use_pow=use_pow,
             maximize=maximize
         )
         super(LNSMul, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -101,9 +96,6 @@ class LNSMul(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, = align_lnstensor_bases(lr, base=base)
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -112,7 +104,7 @@ class LNSMul(LNSOptimizer):
                 grad = p.grad
 
                 if use_pow:
-                    mul_term = lns_mul(lns_neg(lr._lns), lns_mul(grad, lns_sign(p, base), base), base)
+                    mul_term = lns_mul(lns_neg(lr), lns_mul(grad, lns_sign(p, base), base), base)
                     if maximize:
                         mul_term = lns_neg(mul_term)
                     mul_term = lns_pow(
@@ -122,7 +114,7 @@ class LNSMul(LNSOptimizer):
                     )
 
                 else:
-                    mul_term = lns_add(LNS_ONE, lns_mul(lr._lns, lns_abs(grad), base), base)
+                    mul_term = lns_add(LNS_ONE, lns_mul(lr, lns_abs(grad), base), base)
                     diff_sign = lns_ne(lns_sign(grad, base), lns_sign(p, base))
                     mul_term = torch.where(diff_sign ^ maximize, mul_term,
                                            lns_reciprocal(mul_term, base))

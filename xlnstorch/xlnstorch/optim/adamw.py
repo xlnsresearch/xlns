@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
 from xlnstorch.operators import (
     lns_sub,
     lns_neg,
@@ -12,12 +12,6 @@ from xlnstorch.operators import (
     lns_maximum,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSAdamW(LNSOptimizer):
     """
@@ -79,15 +73,16 @@ class LNSAdamW(LNSOptimizer):
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            beta1=_as_lnstensor(betas[0]),
-            beta2=_as_lnstensor(betas[1]),
-            eps=_as_lnstensor(eps),
-            weight_decay=_as_lnstensor(weight_decay),
+            lr=lr,
+            beta1=betas[0],
+            beta2=betas[1],
+            eps=eps,
+            weight_decay=weight_decay,
             amsgrad=amsgrad,
             maximize=maximize,
         )
         super().__init__(params, defaults)
+        self.make_lnstensor_params("lr", "beta1", "beta2", "eps", "weight_decay")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -106,12 +101,8 @@ class LNSAdamW(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, beta1, beta2, eps, weight_decay = align_lnstensor_bases(
-                lr, beta1, beta2, eps, weight_decay, base=base)
-
-            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
-            one_minus_beta2 = lns_sub(LNS_ONE, beta2._lns, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1, base)
+            one_minus_beta2 = lns_sub(LNS_ONE, beta2, base)
 
             for p in group["params"]:
 
@@ -125,8 +116,8 @@ class LNSAdamW(LNSOptimizer):
                     grad = lns_neg(grad) # −∇f
 
                 # 2. weight decay: θ ← θ - γλθ
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    p.data = lns_sub(p.data, lns_mul(lns_mul(lr._lns, weight_decay._lns, base), p.data, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    p.data = lns_sub(p.data, lns_mul(lns_mul(lr, weight_decay, base), p.data, base), base)
 
                 state = self.state[p]
                 if len(state) == 0:
@@ -145,7 +136,7 @@ class LNSAdamW(LNSOptimizer):
 
                 # 3. m_t ← β_1*m_{t-1} + (1 − β_1)*g
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(exp_avg, beta1, base),
                     lns_mul(grad, one_minus_beta1, base),
                     base
                 )
@@ -153,7 +144,7 @@ class LNSAdamW(LNSOptimizer):
                 # 4. v_t ← β_2*v_{t-1} + (1 − β_2)*g^2
                 grad_squared = lns_mul(grad, grad, base)
                 exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns, base),
+                    lns_mul(exp_avg_sq, beta2, base),
                     lns_mul(grad_squared, one_minus_beta2, base),
                     base
                 )
@@ -162,8 +153,8 @@ class LNSAdamW(LNSOptimizer):
                 # m'_t = m_t / (1 − β_1^t)
                 # v'_t = v_t / (1 − β_2^t)
                 t_tensor = torch.tensor(t, dtype=torch.int64)
-                beta1_t = lns_pow(beta1._lns, t_tensor, base)
-                beta2_t = lns_pow(beta2._lns, t_tensor, base)
+                beta1_t = lns_pow(beta1, t_tensor, base)
+                beta2_t = lns_pow(beta2, t_tensor, base)
                 bias_corr1 = lns_sub(LNS_ONE, beta1_t, base)
                 bias_corr2 = lns_sub(LNS_ONE, beta2_t, base)
 
@@ -177,8 +168,8 @@ class LNSAdamW(LNSOptimizer):
                     denom_sq = lns_div(exp_avg_sq, bias_corr2, base)
 
                 # 6. θ ← θ − γ*m' / (sqrt(v') + ε)
-                denom = lns_add(lns_sqrt(denom_sq, base), eps._lns, base)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg_hat, denom, base), base)
+                denom = lns_add(lns_sqrt(denom_sq, base), eps, base)
+                step_size = lns_mul(lr, lns_div(exp_avg_hat, denom, base), base)
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["exp_avg"] = exp_avg

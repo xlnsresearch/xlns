@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNSTensor, LNS_ONE, zeros_like
 from . import LNSOptimizer
 from xlnstorch.operators import (
     lns_mul,
@@ -14,12 +14,6 @@ from xlnstorch.operators import (
     lns_sign,
     lns_exp,
 )
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSMadam(LNSOptimizer):
     r"""
@@ -122,15 +116,16 @@ class LNSMadam(LNSOptimizer):
             raise ValueError(f"Invalid beta value: {beta}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            beta=_as_lnstensor(beta),
-            eps=_as_lnstensor(eps),
-            p_scale=_as_lnstensor(p_scale),
-            g_bound=_as_lnstensor(g_bound),
+            lr=lr,
+            beta=beta,
+            eps=eps,
+            p_scale=p_scale,
+            g_bound=g_bound,
             use_pow=use_pow,
             maximize=maximize
         )
         super(LNSMadam, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "beta", "eps", "p_scale", "g_bound")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -149,9 +144,6 @@ class LNSMadam(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, beta, eps, p_scale, g_bound = align_lnstensor_bases(lr, beta, eps, p_scale, g_bound, base=base)
-
             for p in group["params"]:
                 if p.grad is None:
                     continue
@@ -164,7 +156,7 @@ class LNSMadam(LNSOptimizer):
                     rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p, base), base),
                                            LNSTensor.get_internal_tensor(p.numel(), base),
                                            base), base)
-                    state['max'] = lns_mul(p_scale._lns, rms, base)
+                    state['max'] = lns_mul(p_scale, rms, base)
                     state['step'] = 0
                     state['exp_avg_sq'] = zeros_like(p.data, b=base)._lns
 
@@ -173,29 +165,29 @@ class LNSMadam(LNSOptimizer):
                 step = state['step'] + 1
                 exp_avg_sq = state['exp_avg_sq']
 
-                bias_correction = lns_sub(LNS_ONE, lns_pow(beta._lns, torch.tensor(step), base), base)
+                bias_correction = lns_sub(LNS_ONE, lns_pow(beta, torch.tensor(step), base), base)
                 exp_avg_sq = lns_add(
-                    lns_mul(beta._lns, exp_avg_sq, base),
-                    lns_mul(lns_sub(LNS_ONE, beta._lns, base), lns_mul(grad, grad, base), base),
+                    lns_mul(beta, exp_avg_sq, base),
+                    lns_mul(lns_sub(LNS_ONE, beta, base), lns_mul(grad, grad, base), base),
                     base
                 )
-                corrected_exp_avg_sq = lns_add(lns_div(exp_avg_sq, bias_correction, base), eps._lns, base)
+                corrected_exp_avg_sq = lns_add(lns_div(exp_avg_sq, bias_correction, base), eps, base)
 
                 g_normed = lns_div(grad, lns_sqrt(corrected_exp_avg_sq, base), base)
-                g_normed = lns_clamp(g_normed, lns_neg(g_bound._lns), g_bound._lns)
+                g_normed = lns_clamp(g_normed, lns_neg(g_bound), g_bound)
 
                 if use_pow:
                     if maximize:
-                        exponent = lns_mul(lr._lns, lns_mul(g_normed, lns_sign(p, base), base), base)
+                        exponent = lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base)
                     else:
-                        exponent = lns_mul(lns_neg(lr._lns), lns_mul(g_normed, lns_sign(p, base), base), base)
+                        exponent = lns_mul(lns_neg(lr), lns_mul(g_normed, lns_sign(p, base), base), base)
                     p.data = lns_mul(p.data, lns_exp(exponent, base), base)
 
                 else:
                     if maximize:
-                        mul_term = lns_add(LNS_ONE, lns_mul(lr._lns, lns_mul(g_normed, lns_sign(p, base), base), base), base)
+                        mul_term = lns_add(LNS_ONE, lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base), base)
                     else:
-                        mul_term = lns_sub(LNS_ONE, lns_mul(lr._lns, lns_mul(g_normed, lns_sign(p, base), base), base), base)
+                        mul_term = lns_sub(LNS_ONE, lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base), base)
                     p.data = lns_mul(p.data, mul_term, base)
 
                 p.data = lns_clamp(p.data, lns_neg(max), max)

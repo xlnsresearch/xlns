@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch import LNS_ONE
 from xlnstorch.operators import (
     lns_mul,
     lns_sign,
@@ -12,12 +12,6 @@ from xlnstorch.operators import (
     lns_maximum,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSHybridMul(LNSOptimizer):
     r"""
@@ -73,13 +67,11 @@ class LNSHybridMul(LNSOptimizer):
             raise ValueError(f"Invalid learning rate: {lr}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
+            lr=lr,
+            signmul_term = 2.0 ** lr,
         )
         super(LNSHybridMul, self).__init__(params, defaults)
-
-        for group in self.param_groups:
-            lr_ = group["lr"]
-            group["signmul_term"] = 2.0 ** lr_
+        self.make_lnstensor_params("lr", "signmul_term")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -94,9 +86,6 @@ class LNSHybridMul(LNSOptimizer):
             signmul_term = group["signmul_term"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, signmul_term = align_lnstensor_bases(lr, signmul_term, base=base)
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -105,14 +94,14 @@ class LNSHybridMul(LNSOptimizer):
                 grad = p.grad
 
                 same_sign = lns_eq(lns_sign(grad, base), lns_sign(p, base))
-                small_values = lns_lt(lns_abs(grad), lr._lns) | lns_lt(lns_abs(p.data), lr._lns)
+                small_values = lns_lt(lns_abs(grad), lr) | lns_lt(lns_abs(p.data), lr)
                 mul_mask = same_sign | small_values
 
-                lr_mul_grad = lns_mul(lr._lns, lns_abs(grad), base)
+                lr_mul_grad = lns_mul(lr, lns_abs(grad), base)
                 mul_update = lns_add(LNS_ONE, lr_mul_grad, base)
                 gd_update = lns_add(LNS_ONE, lns_div(lr_mul_grad, lns_abs(p), base), base)
                 mul_term = torch.where(mul_mask, lns_reciprocal(mul_update, base),
-                                       lns_maximum(signmul_term._lns, gd_update, base))
+                                       lns_maximum(signmul_term, gd_update, base))
 
             p.data = lns_mul(p.data, mul_term, base)
 

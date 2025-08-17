@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, LNS_NEG_ONE, align_lnstensor_bases, zeros_like, full_like
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, zeros_like
 from xlnstorch.operators import (
     lns_sub,
     lns_mul,
@@ -10,12 +10,6 @@ from xlnstorch.operators import (
     lns_maximum,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSRprop(LNSOptimizer):
     """
@@ -66,14 +60,15 @@ class LNSRprop(LNSOptimizer):
             )
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            eta_minus=_as_lnstensor(etas[0]),
-            eta_plus=_as_lnstensor(etas[1]),
-            step_min=_as_lnstensor(step_sizes[0]),
-            step_max=_as_lnstensor(step_sizes[1]),
+            lr=lr,
+            eta_minus=etas[0],
+            eta_plus=etas[1],
+            step_min=step_sizes[0],
+            step_max=step_sizes[1],
             maximize=maximize,
         )
         super(LNSRprop, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "eta_minus", "eta_plus", "step_min", "step_max")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -91,10 +86,6 @@ class LNSRprop(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            lr, eta_m, eta_p, step_min, step_max = align_lnstensor_bases(
-                lr, eta_m, eta_p, step_min, step_max, base=base
-            )
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -109,7 +100,7 @@ class LNSRprop(LNSOptimizer):
                 if len(state) == 0:
                     # First time we see this parameter
                     state["prev_grad"] = zeros_like(p, b=base)._lns
-                    state["step_size"] = p.clone().fill_(lr._lns)
+                    state["step_size"] = p.clone().fill_(lr)
 
                 # Retrieve running stats
                 prev_grad = state["prev_grad"]
@@ -121,14 +112,14 @@ class LNSRprop(LNSOptimizer):
 
                 # positive mask and clamp to Γ_max: η ← η * η_+
                 pos_mask = lns_eq(grad_prod_sign, LNS_ONE)
-                step_size_pos = lns_mul(step_size, eta_p._lns, base)
-                step_size_pos = lns_minimum(step_size_pos, step_max._lns, base)
+                step_size_pos = lns_mul(step_size, eta_p, base)
+                step_size_pos = lns_minimum(step_size_pos, step_max, base)
                 step_size = torch.where(pos_mask, step_size_pos, step_size)
 
                 # negative mask and clamp to Γ_min: η ← η * η_-
                 neg_mask = lns_eq(grad_prod_sign, LNS_NEG_ONE)
-                step_size_neg = lns_mul(step_size, eta_m._lns, base)
-                step_size_neg = lns_maximum(step_size_neg, step_min._lns, base)
+                step_size_neg = lns_mul(step_size, eta_m, base)
+                step_size_neg = lns_maximum(step_size_neg, step_min, base)
                 step_size = torch.where(neg_mask, step_size_neg, step_size)
                 grad = torch.where(neg_mask, LNS_ZERO, grad) # when flipped signs, ignore grad
 

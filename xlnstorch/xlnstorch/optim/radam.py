@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNSTensor, LNS_ZERO, LNS_ONE, zeros_like
 from xlnstorch.operators import (
     lns_equal,
     lns_sub,
@@ -12,12 +12,6 @@ from xlnstorch.operators import (
     lns_gt,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSRAdam(LNSOptimizer):
     """
@@ -51,15 +45,16 @@ class LNSRAdam(LNSOptimizer):
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            beta1=_as_lnstensor(betas[0]),
-            beta2=_as_lnstensor(betas[1]),
-            eps=_as_lnstensor(eps),
-            weight_decay=_as_lnstensor(weight_decay),
+            lr=lr,
+            beta1=betas[0],
+            beta2=betas[1],
+            eps=eps,
+            weight_decay=weight_decay,
             decoupled_weight_decay=decoupled_weight_decay,
             maximize=maximize,
         )
         super(LNSRAdam, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "beta1", "beta2", "eps", "weight_decay")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -78,17 +73,13 @@ class LNSRAdam(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            lr, beta1, beta2, eps, weight_decay = align_lnstensor_bases(
-                lr, beta1, beta2, eps, weight_decay, base=base
-            )
-
             two = LNSTensor.get_internal_tensor(2.0, base)
             four = LNSTensor.get_internal_tensor(4.0, base)
             five = LNSTensor.get_internal_tensor(5.0, base)
 
-            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
-            one_minus_beta2 = lns_sub(LNS_ONE, beta2._lns, base)
-            rho_inf = lns_sub(lns_div(two, lns_sub(LNS_ONE, beta2._lns, base), base), LNS_ONE, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1, base)
+            one_minus_beta2 = lns_sub(LNS_ONE, beta2, base)
+            rho_inf = lns_sub(lns_div(two, lns_sub(LNS_ONE, beta2, base), base), LNS_ONE, base)
 
             for p in group["params"]:
 
@@ -103,14 +94,14 @@ class LNSRAdam(LNSOptimizer):
                     grad = lns_neg(grad)
 
                 # 2. weight decay:
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
+                if not lns_equal(weight_decay, LNS_ZERO):
                     if decoupled_weight_decay:
                         # θ ← θ − γ λ θ
-                        wd_step = lns_mul(lr._lns, weight_decay._lns, base)
+                        wd_step = lns_mul(lr, weight_decay, base)
                         p.data  = lns_sub(p.data, lns_mul(p.data, wd_step, base), base)
                     else:
                         # g ← g + λ θ
-                        grad = lns_add(grad, lns_mul(weight_decay._lns, p.data, base), base)
+                        grad = lns_add(grad, lns_mul(weight_decay, p.data, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -127,25 +118,25 @@ class LNSRAdam(LNSOptimizer):
                 # m_t ← β_1*m_{t-1} + (1-β_1)*g_t
                 # v_t ← β_2*v_{t-1} + (1-β_2)*g_t^2
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(exp_avg, beta1, base),
                     lns_mul(grad, one_minus_beta1, base),
                     base
                 )
                 grad_sq = lns_mul(grad, grad, base)
                 exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2._lns, base),
+                    lns_mul(exp_avg_sq, beta2, base),
                     lns_mul(grad_sq, one_minus_beta2, base),
                     base
                 )
 
                 # 5. bias-corrected first moment: m'_t ← m_t / (1 - β_1^t)
-                beta1_pow = lns_pow(beta1._lns, t, base)
+                beta1_pow = lns_pow(beta1, t, base)
                 one_minus_beta1_pow = lns_sub(LNS_ONE, beta1_pow, base)
                 exp_avg_hat = lns_div(exp_avg, one_minus_beta1_pow, base)
 
                 # 6. ρ_t ← ρ_∞ - 2t*β_2^t / (1 - β_2^t)
                 t_lns = LNSTensor.get_internal_tensor(t, base)
-                beta2_pow = lns_pow(beta2._lns, t, base)
+                beta2_pow = lns_pow(beta2, t, base)
                 one_minus_beta2_pow = lns_sub(LNS_ONE, beta2_pow, base)
                 corr_term = lns_div(
                     lns_mul(two, lns_mul(t_lns, beta2_pow, base), base),
@@ -159,7 +150,7 @@ class LNSRAdam(LNSOptimizer):
                     # l_t ← sqrt(1-β_2^t) / (sqrt(v_t) + ε)
                     l_t = lns_div(
                         lns_sqrt(one_minus_beta2_pow, base),
-                        lns_add(lns_sqrt(exp_avg_sq, base), eps._lns, base),
+                        lns_add(lns_sqrt(exp_avg_sq, base), eps, base),
                         base
                     )
                     # r_t ← sqrt((ρ_t−4)(ρ_t−2)ρ_∞ / ((ρ_∞−4)(ρ_∞−2)ρ_t))
@@ -167,10 +158,10 @@ class LNSRAdam(LNSOptimizer):
                     r_t_den = lns_mul(rho_t, lns_mul(lns_sub(rho_inf, four, base), lns_sub(rho_inf, two, base), base), base)
                     r_t = lns_sqrt(lns_div(r_t_num, r_t_den, base), base)
                     # step ← γ * m'_t * l_t * r_t
-                    step = lns_mul(lr._lns, lns_mul(exp_avg_hat, lns_mul(l_t, r_t, base), base), base)
+                    step = lns_mul(lr, lns_mul(exp_avg_hat, lns_mul(l_t, r_t, base), base), base)
                 else:
                     # step ← γ * m'_t
-                    step = lns_mul(lr._lns, exp_avg_hat, base)
+                    step = lns_mul(lr, exp_avg_hat, base)
 
                 # 8. Update parameters: θ ← θ − step
                 p.data = lns_sub(p.data, step, base)

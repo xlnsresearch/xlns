@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
 from xlnstorch.operators import (
     lns_equal,
     lns_sub,
@@ -10,12 +10,6 @@ from xlnstorch.operators import (
     lns_div,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSRMSprop(LNSOptimizer):
     """
@@ -78,15 +72,16 @@ class LNSRMSprop(LNSOptimizer):
             raise ValueError(f"Invalid momentum value: {momentum}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            alpha=_as_lnstensor(alpha),
-            eps=_as_lnstensor(eps),
-            weight_decay=_as_lnstensor(weight_decay),
-            momentum=_as_lnstensor(momentum),
+            lr=lr,
+            alpha=alpha,
+            eps=eps,
+            weight_decay=weight_decay,
+            momentum=momentum,
             centered=centered,
             maximize=maximize
         )
         super(LNSRMSprop, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "alpha", "eps", "weight_decay", "momentum")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -105,11 +100,7 @@ class LNSRMSprop(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            lr, alpha, eps, weight_decay, momentum = align_lnstensor_bases(
-                lr, alpha, eps, weight_decay, momentum, base=base
-            )
-
-            one_minus_alpha = lns_sub(LNS_ONE, alpha._lns, base)
+            one_minus_alpha = lns_sub(LNS_ONE, alpha, base)
 
             for p in group["params"]:
 
@@ -122,8 +113,8 @@ class LNSRMSprop(LNSOptimizer):
                 if maximize:
                     grad = lns_neg(grad)
 
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -140,7 +131,7 @@ class LNSRMSprop(LNSOptimizer):
                 # 1. square_avg: v_t ← α v_{t-1} + (1-α) * g_t²
                 grad_sq = lns_mul(grad, grad, base)
                 square_avg = lns_add(
-                    lns_mul(square_avg, alpha._lns, base), # α v_{t-1}
+                    lns_mul(square_avg, alpha, base), # α v_{t-1}
                     lns_mul(grad_sq, one_minus_alpha, base), # (1-α) g_t²
                     base
                 )
@@ -150,7 +141,7 @@ class LNSRMSprop(LNSOptimizer):
                 # v'_t = v_t - (g_avg) ^ 2
                 if centered:
                     grad_avg = lns_add(
-                        lns_mul(grad_avg, alpha._lns, base), # α g_avg
+                        lns_mul(grad_avg, alpha, base), # α g_avg
                         lns_mul(grad, one_minus_alpha, base), # (1-α) * g_t
                         base
                     )
@@ -161,21 +152,21 @@ class LNSRMSprop(LNSOptimizer):
                     denom = square_avg
 
                 # denominator: sqrt((v'_t) + ε)
-                denom = lns_add(lns_sqrt(denom, base), eps._lns, base)
+                denom = lns_add(lns_sqrt(denom, base), eps, base)
 
                 # 3. momentum buffering:
-                if not lns_equal(momentum._lns, LNS_ZERO):
+                if not lns_equal(momentum, LNS_ZERO):
                     # b_t ← μ b_{t-1} + g_t / denom
                     buf_div = lns_div(grad, denom, base)
-                    buf = lns_add(lns_mul(buf, momentum._lns, base), buf_div, base)
+                    buf = lns_add(lns_mul(buf, momentum, base), buf_div, base)
 
                     # θ ← θ - γ * b_t
-                    delta = lns_mul(buf, lr._lns, base)
+                    delta = lns_mul(buf, lr, base)
 
                 else:
                     # θ ← θ - γ * g_t / denom
                     step_dir = lns_div(grad, denom, base)
-                    delta = lns_mul(step_dir, lr._lns, base)
+                    delta = lns_mul(step_dir, lr, base)
 
                 # 4. parameter update: θ ← θ - γ * b_t
                 p.data = lns_sub(p.data, delta, base)

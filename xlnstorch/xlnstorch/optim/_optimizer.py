@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO
+from xlnstorch import LNS_ZERO, lnstensor
 
 class LNSOptimizer(torch.optim.Optimizer):
 
@@ -24,3 +24,11 @@ class LNSOptimizer(torch.optim.Optimizer):
                         else:
                             param.grad.requires_grad_(False)
                         param.grad.fill_(LNS_ZERO)
+
+    def make_lnstensor_params(self, *param_names):
+        """Convert specified parameters in defaults to LNS tensors."""
+        for group in self.param_groups:
+            base = group["base"]
+            for name in param_names:
+                if name in group:
+                    group[name] = lnstensor(group[name], b=base)._lns

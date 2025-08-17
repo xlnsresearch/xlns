@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch import lnstensor, LNS_ZERO, LNS_ONE
 from xlnstorch.operators import (
     lns_sub,
     lns_equal,
@@ -7,18 +7,11 @@ from xlnstorch.operators import (
     lns_mul,
     lns_add,
     lns_div,
-    lns_sqrt,
     lns_pow,
     lns_maximum,
     lns_gt,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSASGD(LNSOptimizer):
     """
@@ -83,14 +76,15 @@ class LNSASGD(LNSOptimizer):
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
         
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            lambd=_as_lnstensor(lambd),
-            alpha=_as_lnstensor(alpha),
-            t0=_as_lnstensor(t0),
-            weight_decay=_as_lnstensor(weight_decay),
+            lr=lr,
+            lambd=lambd,
+            alpha=alpha,
+            t0=t0,
+            weight_decay=weight_decay,
             maximize=maximize,
         )
         super(LNSASGD, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "lambd", "alpha", "t0", "weight_decay")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -108,10 +102,6 @@ class LNSASGD(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, lambd, alpha, t0, weight_decay = align_lnstensor_bases(
-                lr, lambd, alpha, t0, weight_decay, base=base)
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -123,8 +113,8 @@ class LNSASGD(LNSOptimizer):
                 if maximize:
                     grad = lns_neg(grad)
 
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -138,18 +128,18 @@ class LNSASGD(LNSOptimizer):
                 averaged_param = state["averaged_param"]
 
                 # 1. learning-rate schedule
-                denom = lns_add(LNS_ONE, lns_mul(lambd._lns, lns_mul(lr._lns, step, base), base), base)
-                denom = lns_pow(denom, alpha.value, base)
-                current_lr = lns_div(lr._lns, denom, base)
+                denom = lns_add(LNS_ONE, lns_mul(lambd, lns_mul(lr, step, base), base), base)
+                denom = lns_pow(denom, lnstensor(alpha, from_lns=True, b=base).value, base)
+                current_lr = lns_div(lr, denom, base)
 
                 # 2. update averaged parameter
-                decay = lns_sub(LNS_ONE, lns_mul(lambd._lns, current_lr, base), base)
+                decay = lns_sub(LNS_ONE, lns_mul(lambd, current_lr, base), base)
                 p.data = lns_mul(p.data, decay, base)
                 p.data = lns_sub(p.data, lns_mul(grad, current_lr, base), base)
 
                 # 3. update averaged parameter
-                if lns_gt(step, t0._lns):
-                    denom = lns_maximum(LNS_ONE, lns_sub(step, t0._lns, base), base)
+                if lns_gt(step, t0):
+                    denom = lns_maximum(LNS_ONE, lns_sub(step, t0, base), base)
                     averaging_coef = lns_div(LNS_ONE, denom, base)
 
                 diff = lns_sub(p.data, averaged_param, base)

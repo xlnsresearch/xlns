@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
 from xlnstorch.operators import (
     lns_equal,
     lns_sub,
@@ -10,12 +10,6 @@ from xlnstorch.operators import (
     lns_sqrt,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSAdadelta(LNSOptimizer):
     """
@@ -69,13 +63,14 @@ class LNSAdadelta(LNSOptimizer):
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            rho=_as_lnstensor(rho),
-            eps=_as_lnstensor(eps),
-            weight_decay=_as_lnstensor(weight_decay),
+            lr=lr,
+            rho=rho,
+            eps=eps,
+            weight_decay=weight_decay,
             maximize=maximize,
         )
         super(LNSAdadelta, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "rho", "eps", "weight_decay")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -92,11 +87,7 @@ class LNSAdadelta(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            lr, rho, eps, weight_decay = align_lnstensor_bases(
-                lr, rho, eps, weight_decay, base=base
-            )
-
-            one_minus_rho = lns_sub(LNS_ONE, rho._lns, base)
+            one_minus_rho = lns_sub(LNS_ONE, rho, base)
 
             for p in group["params"]:
 
@@ -109,8 +100,8 @@ class LNSAdadelta(LNSOptimizer):
                 if maximize:
                     grad = lns_neg(grad)
 
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
 
                 if len(state) == 0:
                     # First time we see this parameter
@@ -125,27 +116,27 @@ class LNSAdadelta(LNSOptimizer):
                 # 1. square average: v_t ← ρ v_{t-1} + (1-ρ) g_t^2
                 grad_sq = lns_mul(grad, grad, base)
                 square_avg = lns_add(
-                    lns_mul(square_avg, rho._lns, base),
+                    lns_mul(square_avg, rho, base),
                     lns_mul(grad_sq, one_minus_rho, base),
                     base
                 )
 
                 # 2. Compute update: Δx_t ← sqrt((acc_delta + ε) / (square_avg + ε)) * g_t
-                numer = lns_add(acc_delta, eps._lns, base)
-                denom = lns_add(square_avg, eps._lns, base)
+                numer = lns_add(acc_delta, eps, base)
+                denom = lns_add(square_avg, eps, base)
                 rms_ratio = lns_sqrt(lns_div(numer, denom, base), base)
                 delta = lns_mul(rms_ratio, grad, base)
 
                 # 3. accumulate delta: u_t ← ρ u_{t-1} + (1-ρ) Δx_t^2
                 delta_sq = lns_mul(delta, delta, base)
                 acc_delta = lns_add(
-                    lns_mul(acc_delta, rho._lns, base),
+                    lns_mul(acc_delta, rho, base),
                     lns_mul(delta_sq, one_minus_rho, base),
                     base
                 )
 
                 # 4. Parameter update: θ ← θ - η * Δx_t
-                step = lns_mul(delta, lr._lns, base)
+                step = lns_mul(delta, lr, base)
                 p.data = lns_sub(p.data, step, base)
 
                 state["square_avg"] = square_avg
