@@ -68,6 +68,8 @@ Recurrent Layers                   Note
 :class:`LNSRNNCell`
 :class:`LNSLSTM`
 :class:`LNSLSTMCell`
+:class:`LNSGRU`
+:class:`LNSGRUCell`
 ===============================    =====================
 
 .. hide the autosummary table from the main page but still
@@ -122,6 +124,8 @@ to PyTorch's method of registering parameters.
     LNSRNNCell
     LNSLSTM
     LNSLSTMCell
+    LNSGRU
+    LNSGRUCell
 
 .. raw:: html
 

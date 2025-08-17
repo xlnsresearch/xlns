@@ -37,6 +37,8 @@ from .recurrent_layers import (
     LNSRNNCell,
     LNSLSTM,
     LNSLSTMCell,
+    LNSGRU,
+    LNSGRUCell,
 )
 from . import init
 
@@ -73,4 +75,6 @@ __all__ = [
     "LNSRNNCell",
     "LNSLSTM",
     "LNSLSTMCell",
+    "LNSGRU",
+    "LNSGRUCell",
 ]
