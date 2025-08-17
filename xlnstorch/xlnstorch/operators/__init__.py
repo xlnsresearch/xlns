@@ -67,6 +67,7 @@ from .internal_lns_ops import (
     lns_gaussian_nll_loss,
     lns_huber_loss,
     lns_smooth_l1_loss,
+    lns_cross_entropy,
 
     lns_relu,
     lns_relu_,
@@ -267,6 +268,7 @@ __all__ = [
     "lns_gaussian_nll_loss",
     "lns_huber_loss",
     "lns_smooth_l1_loss",
+    "lns_cross_entropy",
 
     "lns_relu",
     "lns_relu_",

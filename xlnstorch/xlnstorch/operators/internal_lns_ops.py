@@ -518,6 +518,18 @@ lns_smooth_l1_loss = _create_lns_op_func('smooth_l1_loss', torch.nn.functional.s
     ("reduction", "pk", str, "mean")],
     torch.Tensor,
 ))
+lns_cross_entropy = _create_lns_op_func('cross_entropy', torch.nn.functional.cross_entropy, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("target", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("weight", "pk", torch.Tensor, None),
+    ("size_average", "pk", bool, None),
+    ("ignore_index", "pk", int, -100),
+    ("reduce", "pk", bool, None),
+    ("reduction", "pk", str, "mean"),
+    ("label_smoothing", "pk", float, 0.0)],
+    torch.Tensor,
+))
 
 lns_relu = _create_lns_op_func('relu', torch.nn.functional.relu, signature=_build_signature([
     ("x", "pk", torch.Tensor),
