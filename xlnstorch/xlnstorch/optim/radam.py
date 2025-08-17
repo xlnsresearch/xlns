@@ -15,6 +15,32 @@ from . import LNSOptimizer
 
 class LNSRAdam(LNSOptimizer):
     """
+    Implements the rectified Adam optimization algorithm for LNSTensor
+    parameters, including decoupled weight decay, and a "maximize" mode.
+
+    This optimizer is analogous to PyTorch's :py:class:`torch.optim.RAdam`,
+    but is designed to work with LNSTensor objects. See the PyTorch
+    documentation for more details on the RAdam algorithm.
+
+    Parameters
+    ----------
+    params : iterable
+        An iterable of parameters to optimize or dicts defining parameter groups.
+        This should be obtained from a model's `lns_parameters()` method.
+    lr : LNSTensor, float, optional
+        Learning rate (default: 0.002). Must be a non-negative LNSTensor or float.
+    betas : Tuple[float, float] or Tuple[LNSTensor, LNSTensor], optional
+        Coefficients used for computing running averages of gradient and its square
+        (default: (0.9, 0.999)). Must be two non-negative LNSTensor or float values
+        in the range [0.0, 1.0).
+    eps : LNSTensor, float, optional
+        Term added to the denominator for numerical stability (default: 1e-8).
+    weight_decay : LNSTensor or float
+        Weight decay (L2 penalty) (default: 0.0). Must be a non-negative LNSTensor or float.
+    decoupled_weight_decay : bool, optional
+        If True, applies decoupled weight decay (default: False).
+    maximize : bool, optional
+        If True, optimizes the parameters for maximization instead of minimization (default: False).
     """
 
     def __init__(
