@@ -111,6 +111,10 @@ class LNSFunction(torch.autograd.Function):
                 # to use custom addition logic each time it receives a gradient
                 args[i]._track_operation(edge, j - 1)
 
+            # experiment with breaking after first output
+            # otherwise hooks are duplicated unnecessarily
+            break
+
         return result
 
 # This file contains functions to analyze the autograd graph in PyTorch.

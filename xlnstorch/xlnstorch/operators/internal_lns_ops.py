@@ -381,6 +381,12 @@ lns_cat = _create_lns_op_func('cat', torch.cat, signature=_build_signature([
     ("tensors", "*", Iterable[torch.Tensor])],
     torch.Tensor,
 ))
+lns_chunk = _create_lns_op_func('chunk', torch.chunk, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("chunks", "pk", int),
+    ("dim", "pk", int, 0)],
+    Tuple[torch.Tensor, ...],
+))
 lns_where = _create_lns_op_func('where', torch.where, signature=_build_signature([
     ("condition", "pk", torch.Tensor),
     ("x", "pk", torch.Tensor),
