@@ -219,6 +219,37 @@ def cat(tensors, dim=0):
 
     return lnstensor(result, from_lns=True, b=tensors[0].base)
 
+class LNSChunkFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, chunks, dim=0):
+        return torch.chunk(x, chunks, dim=dim)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, _, dim = inputs
+        ctx.dim = dim
+        ctx.out_shapes = [o.shape for o in output]
+        ctx.set_materialize_grads(False)
+
+    @staticmethod
+    def backward(ctx, *grad_outputs):
+        parts = []
+
+        for g, shape in zip(grad_outputs, ctx.out_shapes):
+            if g is None:
+                g = torch.full(shape, LNS_ZERO)
+            parts.append(g)
+
+        grad_x = torch.cat(parts, dim=ctx.dim)
+        return grad_x, None, None
+
+@implements(torch.chunk, LNSChunkFunction.forward, "default", default=True)
+def chunk(x, chunks, dim=0):
+
+    result = LNSChunkFunction.apply(x, chunks, dim)
+    return tuple(lnstensor(r, from_lns=True, b=x.base) for r in result)
+
 class LNSWhereFunction(LNSFunction):
 
     @staticmethod
@@ -240,7 +271,7 @@ class LNSWhereFunction(LNSFunction):
         grad_x = lns_sum_to_size(grad_x, base, x.shape)
         grad_y = lns_sum_to_size(grad_y, base, y.shape)
 
-        return None, grad_x, grad_y
+        return None, grad_x, grad_y, None
 
 @implements(torch.where, LNSWhereFunction.forward, "default", default=True)
 def where(condition, x, y, *, out=None):

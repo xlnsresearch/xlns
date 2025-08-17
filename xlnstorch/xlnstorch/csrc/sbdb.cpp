@@ -8,126 +8,19 @@
 #include <vector>
 #include <tuple>
 
-#include "cnpy.h" // see https://github.com/rogersce/cnpy
 #include "sbdb.h"
 
-static std::string decimal_suffix(double d) {
-    std::ostringstream oss;
-    oss << std::fixed
-        << std::setprecision(std::numeric_limits<double>::max_digits10)
-        << d;
-    std::string s = oss.str();
-
-    auto dot = s.find('.');
-    if (dot == std::string::npos)
-        return {};
-    std::string frac = s.substr(dot + 1);
-
-    while (!frac.empty() && frac.back() == '0')
-        frac.pop_back();
-
-    return frac;
-}
-
-double get_base_from_precision(int prec) {
-    return std::pow(2.0, std::pow(2.0, -prec));
-}
-
-std::tuple<torch::Tensor, torch::Tensor> make_tensors() {
-    const auto opts = torch::TensorOptions()
-                            .dtype(torch::kInt64)
-                            .device(torch::kCPU);
-
-    torch::Tensor tab_ez_tensor = torch::from_blob(
-        &tab::ez,
-        {1},
-        [](void*) {},
-        opts);
-
-    torch::Tensor tab_sbdb_tensor = torch::from_blob(
-        tab::sbdb.data(),
-        {2, static_cast<long>(tab::cols)},
-        [](void*) {},
-        opts);
-
-    return {tab_ez_tensor, tab_sbdb_tensor};
-}
-
-std::tuple<torch::Tensor, torch::Tensor> get_table(
-    const std::string &filename,
-    const double base
+void get_table(
+    torch::Tensor& tab_ez,
+    torch::Tensor& tab_sbdb,
+    torch::Tensor& tab_base
 ) {
 
-    // not used for now
-    tab::mismatch = false;
-    tab::base = base;
-
-    if (std::filesystem::exists(filename)) {
-        std::cout << "Loading table from " << filename << '\n';
-        cnpy::npz_t npzFile = cnpy::npz_load(filename);
-
-        // tab::ez - scalar
-        {
-            const cnpy::NpyArray& arr = npzFile["tab_ez"];
-            tab::ez = *arr.data<int64_t>();
-        }
-
-        // tab::sbdb - [2, N]
-        {
-            const cnpy::NpyArray& arr = npzFile["tab_sbdb"];
-            const std::size_t rows = arr.shape[0];
-            const std::size_t cols = arr.shape[1];
-            const std::size_t numel = rows * cols;
-            tab::cols = cols;
-
-            tab::sbdb.resize(numel);
-            std::memcpy(tab::sbdb.data(), arr.data<int64_t>(), numel * sizeof(int64_t));
-        }
-
-        tab::initialized = true;
-        return make_tensors();
-    }
-
-    const double max_base = get_base_from_precision(tab::MAX_PREC);
-    if (tab::base >= max_base) {
-        std::cout << "Creating ideal table as " << filename << '\n';
-
-        tab::ez = sbdb::ideal(1, 1, tab::base);
-
-        const int64_t first_z = tab::ez;
-        const int64_t last_z = -1;
-        tab::cols = static_cast<std::size_t>(-first_z);
-
-        tab::sbdb.resize(2 * tab::cols);
-        std::size_t col = 0;
-        for (int64_t z = first_z; z <= last_z; ++z, ++col) {
-            tab::sbdb[0 * tab::cols + col] = sbdb::ideal(z, 0, tab::base);
-            tab::sbdb[1 * tab::cols + col] = sbdb::ideal(z, 1, tab::base);
-        }
-
-        cnpy::npz_save(filename,
-                       "tab_ez",
-                       &tab::ez,
-                       {static_cast<std::size_t>(1)},
-                       "w");
-
-        cnpy::npz_save(filename,
-                       "tab_sbdb",
-                       tab::sbdb.data(),
-                       {static_cast<std::size_t>(2), tab::cols},
-                       "a");
-
-        tab::initialized = true;
-        return make_tensors();
-    }
-
-    std::cerr << "Warning: Table for base " << tab::base
-              << " is too large to create. Max precision is "
-              << tab::MAX_PREC << std::endl;
-    tab::base = 0.0;
-    tab::initialized = false;
-
-    return {torch::Tensor(), torch::Tensor()};
+    tab::base = tab_base.item<double>();
+    tab::ez = tab_ez.item<int64_t>();
+    tab::cols = tab_sbdb.numel() / 2;
+    tab::sbdb = tab_sbdb.data_ptr<int64_t>();
+    tab::initialized = true;
 }
 
 namespace sbdb {

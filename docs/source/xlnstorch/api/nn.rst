@@ -43,11 +43,22 @@ Convolutional Layers               Note
 ===============================    =====================
 
 ===============================    =====================
+Normalization Layers               Note
+===============================    =====================
+:class:`LNSBatchNorm1d`
+:class:`LNSBatchNorm2d`
+:class:`LNSBatchNorm3d`
+===============================    =====================
+
+===============================    =====================
 Pooling Layers                     Note
 ===============================    =====================
 :class:`LNSAvgPool1d`              No parameters
 :class:`LNSAvgPool2d`              No parameters
 :class:`LNSAvgPool3d`              No parameters
+:class:`LNSAdaptiveAvgPool1d`      No parameters
+:class:`LNSAdaptiveAvgPool2d`      No parameters
+:class:`LNSAdaptiveAvgPool3d`      No parameters
 ===============================    =====================
 
 ===============================    =====================
@@ -55,6 +66,10 @@ Recurrent Layers                   Note
 ===============================    =====================
 :class:`LNSRNN`
 :class:`LNSRNNCell`
+:class:`LNSLSTM`
+:class:`LNSLSTMCell`
+:class:`LNSGRU`
+:class:`LNSGRUCell`
 ===============================    =====================
 
 .. hide the autosummary table from the main page but still
@@ -94,12 +109,23 @@ to PyTorch's method of registering parameters.
     LNSConv2d
     LNSConv3d
 
+    LNSBatchNorm1d
+    LNSBatchNorm2d
+    LNSBatchNorm3d
+
     LNSAvgPool1d
     LNSAvgPool2d
     LNSAvgPool3d
+    LNSAdaptiveAvgPool1d
+    LNSAdaptiveAvgPool2d
+    LNSAdaptiveAvgPool3d
 
     LNSRNN
     LNSRNNCell
+    LNSLSTM
+    LNSLSTMCell
+    LNSGRU
+    LNSGRUCell
 
 .. raw:: html
 

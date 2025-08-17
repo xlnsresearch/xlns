@@ -60,13 +60,30 @@ class LNSSumCPPFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, _, _, _ = inputs
+        x, _, dim, keepdim = inputs
         ctx.save_for_backward(x)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
 
     @staticmethod
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
-        return torch.full_like(x, LNS_ONE.item()), None, None, None
+
+        grad_x = grad_output
+        if ctx.dim is None:
+            grad_x = grad_x.expand(x.shape)
+
+        else:
+            red_dims = (ctx.dim,) if isinstance(ctx.dim, int) else tuple(ctx.dim)
+            red_dims = tuple(d % x.dim() for d in red_dims)
+
+            if not ctx.keepdim:
+                for d in sorted(red_dims):
+                    grad_x = grad_x.unsqueeze(d)
+
+            grad_x = grad_x.expand(x.shape)
+
+        return grad_x, None, None, None
 
 @implements(torch.sum, LNSSumCPPFunction.forward, "default_cpp", default=True)
 def sum(x, dim=None, keepdim=False, *, out=None):

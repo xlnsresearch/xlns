@@ -21,6 +21,7 @@ from . import(
     lns_maximum,
     lns_reciprocal,
     lns_lt,
+    lns_max,
 )
 
 class LNSMSELossFunction(LNSFunction):
@@ -981,5 +982,140 @@ def smooth_l1_loss(x, y, size_average=None, reduce=None, reduction='mean', beta=
 
     x, y, beta = format_lnstensor_operands(x, y, beta)
     result = LNSSmoothL1LossFunction.apply(x, y, beta, x.base, size_average, reduce, reduction)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSCrossEntropyLossFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, y, base, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
+        x_packed = x.to(torch.int64)
+        dim = -1 if x_packed.dim() > 1 else 0
+
+        m = lns_max(x_packed, base, dim=dim, keepdim=True)[0]
+        x_sub_m = lns_sub(x_packed, m, base)
+
+        exp_x_sub_m = lns_exp(x_sub_m, base)
+        sum_exp_x_sub_m = lns_sum(exp_x_sub_m, base, dim=dim, keepdim=True)
+        log_sum_exp_x_sub_m = lns_log(sum_exp_x_sub_m, base)
+
+        log_softmax = lns_sub(x_sub_m, log_sum_exp_x_sub_m, base)
+
+        if log_softmax.dim() == 1:
+            nll = log_softmax[y]
+        else:
+            nll = log_softmax.gather(1, y.view(-1, 1)).squeeze(1)
+
+        if weight is not None:
+            weight = weight.to(torch.int64)
+            sample_weights = weight[y]
+            nll = lns_mul(nll, sample_weights, base)
+
+        loss = lns_neg(nll)
+
+        if reduction == 'none':
+            return loss.to(torch.float64)
+
+        elif reduction == 'sum':
+            loss_sum = lns_sum(loss, base)
+            return loss_sum.to(torch.float64)
+
+        elif reduction == 'mean':
+            loss_sum = lns_sum(loss, base)
+
+            if weight is not None:
+                weight_sum = lns_sum(sample_weights, base)
+                weighted_mean = lns_div(loss_sum, weight_sum, base)
+                return weighted_mean.to(torch.float64)
+
+            else:
+                batch_size = LNSTensor.get_internal_tensor(y.size(0), base)
+                mean = lns_div(loss_sum, batch_size, base)
+                return mean.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y, base, weight, _, _, _, reduction = inputs
+        ctx.reduction = reduction
+        ctx.weighted = True if weight is not None else False
+
+        if ctx.weighted:
+            ctx.save_for_backward(x, y, base, weight)
+        else:
+            ctx.save_for_backward(x, y, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        if ctx.weighted:
+            x, y, base, weight = ctx.saved_tensors
+            sample_weights = weight[y.to(torch.int64)].to(torch.int64)
+
+        else:
+            x, y, base = ctx.saved_tensors
+            sample_weights = None
+
+        dim = -1 if x.dim() > 1 else 0
+        m = lns_max(x, base, dim=dim, keepdim=True)[0]
+
+        x_sub_m = lns_sub(x, m, base)
+        exp_x_sub_m = lns_exp(x_sub_m, base)
+        sum_exp_x_sub_m = lns_sum(exp_x_sub_m, base, dim=dim, keepdim=True)
+        log_sum_exp_x_sub_m = lns_log(sum_exp_x_sub_m, base)
+
+        log_softmax = lns_sub(x_sub_m, log_sum_exp_x_sub_m, base)
+        softmax = lns_exp(log_softmax, base)
+
+        grad_x = softmax.clone()
+
+        if grad_x.dim() == 1:
+
+            if sample_weights is not None:
+                grad_x = lns_mul(grad_x, sample_weights, base)
+                grad_x[y] = lns_sub(grad_x[y], sample_weights, base)
+
+            else:
+                grad_x[y] = lns_sub(grad_x[y], LNS_ONE, base)
+
+        else:
+            idx = torch.arange(y.size(0))
+
+            if sample_weights is not None:
+                grad_x = lns_mul(grad_x, sample_weights.view(-1, 1), base)
+                grad_x[idx, y] = lns_sub(grad_x[idx, y], sample_weights, base)
+
+            else:
+                grad_x[idx, y] = lns_sub(grad_x[idx, y], LNS_ONE, base)
+
+        if ctx.reduction == 'mean':
+
+            if sample_weights is not None:
+                denom = lns_sum(sample_weights, base)
+            else:
+                denom = LNSTensor.get_internal_tensor(y.size(0), base)
+
+            grad_x = lns_div(grad_x, denom, base)
+
+        elif ctx.reduction == 'none':
+
+            if grad_x.dim() == 1:
+                grad_x = lns_mul(grad_x, grad_output, base)
+
+            else:
+                grad_x = lns_mul(grad_x, grad_output.view(-1, 1), base)
+
+        else:
+            grad_x = lns_mul(grad_x, grad_output, base)
+
+        return grad_x, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.cross_entropy, LNSCrossEntropyLossFunction.forward, key="default", default=True)
+def cross_entropy(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean', label_smoothing=0.0):
+
+    assert isinstance(y, torch.Tensor), "y must be a torch.Tensor"
+
+    if weight is not None:
+        x, weight = format_lnstensor_operands(x, weight)
+
+    result = LNSCrossEntropyLossFunction.apply(x, y, x.base, weight, size_average, ignore_index, reduce, reduction)
 
     return lnstensor(result, from_lns=True, b=x.base)

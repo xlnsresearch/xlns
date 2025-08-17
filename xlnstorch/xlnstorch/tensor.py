@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union, List, Type
+from typing import Any, Union, List, Type, Tuple
 import weakref
 import math
 import numpy as np
@@ -168,6 +168,9 @@ class LNSTensor:
             grad_tensor = weak_grad_holder()
             if grad_tensor is None:
                 return None # should not happen, but just in case
+
+            if grad is None:
+                return None
 
             return grad_tensor._lns
 
@@ -518,6 +521,24 @@ class LNSTensor:
             A new LNSTensor with the specified dimension added.
         """
         return torch.unsqueeze(self, dim)
+
+    def chunk(self, chunks: int, dim: int = 0) -> Tuple[LNSTensor, ...]:
+        """
+        Splits the LNSTensor into a specified number of chunks along a given dimension.
+
+        Parameters
+        ----------
+        chunks : int
+            The number of chunks to split the LNSTensor into.
+        dim : int
+            The dimension along which to split the LNSTensor.
+
+        Returns
+        -------
+        tuple of LNSTensor
+            A tuple containing the resulting chunks as LNSTensor objects.
+        """
+        return torch.chunk(self, chunks, dim)
 
     def detach(self) -> LNSTensor:
         """

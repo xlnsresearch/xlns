@@ -18,6 +18,8 @@ from .internal_lns_ops import (
     lns_positive,
     lns_sum,
     lns_prod,
+    lns_mean,
+    lns_var,
     lns_matmul,
     lns_transpose,
 
@@ -50,6 +52,7 @@ from .internal_lns_ops import (
     lns_unsqueeze,
     lns_stack,
     lns_cat,
+    lns_chunk,
     lns_where,
 
     lns_mse_loss,
@@ -64,6 +67,7 @@ from .internal_lns_ops import (
     lns_gaussian_nll_loss,
     lns_huber_loss,
     lns_smooth_l1_loss,
+    lns_cross_entropy,
 
     lns_relu,
     lns_relu_,
@@ -105,6 +109,10 @@ from .internal_lns_ops import (
     lns_avg_pool1d,
     lns_avg_pool2d,
     lns_avg_pool3d,
+    lns_adaptive_avg_pool1d,
+    lns_adaptive_avg_pool2d,
+    lns_adaptive_avg_pool3d,
+    lns_batch_norm,
 )
 
 def lns_sum_to_size(tensor: torch.Tensor, base: torch.Tensor, target_size: torch.Size) -> torch.Tensor:
@@ -211,6 +219,8 @@ __all__ = [
     "lns_positive",
     "lns_sum",
     "lns_prod",
+    "lns_mean",
+    "lns_var",
     "lns_matmul",
     "lns_transpose",
 
@@ -243,6 +253,7 @@ __all__ = [
     "lns_unsqueeze",
     "lns_stack",
     "lns_cat",
+    "lns_chunk",
     "lns_where",
 
     "lns_mse_loss",
@@ -257,6 +268,7 @@ __all__ = [
     "lns_gaussian_nll_loss",
     "lns_huber_loss",
     "lns_smooth_l1_loss",
+    "lns_cross_entropy",
 
     "lns_relu",
     "lns_relu_",
@@ -298,4 +310,8 @@ __all__ = [
     "lns_avg_pool1d",
     "lns_avg_pool2d",
     "lns_avg_pool3d",
+    "lns_adaptive_avg_pool1d",
+    "lns_adaptive_avg_pool2d",
+    "lns_adaptive_avg_pool3d",
+    "lns_batch_norm",
 ]

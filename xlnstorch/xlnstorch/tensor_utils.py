@@ -248,7 +248,7 @@ class LNSOverflowFunction(LNSFunction):
         if max is not None:
             max_packed = tensor_module.LNSTensor.get_internal_tensor(max, base)
             result = torch.where(ops.lns_gt(ops.lns_abs(result), max_packed),
-                                 ops.lns_sign(result, base) * max_packed, result)
+                                 ops.lns_mul(ops.lns_sign(result, base), max_packed, base), result)
 
         if min is not None:
             min_packed = tensor_module.LNSTensor.get_internal_tensor(min, base)
@@ -383,7 +383,9 @@ def align_lnstensor_bases(
     aligned_tensors = []
     for tensor in tensors:
 
-        if torch.eq(tensor.base, new_base):
+        if tensor is None:
+            aligned_tensors.append(None)
+        elif torch.eq(tensor.base, new_base):
             aligned_tensors.append(tensor)
         else:
             aligned_tensor = LNSChangeBaseFunction.apply(tensor, tensor.base, new_base)
@@ -392,7 +394,7 @@ def align_lnstensor_bases(
     return tuple(aligned_tensors)
 
 
-def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
+def format_lnstensor_operands(*operands: Any, base=None) -> Tuple[LNSTensor, ...]:
     """
     Converts a variable number of operands to LNSTensor objects, aligning
     all operands to the base of the first operand that is an LNSTensor.
@@ -402,6 +404,8 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
     operands : Any
         Variable number of operands, which can be LNSTensor objects or
         other array-like objects that can be converted to LNSTensor.
+    base : torch.Tensor, optional
+        The base to force conversion to if supplied.
 
     Returns
     -------
@@ -412,23 +416,54 @@ def format_lnstensor_operands(*operands: Any) -> Tuple[LNSTensor, ...]:
     """
     tensor_module = _get_tensor_module()
     
-    base = None
+    if base is None:
+        for operand in operands:
+            if isinstance(operand, tensor_module.LNSTensor):
+                base = operand.base
+                break
+        else:
+            base = torch.tensor(xl.xlnsB, dtype=torch.float64)
 
-    for operand in operands:
-        if isinstance(operand, tensor_module.LNSTensor):
-            base = operand.base
-            break
+    elif torch.is_tensor(base):
+        base = base.detach()
+
     else:
-        base = torch.tensor(xl.xlnsB, dtype=torch.float64)
+        base = torch.tensor(base, dtype=torch.float64)
 
     converted_operands = []
     for operand in operands:
         if isinstance(operand, tensor_module.LNSTensor):
             converted_operands.append(operand)
+        elif operand is None:
+            converted_operands.append(None)
         else:
             converted_operands.append(tensor_module.lnstensor(operand, detach=False, b=base))
 
     return align_lnstensor_bases(*converted_operands, base=base)
+
+def get_internal_lnstensor_operands(*operands: Any, base=None) -> Tuple[torch.Tensor, ...]:
+    """
+    Converts a variable number of operands to LNSTensor objects, aligns
+    their bases, and extracts their internal packed tensor representations.
+
+    Parameters
+    ----------
+    operands : Any
+        Variable number of operands, which can be LNSTensor objects or
+        other array-like objects that can be converted to LNSTensor.
+    base : torch.Tensor, optional
+        The base to force conversion to if supplied.
+
+    Returns
+    -------
+    Tuple[torch.Tensor, ...]
+        A tuple of Tensor objects, representing the internal representations
+        of LNSTensors with their bases aligned to the base of the first
+        LNSTensor operand. If no LNSTensor is found, all operands are converted
+        to LNSTensors with the default base.
+    """
+    lnstensor_operands = format_lnstensor_operands(*operands, base=base)
+    return tuple(op._lns for op in lnstensor_operands)
 
 def make_index_tensors(
         index: Any,

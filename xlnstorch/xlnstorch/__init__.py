@@ -41,6 +41,7 @@ from . import autograd
 from .tensor_utils import (
     align_lnstensor_bases,
     format_lnstensor_operands,
+    get_internal_lnstensor_operands,
 )
 from .tensor import (
     LNSTensor,
@@ -100,4 +101,5 @@ __all__ = [
 
     "align_lnstensor_bases",
     "format_lnstensor_operands",
+    "get_internal_lnstensor_operands",
 ]

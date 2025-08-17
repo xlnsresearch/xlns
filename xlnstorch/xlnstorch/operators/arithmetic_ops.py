@@ -10,6 +10,7 @@ from . import (
     lns_pow,
     lns_matmul,
     lns_sum,
+    lns_sub,
     lns_sum_to_size,
 )
 
@@ -447,6 +448,171 @@ def prod(x, dim=None, keepdim=False, *, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+class LNSMeanFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, dim=None, keepdim=False):
+        x_packed = x.to(torch.int64)
+
+        if dim is None:
+            dims = None
+        else:
+            if isinstance(dim, int):
+                dims = (dim,)
+            else:
+                dims = tuple(dim)
+            # canonicalise negative indices
+            dims = tuple(d % x.dim() for d in dims)
+
+        if dims is None:
+            n_elem = x.numel()
+        else:
+            n_elem = 1
+            for d in dims:
+                n_elem *= x.shape[d]
+
+        total = lns_sum(x_packed, base, dims, keepdim)
+        return lns_div(total, LNSTensor.get_internal_tensor(n_elem, base), base).to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, dim, keepdim = inputs
+        ctx.save_for_backward(x, base)
+        ctx.dim = dim
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        if ctx.dim is None:
+            dims = None
+        else:
+            if isinstance(ctx.dim, int):
+                dims = (ctx.dim,)
+            else:
+                dims = tuple(ctx.dim)
+            # canonicalise negative indices
+            dims = tuple(d % x.dim() for d in dims)
+
+        if dims is None:
+            n_elem = x.numel()
+        else:
+            n_elem = 1
+            for d in dims:
+                n_elem *= x.shape[d]
+
+        grad_x = lns_div(grad_output, LNSTensor.get_internal_tensor(n_elem, base), base)
+        if dims is None:
+            grad_x = grad_x.expand(x.shape)
+
+        else:
+            if not ctx.keepdim:
+                for d in sorted(dims):
+                    grad_x = grad_x.unsqueeze(d)
+            grad_x = grad_x.expand(x.shape)
+
+        return grad_x, None, None, None
+
+@implements(torch.mean, LNSMeanFunction.forward, "default", default=True)
+def mean(x, dim=None, keepdim=False, *, out=None):
+
+    result = LNSMeanFunction.apply(x, x.base, dim, keepdim)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSVarFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, correction, dim=None, keepdim=False):
+
+        if dim is None:
+            red_dims = None
+            N = x.numel()
+
+        else:
+            red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
+            red_dims = tuple(d % x.dim() for d in red_dims)
+            N = 1
+            for d in red_dims:
+                N *= x.shape[d]
+
+        n_elems = LNSTensor.get_internal_tensor(N, base)
+
+        denom = lns_sub(n_elems, correction, base)
+        if denom <= 0:
+            raise ValueError("Degrees of freedom <= 0 for slice")
+
+        total_x = lns_sum(x, base, dim=red_dims, keepdim=True)
+        mean = lns_div(total_x, n_elems, base)
+
+        diff = lns_sub(x, mean, base)
+        sq_diff = lns_mul(diff, diff, base)
+        total_sq = lns_sum(sq_diff, base, dim=red_dims, keepdim=keepdim)
+        var = lns_div(total_sq, denom, base)
+
+        return var.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, correction, dim, keepdim = inputs
+        ctx.save_for_backward(x, base)
+        ctx.dim = dim
+        ctx.correction = correction
+        ctx.keepdim = keepdim
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, base = ctx.saved_tensors
+
+        if ctx.dim is None:
+            red_dims = None
+            N = x.numel()
+
+        else:
+            red_dims = (ctx.dim,) if isinstance(ctx.dim, int) else tuple(ctx.dim)
+            red_dims = tuple(d % x.dim() for d in red_dims)
+
+            N = 1
+            for d in red_dims:
+                N *= x.shape[d]
+
+        total_x = lns_sum(x, base, dim=red_dims, keepdim=True)
+        n_elems = LNSTensor.get_internal_tensor(N, base)
+        denom = lns_sub(n_elems, ctx.correction, base)
+        mean = lns_div(total_x, n_elems, base)
+
+        diff = lns_sub(x, mean, base)
+        scale = lns_div(LNSTensor.get_internal_tensor(2.0, base), denom, base)
+
+        grad_x = grad_output
+        if red_dims is None:
+            grad_x = grad_x.expand(x.shape)
+
+        else:
+            if not ctx.keepdim:
+                for d in sorted(red_dims):
+                    grad_x = grad_x.unsqueeze(d)
+            grad_x = grad_x.expand(x.shape)
+
+        grad_x = lns_mul(grad_x, lns_mul(diff, scale, base), base)
+
+        return grad_x, None, None, None, None
+
+@implements(torch.var, LNSVarFunction.forward, "default", default=True)
+def var(x, dim=None, *, correction=1, keepdim=False, out=None):
+
+    x, correction = format_lnstensor_operands(x, correction)
+    result = LNSVarFunction.apply(x, x.base, dim, correction, keepdim)
+
+    if out is not None:
+        return out._inplace_copy(result)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
 class LNSMatmulFunction(LNSFunction):
     """
     Matrix multiplication uses the lns addition and
@@ -620,13 +786,14 @@ class LNSTransposeFunction(LNSFunction):
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        A, _, _ = inputs
-        ctx.save_for_backward(A)
+        _, dim0, dim1 = inputs
+        ctx.dim0 = dim0
+        ctx.dim1 = dim1
 
     @staticmethod
     def backward(ctx, grad_output):
-        A, = ctx.saved_tensors
-        return torch.full_like(A, LNS_ONE), None, None
+        grad_x = torch.transpose(grad_output, ctx.dim0, ctx.dim1)
+        return grad_x, None, None
 
 @implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
 def transpose(A, dim0, dim1):

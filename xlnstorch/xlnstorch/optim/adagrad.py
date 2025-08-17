@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases
+from xlnstorch import LNS_ZERO, LNS_ONE
 from xlnstorch.operators import (
     lns_equal,
     lns_sub,
@@ -10,12 +10,6 @@ from xlnstorch.operators import (
     lns_neg,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSAdagrad(LNSOptimizer):
     """
@@ -77,14 +71,15 @@ class LNSAdagrad(LNSOptimizer):
             raise ValueError(f"Invalid epsilon value: {eps}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            lr_decay=_as_lnstensor(lr_decay),
-            weight_decay=_as_lnstensor(weight_decay),
-            initial_accumulator_value=_as_lnstensor(initial_accumulator_value),
-            eps=_as_lnstensor(eps),
+            lr=lr,
+            lr_decay=lr_decay,
+            weight_decay=weight_decay,
+            initial_accumulator_value=initial_accumulator_value,
+            eps=eps,
             maximize=maximize
         )
         super(LNSAdagrad, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr", "lr_decay", "weight_decay", "initial_accumulator_value", "eps")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -102,10 +97,6 @@ class LNSAdagrad(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            lr, lr_decay, weight_decay, init_acc_val, eps = align_lnstensor_bases(
-                lr, lr_decay, weight_decay, init_acc_val, eps, base=base
-            )
-
             for p in group["params"]:
 
                 if p.grad is None:
@@ -120,25 +111,25 @@ class LNSAdagrad(LNSOptimizer):
                 # 1. State initialisation (run the first time we see this parameter)
                 if len(state) == 0:
                     state["step"] = LNS_ZERO.clone()
-                    state["sum"] = torch.full_like(p, init_acc_val._lns)
+                    state["sum"] = torch.full_like(p, init_acc_val)
 
                 state["step"] = lns_add(state["step"], LNS_ONE, base)
                 step = state["step"] # t
 
                 # 2. step lr: γ' ← γ / (1 + (t − 1) * η)
-                if not lns_equal(lr_decay._lns, LNS_ZERO):
+                if not lns_equal(lr_decay, LNS_ZERO):
                     denom = lns_add(
                         LNS_ONE,
-                        lns_mul(lr_decay._lns, lns_sub(
+                        lns_mul(lr_decay, lns_sub(
                             step, LNS_ONE, base), base), base)
-                    lr_t = lns_div(lr._lns, denom, base)
+                    lr_t = lns_div(lr, denom, base)
 
                 else:
-                    lr_t = lr._lns
+                    lr_t = lr
 
                 # 3. weight decay: g_t ← g_t + λ*θ_{t-1}
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
 
                 # 4. Accumulator update: s_t ← s_{t-1} + g_t^2
                 s_prev = state["sum"]
@@ -147,7 +138,7 @@ class LNSAdagrad(LNSOptimizer):
 
                 # 5. Parameter update: θ_t ← θ_{t-1} ± γ' * g_t / (sqrt(s_t) + ε)
                 sqrt_s_t = lns_sqrt(s_t, base)
-                denom = lns_add(sqrt_s_t, eps._lns, base)
+                denom = lns_add(sqrt_s_t, eps, base)
                 delta = lns_div(lns_mul(grad, lr_t, base), denom, base)
                 p.data = lns_sub(p.data, delta, base)
 

@@ -19,14 +19,26 @@ from .convolutional_layers import (
     LNSConv2d,
     LNSConv3d,
 )
+from .normalization_layers import (
+    LNSBatchNorm1d,
+    LNSBatchNorm2d,
+    LNSBatchNorm3d,
+)
 from .pooling_layers import (
     LNSAvgPool1d,
     LNSAvgPool2d,
     LNSAvgPool3d,
+    LNSAdaptiveAvgPool1d,
+    LNSAdaptiveAvgPool2d,
+    LNSAdaptiveAvgPool3d,
 )
 from .recurrent_layers import (
     LNSRNN,
     LNSRNNCell,
+    LNSLSTM,
+    LNSLSTMCell,
+    LNSGRU,
+    LNSGRUCell,
 )
 from . import init
 
@@ -48,10 +60,21 @@ __all__ = [
     "LNSConv2d",
     "LNSConv3d",
 
+    "LNSBatchNorm1d",
+    "LNSBatchNorm2d",
+    "LNSBatchNorm3d",
+
     "LNSAvgPool1d",
     "LNSAvgPool2d",
     "LNSAvgPool3d",
+    "LNSAdaptiveAvgPool1d",
+    "LNSAdaptiveAvgPool2d",
+    "LNSAdaptiveAvgPool3d",
 
     "LNSRNN",
     "LNSRNNCell",
+    "LNSLSTM",
+    "LNSLSTMCell",
+    "LNSGRU",
+    "LNSGRUCell",
 ]

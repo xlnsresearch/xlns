@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, align_lnstensor_bases, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
 from xlnstorch.operators import (
     lns_sub,
     lns_equal,
@@ -11,12 +11,6 @@ from xlnstorch.operators import (
     lns_abs,
 )
 from . import LNSOptimizer
-
-def _as_lnstensor(x):
-    if isinstance(x, LNSTensor):
-        return x
-    else:
-        return lnstensor(x)
 
 class LNSAdamax(LNSOptimizer):
     """
@@ -72,14 +66,15 @@ class LNSAdamax(LNSOptimizer):
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
         defaults = dict(
-            lr=_as_lnstensor(lr),
-            beta1=_as_lnstensor(betas[0]),
-            beta2=_as_lnstensor(betas[1]),
-            eps=_as_lnstensor(eps),
-            weight_decay=_as_lnstensor(weight_decay),
+            lr=lr,
+            beta1=betas[0],
+            beta2=betas[1],
+            eps=eps,
+            weight_decay=weight_decay,
             maximize=maximize,
         )
         super().__init__(params, defaults)
+        self.make_lnstensor_params("lr", "beta1", "beta2", "eps", "weight_decay")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -97,11 +92,7 @@ class LNSAdamax(LNSOptimizer):
             maximize = group["maximize"]
             base = group["base"]
 
-            # Align the parameters to the base of the group.
-            lr, beta1, beta2, eps, weight_decay = align_lnstensor_bases(
-                lr, beta1, beta2, eps, weight_decay, base=base)
-
-            one_minus_beta1 = lns_sub(LNS_ONE, beta1._lns, base)
+            one_minus_beta1 = lns_sub(LNS_ONE, beta1, base)
 
             for p in group["params"]:
 
@@ -115,8 +106,8 @@ class LNSAdamax(LNSOptimizer):
                     grad = lns_sub(LNS_ZERO, grad, base) # −∇f
 
                 # 2. weight decay: g ← g + λθ
-                if not lns_equal(weight_decay._lns, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay._lns, base), base)
+                if not lns_equal(weight_decay, LNS_ZERO):
+                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
 
                 state = self.state[p]
                 if len(state) == 0:
@@ -133,23 +124,23 @@ class LNSAdamax(LNSOptimizer):
 
                 # 3. m_t ← β_1*m_{t-1} + (1 − β_1)*g
                 exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1._lns, base),
+                    lns_mul(exp_avg, beta1, base),
                     lns_mul(grad, one_minus_beta1, base),
                     base
                 )
 
                 # 4. u_t ← max(β_2*u_{t-1}, |g_t| + ε)
                 inf_norm = lns_maximum(
-                    lns_mul(inf_norm, beta2._lns, base),
-                    lns_add(lns_abs(grad), eps._lns, base),
+                    lns_mul(inf_norm, beta2, base),
+                    lns_add(lns_abs(grad), eps, base),
                     base
                 )
 
                 # 5. θ ← θ − γ*m / (sqrt(1 - b_1^t) * u)
                 t_tensor = torch.tensor(t, dtype=torch.int64)
-                one_minus_beta1_t = lns_sub(LNS_ONE, lns_pow(beta1._lns, t_tensor, base), base)
+                one_minus_beta1_t = lns_sub(LNS_ONE, lns_pow(beta1, t_tensor, base), base)
                 denom = lns_mul(one_minus_beta1_t, inf_norm, base)
-                step_size = lns_mul(lr._lns, lns_div(exp_avg, denom, base), base)
+                step_size = lns_mul(lr, lns_div(exp_avg, denom, base), base)
                 p.data = lns_sub(p.data, step_size, base)
 
                 state["exp_avg"] = exp_avg

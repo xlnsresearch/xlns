@@ -150,6 +150,8 @@ Arithmetic Operations
     lns_positive
     lns_sum
     lns_prod
+    lns_mean
+    lns_var
     lns_matmul
     lns_transpose
 
@@ -191,6 +193,7 @@ Miscellaneous Operations
     lns_unsqueeze
     lns_stack
     lns_cat
+    lns_chunk
     lns_where
 
 Loss Operations
@@ -219,6 +222,7 @@ functions.
     lns_gaussian_nll_loss
     lns_huber_loss
     lns_smooth_l1_loss
+    lns_cross_entropy
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~
@@ -282,3 +286,7 @@ support ``LNSTensor`` objects.
     lns_avg_pool1d
     lns_avg_pool2d
     lns_avg_pool3d
+    lns_adaptive_avg_pool1d
+    lns_adaptive_avg_pool2d
+    lns_adaptive_avg_pool3d
+    lns_batch_norm
