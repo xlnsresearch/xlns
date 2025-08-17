@@ -99,14 +99,14 @@ class LNSRNN(LNSModule):
                 layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
-                weight_hh = rand(hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+                weight_ih = rand(hidden_size, layer_input_size, f=weight_f, b=weight_b)
+                weight_hh = rand(hidden_size, hidden_size, f=weight_f, b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
                 if bias:
-                    bias_ih = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
-                    bias_hh = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_ih = rand(hidden_size, f=bias_f, b=bias_b)
+                    bias_hh = rand(hidden_size, f=bias_f, b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -252,15 +252,15 @@ class LNSRNNCell(LNSModule):
         self.nonlinearity = nonlinearity
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-        weight_ih = rand(hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
-        weight_hh = rand(hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+        weight_ih = rand(hidden_size, input_size, f=weight_f, b=weight_b)
+        weight_hh = rand(hidden_size, hidden_size, f=weight_f, b=weight_b)
 
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
-            bias_hh = rand(hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_ih = rand(hidden_size, f=bias_f, b=bias_b)
+            bias_hh = rand(hidden_size, f=bias_f, b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
         else:
@@ -314,6 +314,10 @@ class LNSLSTM(LNSModule):
         last layer. Default: 0.0.
     bidirectional : bool, optional
         If True, becomes a bidirectional LSTM. Default: False.
+    proj_size : int, optional
+        If > 0, use LSTM with projections. The hidden state h_t will have size
+        ``proj_size`` instead of ``hidden_size``. Default: 0.
+        Note: must satisfy 0 <= proj_size < hidden_size.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
     weight_b : float, int, torch.Tensor, optional
@@ -329,16 +333,22 @@ class LNSLSTM(LNSModule):
         The input-hidden weights of the kth layer with shape
         :math:`(4 \cdot \text{hidden_size}, \text{layer_input_size})`,
         where layer_input_size is input_size for layer 0, else
-        :math:`\text{num_directions} \cdot \text{hidden_size}`.
+        :math:`\text{num_directions} \cdot (\text{proj_size}
+        \textit{ if} \text{proj_size} > 0 \textit{else} \text{hidden_size})`.
     weight_hh_l{k} : LNSTensor
         The hidden-hidden weights of the kth layer with shape
-        :math:`(4 \cdot \text{hidden_size}, \text{hidden_size})`.
+        :math:`(4 \cdot \text{hidden_size}, (\text{proj_size}
+        \textit{ if} \text{proj_size} > 0 \textit{else} \text{hidden_size})`.
     bias_ih_l{k} : LNSTensor, optional
         The input-hidden bias of the kth layer with shape
-        :math:`(4 \cdot \text{hidden_size})`.
+        :math:`(4 \cdot (\text{proj_size} \textit{ if}
+        \text{proj_size} > 0 \textit{else} \text{hidden_size})`.
     bias_hh_l{k} : LNSTensor, optional
         The hidden-hidden bias of the kth layer with shape
         :math:`(4 \cdot \text{hidden_size})`.
+    weight_hr_l{k} : LNSTensor, optional
+        The projection matrix of the kth layer with shape (proj_size, hidden_size).
+        This is present only if :math:`\text{proj_size} > 0`
 
     Notes
     -----
@@ -360,6 +370,7 @@ class LNSLSTM(LNSModule):
             batch_first: bool = False,
             dropout: float = 0.0,
             bidirectional: bool = False,
+            proj_size: int = 0,
             weight_f: int = None,
             weight_b: float = None,
             bias_f: int = None,
@@ -369,27 +380,35 @@ class LNSLSTM(LNSModule):
 
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.proj_size = proj_size
+        self.hidden_out_size = self.proj_size if self.proj_size > 0 else self.hidden_size
+
         self.num_layers = num_layers
         self.bias = bias
         self.batch_first = batch_first
         self.dropout = dropout
         self.bidirectional = bidirectional
+        self.proj_size = proj_size
         self.num_directions = 2 if bidirectional else 1
 
         for layer in range(num_layers):
             for direction in range(self.num_directions):
                 suffix = f"l{layer}" + ("_reverse" if direction == 1 else "")
-                layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
+                layer_input_size = input_size if layer == 0 else self.hidden_out_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(4 * hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
-                weight_hh = rand(4 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+                weight_ih = rand(4 * hidden_size, layer_input_size, f=weight_f, b=weight_b)
+                weight_hh = rand(4 * hidden_size, self.hidden_out_size, f=weight_f, b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
+                if self.proj_size > 0:
+                    weight_hr = rand(self.proj_size, self.hidden_size, f=weight_f, b=weight_b)
+                    self.register_parameter(f"weight_hr_{suffix}", (weight_hr * 2 - 1) * sqrt_k)
+
                 if bias:
-                    bias_ih = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
-                    bias_hh = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_ih = rand(4 * hidden_size, f=bias_f, b=bias_b)
+                    bias_hh = rand(4 * hidden_size, f=bias_f, b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -402,13 +421,13 @@ class LNSLSTM(LNSModule):
         seq_len, batch_size, _ = x.shape
 
         if hx is None:
-            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_out_size)
             c0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
         else:
             if not (isinstance(hx, tuple) and len(hx) == 2):
                 raise ValueError("hx must be a tuple (h0, c0)")
             h0, c0 = hx
-            assert h0.shape == (self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            assert h0.shape == (self.num_layers * self.num_directions, batch_size, self.hidden_out_size)
             assert c0.shape == (self.num_layers * self.num_directions, batch_size, self.hidden_size)
 
         h_n = []
@@ -422,6 +441,7 @@ class LNSLSTM(LNSModule):
                 suffix = f"l{layer}" + ("_reverse" if direction == 1 else "")
                 w_ih = getattr(self, f"weight_ih_{suffix}")
                 w_hh = getattr(self, f"weight_hh_{suffix}")
+                w_hr = getattr(self, f"weight_hr_{suffix}", None)
                 b_ih = getattr(self, f"bias_ih_{suffix}") if self.bias else None
                 b_hh = getattr(self, f"bias_hh_{suffix}") if self.bias else None
 
@@ -447,7 +467,12 @@ class LNSLSTM(LNSModule):
                     o_t = torch.sigmoid(o_gate)
 
                     c_t = f_t * c_t + i_t * g_t
-                    h_t = o_t * torch.tanh(c_t)
+                    h_hat = o_t * torch.tanh(c_t)
+
+                    if self.proj_size > 0:
+                        h_t = torch.nn.functional.linear(h_hat, w_hr, None)
+                    else:
+                        h_t = h_hat
 
                     outputs.append(h_t)
 
@@ -540,14 +565,14 @@ class LNSLSTMCell(LNSModule):
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
 
-        weight_ih = rand(4 * hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
-        weight_hh = rand(4 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+        weight_ih = rand(4 * hidden_size, input_size, f=weight_f, b=weight_b)
+        weight_hh = rand(4 * hidden_size, hidden_size, f=weight_f, b=weight_b)
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
-            bias_hh = rand(4 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_ih = rand(4 * hidden_size, f=bias_f, b=bias_b)
+            bias_hh = rand(4 * hidden_size, f=bias_f, b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
         else:
@@ -681,14 +706,14 @@ class LNSGRU(LNSModule):
                 layer_input_size = input_size if layer == 0 else hidden_size * self.num_directions
 
                 sqrt_k = 1.0 / (self.hidden_size ** 0.5)
-                weight_ih = rand(3 * hidden_size, layer_input_size, weight_f=weight_f, weight_b=weight_b)
-                weight_hh = rand(3 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+                weight_ih = rand(3 * hidden_size, layer_input_size, f=weight_f, b=weight_b)
+                weight_hh = rand(3 * hidden_size, hidden_size, f=weight_f, b=weight_b)
                 self.register_parameter(f"weight_ih_{suffix}", (weight_ih * 2 - 1) * sqrt_k)
                 self.register_parameter(f"weight_hh_{suffix}", (weight_hh * 2 - 1) * sqrt_k)
 
                 if bias:
-                    bias_ih = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
-                    bias_hh = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+                    bias_ih = rand(3 * hidden_size, f=bias_f, b=bias_b)
+                    bias_hh = rand(3 * hidden_size, f=bias_f, b=bias_b)
                     self.register_parameter(f"bias_ih_{suffix}", (bias_ih * 2 - 1) * sqrt_k)
                     self.register_parameter(f"bias_hh_{suffix}", (bias_hh * 2 - 1) * sqrt_k)
 
@@ -831,14 +856,14 @@ class LNSGRUCell(LNSModule):
 
         sqrt_k = 1.0 / (self.hidden_size ** 0.5)
 
-        weight_ih = rand(3 * hidden_size, input_size, weight_f=weight_f, weight_b=weight_b)
-        weight_hh = rand(3 * hidden_size, hidden_size, weight_f=weight_f, weight_b=weight_b)
+        weight_ih = rand(3 * hidden_size, input_size, f=weight_f, b=weight_b)
+        weight_hh = rand(3 * hidden_size, hidden_size, f=weight_f, b=weight_b)
         self.register_parameter("weight_ih", (weight_ih * 2 - 1) * sqrt_k)
         self.register_parameter("weight_hh", (weight_hh * 2 - 1) * sqrt_k)
 
         if bias:
-            bias_ih = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
-            bias_hh = rand(3 * hidden_size, bias_f=bias_f, bias_b=bias_b)
+            bias_ih = rand(3 * hidden_size, f=bias_f, b=bias_b)
+            bias_hh = rand(3 * hidden_size, f=bias_f, b=bias_b)
             self.register_parameter("bias_ih", (bias_ih * 2 - 1) * sqrt_k)
             self.register_parameter("bias_hh", (bias_hh * 2 - 1) * sqrt_k)
 
