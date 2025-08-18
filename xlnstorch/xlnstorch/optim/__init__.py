@@ -14,6 +14,7 @@ from .signmul import LNSSignMul
 from .mul import LNSMul
 from .madam import LNSMadam
 from .hybridmul import LNSHybridMul
+from . import lr_scheduler
 
 __all__ = [
     "LNSOptimizer",
