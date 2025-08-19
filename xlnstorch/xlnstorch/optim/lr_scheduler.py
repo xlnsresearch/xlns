@@ -347,3 +347,49 @@ class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
                 self.total_iters_lns, self.lns_lr_bases
             )
         ]
+
+class LNSExponentialLR(torch.optim.lr_scheduler.ExponentialLR):
+    """
+    An LNS learning rate scheduler that decays the learning rate of each parameter group
+    by gamma each epoch.
+
+    See also: :class:`torch.optim.lr_scheduler.ExponentialLR`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    gamma : float | LNSTensor
+        Multiplicative factor of learning rate decay.
+    last_epoch : int, optional
+        The index of last epoch. Default: -1.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            gamma: float | LNSTensor,
+            last_epoch: int = -1
+        ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
+        self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, gamma, last_epoch)
+
+    @override
+    def get_lr(self) -> List[torch.Tensor]:
+        torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
+
+        if self.last_epoch == 0:
+            return [group["lr"] for group in self.optimizer.param_groups]
+
+        return [
+            lns_mul(group["lr"], gamma, base)
+            for group, gamma, base in zip(self.optimizer.param_groups, self.gammas, self.lns_lr_bases)
+        ]
+
+    @override
+    def _get_closed_form_lr(self) -> List[torch.Tensor]:
+        return [
+            lns_mul(base_lr, lns_pow(gamma, torch.tensor(self.last_epoch), base), base)
+            for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
+        ]

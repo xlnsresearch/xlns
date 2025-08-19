@@ -36,3 +36,4 @@ and support both float and LNSTensor learning rates. For example:
     LNSMultiStepLR
     LNSConstantLR
     LNSLinearLR
+    LNSExponentialLR
