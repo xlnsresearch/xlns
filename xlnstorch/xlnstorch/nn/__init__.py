@@ -70,6 +70,7 @@ __all__ = [
     "LNSAdaptiveAvgPool1d",
     "LNSAdaptiveAvgPool2d",
     "LNSAdaptiveAvgPool3d",
+    "LNSMaxPool2d",
 
     "LNSRNN",
     "LNSRNNCell",

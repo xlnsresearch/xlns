@@ -59,6 +59,7 @@ Pooling Layers                     Note
 :class:`LNSAdaptiveAvgPool1d`      No parameters
 :class:`LNSAdaptiveAvgPool2d`      No parameters
 :class:`LNSAdaptiveAvgPool3d`      No parameters
+:class:`LNSMaxPool2d`              No parameters
 ===============================    =====================
 
 ===============================    =====================
