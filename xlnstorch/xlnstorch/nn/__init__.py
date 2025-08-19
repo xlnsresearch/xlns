@@ -31,6 +31,7 @@ from .pooling_layers import (
     LNSAdaptiveAvgPool1d,
     LNSAdaptiveAvgPool2d,
     LNSAdaptiveAvgPool3d,
+    LNSMaxPool2d,
 )
 from .recurrent_layers import (
     LNSRNN,
