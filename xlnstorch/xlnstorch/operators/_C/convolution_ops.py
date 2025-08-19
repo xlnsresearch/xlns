@@ -108,7 +108,7 @@ class LNSConv2dCPPFunction(LNSFunction):
 
         return (grads[0].to(torch.float64), grads[1].to(torch.float64),
                 None, None, None, None,
-                None)
+                None, None)
 
 @implements(torch.nn.functional.conv2d, LNSConv2dCPPFunction.forward, "default_cpp", default=True)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
@@ -175,7 +175,7 @@ class LNSConv3dCPPFunction(LNSFunction):
 
         return (grads[0].to(torch.float64), grads[1].to(torch.float64),
                 None, None, None, None,
-                None)
+                None, None)
 
 @implements(torch.nn.functional.conv3d, LNSConv3dCPPFunction.forward, "default_cpp", default=True)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
