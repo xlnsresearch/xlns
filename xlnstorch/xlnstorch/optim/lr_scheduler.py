@@ -40,7 +40,7 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
     ----------
     optimizer : LNSOptimizer
         Wrapped optimizer.
-    lr_scheduler : Callable[[int], float | LNSTensor] or List[Callable[[int], float | LNSTensor]]
+    lr_lambda : Callable[[int], float | LNSTensor] or List[Callable[[int], float | LNSTensor]]
         A function or a list of functions which computes a multiplicative factor given an integer parameter
         `epoch`, which is the index of the current epoch.
     last_epoch : int, optional
@@ -50,10 +50,10 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            lr_scheduler: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
+            lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
             last_epoch: int = -1,
         ):
-        super().__init__(optimizer, lr_scheduler, last_epoch)
+        super().__init__(optimizer, lr_lambda, last_epoch)
 
     @override
     def get_lr(self) -> List[torch.Tensor]:
