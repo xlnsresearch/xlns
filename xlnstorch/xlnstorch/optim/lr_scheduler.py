@@ -63,3 +63,41 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
             lns_mul(base_lr, _lns(lmbda(self.last_epoch), base), base)
             for lmbda, base_lr, base in zip(self.lr_lambdas, self.base_lrs, self.lns_lr_bases)
         ]
+
+class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR, LNSLRScheduler):
+    """
+    An LNS learning rate scheduler that sets the learning rate of each parameter group
+    to the previous learning rate multipled by a given multiplicative factor.
+
+    See also: :class:`torch.optim.lr_scheduler.MultiplicativeLR`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    lr_lambda : Callable[[int], float | LNSTensor] or List[Callable[[int], float | LNSTensor]]
+        A function or a list of functions which computes a multiplicative factor given an integer parameter
+        `epoch`, which is the index of the current epoch.
+    last_epoch : int, optional
+        The index of last epoch. Default: -1.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
+            last_epoch: int = -1,
+        ):
+        super().__init__(optimizer, lr_lambda, last_epoch)
+
+    @override
+    def get_lr(self) -> List[torch.Tensor]:
+        torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
+
+        if self.last_epoch > 0:
+            return [
+                lns_mul(group["lr"], _lns(lmbda(self.last_epoch), base), base)
+                for lmbda, group, base in zip(self.lr_lambdas, self.optimizer.param_groups, self.lns_lr_bases)
+            ]
+
+        return [group["lr"] for group in self.optimizer.param_groups]
