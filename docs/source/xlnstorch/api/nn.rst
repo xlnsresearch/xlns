@@ -120,6 +120,7 @@ to PyTorch's method of registering parameters.
     LNSAdaptiveAvgPool1d
     LNSAdaptiveAvgPool2d
     LNSAdaptiveAvgPool3d
+    LNSMaxPool2d
 
     LNSRNN
     LNSRNNCell
