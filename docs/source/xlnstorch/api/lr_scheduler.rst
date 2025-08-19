@@ -24,9 +24,7 @@ and support both float and LNSTensor learning rates. For example:
         validate(...)
         scheduler.step()
 
-.. autoclass:: LNSLRScheduler
-    :members:
-    :show-inheritance:
+.. autofunction:: xlnstorch.optim.lr_scheduler.get_lr_bases
 
 .. autosummary::
     :toctree: generated/optim/lr_scheduler
@@ -36,3 +34,4 @@ and support both float and LNSTensor learning rates. For example:
     LNSMultiplicativeLR
     LNSStepLR
     LNSMultiStepLR
+    LNSConstantLR

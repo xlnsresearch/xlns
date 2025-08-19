@@ -7,6 +7,7 @@ from . import LNSOptimizer
 from xlnstorch.operators import (
     lns_mul,
     lns_pow,
+    lns_div,
 )
 
 def _lns(value: float | LNSTensor, base) -> LNSTensor:
@@ -14,24 +15,32 @@ def _lns(value: float | LNSTensor, base) -> LNSTensor:
         return lnstensor(value, b=base)._lns
     return LNSTensor.get_internal_tensor(value, base)
 
-class LNSLRScheduler(torch.optim.lr_scheduler.LRScheduler):
-    """Base class for all LNS learning rate schedulers."""
+def get_lr_bases(optimizer: LNSOptimizer) -> List[torch.Tensor]:
+    """
+    Returns a list of base values for the learning rates of each
+    parameter group in the optimizer.
 
-    def __init__(
-            self,
-            optimizer: LNSOptimizer,
-            last_epoch: int = -1,
-        ):
-        if not isinstance(optimizer, LNSOptimizer):
-            raise TypeError(f"{type(optimizer).__name__} is not an LNSOptimizer")
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        The optimizer from which to extract the base learning rates.
 
-        self.lns_lr_bases: list[torch.Tensor] = [
-            group["base"] for group in optimizer.param_groups
-        ]
+    Returns
+    -------
+    List[torch.Tensor]
+        A list of base learning rates for each parameter group.
 
-        super().__init__(optimizer, last_epoch)
+    Raises
+    ------
+    TypeError
+        If the provided optimizer is not an instance of `LNSOptimizer`.
+    """
+    if not isinstance(optimizer, LNSOptimizer):
+        raise TypeError(f"{type(optimizer).__name__} is not an LNSOptimizer")
 
-class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
+    return [group["base"] for group in optimizer.param_groups]
+
+class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR):
     """
     An LNS learning rate scheduler that sets the learning rate of each parameter group
     to the initial learning rate multipled by a given function of the epoch.
@@ -55,6 +64,7 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
             lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
             last_epoch: int = -1,
         ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
         super().__init__(optimizer, lr_lambda, last_epoch)
 
     @override
@@ -66,7 +76,7 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR, LNSLRScheduler):
             for lmbda, base_lr, base in zip(self.lr_lambdas, self.base_lrs, self.lns_lr_bases)
         ]
 
-class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR, LNSLRScheduler):
+class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR):
     """
     An LNS learning rate scheduler that sets the learning rate of each parameter group
     to the previous learning rate multipled by a given multiplicative factor.
@@ -90,6 +100,7 @@ class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR, LNSLRSchedu
             lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
             last_epoch: int = -1,
         ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
         super().__init__(optimizer, lr_lambda, last_epoch)
 
     @override
@@ -104,7 +115,7 @@ class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR, LNSLRSchedu
 
         return [group["lr"] for group in self.optimizer.param_groups]
 
-class LNSStepLR(torch.optim.lr_scheduler.StepLR, LNSLRScheduler):
+class LNSStepLR(torch.optim.lr_scheduler.StepLR):
     """
     An LNS learning rate scheduler that decays the learning rate of each parameter
     group by a factor of `gamma` every `step_size` epochs.
@@ -130,8 +141,9 @@ class LNSStepLR(torch.optim.lr_scheduler.StepLR, LNSLRScheduler):
             gamma: float | LNSTensor = 0.1,
             last_epoch: int = -1,
         ):
-        super().__init__(optimizer, step_size, gamma, last_epoch)
+        self.lns_lr_bases = get_lr_bases(optimizer)
         self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, step_size, gamma, last_epoch)
 
     @override
     def get_lr(self) -> List[torch.Tensor]:
@@ -151,7 +163,7 @@ class LNSStepLR(torch.optim.lr_scheduler.StepLR, LNSLRScheduler):
             for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
         ]
 
-class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR, LNSLRScheduler):
+class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR):
     """
     An LNS learning rate scheduler that decays the learning rate of each parameter
     group by a factor of `gamma` at specified epochs.
@@ -177,8 +189,9 @@ class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR, LNSLRScheduler):
             gamma: float | LNSTensor = 0.1,
             last_epoch: int = -1,
         ):
-        super().__init__(optimizer, milestones, gamma, last_epoch)
+        self.lns_lr_bases = get_lr_bases(optimizer)
         self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, milestones, gamma, last_epoch)
 
     @override
     def get_lr(self) -> List[torch.Tensor]:
@@ -197,4 +210,53 @@ class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR, LNSLRScheduler):
         return [
             lns_mul(base_lr, lns_pow(gamma, torch.tensor(bisect_right(milestones, self.last_epoch)), base), base)
             for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
+        ]
+
+class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
+    """
+    An LNS learning rate scheduler that sets the learning rate of each parameter group
+    to a constant value until a pre-determined number of epochs is reached.
+
+    See also: :class:`torch.optim.lr_scheduler.ConstantLR`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    factor : float | LNSTensor
+        Multiplicative factor of the learning rate.
+    total_iters : int, optional
+        The number of iterations for which the learning rate will be constant.
+        Default: 0.
+    last_epoch : int, optional
+        The index of last epoch. Default: -1.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            factor: float | LNSTensor = 1.0 / 3,
+            total_iters: int = 0,
+            last_epoch: int = -1,
+        ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
+        self.factors = [_lns(factor, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, factor, total_iters, last_epoch)
+
+    @override
+    def get_lr(self) -> List[torch.Tensor]:
+        torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
+
+        if self.last_epoch == 0:
+            return [
+                lns_mul(base_lr, factor, base)
+                for base_lr, factor, base in zip(self.base_lrs, self.factors, self.lns_lr_bases)
+            ]
+
+        if self.last_epoch != self.total_iters:
+            return [group["lr"] for group in self.optimizer.param_groups]
+
+        return [
+            lns_div(group["lr"], factor, base)
+            for group, factor, base in zip(self.optimizer.param_groups, self.factors, self.lns_lr_bases)
         ]
