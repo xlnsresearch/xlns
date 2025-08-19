@@ -14,6 +14,8 @@ from . import (
     lns_sub,
     lns_neg,
     lns_sqrt,
+    lns_max,
+    lns_min,
 )
 
 class LNSLinearFunction(LNSFunction):
@@ -1819,3 +1821,207 @@ def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=Fa
         running_var._inplace_copy(running_var_cpy._lns)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSMaxPool2dFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+        if stride is None:
+            stride = kernel_size
+
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride)
+        if isinstance(padding, int): padding = (padding, padding)
+        if isinstance(dilation, int): dilation = (dilation, dilation)
+        kernel_h, kernel_w = kernel_size
+        stride_h, stride_w = stride
+        pad_h, pad_w = padding
+        dil_h, dil_w = dilation
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        x_packed = x.to(torch.int64)
+        N, C, H_in, W_in = x_packed.shape
+
+        if pad_h > 0 or pad_w > 0:
+            x_min = lns_min(x_packed, base)
+            fill = lns_sub(x_min, LNS_ONE, base).item()
+            x_padded = torch.nn.functional.pad(x_packed, (pad_w, pad_w, pad_h, pad_h), value=fill)
+        else:
+            x_padded = x_packed
+
+        eff_kh = (kernel_h - 1) * dil_h + 1
+        eff_kw = (kernel_w - 1) * dil_w + 1
+
+        if ceil_mode:
+            H_out = int(math.ceil((H_in + 2 * pad_h - eff_kh) / stride_h)) + 1
+            W_out = int(math.ceil((W_in + 2 * pad_w - eff_kw) / stride_w)) + 1
+        else:
+            H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
+            W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
+
+        out_vals = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns
+        if return_indices:
+            out_idx = torch.empty((N, C, H_out, W_out), dtype=torch.int64, device=x.device)
+
+        padded_H = x_padded.size(-2)
+        padded_W = x_padded.size(-1)
+
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    h_start = h_out * stride_h
+                    h_end = h_start + eff_kh
+
+                    if h_start >= padded_H:
+                        continue
+
+                    for w_out in range(W_out):
+                        w_start = w_out * stride_w
+                        w_end = w_start + eff_kw
+
+                        if w_start >= padded_W:
+                            continue
+
+                        h_end_eff = min(h_end, padded_H)
+                        w_end_eff = min(w_end, padded_W)
+
+                        window = x_padded[n, c, h_start:h_end_eff:dil_h, w_start:w_end_eff:dil_w]
+                        window_flat = window.reshape(-1)
+
+                         # pass dim to get indices
+                        mx_val, mx_idx = lns_max(window_flat, base, dim=0)
+                        out_vals[n, c, h_out, w_out] = mx_val
+
+                        if return_indices:
+                            mx_idx_int = int(mx_idx)
+                            i = mx_idx_int // kernel_w
+                            j = mx_idx_int % kernel_w
+                            h_in_idx = (h_start + i * dil_h) - pad_h
+                            w_in_idx = (w_start + j * dil_w) - pad_w
+                            out_idx[n, c, h_out, w_out] = h_in_idx * W_in + w_in_idx
+
+        if squeeze_batch:
+            out_vals = out_vals.squeeze(0)
+            if return_indices:
+                out_idx = out_idx.squeeze(0)
+
+        if return_indices:
+            return out_vals.to(torch.float64), out_idx
+        else:
+            return out_vals.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices = inputs
+
+        if stride is None:
+            stride = kernel_size
+
+        if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int): stride = (stride, stride)
+        if isinstance(padding, int): padding = (padding, padding)
+        if isinstance(dilation, int): dilation = (dilation, dilation)
+
+        ctx.save_for_backward(x, base)
+        ctx.kernel_size = kernel_size
+        ctx.stride = stride
+        ctx.padding = padding
+        ctx.dilation = dilation
+        ctx.ceil_mode = ceil_mode
+        ctx.return_indices = return_indices
+
+    @staticmethod
+    def backward(ctx, grad_output, grad_out_indices=None):
+        x, base = ctx.saved_tensors
+
+        kernel_h, kernel_w = ctx.kernel_size
+        stride_h, stride_w = ctx.stride
+        pad_h, pad_w = ctx.padding
+        dil_h, dil_w = ctx.dilation
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+            grad_output = grad_output.unsqueeze(0)
+            squeeze_batch = True
+        else:
+            squeeze_batch = False
+
+        N, C, H_in, W_in = x.shape
+        x_packed = x.to(torch.int64)
+
+        if pad_h > 0 or pad_w > 0:
+            x_min = lns_min(x, base)
+            fill  = lns_sub(x_min, LNS_ONE, base).item()
+            x_padded = torch.nn.functional.pad(x_packed, (pad_w, pad_w, pad_h, pad_h), value=fill)
+
+        else:
+            x_padded = x_packed
+
+        padded_H, padded_W = x_padded.shape[-2:]
+        eff_kh = (kernel_h - 1) * dil_h + 1
+        eff_kw = (kernel_w - 1) * dil_w + 1
+
+        if ctx.ceil_mode:
+            H_out = int(math.ceil((H_in + 2 * pad_h - eff_kh) / stride_h)) + 1
+            W_out = int(math.ceil((W_in + 2 * pad_w - eff_kw) / stride_w)) + 1
+        else:
+            H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
+            W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
+
+        grad_padded = zeros_like(x_padded, b=base)._lns
+        for n in range(N):
+            for c in range(C):
+                for h_out in range(H_out):
+                    h_start = h_out * stride_h
+                    h_end   = h_start + eff_kh
+
+                    if h_start >= padded_H:
+                        continue
+
+                    for w_out in range(W_out):
+                        w_start = w_out * stride_w
+                        w_end   = w_start + eff_kw
+
+                        if w_start >= padded_W:
+                            continue
+
+                        h_end_eff = min(h_end, padded_H)
+                        w_end_eff = min(w_end, padded_W)
+
+                        window = x_padded[n, c, h_start:h_end_eff:dil_h, w_start:w_end_eff:dil_w]
+                        window_flat = window.reshape(-1)
+
+                        _, mx_idx = lns_max(window_flat, base, dim=0)
+
+                        mx_idx = int(mx_idx)
+                        i = mx_idx // kernel_w
+                        j = mx_idx %  kernel_w
+
+                        h_in_idx = h_start + i * dil_h
+                        w_in_idx = w_start + j * dil_w
+
+                        grad_padded[n, c, h_in_idx, w_in_idx] = lns_add(grad_padded[n, c, h_in_idx, w_in_idx],
+                                                                        grad_output[n, c, h_out, w_out],
+                                                                        base)
+
+        if pad_h > 0 or pad_w > 0:
+            grad_padded = grad_padded[:, :, pad_h:pad_h + H_in, pad_w:pad_w + W_in]
+
+        grad_x = grad_padded.squeeze(0) if squeeze_batch else grad_padded
+        return grad_x, None, None, None, None, None, None, None
+
+@implements(torch.nn.functional.max_pool2d_with_indices, LNSMaxPool2dFunction.forward, "default", default=True)
+@implements(torch.nn.functional.max_pool2d, LNSMaxPool2dFunction.forward, "default", default=True)
+def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+
+    result = LNSMaxPool2dFunction.apply(x, kernel_size, x.base, stride, padding, dilation, ceil_mode, return_indices)
+
+    if return_indices:
+        return lnstensor(result[0], from_lns=True, b=x.base), result[1]
+    else:
+        return lnstensor(result, from_lns=True, b=x.base)
