@@ -2,12 +2,15 @@ from typing import Callable, List
 from typing_extensions import override
 from bisect import bisect_right
 import torch
-from xlnstorch import LNSTensor, lnstensor
+from xlnstorch import LNSTensor, lnstensor, LNS_ONE
 from . import LNSOptimizer
 from xlnstorch.operators import (
     lns_mul,
     lns_pow,
     lns_div,
+    lns_add,
+    lns_sub,
+    lns_minimum,
 )
 
 def _lns(value: float | LNSTensor, base) -> LNSTensor:
@@ -259,4 +262,88 @@ class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
         return [
             lns_div(group["lr"], factor, base)
             for group, factor, base in zip(self.optimizer.param_groups, self.factors, self.lns_lr_bases)
+        ]
+
+class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
+    """
+    An LNS learning rate scheduler that sets the learning rate of each parameter group
+    to a linearly decaying value.
+
+    See also: :class:`torch.optim.lr_scheduler.LinearLR`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    start_factor : float | LNSTensor
+        The initial factor for the learning rate.
+    end_factor : float | LNSTensor
+        The final factor for the learning rate.
+    total_iters : int, optional
+        The number of iterations over which the learning rate will decay.
+        Default: 0.
+    last_epoch : int, optional
+        The index of last epoch. Default: -1.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            start_factor: float | LNSTensor = 1.0 / 3,
+            end_factor: float | LNSTensor = 1.0,
+            total_iters: int = 0,
+            last_epoch: int = -1,
+        ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
+        self.start_factor_lns = [_lns(start_factor, base) for base in self.lns_lr_bases]
+        self.end_factor_lns = [_lns(end_factor, base) for base in self.lns_lr_bases]
+        self.total_iters_lns = [_lns(total_iters, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, start_factor, end_factor, total_iters, last_epoch)
+
+    @override
+    def get_lr(self) -> List[torch.Tensor]:
+        torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
+
+        if self.last_epoch == 0:
+            return [
+                lns_mul(group["lr"], start_factor, base)
+                for group, start_factor, base in zip(self.optimizer.param_groups, self.start_factor_lns, self.lns_lr_bases)
+            ]
+
+        if self.last_epoch > self.total_iters:
+            return [group["lr"] for group in self.optimizer.param_groups]
+
+        return [
+            lns_mul(group["lr"],
+                    lns_add(LNS_ONE,
+                            lns_div(
+                                lns_sub(end_factor, start_factor, base),
+                                lns_add(
+                                    lns_mul(total_iters, start_factor, base),
+                                    lns_mul(
+                                        lns_sub(LNSTensor.get_internal_tensor(self.last_epoch, base),
+                                                LNS_ONE, base),
+                                        lns_sub(end_factor, start_factor, base),
+                                        base), base), base), base), base)
+            for group, start_factor, end_factor, total_iters, base in zip(
+                self.optimizer.param_groups, self.start_factor_lns, self.end_factor_lns,
+                self.total_iters_lns, self.lns_lr_bases)
+        ]
+
+    def _get_closed_form_lr(self) -> List[torch.Tensor]:
+        return [
+            lns_mul(
+                base_lr,
+                lns_add(
+                    start_factor,
+                    lns_div(
+                        lns_mul(
+                            lns_sub(end_factor, start_factor, base),
+                            lns_minimum(
+                                total_iters, LNSTensor.get_internal_tensor(self.last_epoch, base), base),
+                            base), total_iters, base), base), base)
+            for base_lr, start_factor, end_factor, total_iters, base in zip(
+                self.base_lrs, self.start_factor_lns, self.end_factor_lns,
+                self.total_iters_lns, self.lns_lr_bases
+            )
         ]
