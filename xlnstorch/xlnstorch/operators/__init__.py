@@ -113,6 +113,7 @@ from .internal_lns_ops import (
     lns_adaptive_avg_pool2d,
     lns_adaptive_avg_pool3d,
     lns_batch_norm,
+    lns_max_pool1d,
     lns_max_pool2d,
 )
 
@@ -315,5 +316,6 @@ __all__ = [
     "lns_adaptive_avg_pool2d",
     "lns_adaptive_avg_pool3d",
     "lns_batch_norm",
+    "lns_max_pool1d",
     "lns_max_pool2d",
 ]
