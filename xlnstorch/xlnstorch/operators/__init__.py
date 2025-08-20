@@ -169,8 +169,7 @@ from . import activation_ops
 from . import layer_ops
 from . import misc_ops
 
-if CSRC_AVAILABLE:
-    from . import _C
+from . import _C
 from . import implementations
 
 def toggle_cpp_implementations(use_cpp: bool) -> None:

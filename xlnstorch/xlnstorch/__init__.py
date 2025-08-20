@@ -14,7 +14,7 @@ LNS_ONE = torch.tensor(0, dtype=torch.float64)
 LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
 
 try:
-    from . import csrc
+    from . import _csrc
     CSRC_AVAILABLE = True
 except ImportError as e:
     logging.info("xlnstorch c++ extension not found. Reverting to pure Python implementation.")

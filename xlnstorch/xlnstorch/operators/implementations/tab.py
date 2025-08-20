@@ -7,6 +7,7 @@ import os
 import warnings
 import torch
 import numpy as np
+import xlnstorch.csrc
 from xlnstorch import implements_sbdb, CSRC_AVAILABLE
 from xlnstorch.operators.addition_ops import sbdb_ideal
 from xlnstorch.tensor_utils import get_base_from_precision
@@ -44,7 +45,6 @@ def get_table(filestem: str, f=None, b=None):
         initialized = True
 
         if CSRC_AVAILABLE:
-            import xlnstorch.csrc
             xlnstorch.csrc.get_table(tab_ez, tab_sbdb, tab_base)
 
     elif tab_base >= get_base_from_precision(MAX_PREC):
@@ -60,7 +60,6 @@ def get_table(filestem: str, f=None, b=None):
         initialized = True
 
         if CSRC_AVAILABLE:
-            import xlnstorch.csrc
             xlnstorch.csrc.get_table(tab_ez, tab_sbdb, tab_base)
 
     else:

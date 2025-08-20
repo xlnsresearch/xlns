@@ -2,6 +2,7 @@ import contextlib
 from typing import Generator, Callable
 import torch
 from xlnstorch import CSRC_AVAILABLE
+import xlnstorch.csrc
 from xlnstorch.tensor_utils import get_precision_from_base
 
 # SBDB_FUNCS is a dictionary that contains different implementations
@@ -31,7 +32,6 @@ def set_default_sbdb_implementation(impl_key: str) -> None:
     DEFAULT_SBDB_FUNC = impl_key
 
     if CSRC_AVAILABLE:
-        import xlnstorch.csrc
         xlnstorch.csrc.set_default_sbdb_implementation(impl_key)
 
 @contextlib.contextmanager

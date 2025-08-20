@@ -12,6 +12,7 @@ import xlns as xl
 # Import constants and base classes that don't cause circular imports
 from xlnstorch import LNS_ZERO, CSRC_AVAILABLE
 from xlnstorch.autograd import LNSFunction
+import xlnstorch.csrc
 
 # Precomputed table of bases from precisions
 # base = 2^(2^(-f)) for f in [1, 40]
@@ -142,7 +143,6 @@ def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tens
     return old_tensor
 
 if CSRC_AVAILABLE:
-    import xlnstorch.csrc
     float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
     float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
     change_base_forward = xlnstorch.csrc.change_base_forward
