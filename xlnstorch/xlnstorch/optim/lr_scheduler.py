@@ -537,3 +537,57 @@ class LNSReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
                 self.min_lrs[i], self.lns_lr_bases[i])
             if lns_gt(lns_sub(old_lr, new_lr, base), self.eps_lns[i]):
                 param_group["lr"] = new_lr
+
+class LNSChainedScheduler(torch.optim.lr_scheduler.ChainedScheduler):
+    """
+    A scheduler that chains multiple schedulers together.
+
+    Note that this scheduler is a subclass of torch's `ChainedScheduler`,
+    and is implemented for completeness. You can use the torch version
+    directly with LNS optimizers.
+
+    See also: :class:`torch.optim.lr_scheduler.ChainedScheduler`
+
+    Parameters
+    ----------
+    schedulers : List[torch.optim.lr_scheduler.LRScheduler]
+        List of schedulers to chain.
+    """
+
+    def __init__(
+            self,
+            schedulers: List[torch.optim.lr_scheduler.LRScheduler],
+            optimizer: LNSOptimizer,
+        ):
+        super().__init__(schedulers, optimizer)
+
+class LNSSequentialLR(torch.optim.lr_scheduler.SequentialLR):
+    """
+    A scheduler that applies a sequence of schedulers in order.
+
+    Note that this scheduler is a subclass of torch's `SequentialLR`,
+    and is implemented for completeness. You can use the torch version
+    directly with LNS optimizers.
+
+    See also: :class:`torch.optim.lr_scheduler.SequentialLR`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    schedulers : List[torch.optim.lr_scheduler.LRScheduler]
+        List of schedulers to apply sequentially.
+    milestones : List[int]
+        List of epochs at which to switch to the next scheduler.
+    last_epoch : int, optional
+        The index of last epoch. Default: -1.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            schedulers: List[torch.optim.lr_scheduler.LRScheduler],
+            milestones: List[int],
+            last_epoch: int = -1,
+        ):
+        super().__init__(optimizer, schedulers, milestones, last_epoch)

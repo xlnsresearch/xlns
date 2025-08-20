@@ -39,3 +39,5 @@ and support both float and LNSTensor learning rates. For example:
     LNSExponentialLR
     LNSPolynomialLR
     LNSReduceLROnPlateau
+    LNSChainedScheduler
+    LNSSequentialLR
