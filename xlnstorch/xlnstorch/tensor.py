@@ -825,6 +825,11 @@ class LNSTensor:
         lnstensor_value = lnstensor(value, b=self.base)
         torch.index_put_(self, tensor_utils.make_index_tensors(index, self.shape), lnstensor_value)
 
+    def __float__(self):
+        if self.numel() != 1:
+            raise RuntimeError("Cannot convert LNSTensor with more than one element to float.")
+        return self.value.item()
+
     def add(self, other, *, alpha=1):
         return torch.add(self, other, alpha=alpha)
 

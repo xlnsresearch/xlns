@@ -11,6 +11,8 @@ from xlnstorch.operators import (
     lns_add,
     lns_sub,
     lns_minimum,
+    lns_maximum,
+    lns_gt,
 )
 
 def _lns(value: float | LNSTensor, base) -> LNSTensor:
@@ -460,3 +462,78 @@ class LNSPolynomialLR(torch.optim.lr_scheduler.PolynomialLR):
                             ), base), torch.tensor(self.power), base), base)
             for base_lr, total_iters, base in zip(self.base_lrs, self.total_iters_lns, self.lns_lr_bases)
         ]
+
+class LNSReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
+    """
+    An LNS learning rate scheduler that reduces the learning rate of each parameter group
+    when a metric has stopped improving.
+
+    See also: :class:`torch.optim.lr_scheduler.ReduceLROnPlateau`
+
+    Parameters
+    ----------
+    optimizer : LNSOptimizer
+        Wrapped optimizer.
+    mode : str, optional
+        One of `min`, `max`. In `min` mode, the learning rate will be reduced when the quantity
+        monitored has stopped decreasing; in `max` mode, it will be reduced when the quantity
+        monitored has stopped increasing. Default: `min`.
+    factor : float | LNSTensor, optional
+        Factor by which the learning rate will be reduced. new_lr = lr * factor. Default: 0.1.
+    patience : int, optional
+        Number of epochs with no improvement after which learning rate will be reduced.
+        Default: 10.
+    threshold : float | LNSTensor, optional
+        Threshold for measuring the new optimum, to only focus on significant changes.
+        Default: 1e-4.
+    threshold_mode : str, optional
+        One of `rel`, `abs`. In `rel` mode, the threshold is a relative change;
+        in `abs` mode, it is an absolute change. Default: `rel`.
+    cooldown : int, optional
+        Number of epochs to wait before resuming normal operation after lr has been reduced.
+        Default: 0.
+    min_lr : float | LNSTensor | List[float] | List[LNSTensor], optional
+        A scalar or a list of scalars defining the lower bound on the learning rate
+        of each parameter group. Default: 0.0.
+    eps : float | LNSTensor, optional
+        Minimal decay applied to lr. If the difference between new and old lr is smaller than eps,
+        the update is ignored. Default: 1e-8.
+    """
+
+    def __init__(
+            self,
+            optimizer: LNSOptimizer,
+            mode: str = "min",
+            factor: float | LNSTensor = 0.1,
+            patience: int = 10,
+            threshold: float | LNSTensor = 1e-4,
+            threshold_mode: str = "rel",
+            cooldown: int = 0,
+            min_lr: float | LNSTensor | List[float] | List[LNSTensor] = 0.0,
+            eps: float | LNSTensor = 1e-8,
+        ):
+        self.lns_lr_bases = get_lr_bases(optimizer)
+        self.factor_lns = [_lns(factor, base) for base in self.lns_lr_bases]
+        self.eps_lns = [_lns(eps, base) for base in self.lns_lr_bases]
+        super().__init__(optimizer, mode, factor, patience, threshold, threshold_mode, cooldown, min_lr, eps)
+
+        if isinstance(min_lr, (list, tuple)):
+            self.min_lrs = [_lns(lr, base) for lr, base in zip(min_lr, self.lns_lr_bases)]
+        else:
+            self.min_lrs = [_lns(min_lr, base) for base in self.lns_lr_bases]
+
+    def _reduce_lr(self, epoch):
+        if len(self.optimizer.param_groups) != len(self.min_lrs):
+            if self.default_min_lr is None:
+                raise RuntimeError("The number of param groups in the optimizer must match the number of min_lrs.")
+            else:
+                self.min_lrs = [_lns(self.default_min_lr, base) for base in self.lns_lr_bases]
+
+        for i, param_group in enumerate(self.optimizer.param_groups):
+            base = param_group["base"]
+            old_lr = param_group["lr"]
+            new_lr = lns_maximum(
+                lns_mul(old_lr, self.factor_lns[i], base),
+                self.min_lrs[i], self.lns_lr_bases[i])
+            if lns_gt(lns_sub(old_lr, new_lr, base), self.eps_lns[i]):
+                param_group["lr"] = new_lr

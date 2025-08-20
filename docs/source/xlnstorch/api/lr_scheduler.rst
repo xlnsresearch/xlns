@@ -38,3 +38,4 @@ and support both float and LNSTensor learning rates. For example:
     LNSLinearLR
     LNSExponentialLR
     LNSPolynomialLR
+    LNSReduceLROnPlateau
