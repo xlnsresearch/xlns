@@ -1,3 +1,5 @@
+.. currentmodule:: xlnstorch.csrc
+
 C++ Extensions
 ==============
 
@@ -13,3 +15,27 @@ You can verify if the C++ extensions are available by checking the
 and use the ``xlnstorch.csrc`` module. To switch between the C++ and Python
 implementations, you can call the `xlnstorch.operators.toggle_cpp_implementations()`
 function.
+
+The following functions are available in the `xlnstorch.csrc` module. They should
+not be called directly by users, but if necessary, the following docs are provided
+for reference:
+
+.. autosummary::
+    :toctree: generated/csrc
+    
+    float_to_lns_forward
+    float_to_lns_backward
+    change_base_forward
+    change_base_backward
+    set_default_sbdb_implementation
+    get_table
+    add_forward
+    sum_forward
+    matmul_forward
+    matmul_backward
+    conv1d_forward
+    conv1d_backward
+    conv2d_forward
+    conv2d_backward
+    conv3d_forward
+    conv3d_backward
