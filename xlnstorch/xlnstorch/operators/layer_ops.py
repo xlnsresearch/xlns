@@ -2070,10 +2070,12 @@ class LNSMaxPool2dFunction(LNSFunction):
                         mx_val, mx_idx = lns_max(window_flat, base, dim=0)
                         out_vals[n, c, h_out, w_out] = mx_val
 
+                        len_w = (w_end_eff - w_start + dil_w - 1) // dil_w
+
                         if return_indices:
                             mx_idx_int = int(mx_idx)
-                            i = mx_idx_int // kernel_w
-                            j = mx_idx_int % kernel_w
+                            i = mx_idx_int // len_w
+                            j = mx_idx_int % len_w
                             h_in_idx = (h_start + i * dil_h) - pad_h
                             w_in_idx = (w_start + j * dil_w) - pad_w
                             out_idx[n, c, h_out, w_out] = h_in_idx * W_in + w_in_idx
@@ -2166,14 +2168,19 @@ class LNSMaxPool2dFunction(LNSFunction):
                         h_end_eff = min(h_end, padded_H)
                         w_end_eff = min(w_end, padded_W)
 
+                        len_h = (h_end_eff - h_start + dil_h - 1) // dil_h
+                        len_w = (w_end_eff - w_start + dil_w - 1) // dil_w
+                        if len_h <= 0 or len_w <= 0:
+                            continue
+
                         window = x_padded[n, c, h_start:h_end_eff:dil_h, w_start:w_end_eff:dil_w]
                         window_flat = window.reshape(-1)
 
                         _, mx_idx = lns_max(window_flat, base, dim=0)
 
                         mx_idx = int(mx_idx)
-                        i = mx_idx // kernel_w
-                        j = mx_idx %  kernel_w
+                        i = mx_idx // len_w
+                        j = mx_idx %  len_w
 
                         h_in_idx = h_start + i * dil_h
                         w_in_idx = w_start + j * dil_w
