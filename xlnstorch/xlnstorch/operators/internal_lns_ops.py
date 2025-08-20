@@ -815,3 +815,36 @@ lns_batch_norm = _create_lns_op_func('batch_norm', torch.nn.functional.batch_nor
     ("training", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_max_pool1d = _create_lns_op_func('max_pool1d', torch.nn.functional.max_pool1d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int | Tuple[int]),
+    ("base", "pk", torch.Tensor),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("dilation", "pk", int | Tuple[int], 1),
+    ("ceil_mode", "pk", bool, False),
+    ("return_indices", "pk", bool, False)],
+    torch.Tensor,
+))
+lns_max_pool2d = _create_lns_op_func('max_pool2d', torch.nn.functional.max_pool2d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int | Tuple[int]),
+    ("base", "pk", torch.Tensor),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("dilation", "pk", int | Tuple[int], 1),
+    ("ceil_mode", "pk", bool, False),
+    ("return_indices", "pk", bool, False)],
+    torch.Tensor,
+))
+lns_max_pool3d = _create_lns_op_func('max_pool3d', torch.nn.functional.max_pool3d, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("kernel_size", "pk", int | Tuple[int]),
+    ("base", "pk", torch.Tensor),
+    ("stride", "pk", int | Tuple[int] | None, None),
+    ("padding", "pk", int | Tuple[int], 0),
+    ("dilation", "pk", int | Tuple[int], 1),
+    ("ceil_mode", "pk", bool, False),
+    ("return_indices", "pk", bool, False)],
+    torch.Tensor,
+))

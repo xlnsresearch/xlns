@@ -11,6 +11,7 @@ Python API
     xlnstorch.operators <operators>
     xlnstorch.nn <nn>
     xlnstorch.optim <optim>
+    xlnstorch.optim.lr_scheduler <lr_scheduler>
     xlnstorch.transforms <transforms>
     xlnstorch.benchmark <benchmark>
     xlnstorch.viz <viz>
