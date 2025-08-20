@@ -15,3 +15,4 @@ Python API
     xlnstorch.transforms <transforms>
     xlnstorch.benchmark <benchmark>
     xlnstorch.viz <viz>
+    xlnstorch.csrc <csrc>
