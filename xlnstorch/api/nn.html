@@ -45,7 +45,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="xlnstorch.nn.LNSModule" href="generated/nn/xlnstorch.nn.LNSModule.html" />
-    <link rel="prev" title="xlnstorch.operators.lns_batch_norm" href="generated/operators/xlnstorch.operators.lns_batch_norm.html" />
+    <link rel="prev" title="xlnstorch.operators.lns_max_pool3d" href="generated/operators/xlnstorch.operators.lns_max_pool3d.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -173,6 +173,7 @@
 <li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">xlnstorch.nn</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
@@ -458,6 +459,15 @@ denoted in the documentation.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSAdaptiveAvgPool3d.html#xlnstorch.nn.LNSAdaptiveAvgPool3d" title="xlnstorch.nn.LNSAdaptiveAvgPool3d"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSAdaptiveAvgPool3d</span></code></a></p></td>
 <td><p>No parameters</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool1d.html#xlnstorch.nn.LNSMaxPool1d" title="xlnstorch.nn.LNSMaxPool1d"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSMaxPool1d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool2d.html#xlnstorch.nn.LNSMaxPool2d" title="xlnstorch.nn.LNSMaxPool2d"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSMaxPool2d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool3d.html#xlnstorch.nn.LNSMaxPool3d" title="xlnstorch.nn.LNSMaxPool3d"><code class="xref py py-class docutils literal notranslate"><span class="pre">LNSMaxPool3d</span></code></a></p></td>
+<td><p>No parameters</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -561,22 +571,31 @@ to PyTorch’s method of registering parameters.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSAdaptiveAvgPool3d.html#xlnstorch.nn.LNSAdaptiveAvgPool3d" title="xlnstorch.nn.LNSAdaptiveAvgPool3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSAdaptiveAvgPool3d</span></code></a></p></td>
 <td><p>An LNS 3D adaptive average pooling layer that applies a 3D adaptive average pooling operation over the input tensor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSRNN.html#xlnstorch.nn.LNSRNN" title="xlnstorch.nn.LNSRNN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSRNN</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool1d.html#xlnstorch.nn.LNSMaxPool1d" title="xlnstorch.nn.LNSMaxPool1d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSMaxPool1d</span></code></a></p></td>
+<td><p>An LNS 1D maximum pooling layer that applies a 1D maximum pooling operation over the input tensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool2d.html#xlnstorch.nn.LNSMaxPool2d" title="xlnstorch.nn.LNSMaxPool2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSMaxPool2d</span></code></a></p></td>
+<td><p>An LNS 2D maximum pooling layer that applies a 2D maximum pooling operation over the input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSMaxPool3d.html#xlnstorch.nn.LNSMaxPool3d" title="xlnstorch.nn.LNSMaxPool3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSMaxPool3d</span></code></a></p></td>
+<td><p>An LNS 3D maximum pooling layer that applies a 3D maximum pooling operation over the input tensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSRNN.html#xlnstorch.nn.LNSRNN" title="xlnstorch.nn.LNSRNN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSRNN</span></code></a></p></td>
 <td><p>An LNS multi-layer Elman RNN.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSRNNCell.html#xlnstorch.nn.LNSRNNCell" title="xlnstorch.nn.LNSRNNCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSRNNCell</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSRNNCell.html#xlnstorch.nn.LNSRNNCell" title="xlnstorch.nn.LNSRNNCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSRNNCell</span></code></a></p></td>
 <td><p>An LNS Elman RNN cell.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSLSTM.html#xlnstorch.nn.LNSLSTM" title="xlnstorch.nn.LNSLSTM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSLSTM</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSLSTM.html#xlnstorch.nn.LNSLSTM" title="xlnstorch.nn.LNSLSTM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSLSTM</span></code></a></p></td>
 <td><p>An LNS multi-layer long-short term memory (LSTM) RNN.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSLSTMCell.html#xlnstorch.nn.LNSLSTMCell" title="xlnstorch.nn.LNSLSTMCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSLSTMCell</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSLSTMCell.html#xlnstorch.nn.LNSLSTMCell" title="xlnstorch.nn.LNSLSTMCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSLSTMCell</span></code></a></p></td>
 <td><p>An LNS long-short term memory (LSTM) cell.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSGRU.html#xlnstorch.nn.LNSGRU" title="xlnstorch.nn.LNSGRU"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSGRU</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSGRU.html#xlnstorch.nn.LNSGRU" title="xlnstorch.nn.LNSGRU"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSGRU</span></code></a></p></td>
 <td><p>An LNS multi-layer gated recurrent unit (GRU) RNN.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSGRUCell.html#xlnstorch.nn.LNSGRUCell" title="xlnstorch.nn.LNSGRUCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSGRUCell</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/nn/xlnstorch.nn.LNSGRUCell.html#xlnstorch.nn.LNSGRUCell" title="xlnstorch.nn.LNSGRUCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSGRUCell</span></code></a></p></td>
 <td><p>An LNS gated recurrent unit (GRU) cell.</p></td>
 </tr>
 </tbody>
@@ -597,12 +616,12 @@ to PyTorch’s method of registering parameters.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="generated/operators/xlnstorch.operators.lns_batch_norm.html"
+       href="generated/operators/xlnstorch.operators.lns_max_pool3d.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">xlnstorch.operators.lns_batch_norm</p>
+        <p class="prev-next-title">xlnstorch.operators.lns_max_pool3d</p>
       </div>
     </a>
     <a class="right-next"
