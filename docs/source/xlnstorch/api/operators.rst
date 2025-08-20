@@ -292,3 +292,4 @@ support ``LNSTensor`` objects.
     lns_batch_norm
     lns_max_pool1d
     lns_max_pool2d
+    lns_max_pool3d
