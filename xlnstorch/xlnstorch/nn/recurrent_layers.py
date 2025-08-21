@@ -119,7 +119,7 @@ class LNSRNN(LNSModule):
         seq_len, batch_size, _ = x.shape
 
         if h0 is None:
-            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, b=x.base)
         else:
             assert h0.shape == (self.num_layers * self.num_directions, batch_size, self.hidden_size)
 
@@ -421,8 +421,8 @@ class LNSLSTM(LNSModule):
         seq_len, batch_size, _ = x.shape
 
         if hx is None:
-            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_out_size)
-            c0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_out_size, b=x.base)
+            c0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, b=x.base)
         else:
             if not (isinstance(hx, tuple) and len(hx) == 2):
                 raise ValueError("hx must be a tuple (h0, c0)")
@@ -592,7 +592,7 @@ class LNSLSTMCell(LNSModule):
 
         h_prev, c_prev = (None, None) if hx is None else hx
         if c_prev is None:
-            c_prev = zeros(x.size(0), self.hidden_size)
+            c_prev = zeros(x.size(0), self.hidden_size, b=x.base)
 
         gates = torch.nn.functional.linear(x, self.weight_ih, self.bias_ih)
         if h_prev is not None:
@@ -725,7 +725,7 @@ class LNSGRU(LNSModule):
         seq_len, batch_size, _ = x.shape
 
         if hx is None:
-            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            h0 = zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, b=x.base)
         else:
             if isinstance(hx, tuple):
                 raise ValueError("hx must be a single tensor (h0) for GRU")
@@ -882,7 +882,7 @@ class LNSGRUCell(LNSModule):
                 hx = hx.unsqueeze(0)
 
         if hx is None:
-            h_prev = zeros(x.size(0), self.hidden_size)
+            h_prev = zeros(x.size(0), self.hidden_size, b=x.base)
         else:
             h_prev = hx
 
