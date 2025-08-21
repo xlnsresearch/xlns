@@ -102,3 +102,53 @@ class ToLNSTensor:
             return lnstensor(tensor, f=self.f, b=self.b).to(self.device)
         else:
             return tensor.to(self.device)
+
+class LNSNormalize:
+    """
+    Normalize an LNSTensor with mean and standard deviation. This is analogous
+    to torchvision.transforms.Normalize but performs normalization on LNSTensor.
+
+    Parameters
+    ----------
+    mean : float | tuple[float, ...]
+        The mean value(s) for normalization.
+    std : float | tuple[float, ...]
+        The standard deviation value(s) for normalization.
+    f : int | None, optional
+        The precision of the input LNSTensor.
+    b : float | None, optional
+        The base of the input LNSTensor.
+
+    Returns
+    -------
+    LNSTensor
+        The normalized LNSTensor.
+    """
+
+    def __init__(
+            self,
+            mean: float | Tuple[float, ...],
+            std: float | Tuple[float, ...],
+            f: int | None = None,
+            b: float | None = None,
+    ):
+        self.mean = lnstensor(mean, f=f, b=b)
+        self.std = lnstensor(std, f=f, b=b)
+        assert self.mean.ndim == 1, "Mean must be a 1D tensor."
+        assert self.std.ndim == 1, "Std must be a 1D tensor."
+        self.mean = self.mean.unsqueeze(-1).unsqueeze(-1)
+        self.std = self.std.unsqueeze(-1).unsqueeze(-1)
+
+    def __call__(self, tensor: LNSTensor) -> LNSTensor:
+        assert tensor.ndim >= 3, "Expected tensor to be an image of size" \
+            f"(..., C, H, W) but got {tensor.ndim} dimensions."
+
+        assert self.mean.numel() == tensor.shape[-3] or self.mean.numel() == 1, \
+            "The number of channels in the tensor must match the length of mean. " \
+            "Or the mean must be a scalar."
+
+        assert self.std.numel() == tensor.shape[-3] or self.std.numel() == 1, \
+            "The number of channels in the tensor must match the length of std. " \
+            "Or the std must be a scalar."
+
+        return (tensor - self.mean) / self.std
