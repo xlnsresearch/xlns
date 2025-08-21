@@ -134,8 +134,8 @@ class LNSNormalize:
     ):
         self.mean = lnstensor(mean, f=f, b=b)
         self.std = lnstensor(std, f=f, b=b)
-        assert self.mean.ndim == 1, "Mean must be a 1D tensor."
-        assert self.std.ndim == 1, "Std must be a 1D tensor."
+        assert self.mean.ndim == 1 or self.mean.ndim == 0, "Mean must be a 1D or 0D tensor."
+        assert self.std.ndim == 1 or self.std.ndim == 0, "Std must be a 1D or 0D tensor."
         self.mean = self.mean.unsqueeze(-1).unsqueeze(-1)
         self.std = self.std.unsqueeze(-1).unsqueeze(-1)
 
