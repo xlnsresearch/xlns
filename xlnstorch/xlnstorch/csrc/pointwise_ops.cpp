@@ -10,6 +10,17 @@
 
 namespace lns {
 
+    int64_t float_to_lns(double value, double inv_log_base) {
+
+        if (value == 0.0)
+            return lns::zero_int;
+
+        int64_t exponent = llround(std::log(std::abs(value)) * inv_log_base);
+        int64_t sign_bit = (value < 0.0) ? 1LL : 0LL;
+
+        return (exponent << 1) | sign_bit;
+    }
+
     int64_t add(int64_t x, int64_t y, double base) {
 
         if ((x | 1LL) == lns::zero_int) return y;

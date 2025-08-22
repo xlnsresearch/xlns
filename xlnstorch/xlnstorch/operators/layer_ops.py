@@ -1033,7 +1033,7 @@ class LNSAvgPool1dFuncton(LNSFunction):
 
         return grad_x, None, None, None, None, None, None
 
-@implements(torch.nn.functional.avg_pool1d, LNSAvgPool1dFuncton.forward, "default", default=True)
+@implements(torch.nn.functional.avg_pool1d, LNSAvgPool1dFuncton.forward, "default", default=not CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
 
     kernel_size = kernel_size[0] if isinstance(kernel_size, (list, tuple)) else kernel_size

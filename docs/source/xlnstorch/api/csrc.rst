@@ -47,3 +47,4 @@ for reference:
     conv2d_backward
     conv3d_forward
     conv3d_backward
+    avg_pool1d_forward

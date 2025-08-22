@@ -1,5 +1,6 @@
 from . import addition_ops
 from . import convolution_ops
+from . import pooling_ops
 
 import torch
 
@@ -15,6 +16,7 @@ CPP_IMPLEMENTED_OPERATORS = {
     torch.nn.functional.conv1d: ("default", "default_cpp"),
     torch.nn.functional.conv2d: ("default", "default_cpp"),
     torch.nn.functional.conv3d: ("default", "default_cpp"),
+    torch.nn.functional.avg_pool1d: ("default", "default_cpp"),
 }
 
 __all__ = [
