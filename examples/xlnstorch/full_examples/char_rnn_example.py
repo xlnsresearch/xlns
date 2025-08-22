@@ -19,11 +19,12 @@ import xlnstorch as xlt
 parser = argparse.ArgumentParser(description='MNIST training with LNS')
 parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
 parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
+parser.add_argument('--table', '-t', type=bool, default=True, help='Whether to use table-based LNS computations')
 args = parser.parse_args()
 
-args.precision = 10
-xlt.set_default_sbdb_implementation("tab")
-xlt.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+if args.table:
+    xlt.set_default_sbdb_implementation("tab")
+    xlt.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
 
 DATASET_URL = "https://download.pytorch.org/tutorial/data.zip"
 ZIP_FILENAME = "data.zip"
