@@ -48,3 +48,4 @@ for reference:
     conv3d_forward
     conv3d_backward
     avg_pool1d_forward
+    avg_pool1d_backward

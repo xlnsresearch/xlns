@@ -603,6 +603,46 @@ def avg_pool1d_forward(
     _ensure_built()
     return _C.avg_pool1d_forward(x, kernel_size, base, stride, padding, ceil_mode, count_include_pad)
 
+def avg_pool1d_backward(
+        grad: torch.Tensor,
+        x: torch.Tensor,
+        kernel_size: int,
+        base: torch.Tensor,
+        stride: int | None,
+        padding: int,
+        ceil_mode: bool,
+        count_include_pad: bool,
+) -> torch.Tensor:
+    """
+    Perform the backward pass for LNS 1D average pooling.
+
+    Parameters
+    ----------
+    grad : torch.Tensor
+        The gradient tensor in LNS format (torch.int64).
+    x : torch.Tensor
+        The input tensor in LNS format (torch.int64).
+    kernel_size : int
+        The size of the pooling kernel.
+    base : torch.Tensor
+        The base for the LNS representation.
+    stride : int, optional
+        The stride of the pooling operation. Defaults to kernel_size if None.
+    padding : int
+        The padding applied to the input tensor.
+    ceil_mode : bool
+        If True, will use ceil instead of floor to compute the output shape.
+    count_include_pad : bool
+        If True, will include the zero-padding in the averaging calculation.
+
+    Returns
+    -------
+    torch.Tensor
+        The output gradient tensor in LNS format (torch.int64).
+    """
+    _ensure_built()
+    return _C.avg_pool1d_backward(grad, x, kernel_size, base, stride, padding, ceil_mode, count_include_pad)
+
 __all__ = [
     "load_backend",
 
@@ -623,4 +663,5 @@ __all__ = [
     "conv3d_forward",
     "conv3d_backward",
     "avg_pool1d_forward",
+    "avg_pool1d_backward",
 ]
