@@ -1,4 +1,8 @@
 from typing import List
+import warnings
+from pathlib import Path
+from torch.utils.cpp_extension import load, include_paths
+import xlnstorch
 import torch
 
 try:
@@ -12,6 +16,59 @@ def _ensure_built() -> None:
             "xlnstorch C++ extension is not built. "
             "Install a prebuilt wheel or build from source with a C++17 compiler."
         )
+
+def load_backend(
+        build_dir: str | None = None,
+        verbose: bool = False,
+        enable_cpp: bool = True,
+) -> bool:
+    """
+    Try to compile and load the C++ extension if it is not
+    already built and loaded. If the extension is already
+    loaded, this function exits and returns True.
+
+    Parameters
+    ----------
+    build_dir : str | None, optional
+        Directory to use for building the extension. If None, a temporary directory is used.
+    verbose : bool, optional
+        If True, enables verbose output during the build process.
+    enable_cpp : bool, optional
+        If True, sets the C++ operators as the default implementations for LNS operations.
+
+    Returns
+    -------
+    bool
+        True if the C++ extension is successfully loaded, False otherwise.
+    """
+    global _C
+    if _C is not None:
+        return True
+
+    src_dir = Path(__file__).resolve().parent
+    cpp_files = [str(p) for p in src_dir.glob("*.cpp")]
+
+    try:
+        mod = load(
+            name="xlnstorch_csrc",
+            sources=cpp_files,
+            build_directory=build_dir,
+            extra_cflags=["-O3", "-std=c++17", "-ffast-math"],
+            verbose=verbose,
+            extra_include_paths=include_paths(),
+        )
+
+    except (RuntimeError, OSError) as e:
+        warnings.warn(f"Could not build C++ backend: {e}")
+        return False
+
+    _C = mod
+    xlnstorch.CSRC_AVAILABLE = True
+
+    if enable_cpp:
+        xlnstorch.operators.toggle_cpp_implementations(True)
+
+    return True
 
 def float_to_lns_forward(x: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
     """
@@ -510,6 +567,8 @@ def conv3d_backward(
                               dilation_d, dilation_h, dilation_w, groups)
 
 __all__ = [
+    "load_backend",
+
     "float_to_lns_forward",
     "float_to_lns_backward",
     "change_base_forward",

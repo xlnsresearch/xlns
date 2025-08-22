@@ -1,7 +1,7 @@
 import contextlib
 from typing import Generator, Callable
 import torch
-from xlnstorch import CSRC_AVAILABLE
+import xlnstorch
 import xlnstorch.csrc
 from xlnstorch.tensor_utils import get_precision_from_base
 
@@ -31,7 +31,7 @@ def set_default_sbdb_implementation(impl_key: str) -> None:
     global DEFAULT_SBDB_FUNC
     DEFAULT_SBDB_FUNC = impl_key
 
-    if CSRC_AVAILABLE:
+    if xlnstorch.CSRC_AVAILABLE:
         xlnstorch.csrc.set_default_sbdb_implementation(impl_key)
 
 @contextlib.contextmanager
