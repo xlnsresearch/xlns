@@ -99,6 +99,11 @@ def _get_operator_module():
         _operator_module = operators
     return _operator_module
 
+float_to_lns_forward = None
+float_to_lns_backward = None
+change_base_forward = None
+change_base_backward = None
+
 def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
 
     log_base = torch.log(base)
@@ -142,16 +147,42 @@ def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tens
 
     return old_tensor
 
-if CSRC_AVAILABLE:
-    float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
-    float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
-    change_base_forward = xlnstorch.csrc.change_base_forward
-    change_base_backward = xlnstorch.csrc.change_base_backward
-else:
-    float_to_lns_forward = _float_to_lns_forward_python
-    float_to_lns_backward = _float_to_lns_backward_python
-    change_base_forward = _change_base_forward_python
-    change_base_backward = _change_base_backward_python
+def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
+    """
+    Toggle the use of C++ implementations for tensor utility functions. This
+    function is called by `xlnstorch.operators.toggle_cpp_implementations()`.
+
+    In particular, this toggles the implementations for float to and from LNS
+    conversions and base change operations.
+
+    Parameters
+    ----------
+    use_cpp : bool
+        If True, use C++ implementations where available. If False, use
+        pure Python implementations.
+
+    Raises
+    ------
+    RuntimeError
+        If C++ extensions are not available and `use_cpp` is True.
+    """
+    global float_to_lns_forward, float_to_lns_backward
+    global change_base_forward, change_base_backward
+
+    if use_cpp and not xlnstorch.CSRC_AVAILABLE:
+        raise RuntimeError("C++ extensions are not available. Cannot enable C++ tensor utils.")
+
+    if use_cpp:
+        float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
+        float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
+        change_base_forward = xlnstorch.csrc.change_base_forward
+        change_base_backward = xlnstorch.csrc.change_base_backward
+
+    else:
+        float_to_lns_forward = _float_to_lns_forward_python
+        float_to_lns_backward = _float_to_lns_backward_python
+        change_base_forward = _change_base_forward_python
+        change_base_backward = _change_base_backward_python
 
 class FloatToLNS(LNSFunction):
 

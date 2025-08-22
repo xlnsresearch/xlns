@@ -42,7 +42,9 @@ from .tensor_utils import (
     align_lnstensor_bases,
     format_lnstensor_operands,
     get_internal_lnstensor_operands,
+    toggle_cpp_tensor_utils,
 )
+toggle_cpp_tensor_utils(CSRC_AVAILABLE)
 from .tensor import (
     LNSTensor,
     lnstensor,

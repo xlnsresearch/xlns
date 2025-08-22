@@ -188,12 +188,14 @@ def toggle_cpp_implementations(use_cpp: bool) -> None:
     RuntimeError
         If C++ extensions are not available.
     """
-    if not xlnstorch.CSRC_AVAILABLE:
-        raise RuntimeError("C++ extensions are not available. Cannot toggle C++ implementations.")
+    if use_cpp and not xlnstorch.CSRC_AVAILABLE:
+        raise RuntimeError("C++ extensions are not available. Cannot enable C++ implementations.")
 
     for torch_op, (py_key, cpp_key) in _C.CPP_IMPLEMENTED_OPERATORS.items():
         impl_key = cpp_key if use_cpp else py_key
         set_default_implementation(torch_op, impl_key)
+
+    xlnstorch.tensor_utils.toggle_cpp_tensor_utils(use_cpp)
 
 __all__ = [
     "toggle_cpp_implementations",
