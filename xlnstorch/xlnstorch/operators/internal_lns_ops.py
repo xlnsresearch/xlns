@@ -815,6 +815,15 @@ lns_batch_norm = _create_lns_op_func('batch_norm', torch.nn.functional.batch_nor
     ("training", "pk", bool, False)],
     torch.Tensor,
 ))
+lns_layer_norm = _create_lns_op_func('layer_norm', torch.nn.functional.layer_norm, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("normalized_shape", "pk", int | Tuple[int]),
+    ("base", "pk", torch.Tensor),
+    ("weight", "pk", torch.Tensor | None, None),
+    ("bias", "pk", torch.Tensor | None, None),
+    ("eps", "pk", torch.Tensor, 1e-5)],
+    torch.Tensor,
+))
 lns_max_pool1d = _create_lns_op_func('max_pool1d', torch.nn.functional.max_pool1d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("kernel_size", "pk", int | Tuple[int]),
