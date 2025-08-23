@@ -39,6 +39,20 @@ Constants
     :math:`\left( -2^{52} \ll 1 \right) \mid 1 = -9007199254740991`.
     It is independent of an LNS object's base.
 
+.. data:: LNS_INF
+
+    A float64 scalar tensor representing positive infinity in the LNS.
+    This is a special value defined to be
+    :math:`2^{53} = 9007199254740992`.
+    It is independent of an LNS object's base.
+
+.. data:: LNS_NEG_INF
+
+    A float64 scalar tensor representing negative infinity in the LNS.
+    This is a special value defined to be
+    :math:`\left( 2^{53} \right) - 1 = 9007199254740991`.
+    It is independent of an LNS object's base.
+
 .. data:: LNS_ONE
 
     A float64 scalar tensor representing one in the LNS. For any
