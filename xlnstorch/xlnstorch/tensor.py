@@ -369,6 +369,13 @@ class LNSTensor:
         """
         return lnstensor(self._lns.view(*shape), from_lns=True, b=self.base)
 
+    def contiguous(self, memory_format=torch.contiguous_format) -> LNSTensor:
+        """
+        Returns a contiguous copy of the LNSTensor in memory.
+        """
+        result = tensor_utils.LNSContiguousFunction.apply(self, memory_format)
+        return lnstensor(result, from_lns=True, b=self.base)
+
     def item(self) -> float:
         """
         Returns the value of the LNSTensor as a Python number. This method

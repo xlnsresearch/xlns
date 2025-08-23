@@ -266,6 +266,21 @@ class LNSToFunction(LNSFunction):
         return grad_x, None
 
 
+class LNSContiguousFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, memory_format):
+        return x.contiguous(memory_format=memory_format)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        pass
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output, None
+
+
 class LNSOverflowFunction(LNSFunction):
 
     @staticmethod
