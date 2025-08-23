@@ -367,7 +367,8 @@ class LNSTensor:
         Returns a new tensor with the same data as this LNSTensor
         but with a different shape.
         """
-        return lnstensor(self._lns.view(*shape), from_lns=True, b=self.base)
+        result = tensor_utils.LNSViewFunction.apply(self, shape)
+        return lnstensor(result, from_lns=True, b=self.base)
 
     def contiguous(self, memory_format=torch.contiguous_format) -> LNSTensor:
         """

@@ -266,6 +266,25 @@ class LNSToFunction(LNSFunction):
         return grad_x, None
 
 
+class LNSViewFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, shape):
+        return x.view(*shape)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, shape = inputs
+        ctx.original_shape = x.shape
+        ctx.n_shape = len(shape)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_x = grad_output.contiguous().view(ctx.original_shape)
+
+        return grad_x, None
+
+
 class LNSContiguousFunction(LNSFunction):
 
     @staticmethod
