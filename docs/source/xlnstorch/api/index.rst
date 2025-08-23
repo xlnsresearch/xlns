@@ -13,6 +13,7 @@ Python API
     xlnstorch.optim <optim>
     xlnstorch.optim.lr_scheduler <lr_scheduler>
     xlnstorch.transforms <transforms>
+    xlnstorch.convert_model <convert_model>
     xlnstorch.benchmark <benchmark>
     xlnstorch.viz <viz>
     xlnstorch.csrc <csrc>
