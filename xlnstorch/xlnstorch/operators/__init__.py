@@ -55,6 +55,7 @@ from .internal_lns_ops import (
     lns_cat,
     lns_chunk,
     lns_where,
+    lns_pad,
 
     lns_mse_loss,
     lns_l1_loss,
@@ -261,6 +262,7 @@ __all__ = [
     "lns_cat",
     "lns_chunk",
     "lns_where",
+    "lns_pad",
 
     "lns_mse_loss",
     "lns_l1_loss",

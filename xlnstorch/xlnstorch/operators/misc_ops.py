@@ -4,6 +4,7 @@ from xlnstorch.autograd import LNSFunction
 from . import (
     lns_sum,
     lns_sum_to_size,
+    lns_add,
 )
 
 class LNSExpandFunction(LNSFunction):
@@ -282,4 +283,99 @@ def where(condition, x, y, *, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
+    return lnstensor(result, from_lns=True, b=x.base)
+
+def _unpad_along_dim(g, base, left, right, dim, mode):
+
+    if left == right == 0:
+        return g
+
+    if mode == "constant":
+        return g.narrow(dim, left, g.size(dim) - left - right).clone()
+
+    interior_len = g.size(dim) - left - right
+    grad_x = g.narrow(dim, left, interior_len).clone()
+
+    first = 0
+    last = interior_len - 1
+
+    if mode == "replicate":
+        if left:
+            grad_x.select(dim, first).copy_(lns_add(
+                grad_x.select(dim, first),
+                lns_sum(g.narrow(dim, 0, left), base, dim=dim),
+            base))
+        if right:
+            grad_x.select(dim, last).copy_(lns_add(
+                grad_x.select(dim, last),
+                lns_sum(g.narrow(dim, g.size(dim) - right, right), base, dim=dim),
+            base))
+
+    elif mode == "reflect":
+
+        for i in range(left):
+            target = left - i
+            grad_x.select(dim, target).copy_(lns_add(
+                grad_x.select(dim, target),
+                g.select(dim, i),
+            base))
+
+        for i in range(right):
+            target = last - 1 - i
+            grad_x.select(dim, target).copy_(lns_add(
+                grad_x.select(dim, target),
+                g.select(dim, g.size(dim) - 1 - i),
+            base))
+
+    elif mode == "circular":
+
+        if left:
+            grad_x.narrow(dim, interior_len-left, left).copy_(lns_add(
+                grad_x.narrow(dim, interior_len - left, left),
+                g.narrow(dim, 0, left),
+            base))
+
+        if right:
+            grad_x.narrow(dim, 0, right).copy_(lns_add(
+                grad_x.narrow(dim, 0, right),
+                g.narrow(dim, g.size(dim) - right, right),
+            base))
+
+    return grad_x
+
+class LNSPadFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, pad, mode="constant", value=None):
+        return torch.nn.functional.pad(x, pad, mode=mode, value=value)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        _, base, pad, mode, _ = inputs
+        ctx.save_for_backward(base)
+        ctx.pad = pad
+        ctx.mode = mode
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        base, = ctx.saved_tensors
+
+        ndim_pad = len(ctx.pad) // 2
+        grad_x = grad_output
+        for i in range(ndim_pad):
+            left = ctx.pad[2 * i]
+            right = ctx.pad[2 * i + 1]
+
+            dim = grad_output.dim() - 1 - i
+            grad_x = _unpad_along_dim(grad_x, base, left, right, dim, ctx.mode)
+
+        return grad_x, None, None, None, None
+
+@implements(torch.nn.functional.pad, LNSPadFunction.forward, "default", default=True)
+def pad(x, pad, mode="constant", value=0):
+
+    if mode == "constant":
+        x, value = format_lnstensor_operands(x, value)
+
+    result = LNSPadFunction.apply(x, x.base, pad, mode, value)
     return lnstensor(result, from_lns=True, b=x.base)

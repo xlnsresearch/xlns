@@ -195,6 +195,7 @@ Miscellaneous Operations
     lns_cat
     lns_chunk
     lns_where
+    lns_pad
 
 Loss Operations
 ~~~~~~~~~~~~~~~

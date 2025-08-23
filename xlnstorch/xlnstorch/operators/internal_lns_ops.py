@@ -394,6 +394,14 @@ lns_where = _create_lns_op_func('where', torch.where, signature=_build_signature
     ("base", "pk", torch.Tensor)],
     torch.Tensor,
 ))
+lns_pad = _create_lns_op_func('pad', torch.nn.functional.pad, signature=_build_signature([
+    ("x", "pk", torch.Tensor),
+    ("base", "pk", torch.Tensor),
+    ("pad", "pk", Tuple[int]),
+    ("mode", "pk", str, "constant"),
+    ("value", "pk", float | torch.Tensor | None, 0.0)],
+    torch.Tensor,
+))
 
 lns_mse_loss = _create_lns_op_func('mse_loss', torch.nn.functional.mse_loss, signature=_build_signature([
     ("x", "pk", torch.Tensor),
