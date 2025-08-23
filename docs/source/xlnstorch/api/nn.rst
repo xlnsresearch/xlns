@@ -48,6 +48,7 @@ Normalization Layers               Note
 :class:`LNSBatchNorm1d`
 :class:`LNSBatchNorm2d`
 :class:`LNSBatchNorm3d`
+:class:`LNSLayerNorm`
 ===============================    =====================
 
 ===============================    =====================

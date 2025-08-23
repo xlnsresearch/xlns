@@ -23,6 +23,7 @@ from .normalization_layers import (
     LNSBatchNorm1d,
     LNSBatchNorm2d,
     LNSBatchNorm3d,
+    LNSLayerNorm,
 )
 from .pooling_layers import (
     LNSAvgPool1d,
@@ -66,6 +67,7 @@ __all__ = [
     "LNSBatchNorm1d",
     "LNSBatchNorm2d",
     "LNSBatchNorm3d",
+    "LNSLayerNorm",
 
     "LNSAvgPool1d",
     "LNSAvgPool2d",
