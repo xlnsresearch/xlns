@@ -76,6 +76,12 @@ Recurrent Layers                   Note
 :class:`LNSGRUCell`
 ===============================    =====================
 
+===============================    =====================
+Transformer Layers                 Note
+===============================    =====================
+:class:`LNSMultiheadAttention`
+===============================    =====================
+
 .. hide the autosummary table from the main page but still
 .. generate the stub files for the layers (this is a hack).
 
@@ -116,6 +122,7 @@ to PyTorch's method of registering parameters.
     LNSBatchNorm1d
     LNSBatchNorm2d
     LNSBatchNorm3d
+    LNSLayerNorm
 
     LNSAvgPool1d
     LNSAvgPool2d
@@ -133,6 +140,8 @@ to PyTorch's method of registering parameters.
     LNSLSTMCell
     LNSGRU
     LNSGRUCell
+
+    LNSMultiheadAttention
 
 .. raw:: html
 

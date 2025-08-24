@@ -44,6 +44,9 @@ from .recurrent_layers import (
     LNSGRU,
     LNSGRUCell,
 )
+from .transformer_layers import (
+    LNSMultiheadAttention,
+)
 from . import init
 
 __all__ = [
@@ -85,4 +88,6 @@ __all__ = [
     "LNSLSTMCell",
     "LNSGRU",
     "LNSGRUCell",
+
+    "LNSMultiheadAttention",
 ]
