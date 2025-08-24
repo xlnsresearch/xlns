@@ -377,6 +377,13 @@ class LNSTensor:
         result = tensor_utils.LNSContiguousFunction.apply(self, memory_format)
         return lnstensor(result, from_lns=True, b=self.base)
 
+    def repeat(self, *repeats: int) -> LNSTensor:
+        """
+        Repeats the tensor along the specified dimensions.
+        """
+        result = tensor_utils.LNSRepeatFunction.apply(self, self.base, repeats)
+        return lnstensor(result, from_lns=True, b=self.base)
+
     def item(self) -> float:
         """
         Returns the value of the LNSTensor as a Python number. This method

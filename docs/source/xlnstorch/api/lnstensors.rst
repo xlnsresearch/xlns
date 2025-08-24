@@ -86,6 +86,7 @@ LNSTensor class reference
 
     LNSTensor.view
     LNSTensor.contiguous
+    LNSTensor.repeat
     LNSTensor.item
     LNSTensor.size
     LNSTensor.numel

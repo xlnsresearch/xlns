@@ -300,6 +300,38 @@ class LNSContiguousFunction(LNSFunction):
         return grad_output, None
 
 
+class LNSRepeatFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, repeats):
+        return x.repeat(*repeats)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, repeats = inputs
+        ctx.save_for_backward(base)
+        ctx.input_shape = tuple(x.shape)
+        ctx.repeats = tuple(repeats)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        ops = _get_operator_module()
+        base, = ctx.saved_tensors
+        grad_x = grad_output
+
+        for dim, rep in enumerate(ctx.repeats):
+            if rep == 1:
+                continue
+
+            new_shape = list(grad_x.shape)
+            new_shape[dim] = ctx.input_shape[dim]
+            new_shape.insert(dim + 1, rep)
+
+            grad_x = ops.lns_sum(grad_x.view(*new_shape), base, dim=dim+1)
+
+        return grad_x, None, None
+
+
 class LNSOverflowFunction(LNSFunction):
 
     @staticmethod
