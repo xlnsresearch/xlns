@@ -1,6 +1,6 @@
 import torch
 import xlnstorch.csrc
-from xlnstorch import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 class LNSConv1dCPPFunction(LNSFunction):
@@ -42,7 +42,7 @@ class LNSConv1dCPPFunction(LNSFunction):
         return (grads[0].to(torch.float64), grads[1].to(torch.float64),
                 None, None, None, None, None, None)
 
-@implements(torch.nn.functional.conv1d, LNSConv1dCPPFunction.forward, "default_cpp", default=True)
+@implements(torch.nn.functional.conv1d, LNSConv1dCPPFunction.forward, "default_cpp", default=CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
     if bias is not None:
@@ -110,7 +110,7 @@ class LNSConv2dCPPFunction(LNSFunction):
                 None, None, None, None,
                 None, None)
 
-@implements(torch.nn.functional.conv2d, LNSConv2dCPPFunction.forward, "default_cpp", default=True)
+@implements(torch.nn.functional.conv2d, LNSConv2dCPPFunction.forward, "default_cpp", default=CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)
@@ -177,7 +177,7 @@ class LNSConv3dCPPFunction(LNSFunction):
                 None, None, None, None,
                 None, None)
 
-@implements(torch.nn.functional.conv3d, LNSConv3dCPPFunction.forward, "default_cpp", default=True)
+@implements(torch.nn.functional.conv3d, LNSConv3dCPPFunction.forward, "default_cpp", default=CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
     if bias is not None:
         x, weight, bias = format_lnstensor_operands(x, weight, bias)

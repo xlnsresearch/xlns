@@ -367,7 +367,22 @@ class LNSTensor:
         Returns a new tensor with the same data as this LNSTensor
         but with a different shape.
         """
-        return lnstensor(self._lns.view(*shape), from_lns=True, b=self.base)
+        result = tensor_utils.LNSViewFunction.apply(self, shape)
+        return lnstensor(result, from_lns=True, b=self.base)
+
+    def contiguous(self, memory_format=torch.contiguous_format) -> LNSTensor:
+        """
+        Returns a contiguous copy of the LNSTensor in memory.
+        """
+        result = tensor_utils.LNSContiguousFunction.apply(self, memory_format)
+        return lnstensor(result, from_lns=True, b=self.base)
+
+    def repeat(self, *repeats: int) -> LNSTensor:
+        """
+        Repeats the tensor along the specified dimensions.
+        """
+        result = tensor_utils.LNSRepeatFunction.apply(self, self.base, repeats)
+        return lnstensor(result, from_lns=True, b=self.base)
 
     def item(self) -> float:
         """

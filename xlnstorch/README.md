@@ -1,26 +1,38 @@
-# xlns
-XLNS: a configurable python package for Logarithmic Number System eXperimentation
+# xlnstorch
+XLNSTorch: a PyTorch addon python package for simulating Logarithmic Number System (LNS) arithmetic.
+You can find the docs at https://xlnsresearch.github.io/xlns/.
 
 
 # Getting Started
 
-It is recommended to create a python virtual environment for experimentation with the ``xlns`` package. Within that environment, ensure you have the dependencies listed below installed.
+To install ``xlnstorch``, you can run ``pip3 install xlnstorch``. If you have a C++ compiler, this
+will allow you to use more efficient operations and layers. Otherwise, ``xlnstorch`` will fallback
+to pure python, slower implementations.
 
-Explanatory information about LNS is in the ``LNS_Intro.md`` file.  By default,  ``xlns`` uses 64-bit built-in floating point (FP) to calculate as accurately as is possible.  We call this approach _ideal_. The recent interest in LNS is mostly because there are many _non-ideal_ approximations which greatly reduce the cost of the hardware, and some of these methods are available here as _user configurations_.  Information on available user configurations can be found in the ``README.md`` file in ``src/xlnsconf``.  It also explains how you can contribute your own configurations to this open-source project.
+To learn more about LNS, see the ``LNS_Intro.md`` and ``src/xlnsconf/README.md`` files. For examples,
+look at the documentation and the ``examples`` directory.
+
 
 # Dependencies
-numpy
 
-````
-pip3 install numpy
-````
+xlnstorch has several dependencies that are automatically installed when you install it:
+- torch
+- xlns
+- numpy
 
-For some examples, matplotlib is also needed:
-````
-pip3 install matplotlib
-````
+xlnstorch also has several optional dependencies for additional features:
+- matplotlib: For many of the ``viz`` submodule's graphs
+- graphviz: For visualizing the computational graph
+- torchvision: For tensor transforms and datasets
 
-You can grab all the dependencies in one go using the requirements file thus:
-````
-pip install -r requirements.txt
-````
+
+# To Do list
+- Implement more transformer layers.
+- Improve support for saving and loading LNSTensor weights, and copying
+  weights between torch and xlnstorch.
+- Rework float64 storage to bitcast rather than reinterpret types.
+- Implement more layers in the C++ backend.
+- Implement positive and negative infinity sentinel values.
+- Improve type and shape checks/error messages.
+- Support LNSTensors and operations performed on the GPU.
+- Add more implementations from ``xlnsconf``.

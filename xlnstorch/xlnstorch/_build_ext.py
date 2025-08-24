@@ -64,7 +64,7 @@ class OptionalBuildExtension(BuildExtension):
         torch_includes = include_paths()
 
         for ext in self.extensions:
-            if ext.name == "xlnstorch.csrc": # only our extension
+            if ext.name == "xlnstorch._csrc": # only our extension
                 ext.sources = cpp_files
             # add torch include directories to the extension
             ext.include_dirs = list(ext.include_dirs or []) + torch_includes

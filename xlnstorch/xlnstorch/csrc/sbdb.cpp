@@ -126,6 +126,18 @@ namespace sbdb {
 }
 
 void init_sbdb(py::module& m) {
-    m.def("set_default_sbdb_implementation", &sbdb::set_default_func, "Set the default SBDB function for C++ LNS operations");
-    m.def("get_table", &get_table, "Get the SBDB table for a given base precision");
+    m.def(
+        "set_default_sbdb_implementation",
+        &sbdb::set_default_func,
+        "Set the default SBDB function for C++ LNS operations",
+        py::arg("sbdb_key")
+    );
+    m.def(
+        "get_table",
+        &get_table,
+        "Get the SBDB table for a given base precision",
+        py::arg("tab_ez"),
+        py::arg("tab_sbdb"),
+        py::arg("tab_base")
+    );
 }

@@ -85,6 +85,8 @@ LNSTensor class reference
     LNSTensor.grad_fn
 
     LNSTensor.view
+    LNSTensor.contiguous
+    LNSTensor.repeat
     LNSTensor.item
     LNSTensor.size
     LNSTensor.numel

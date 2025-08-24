@@ -256,3 +256,76 @@ class LNSBatchNorm3d(_BatchNorm):
     def _check_input_dim(self, input):
         if input.dim() != 5:
             raise ValueError("expected 5D input (got {}D input)".format(input.dim()))
+
+class LNSLayerNorm(LNSModule):
+    r"""
+    Applies Layer Normalization over a mini-batch of inputs.
+
+    See also: :py:class:`torch.nn.LayerNorm`
+
+    Parameters
+    ----------
+    normalized_shape : int or tuple of int
+        Input shape from an expected input of size
+        :math:`(N, *)` where `*` means any number of additional
+        dimensions. If a single integer is used, it is treated as a singleton
+        tuple.
+    eps : float, LNSTensor, optional
+        A value added to the denominator for numerical stability. Default: 1e-5.
+    elementwise_affine : bool, optional
+        If True, this module has learnable per-element affine parameters
+        initialized to ones (for weights) and zeros (for biases). Default: True.
+    bias : bool, optional
+        If True, this module has learnable bias parameters. Default: True.
+    weight_f : int, optional
+        The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
+    weight_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
+    bias_f : int, optional
+        The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
+    bias_b : float, int, torch.Tensor, optional
+        The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
+
+    Attributes
+    ---------
+    weight : LNSTensor
+        The learnable weight of shape :math:`(\text{normalized\_shape},)`. Initialized to ones.
+    bias : LNSTensor
+        The learnable bias of shape :math:`(\text{normalized\_shape},)`. Initialized to zeros.
+    """
+
+    def __init__(
+            self,
+            normalized_shape: int | tuple[int],
+            eps: float = 1e-5,
+            elementwise_affine: bool = True,
+            bias: bool = True,
+            weight_f: int = None,
+            weight_b: float = None,
+            bias_f: int = None,
+            bias_b: float = None,
+        ):
+        super().__init__()
+        if isinstance(normalized_shape, int):
+            normalized_shape = (normalized_shape,)
+        self.normalized_shape = tuple(normalized_shape)
+        self.eps = eps
+        self.elementwise_affine = elementwise_affine
+
+        if self.elementwise_affine:
+            weight = xlnstorch.ones(*self.normalized_shape, f=weight_f, b=weight_b)
+            self.register_parameter("weight", weight)
+
+            if bias:
+                bias = xlnstorch.zeros(*self.normalized_shape, f=bias_f, b=bias_b)
+                self.register_parameter("bias", bias)
+
+            else:
+                self.bias = None
+
+        else:
+            self.weight = None
+            self.bias = None
+
+    def forward(self, x):
+        return torch.nn.functional.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)

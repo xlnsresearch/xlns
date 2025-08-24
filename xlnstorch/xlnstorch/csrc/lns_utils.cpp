@@ -160,8 +160,34 @@ torch::Tensor change_base_backward(const torch::Tensor& grad_output, const torch
 
 
 void init_lns_utils(py::module& m) {
-    m.def("float_to_lns_forward", &float_to_lns_forward, "Convert float tensor to LNS representation (forward pass)");
-    m.def("float_to_lns_backward", &float_to_lns_backward, "Convert gradients from LNS representation back to float (backward pass)");
-    m.def("change_base_forward", &change_base_forward, "Change base of LNS representation (forward pass)");
-    m.def("change_base_backward", &change_base_backward, "Change base of gradients back to original base (backward pass)");
+    m.def(
+        "float_to_lns_forward",
+        &float_to_lns_forward,
+        "Convert float tensor to LNS representation (forward pass)",
+        py::arg("x"),
+        py::arg("base_t")
+    );
+    m.def(
+        "float_to_lns_backward",
+        &float_to_lns_backward,
+        "Convert gradients from LNS representation back to float (backward pass)",
+        py::arg("grad_output"),
+        py::arg("base_t")
+    );
+    m.def(
+        "change_base_forward",
+        &change_base_forward,
+        "Change base of LNS representation (forward pass)",
+        py::arg("x"),
+        py::arg("old_base"),
+        py::arg("new_base")
+    );
+    m.def(
+        "change_base_backward",
+        &change_base_backward,
+        "Change base of gradients back to original base (backward pass)",
+        py::arg("grad_output"),
+        py::arg("old_base"),
+        py::arg("new_base")
+    );
 }

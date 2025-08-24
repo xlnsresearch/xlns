@@ -195,6 +195,7 @@ Miscellaneous Operations
     lns_cat
     lns_chunk
     lns_where
+    lns_pad
 
 Loss Operations
 ~~~~~~~~~~~~~~~
@@ -290,6 +291,7 @@ support ``LNSTensor`` objects.
     lns_adaptive_avg_pool2d
     lns_adaptive_avg_pool3d
     lns_batch_norm
+    lns_layer_norm
     lns_max_pool1d
     lns_max_pool2d
     lns_max_pool3d

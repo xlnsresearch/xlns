@@ -1033,7 +1033,7 @@ class LNSAvgPool1dFuncton(LNSFunction):
 
         return grad_x, None, None, None, None, None, None
 
-@implements(torch.nn.functional.avg_pool1d, LNSAvgPool1dFuncton.forward, "default", default=True)
+@implements(torch.nn.functional.avg_pool1d, LNSAvgPool1dFuncton.forward, "default", default=not CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
 
     kernel_size = kernel_size[0] if isinstance(kernel_size, (list, tuple)) else kernel_size
@@ -1819,6 +1819,118 @@ def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=Fa
     if training:
         running_mean._inplace_copy(running_mean_cpy._lns)
         running_var._inplace_copy(running_var_cpy._lns)
+
+    return lnstensor(result, from_lns=True, b=x.base)
+
+class LNSLayerNorm(LNSFunction):
+    """
+    LNS version of nn.LayerNorm (forward pass only).
+
+    x  : input in log–number system
+    eps: small constant in the same LNS base that is added for numerical stability
+    base: LNS base used by the helper ops
+    normalized_shape : tuple or list indicating which (trailing) dims are normalised
+                       e.g. for PyTorch’s nn.LayerNorm(normalized_shape=(C,H,W)) you
+                       would pass (C, H, W).
+    weight, bias (optional): element-wise affine parameters, given in LNS
+    """
+    @staticmethod
+    def forward(x, eps, base, normalized_shape, weight=None, bias=None):
+        reduce_dims = tuple(range(x.dim() - len(normalized_shape), x.dim()))
+
+        mean = lns_mean(x, base, dim=reduce_dims, keepdim=True)
+        var = lns_var(x, base, LNS_ZERO, dim=reduce_dims, keepdim=True)
+
+        var_eps = lns_add(var, eps, base)
+        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base), base)
+
+        x_hat = lns_mul(lns_sub(x, mean, base), inv_std, base)
+
+        if weight is not None:
+            shape = [1] * (x.dim() - len(normalized_shape)) + list(normalized_shape)
+            x_hat = lns_mul(x_hat, weight.view(*shape), base)
+
+        if bias is not None:
+            shape = [1] * (x.dim() - len(normalized_shape)) + list(normalized_shape)
+            x_hat = lns_add(x_hat, bias.view(*shape), base)
+
+        return x_hat.to(torch.float64)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, eps, base, normalized_shape, weight, bias = inputs
+
+        ctx.red_dims = tuple(range(x.dim() - len(normalized_shape), x.dim()))
+
+        mean = lns_mean(x, base, dim=ctx.red_dims, keepdim=True)
+        var = lns_var(x, base, LNS_ZERO, dim=ctx.red_dims, keepdim=True)
+
+        ctx.save_for_backward(x, weight, bias, mean, var, eps, base)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, weight, bias, mean, var, eps, base = ctx.saved_tensors
+        red_dims = ctx.red_dims
+
+        var_eps = lns_add(var, eps, base)
+        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base), base)
+        x_centered = lns_sub(x, mean, base)
+        x_hat = lns_mul(x_centered, inv_std, base)
+
+        param_red_dims = tuple(i for i in range(x.dim()) if i not in red_dims)
+
+        grad_bias = None
+        if bias is not None:
+            grad_bias = lns_sum(grad_output, base, dim=param_red_dims, keepdim=False)
+
+        grad_weight = None
+        if weight is not None:
+
+            w_view = [1] * x.dim()
+            for d in red_dims:
+                w_view[d] = x.size(d)
+            weight_b = weight.view(*w_view)
+
+            grad_y_wrt_x_hat = lns_mul(grad_output, weight_b, base)
+            grad_weight = lns_sum(
+                lns_mul(grad_output, x_hat, base),
+                base, dim=param_red_dims, keepdim=False
+            )
+
+        else:
+            grad_y_wrt_x_hat = grad_output
+
+        N = 1
+        for d in red_dims:
+            N *= x.shape[d]
+        n_elems = LNSTensor.get_internal_tensor(N, base)
+
+        sum_grad = lns_sum(grad_y_wrt_x_hat, base, dim=red_dims, keepdim=True)
+        sum_grad_xhat = lns_sum(
+            lns_mul(grad_y_wrt_x_hat, x_hat, base),
+            base, dim=red_dims, keepdim=True
+        )
+
+        Ng = lns_mul(n_elems, grad_y_wrt_x_hat, base)
+        term_inner = lns_sub(
+            lns_sub(Ng, sum_grad, base),
+            lns_mul(x_hat, sum_grad_xhat, base),
+            base
+        )
+
+        inv_N = lns_div(LNS_ONE, n_elems, base)
+        grad_x = lns_mul(
+            lns_mul(inv_std, inv_N, base),
+            term_inner, base
+        )
+
+        return grad_x.to(torch.float64), None, None, None, grad_weight, grad_bias
+
+@implements(torch.nn.functional.layer_norm, LNSLayerNorm.forward, "default", default=True)
+def layer_norm(x, normalized_shape, weight=None, bias=None, eps=1e-5):
+
+    x, weight, bias, eps = format_lnstensor_operands(x, weight, bias, eps)
+    result = LNSLayerNorm.apply(x, eps, x.base, normalized_shape, weight, bias)
 
     return lnstensor(result, from_lns=True, b=x.base)
 

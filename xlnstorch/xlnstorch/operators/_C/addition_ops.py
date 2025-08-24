@@ -1,6 +1,6 @@
 import torch
 import xlnstorch.csrc
-from xlnstorch import lnstensor, format_lnstensor_operands, implements, LNS_ONE
+from xlnstorch import lnstensor, format_lnstensor_operands, implements, CSRC_AVAILABLE
 from xlnstorch.sbdb_dispatch_table import DEFAULT_SBDB_FUNC
 from xlnstorch.operators import lns_sum_to_size
 from xlnstorch.operators.addition_ops import LNSAddFunction
@@ -34,7 +34,7 @@ class LNSAddCPPFunction(LNSFunction):
 
         return grad_x, grad_y, None
 
-@implements(torch.add, LNSAddCPPFunction.forward, key='default_cpp', default=True)
+@implements(torch.add, LNSAddCPPFunction.forward, key='default_cpp', default=CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
@@ -85,7 +85,7 @@ class LNSSumCPPFunction(LNSFunction):
 
         return grad_x, None, None, None
 
-@implements(torch.sum, LNSSumCPPFunction.forward, "default_cpp", default=True)
+@implements(torch.sum, LNSSumCPPFunction.forward, "default_cpp", default=CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
 
     result = LNSSumCPPFunction.apply(x, x.base, dim, keepdim)
@@ -116,7 +116,7 @@ class LNSMatmulCPPFunction(LNSFunction):
         grad_A, grad_B = xlnstorch.csrc.matmul_backward(grad_packed, A_packed, B_packed, base)
         return grad_A, grad_B, None
 
-@implements(torch.matmul, LNSMatmulCPPFunction.forward, "default_cpp", default=True)
+@implements(torch.matmul, LNSMatmulCPPFunction.forward, "default_cpp", default=CSRC_AVAILABLE)
 def matmul(A, B, *, out=None):
 
     A, B = format_lnstensor_operands(A, B)

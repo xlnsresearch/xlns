@@ -1,4 +1,5 @@
-from xlnstorch import CSRC_AVAILABLE, set_default_implementation
+import xlnstorch
+from xlnstorch import set_default_implementation
 import torch
 
 from .internal_lns_ops import (
@@ -54,6 +55,7 @@ from .internal_lns_ops import (
     lns_cat,
     lns_chunk,
     lns_where,
+    lns_pad,
 
     lns_mse_loss,
     lns_l1_loss,
@@ -113,6 +115,7 @@ from .internal_lns_ops import (
     lns_adaptive_avg_pool2d,
     lns_adaptive_avg_pool3d,
     lns_batch_norm,
+    lns_layer_norm,
     lns_max_pool1d,
     lns_max_pool2d,
     lns_max_pool3d,
@@ -169,8 +172,7 @@ from . import activation_ops
 from . import layer_ops
 from . import misc_ops
 
-if CSRC_AVAILABLE:
-    from . import _C
+from . import _C
 from . import implementations
 
 def toggle_cpp_implementations(use_cpp: bool) -> None:
@@ -188,12 +190,14 @@ def toggle_cpp_implementations(use_cpp: bool) -> None:
     RuntimeError
         If C++ extensions are not available.
     """
-    if not CSRC_AVAILABLE:
-        raise RuntimeError("C++ extensions are not available. Cannot toggle C++ implementations.")
+    if use_cpp and not xlnstorch.CSRC_AVAILABLE:
+        raise RuntimeError("C++ extensions are not available. Cannot enable C++ implementations.")
 
     for torch_op, (py_key, cpp_key) in _C.CPP_IMPLEMENTED_OPERATORS.items():
         impl_key = cpp_key if use_cpp else py_key
         set_default_implementation(torch_op, impl_key)
+
+    xlnstorch.tensor_utils.toggle_cpp_tensor_utils(use_cpp)
 
 __all__ = [
     "toggle_cpp_implementations",
@@ -258,6 +262,7 @@ __all__ = [
     "lns_cat",
     "lns_chunk",
     "lns_where",
+    "lns_pad",
 
     "lns_mse_loss",
     "lns_l1_loss",
@@ -317,6 +322,7 @@ __all__ = [
     "lns_adaptive_avg_pool2d",
     "lns_adaptive_avg_pool3d",
     "lns_batch_norm",
+    "lns_layer_norm",
     "lns_max_pool1d",
     "lns_max_pool2d",
     "lns_max_pool3d",

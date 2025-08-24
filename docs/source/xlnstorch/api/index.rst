@@ -10,8 +10,11 @@ Python API
     xlnstorch.autograd <autograd>
     xlnstorch.operators <operators>
     xlnstorch.nn <nn>
+    xlnstorch.nn.init <init>
     xlnstorch.optim <optim>
     xlnstorch.optim.lr_scheduler <lr_scheduler>
     xlnstorch.transforms <transforms>
+    xlnstorch.convert_model <convert_model>
     xlnstorch.benchmark <benchmark>
     xlnstorch.viz <viz>
+    xlnstorch.csrc <csrc>

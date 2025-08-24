@@ -23,6 +23,7 @@ from .normalization_layers import (
     LNSBatchNorm1d,
     LNSBatchNorm2d,
     LNSBatchNorm3d,
+    LNSLayerNorm,
 )
 from .pooling_layers import (
     LNSAvgPool1d,
@@ -42,6 +43,9 @@ from .recurrent_layers import (
     LNSLSTMCell,
     LNSGRU,
     LNSGRUCell,
+)
+from .transformer_layers import (
+    LNSMultiheadAttention,
 )
 from . import init
 
@@ -66,6 +70,7 @@ __all__ = [
     "LNSBatchNorm1d",
     "LNSBatchNorm2d",
     "LNSBatchNorm3d",
+    "LNSLayerNorm",
 
     "LNSAvgPool1d",
     "LNSAvgPool2d",
@@ -83,4 +88,6 @@ __all__ = [
     "LNSLSTMCell",
     "LNSGRU",
     "LNSGRUCell",
+
+    "LNSMultiheadAttention",
 ]

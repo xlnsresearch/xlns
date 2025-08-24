@@ -5,10 +5,10 @@
 Transforms
 ==========
 
-The ``xlnstorch.transforms`` submodule provides a data transformation class,
-``ToLNSTensor``, which converts various input formats (like images and tensors)
-into LNSTensor objects. It is analogous to torchvision's
-:class:`torchvision.transforms.ToTensor` transform.
+This module provides a set of transforms for converting various data formats.
+It is primarily used to convert images and other data types into
+:class:`xlnstorch.LNSTensor` objects and is similar to the transforms
+provided by torchvision.
 
 This submodule requires the ``torchvision`` package to be installed, which can
 be done via pip:
@@ -17,16 +17,18 @@ be done via pip:
 
     pip install torchvision
 
-.. autosummary::
-    :toctree: generated/transforms
-    :nosignatures:
-
-    ToLNSTensor
+.. autoclass:: ToLNSTensor
+    :members:
 
 .. note::
 
     By default, the ToLNSTensor transform will only wrap floating point tensors.
     If you want to wrap all tensor types, set the `wrap_all` parameter to `True`.
+
+.. autoclass:: LNSNormalize
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Quick Start
 -----------

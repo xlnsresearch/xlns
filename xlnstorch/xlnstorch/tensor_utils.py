@@ -12,6 +12,7 @@ import xlns as xl
 # Import constants and base classes that don't cause circular imports
 from xlnstorch import LNS_ZERO, CSRC_AVAILABLE
 from xlnstorch.autograd import LNSFunction
+import xlnstorch.csrc
 
 # Precomputed table of bases from precisions
 # base = 2^(2^(-f)) for f in [1, 40]
@@ -98,6 +99,11 @@ def _get_operator_module():
         _operator_module = operators
     return _operator_module
 
+float_to_lns_forward = None
+float_to_lns_backward = None
+change_base_forward = None
+change_base_backward = None
+
 def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
 
     log_base = torch.log(base)
@@ -141,17 +147,42 @@ def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tens
 
     return old_tensor
 
-if CSRC_AVAILABLE:
-    import xlnstorch.csrc
-    float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
-    float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
-    change_base_forward = xlnstorch.csrc.change_base_forward
-    change_base_backward = xlnstorch.csrc.change_base_backward
-else:
-    float_to_lns_forward = _float_to_lns_forward_python
-    float_to_lns_backward = _float_to_lns_backward_python
-    change_base_forward = _change_base_forward_python
-    change_base_backward = _change_base_backward_python
+def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
+    """
+    Toggle the use of C++ implementations for tensor utility functions. This
+    function is called by `xlnstorch.operators.toggle_cpp_implementations()`.
+
+    In particular, this toggles the implementations for float to and from LNS
+    conversions and base change operations.
+
+    Parameters
+    ----------
+    use_cpp : bool
+        If True, use C++ implementations where available. If False, use
+        pure Python implementations.
+
+    Raises
+    ------
+    RuntimeError
+        If C++ extensions are not available and `use_cpp` is True.
+    """
+    global float_to_lns_forward, float_to_lns_backward
+    global change_base_forward, change_base_backward
+
+    if use_cpp and not xlnstorch.CSRC_AVAILABLE:
+        raise RuntimeError("C++ extensions are not available. Cannot enable C++ tensor utils.")
+
+    if use_cpp:
+        float_to_lns_forward = xlnstorch.csrc.float_to_lns_forward
+        float_to_lns_backward = xlnstorch.csrc.float_to_lns_backward
+        change_base_forward = xlnstorch.csrc.change_base_forward
+        change_base_backward = xlnstorch.csrc.change_base_backward
+
+    else:
+        float_to_lns_forward = _float_to_lns_forward_python
+        float_to_lns_backward = _float_to_lns_backward_python
+        change_base_forward = _change_base_forward_python
+        change_base_backward = _change_base_backward_python
 
 class FloatToLNS(LNSFunction):
 
@@ -233,6 +264,72 @@ class LNSToFunction(LNSFunction):
     def backward(ctx, grad_output):
         grad_x = grad_output.to(ctx.orig_device)
         return grad_x, None
+
+
+class LNSViewFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, shape):
+        return x.view(*shape)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, shape = inputs
+        ctx.original_shape = x.shape
+        ctx.n_shape = len(shape)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_x = grad_output.contiguous().view(ctx.original_shape)
+
+        return grad_x, None
+
+
+class LNSContiguousFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, memory_format):
+        return x.contiguous(memory_format=memory_format)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        pass
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output, None
+
+
+class LNSRepeatFunction(LNSFunction):
+
+    @staticmethod
+    def forward(x, base, repeats):
+        return x.repeat(*repeats)
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, base, repeats = inputs
+        ctx.save_for_backward(base)
+        ctx.input_shape = tuple(x.shape)
+        ctx.repeats = tuple(repeats)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        ops = _get_operator_module()
+        base, = ctx.saved_tensors
+        grad_x = grad_output
+
+        for dim, rep in enumerate(ctx.repeats):
+            if rep == 1:
+                continue
+
+            new_shape = list(grad_x.shape)
+            new_shape[dim] = ctx.input_shape[dim]
+            new_shape.insert(dim + 1, rep)
+
+            grad_x = ops.lns_sum(grad_x.view(*new_shape), base, dim=dim+1)
+
+        return grad_x, None, None
 
 
 class LNSOverflowFunction(LNSFunction):

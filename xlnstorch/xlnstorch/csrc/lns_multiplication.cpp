@@ -33,5 +33,11 @@ torch::Tensor mul_forward(
 }
 
 void init_lns_multiplication(py::module& m) {
-    m.def("mul_forward", &mul_forward, "LNS multiplication forward pass");
+    m.def(
+        "mul_forward",
+        &mul_forward,
+        "LNS multiplication forward pass",
+        py::arg("x"),
+        py::arg("y")
+    );
 }

@@ -7,6 +7,7 @@
 #include "lns_multiplication.h"
 #include "lns_matmul.h"
 #include "lns_convolution.h"
+#include "lns_pooling.h"
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     init_lns_utils(m);
@@ -15,4 +16,5 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     init_lns_multiplication(m);
     init_lns_matmul(m);
     init_lns_convolution(m);
+    init_lns_pool(m);
 }
