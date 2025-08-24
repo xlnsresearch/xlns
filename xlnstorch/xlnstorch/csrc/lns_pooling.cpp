@@ -191,6 +191,29 @@ torch::Tensor avg_pool1d_backward(
 }
 
 void init_lns_pool(py::module& m) {
-    m.def("avg_pool1d_forward", &avg_pool1d_forward, "LNS avg_pool1d forward");
-    m.def("avg_pool1d_backward", &avg_pool1d_backward, "LNS avg_pool1d backward");
+    m.def(
+        "avg_pool1d_forward",
+        &avg_pool1d_forward,
+        "LNS avg_pool1d forward",
+        py::arg("input"),
+        py::arg("kernel_size"),
+        py::arg("base_t"),
+        py::arg("stride") = c10::nullopt,
+        py::arg("padding") = 0,
+        py::arg("ceil_mode") = false,
+        py::arg("count_include_pad") = true
+    );
+    m.def(
+        "avg_pool1d_backward",
+        &avg_pool1d_backward,
+        "LNS avg_pool1d backward",
+        py::arg("grad_output"),
+        py::arg("input"),
+        py::arg("kernel_size"),
+        py::arg("base_t"),
+        py::arg("stride") = c10::nullopt,
+        py::arg("padding") = 0,
+        py::arg("ceil_mode") = false,
+        py::arg("count_include_pad") = true
+    );
 }

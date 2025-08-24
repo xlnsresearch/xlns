@@ -178,6 +178,21 @@ torch::Tensor sum_forward(
 }
 
 void init_lns_addition(py::module& m) {
-    m.def("add_forward", &add_forward, "LNS addition forward pass");
-    m.def("sum_forward", &sum_forward, "LNS summation forward pass");
+    m.def(
+        "add_forward",
+        &add_forward,
+        "LNS addition forward pass",
+        py::arg("x"),
+        py::arg("y"),
+        py::arg("base_t")
+    );
+    m.def(
+        "sum_forward",
+        &sum_forward,
+        "LNS summation forward pass",
+        py::arg("x"),
+        py::arg("base_t"),
+        py::arg("dims") = std::vector<int64_t>{},
+        py::arg("keepdim") = false
+    );
 }

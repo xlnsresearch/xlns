@@ -877,10 +877,103 @@ std::vector<torch::Tensor> conv3d_backward(
 }
 
 void init_lns_convolution(py::module& m) {
-    m.def("conv1d_forward", &conv1d_forward, "LNS conv1d forward pass");
-    m.def("conv1d_backward", &conv1d_backward, "LNS conv1d backward pass");
-    m.def("conv2d_forward", &conv2d_forward, "LNS conv2d forward pass");
-    m.def("conv2d_backward", &conv2d_backward, "LNS conv2d backward pass");
-    m.def("conv3d_forward", &conv3d_forward, "LNS conv3d forward pass");
-    m.def("conv3d_backward", &conv3d_backward, "LNS conv3d backward pass");
+    m.def(
+        "conv1d_forward",
+        &conv1d_forward,
+        "LNS conv1d forward pass",
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("bias").none(true),
+        py::arg("base_t"),
+        py::arg("stride") = 1,
+        py::arg("padding") = 0,
+        py::arg("dilation") = 1,
+        py::arg("groups") = 1
+    );
+    m.def(
+        "conv1d_backward",
+        &conv1d_backward,
+        "LNS conv1d backward pass",
+        py::arg("grad_output"),
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("base_t"),
+        py::arg("bias_defined"),
+        py::arg("stride") = 1,
+        py::arg("padding") = 0,
+        py::arg("dilation") = 1,
+        py::arg("groups") = 1
+    );
+    m.def(
+        "conv2d_forward",
+        &conv2d_forward,
+        "LNS conv2d forward pass",
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("bias").none(true),
+        py::arg("base_t"),
+        py::arg("stride_h") = 1,
+        py::arg("stride_w") = 1,
+        py::arg("padding_h") = 0,
+        py::arg("padding_w") = 0,
+        py::arg("dilation_h") = 1,
+        py::arg("dilation_w") = 1,
+        py::arg("groups") = 1
+    );
+    m.def(
+        "conv2d_backward",
+        &conv2d_backward,
+        "LNS conv2d backward pass",
+        py::arg("grad_output"),
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("base_t"),
+        py::arg("bias_defined"),
+        py::arg("stride_h") = 1,
+        py::arg("stride_w") = 1,
+        py::arg("padding_h") = 0,
+        py::arg("padding_w") = 0,
+        py::arg("dilation_h") = 1,
+        py::arg("dilation_w") = 1,
+        py::arg("groups") = 1
+    );
+    m.def(
+        "conv3d_forward",
+        &conv3d_forward,
+        "LNS conv3d forward pass",
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("bias").none(true),
+        py::arg("base_t"),
+        py::arg("stride_d") = 1,
+        py::arg("stride_h") = 1,
+        py::arg("stride_w") = 1,
+        py::arg("padding_d") = 0,
+        py::arg("padding_h") = 0,
+        py::arg("padding_w") = 0,
+        py::arg("dilation_d") = 1,
+        py::arg("dilation_h") = 1,
+        py::arg("dilation_w") = 1,
+        py::arg("groups") = 1
+    );
+    m.def(
+        "conv3d_backward",
+        &conv3d_backward,
+        "LNS conv3d backward pass",
+        py::arg("grad_output"),
+        py::arg("input"),
+        py::arg("weight"),
+        py::arg("base_t"),
+        py::arg("bias_defined"),
+        py::arg("stride_d") = 1,
+        py::arg("stride_h") = 1,
+        py::arg("stride_w") = 1,
+        py::arg("padding_d") = 0,
+        py::arg("padding_h") = 0,
+        py::arg("padding_w") = 0,
+        py::arg("dilation_d") = 1,
+        py::arg("dilation_h") = 1,
+        py::arg("dilation_w") = 1,
+        py::arg("groups") = 1
+    );
 }

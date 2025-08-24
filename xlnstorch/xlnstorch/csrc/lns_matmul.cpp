@@ -478,6 +478,21 @@ std::vector<torch::Tensor> matmul_backward(
 }
 
 void init_lns_matmul(py::module& m) {
-    m.def("matmul_forward", &matmul_forward, "LNS matmul forward pass");
-    m.def("matmul_backward", &matmul_backward, "LNS matmul backward pass");
+    m.def(
+        "matmul_forward",
+        &matmul_forward,
+        "LNS matmul forward pass",
+        py::arg("A"),
+        py::arg("B"),
+        py::arg("base_t")
+    );
+    m.def(
+        "matmul_backward",
+        &matmul_backward,
+        "LNS matmul backward pass",
+        py::arg("grad_output"),
+        py::arg("A"),
+        py::arg("B"),
+        py::arg("base_t")
+    );
 }
