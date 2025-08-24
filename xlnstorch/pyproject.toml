@@ -13,7 +13,7 @@ version = "1.0.0"
 description = "A PyTorch backend for LNS experimentation"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["torch>=2.0"]
+dependencies = ["torch>=2.0", "xlns", "numpy"]
 
 [tool.setuptools]
 include-package-data = true
