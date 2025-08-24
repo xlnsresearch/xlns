@@ -43,7 +43,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/tensor_utils';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="xlnstorch.tensor_utils.get_base_from_precision" href="generated/tensor_utils/xlnstorch.tensor_utils.get_base_from_precision.html" />
+    <link rel="next" title="xlnstorch.tensor_utils.toggle_cpp_tensor_utils" href="generated/tensor_utils/xlnstorch.tensor_utils.toggle_cpp_tensor_utils.html" />
     <link rel="prev" title="xlnstorch.format_lnstensor_operands" href="generated/xlnstorch.format_lnstensor_operands.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -171,11 +171,14 @@
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -336,22 +339,25 @@ document.write(`
 with LNSTensor objects and helpers for useful quantities.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.get_base_from_precision.html#xlnstorch.tensor_utils.get_base_from_precision" title="xlnstorch.tensor_utils.get_base_from_precision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_base_from_precision</span></code></a>(f)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.toggle_cpp_tensor_utils.html#xlnstorch.tensor_utils.toggle_cpp_tensor_utils" title="xlnstorch.tensor_utils.toggle_cpp_tensor_utils"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_cpp_tensor_utils</span></code></a>(use_cpp)</p></td>
+<td><p>Toggle the use of C++ implementations for tensor utility functions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.get_base_from_precision.html#xlnstorch.tensor_utils.get_base_from_precision" title="xlnstorch.tensor_utils.get_base_from_precision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_base_from_precision</span></code></a>(f)</p></td>
 <td><p>Get the logarithmic base for a given precision.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.get_precision_from_base.html#xlnstorch.tensor_utils.get_precision_from_base" title="xlnstorch.tensor_utils.get_precision_from_base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_precision_from_base</span></code></a>(base[, tolerance])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.get_precision_from_base.html#xlnstorch.tensor_utils.get_precision_from_base" title="xlnstorch.tensor_utils.get_precision_from_base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_precision_from_base</span></code></a>(base[, tolerance])</p></td>
 <td><p>Get the precision for a given logarithmic base, if it matches a precomputed base.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.set_overflow_limits.html#xlnstorch.tensor_utils.set_overflow_limits" title="xlnstorch.tensor_utils.set_overflow_limits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_overflow_limits</span></code></a>([max, min])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.set_overflow_limits.html#xlnstorch.tensor_utils.set_overflow_limits" title="xlnstorch.tensor_utils.set_overflow_limits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_overflow_limits</span></code></a>([max, min])</p></td>
 <td><p>Set global overflow limits for the handle_overflow function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.handle_overflow.html#xlnstorch.tensor_utils.handle_overflow" title="xlnstorch.tensor_utils.handle_overflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_overflow</span></code></a>(*tensors[, inplace, no_grad])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.handle_overflow.html#xlnstorch.tensor_utils.handle_overflow" title="xlnstorch.tensor_utils.handle_overflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_overflow</span></code></a>(*tensors[, inplace, no_grad])</p></td>
 <td><p>Handle overflow for a variable number of LNSTensors based on global overflow limits.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.align_lnstensor_bases.html#xlnstorch.tensor_utils.align_lnstensor_bases" title="xlnstorch.tensor_utils.align_lnstensor_bases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_lnstensor_bases</span></code></a>(*tensors[, base])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.align_lnstensor_bases.html#xlnstorch.tensor_utils.align_lnstensor_bases" title="xlnstorch.tensor_utils.align_lnstensor_bases"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_lnstensor_bases</span></code></a>(*tensors[, base])</p></td>
 <td><p>Aligns the bases of a sequence of LNSTensors to a common base.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.format_lnstensor_operands.html#xlnstorch.tensor_utils.format_lnstensor_operands" title="xlnstorch.tensor_utils.format_lnstensor_operands"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_lnstensor_operands</span></code></a>(*operands[, base])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/tensor_utils/xlnstorch.tensor_utils.format_lnstensor_operands.html#xlnstorch.tensor_utils.format_lnstensor_operands" title="xlnstorch.tensor_utils.format_lnstensor_operands"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_lnstensor_operands</span></code></a>(*operands[, base])</p></td>
 <td><p>Converts a variable number of operands to LNSTensor objects, aligning all operands to the base of the first operand that is an LNSTensor.</p></td>
 </tr>
 </tbody>
@@ -380,11 +386,11 @@ with LNSTensor objects and helpers for useful quantities.</p>
       </div>
     </a>
     <a class="right-next"
-       href="generated/tensor_utils/xlnstorch.tensor_utils.get_base_from_precision.html"
+       href="generated/tensor_utils/xlnstorch.tensor_utils.toggle_cpp_tensor_utils.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">xlnstorch.tensor_utils.get_base_from_precision</p>
+        <p class="prev-next-title">xlnstorch.tensor_utils.toggle_cpp_tensor_utils</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

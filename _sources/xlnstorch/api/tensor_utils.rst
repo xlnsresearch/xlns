@@ -9,6 +9,7 @@ with LNSTensor objects and helpers for useful quantities.
 .. autosummary::
     :toctree: generated/tensor_utils
 
+    toggle_cpp_tensor_utils
     get_base_from_precision
     get_precision_from_base
     set_overflow_limits

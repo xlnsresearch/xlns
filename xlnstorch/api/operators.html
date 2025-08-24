@@ -172,11 +172,14 @@
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -611,6 +614,9 @@ operations. For the most part, these internal operator functions wrap the
 <tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_where.html#xlnstorch.operators.lns_where" title="xlnstorch.operators.lns_where"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_where</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.where.html#torch.where" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.where()</span></code></a> for parameter/return details.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_pad.html#xlnstorch.operators.lns_pad" title="xlnstorch.operators.lns_pad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_pad</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.pad.html#torch.nn.functional.pad" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.pad()</span></code></a> for parameter/return details.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -815,13 +821,16 @@ support <code class="docutils literal notranslate"><span class="pre">LNSTensor</
 <tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_batch_norm.html#xlnstorch.operators.lns_batch_norm" title="xlnstorch.operators.lns_batch_norm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_batch_norm</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.batch_norm.html#torch.nn.functional.batch_norm" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.batch_norm()</span></code></a> for parameter/return details.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool1d.html#xlnstorch.operators.lns_max_pool1d" title="xlnstorch.operators.lns_max_pool1d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool1d</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_layer_norm.html#xlnstorch.operators.lns_layer_norm" title="xlnstorch.operators.lns_layer_norm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_layer_norm</span></code></a></p></td>
+<td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.layer_norm.html#torch.nn.functional.layer_norm" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.layer_norm()</span></code></a> for parameter/return details.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool1d.html#xlnstorch.operators.lns_max_pool1d" title="xlnstorch.operators.lns_max_pool1d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool1d</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.max_pool1d.html#torch.nn.functional.max_pool1d" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.max_pool1d()</span></code></a> for parameter/return details.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool2d.html#xlnstorch.operators.lns_max_pool2d" title="xlnstorch.operators.lns_max_pool2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool2d</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool2d.html#xlnstorch.operators.lns_max_pool2d" title="xlnstorch.operators.lns_max_pool2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool2d</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.max_pool2d.html#torch.nn.functional.max_pool2d" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.max_pool2d()</span></code></a> for parameter/return details.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool3d.html#xlnstorch.operators.lns_max_pool3d" title="xlnstorch.operators.lns_max_pool3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool3d</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/operators/xlnstorch.operators.lns_max_pool3d.html#xlnstorch.operators.lns_max_pool3d" title="xlnstorch.operators.lns_max_pool3d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lns_max_pool3d</span></code></a></p></td>
 <td><p>See docs for <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.max_pool3d.html#torch.nn.functional.max_pool3d" title="(in PyTorch v2.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.nn.functional.max_pool3d()</span></code></a> for parameter/return details.</p></td>
 </tr>
 </tbody>

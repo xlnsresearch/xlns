@@ -172,11 +172,14 @@
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -332,6 +335,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-creation-ops">Tensor Creation Ops</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ZERO"><code class="docutils literal notranslate"><span class="pre">LNS_ZERO</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_INF"><code class="docutils literal notranslate"><span class="pre">LNS_INF</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_INF"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_INF</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_ONE</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_ONE</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.CSRC_AVAILABLE"><code class="docutils literal notranslate"><span class="pre">CSRC_AVAILABLE</span></code></a></li>
@@ -410,6 +415,24 @@ differentiation, while also providing specialized methods for LNS operations.</p
 <dd><p>A float64 scalar tensor representing zero in the LNS. This is a
 special value defined to be
 <span class="math notranslate nohighlight">\(\left( -2^{52} \ll 1 \right) \mid 1 = -9007199254740991\)</span>.
+It is independent of an LNS object’s base.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.LNS_INF">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNS_INF</span></span><a class="headerlink" href="#xlnstorch.LNS_INF" title="Link to this definition">#</a></dt>
+<dd><p>A float64 scalar tensor representing positive infinity in the LNS.
+This is a special value defined to be
+<span class="math notranslate nohighlight">\(2^{53} = 9007199254740992\)</span>.
+It is independent of an LNS object’s base.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="xlnstorch.LNS_NEG_INF">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.</span></span><span class="sig-name descname"><span class="pre">LNS_NEG_INF</span></span><a class="headerlink" href="#xlnstorch.LNS_NEG_INF" title="Link to this definition">#</a></dt>
+<dd><p>A float64 scalar tensor representing negative infinity in the LNS.
+This is a special value defined to be
+<span class="math notranslate nohighlight">\(\left( 2^{53} \right) - 1 = 9007199254740991\)</span>.
 It is independent of an LNS object’s base.</p>
 </dd></dl>
 
@@ -554,6 +577,8 @@ operation, you can use the following functions.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tensor-creation-ops">Tensor Creation Ops</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ZERO"><code class="docutils literal notranslate"><span class="pre">LNS_ZERO</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_INF"><code class="docutils literal notranslate"><span class="pre">LNS_INF</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_INF"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_INF</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_ONE</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.LNS_NEG_ONE"><code class="docutils literal notranslate"><span class="pre">LNS_NEG_ONE</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.CSRC_AVAILABLE"><code class="docutils literal notranslate"><span class="pre">CSRC_AVAILABLE</span></code></a></li>

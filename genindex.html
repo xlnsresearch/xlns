@@ -170,11 +170,14 @@
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xlnstorch/api/csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -301,6 +304,7 @@ document.write(`
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -365,6 +369,8 @@ document.write(`
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSIdentity.html#xlnstorch.nn.LNSIdentity.__init__">(xlnstorch.nn.LNSIdentity method)</a>
 </li>
+        <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLayerNorm.html#xlnstorch.nn.LNSLayerNorm.__init__">(xlnstorch.nn.LNSLayerNorm method)</a>
+</li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLazyLinear.html#xlnstorch.nn.LNSLazyLinear.__init__">(xlnstorch.nn.LNSLazyLinear method)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLinear.html#xlnstorch.nn.LNSLinear.__init__">(xlnstorch.nn.LNSLinear method)</a>
@@ -380,6 +386,8 @@ document.write(`
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMaxPool3d.html#xlnstorch.nn.LNSMaxPool3d.__init__">(xlnstorch.nn.LNSMaxPool3d method)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSModule.html#xlnstorch.nn.LNSModule.__init__">(xlnstorch.nn.LNSModule method)</a>
+</li>
+        <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.__init__">(xlnstorch.nn.LNSMultiheadAttention method)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNN.html#xlnstorch.nn.LNSRNN.__init__">(xlnstorch.nn.LNSRNN method)</a>
 </li>
@@ -407,8 +415,6 @@ document.write(`
 </li>
         <li><a href="xlnstorch/api/generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSStepLR.html#xlnstorch.optim.lr_scheduler.LNSStepLR.__init__">(xlnstorch.optim.lr_scheduler.LNSStepLR method)</a>
 </li>
-        <li><a href="xlnstorch/api/generated/transforms/xlnstorch.transforms.ToLNSTensor.html#xlnstorch.transforms.ToLNSTensor.__init__">(xlnstorch.transforms.ToLNSTensor method)</a>
-</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -424,16 +430,18 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.add_.html#xlnstorch.LNSTensor.add_">add_() (xlnstorch.LNSTensor method)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.add_forward.html#xlnstorch.csrc.add_forward">add_forward() (in module xlnstorch.csrc)</a>
+</li>
       <li><a href="xlnstorch/api/generated/benchmark/xlnstorch.benchmark.Benchmark.after_epoch.html#xlnstorch.benchmark.Benchmark.after_epoch">after_epoch() (xlnstorch.benchmark.Benchmark method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.align_lnstensor_bases.html#xlnstorch.align_lnstensor_bases">align_lnstensor_bases() (in module xlnstorch)</a>
 
       <ul>
         <li><a href="xlnstorch/api/generated/tensor_utils/xlnstorch.tensor_utils.align_lnstensor_bases.html#xlnstorch.tensor_utils.align_lnstensor_bases">(in module xlnstorch.tensor_utils)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.all.html#xlnstorch.LNSTensor.all">all() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.allclose.html#xlnstorch.LNSTensor.allclose">allclose() (xlnstorch.LNSTensor method)</a>
@@ -441,6 +449,12 @@ document.write(`
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.any.html#xlnstorch.LNSTensor.any">any() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.argsort.html#xlnstorch.LNSTensor.argsort">argsort() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.attn_dropout">attn_dropout (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.avg_pool1d_backward.html#xlnstorch.csrc.avg_pool1d_backward">avg_pool1d_backward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.avg_pool1d_forward.html#xlnstorch.csrc.avg_pool1d_forward">avg_pool1d_forward() (in module xlnstorch.csrc)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -475,6 +489,8 @@ document.write(`
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSConv3d.html#xlnstorch.nn.LNSConv3d.bias">(xlnstorch.nn.LNSConv3d attribute)</a>
 </li>
+        <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLayerNorm.html#xlnstorch.nn.LNSLayerNorm.bias">(xlnstorch.nn.LNSLayerNorm attribute)</a>
+</li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLazyLinear.html#xlnstorch.nn.LNSLazyLinear.bias">(xlnstorch.nn.LNSLazyLinear attribute)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLinear.html#xlnstorch.nn.LNSLinear.bias">(xlnstorch.nn.LNSLinear attribute)</a>
@@ -498,9 +514,15 @@ document.write(`
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSRNNCell.html#xlnstorch.nn.LNSRNNCell.bias_ih">(xlnstorch.nn.LNSRNNCell attribute)</a>
 </li>
       </ul></li>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.bias_k">bias_k (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.bias_v">bias_v (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
       <li><a href="xlnstorch/api/generated/benchmark/xlnstorch.benchmark.BinaryBench.html#xlnstorch.benchmark.BinaryBench">BinaryBench (class in xlnstorch.benchmark)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.broadcast_to.html#xlnstorch.LNSTensor.broadcast_to">broadcast_to() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/convert_model/xlnstorch.convert_model.build_lns_sequential.html#xlnstorch.convert_model.build_lns_sequential">build_lns_sequential() (in module xlnstorch.convert_model)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -508,10 +530,30 @@ document.write(`
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.change_base_backward.html#xlnstorch.csrc.change_base_backward">change_base_backward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.change_base_forward.html#xlnstorch.csrc.change_base_forward">change_base_forward() (in module xlnstorch.csrc)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.clone.html#xlnstorch.LNSTensor.clone">clone() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.constant_.html#xlnstorch.nn.init.constant_">constant_() (in module xlnstorch.nn.init)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.contiguous.html#xlnstorch.LNSTensor.contiguous">contiguous() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv1d_backward.html#xlnstorch.csrc.conv1d_backward">conv1d_backward() (in module xlnstorch.csrc)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv1d_forward.html#xlnstorch.csrc.conv1d_forward">conv1d_forward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv2d_backward.html#xlnstorch.csrc.conv2d_backward">conv2d_backward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv2d_forward.html#xlnstorch.csrc.conv2d_forward">conv2d_forward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv3d_backward.html#xlnstorch.csrc.conv3d_backward">conv3d_backward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.conv3d_forward.html#xlnstorch.csrc.conv3d_forward">conv3d_forward() (in module xlnstorch.csrc)</a>
+</li>
       <li><a href="xlnstorch/api/xlnstorch.html#xlnstorch.CSRC_AVAILABLE">CSRC_AVAILABLE (in module xlnstorch)</a>
 </li>
   </ul></td>
@@ -540,13 +582,15 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.empty_like.html#xlnstorch.empty_like">empty_like() (in module xlnstorch)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.eq.html#xlnstorch.LNSTensor.eq">eq() (xlnstorch.LNSTensor method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.equal.html#xlnstorch.LNSTensor.equal">equal() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.expand.html#xlnstorch.LNSTensor.expand">expand() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.eye_.html#xlnstorch.nn.init.eye_">eye_() (in module xlnstorch.nn.init)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -555,6 +599,10 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.autograd.find_fanout.html#xlnstorch.autograd.find_fanout">find_fanout() (in module xlnstorch.autograd)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.float_to_lns_backward.html#xlnstorch.csrc.float_to_lns_backward">float_to_lns_backward() (in module xlnstorch.csrc)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.float_to_lns_forward.html#xlnstorch.csrc.float_to_lns_forward">float_to_lns_forward() (in module xlnstorch.csrc)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.format_lnstensor_operands.html#xlnstorch.format_lnstensor_operands">format_lnstensor_operands() (in module xlnstorch)</a>
 
@@ -591,6 +639,8 @@ document.write(`
       <li><a href="xlnstorch/api/lr_scheduler.html#xlnstorch.optim.lr_scheduler.get_lr_bases">get_lr_bases() (in module xlnstorch.optim.lr_scheduler)</a>
 </li>
       <li><a href="xlnstorch/api/generated/tensor_utils/xlnstorch.tensor_utils.get_precision_from_base.html#xlnstorch.tensor_utils.get_precision_from_base">get_precision_from_base() (in module xlnstorch.tensor_utils)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.get_table.html#xlnstorch.csrc.get_table">get_table() (in module xlnstorch.csrc)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.grad.html#xlnstorch.LNSTensor.grad">grad (xlnstorch.LNSTensor property)</a>
 </li>
@@ -631,6 +681,10 @@ document.write(`
 
 <h2 id="K">K</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.k_proj">k_proj (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.kthvalue.html#xlnstorch.LNSTensor.kthvalue">kthvalue() (xlnstorch.LNSTensor method)</a>
 </li>
@@ -732,6 +786,8 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_huber_loss.html#xlnstorch.operators.lns_huber_loss">lns_huber_loss() (in module xlnstorch.operators)</a>
 </li>
+      <li><a href="xlnstorch/api/xlnstorch.html#xlnstorch.LNS_INF">LNS_INF (in module xlnstorch)</a>
+</li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_isclose.html#xlnstorch.operators.lns_isclose">lns_isclose() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_isin.html#xlnstorch.operators.lns_isin">lns_isin() (in module xlnstorch.operators)</a>
@@ -741,6 +797,8 @@ document.write(`
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_kthvalue.html#xlnstorch.operators.lns_kthvalue">lns_kthvalue() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_l1_loss.html#xlnstorch.operators.lns_l1_loss">lns_l1_loss() (in module xlnstorch.operators)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_layer_norm.html#xlnstorch.operators.lns_layer_norm">lns_layer_norm() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_le.html#xlnstorch.operators.lns_le">lns_le() (in module xlnstorch.operators)</a>
 </li>
@@ -782,11 +840,15 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_neg.html#xlnstorch.operators.lns_neg">lns_neg() (in module xlnstorch.operators)</a>
 </li>
+      <li><a href="xlnstorch/api/xlnstorch.html#xlnstorch.LNS_NEG_INF">LNS_NEG_INF (in module xlnstorch)</a>
+</li>
       <li><a href="xlnstorch/api/xlnstorch.html#xlnstorch.LNS_NEG_ONE">LNS_NEG_ONE (in module xlnstorch)</a>
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_nll_loss.html#xlnstorch.operators.lns_nll_loss">lns_nll_loss() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/api/xlnstorch.html#xlnstorch.LNS_ONE">LNS_ONE (in module xlnstorch)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_pad.html#xlnstorch.operators.lns_pad">lns_pad() (in module xlnstorch.operators)</a>
 </li>
       <li><a href="xlnstorch/api/generated/operators/xlnstorch.operators.lns_poisson_nll_loss.html#xlnstorch.operators.lns_poisson_nll_loss">lns_poisson_nll_loss() (in module xlnstorch.operators)</a>
 </li>
@@ -924,6 +986,8 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSLambdaLR.html#xlnstorch.optim.lr_scheduler.LNSLambdaLR">LNSLambdaLR (class in xlnstorch.optim.lr_scheduler)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLayerNorm.html#xlnstorch.nn.LNSLayerNorm">LNSLayerNorm (class in xlnstorch.nn)</a>
+</li>
       <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLazyLinear.html#xlnstorch.nn.LNSLazyLinear">LNSLazyLinear (class in xlnstorch.nn)</a>
 </li>
       <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLinear.html#xlnstorch.nn.LNSLinear">LNSLinear (class in xlnstorch.nn)</a>
@@ -946,11 +1010,15 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/optim.html#xlnstorch.optim.LNSMul">LNSMul (class in xlnstorch.optim)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention">LNSMultiheadAttention (class in xlnstorch.nn)</a>
+</li>
       <li><a href="xlnstorch/api/generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSMultiplicativeLR.html#xlnstorch.optim.lr_scheduler.LNSMultiplicativeLR">LNSMultiplicativeLR (class in xlnstorch.optim.lr_scheduler)</a>
 </li>
       <li><a href="xlnstorch/api/generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSMultiStepLR.html#xlnstorch.optim.lr_scheduler.LNSMultiStepLR">LNSMultiStepLR (class in xlnstorch.optim.lr_scheduler)</a>
 </li>
       <li><a href="xlnstorch/api/optim.html#xlnstorch.optim.LNSNAdam">LNSNAdam (class in xlnstorch.optim)</a>
+</li>
+      <li><a href="xlnstorch/api/transforms.html#xlnstorch.transforms.LNSNormalize">LNSNormalize (class in xlnstorch.transforms)</a>
 </li>
       <li><a href="xlnstorch/api/generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSPolynomialLR.html#xlnstorch.optim.lr_scheduler.LNSPolynomialLR">LNSPolynomialLR (class in xlnstorch.optim.lr_scheduler)</a>
 </li>
@@ -978,6 +1046,8 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.lnstensor.html#xlnstorch.lnstensor">lnstensor() (in module xlnstorch)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.load_backend.html#xlnstorch.csrc.load_backend">load_backend() (in module xlnstorch.csrc)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.lt.html#xlnstorch.LNSTensor.lt">lt() (xlnstorch.LNSTensor method)</a>
 </li>
   </ul></td>
@@ -992,8 +1062,12 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/benchmark/xlnstorch.benchmark.Benchmark.make_inputs.html#xlnstorch.benchmark.Benchmark.make_inputs">make_inputs() (xlnstorch.benchmark.Benchmark method)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.matmul_backward.html#xlnstorch.csrc.matmul_backward">matmul_backward() (in module xlnstorch.csrc)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.matmul_forward.html#xlnstorch.csrc.matmul_forward">matmul_forward() (in module xlnstorch.csrc)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.maximum.html#xlnstorch.LNSTensor.maximum">maximum() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.minimum.html#xlnstorch.LNSTensor.minimum">minimum() (xlnstorch.LNSTensor method)</a>
@@ -1015,6 +1089,8 @@ document.write(`
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.neg.html#xlnstorch.LNSTensor.neg">neg() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.neg_.html#xlnstorch.LNSTensor.neg_">neg_() (xlnstorch.LNSTensor method)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.normal_.html#xlnstorch.nn.init.normal_">normal_() (in module xlnstorch.nn.init)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1038,10 +1114,14 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="xlnstorch/api/generated/xlnstorch.ones.html#xlnstorch.ones">ones() (in module xlnstorch)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.ones_.html#xlnstorch.nn.init.ones_">ones_() (in module xlnstorch.nn.init)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.ones_like.html#xlnstorch.ones_like">ones_like() (in module xlnstorch)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.out_proj">out_proj (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.override_implementation.html#xlnstorch.override_implementation">override_implementation() (in module xlnstorch)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.override_sbdb_implementation.html#xlnstorch.override_sbdb_implementation">override_sbdb_implementation() (in module xlnstorch)</a>
@@ -1052,6 +1132,8 @@ document.write(`
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/convert_model/xlnstorch.convert_model.parse_sequential.html#xlnstorch.convert_model.parse_sequential">parse_sequential() (in module xlnstorch.convert_model)</a>
+</li>
       <li><a href="xlnstorch/api/generated/viz/xlnstorch.viz.plot_error_heatmap.html#xlnstorch.viz.plot_error_heatmap">plot_error_heatmap() (in module xlnstorch.viz)</a>
 </li>
       <li><a href="xlnstorch/api/generated/viz/xlnstorch.viz.plot_precision_comparison.html#xlnstorch.viz.plot_precision_comparison">plot_precision_comparison() (in module xlnstorch.viz)</a>
@@ -1083,6 +1165,14 @@ document.write(`
   </ul></td>
 </tr></table>
 
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.q_proj">q_proj (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1101,6 +1191,8 @@ document.write(`
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.reciprocal_.html#xlnstorch.LNSTensor.reciprocal_">reciprocal_() (xlnstorch.LNSTensor method)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.register_xlnsconf_implementation.html#xlnstorch.register_xlnsconf_implementation">register_xlnsconf_implementation() (in module xlnstorch)</a>
+</li>
+      <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.repeat.html#xlnstorch.LNSTensor.repeat">repeat() (xlnstorch.LNSTensor method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1139,7 +1231,11 @@ document.write(`
       <li><a href="xlnstorch/api/generated/xlnstorch.set_default_implementation.html#xlnstorch.set_default_implementation">set_default_implementation() (in module xlnstorch)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.set_default_sbdb_implementation.html#xlnstorch.set_default_sbdb_implementation">set_default_sbdb_implementation() (in module xlnstorch)</a>
+
+      <ul>
+        <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.set_default_sbdb_implementation.html#xlnstorch.csrc.set_default_sbdb_implementation">(in module xlnstorch.csrc)</a>
 </li>
+      </ul></li>
       <li><a href="xlnstorch/api/generated/tensor_utils/xlnstorch.tensor_utils.set_overflow_limits.html#xlnstorch.tensor_utils.set_overflow_limits">set_overflow_limits() (in module xlnstorch.tensor_utils)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.shape.html#xlnstorch.LNSTensor.shape">shape (xlnstorch.LNSTensor property)</a>
@@ -1204,6 +1300,8 @@ document.write(`
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.sum.html#xlnstorch.LNSTensor.sum">sum() (xlnstorch.LNSTensor method)</a>
 </li>
+      <li><a href="xlnstorch/api/generated/csrc/xlnstorch.csrc.sum_forward.html#xlnstorch.csrc.sum_forward">sum_forward() (in module xlnstorch.csrc)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1216,7 +1314,9 @@ document.write(`
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="xlnstorch/api/generated/transforms/xlnstorch.transforms.ToLNSTensor.html#xlnstorch.transforms.ToLNSTensor">ToLNSTensor (class in xlnstorch.transforms)</a>
+      <li><a href="xlnstorch/api/generated/tensor_utils/xlnstorch.tensor_utils.toggle_cpp_tensor_utils.html#xlnstorch.tensor_utils.toggle_cpp_tensor_utils">toggle_cpp_tensor_utils() (in module xlnstorch.tensor_utils)</a>
+</li>
+      <li><a href="xlnstorch/api/transforms.html#xlnstorch.transforms.ToLNSTensor">ToLNSTensor (class in xlnstorch.transforms)</a>
 </li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.transpose.html#xlnstorch.LNSTensor.transpose">transpose() (xlnstorch.LNSTensor method)</a>
 </li>
@@ -1230,6 +1330,8 @@ document.write(`
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.uniform_.html#xlnstorch.nn.init.uniform_">uniform_() (in module xlnstorch.nn.init)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.unsqueeze.html#xlnstorch.LNSTensor.unsqueeze">unsqueeze() (xlnstorch.LNSTensor method)</a>
 </li>
   </ul></td>
@@ -1238,10 +1340,12 @@ document.write(`
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.value.html#xlnstorch.LNSTensor.value">value (xlnstorch.LNSTensor property)</a>
+      <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSMultiheadAttention.html#xlnstorch.nn.LNSMultiheadAttention.v_proj">v_proj (xlnstorch.nn.LNSMultiheadAttention attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.value.html#xlnstorch.LNSTensor.value">value (xlnstorch.LNSTensor property)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.view.html#xlnstorch.LNSTensor.view">view() (xlnstorch.LNSTensor method)</a>
 </li>
   </ul></td>
@@ -1266,6 +1370,8 @@ document.write(`
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSConv2d.html#xlnstorch.nn.LNSConv2d.weight">(xlnstorch.nn.LNSConv2d attribute)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSConv3d.html#xlnstorch.nn.LNSConv3d.weight">(xlnstorch.nn.LNSConv3d attribute)</a>
+</li>
+        <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLayerNorm.html#xlnstorch.nn.LNSLayerNorm.weight">(xlnstorch.nn.LNSLayerNorm attribute)</a>
 </li>
         <li><a href="xlnstorch/api/generated/nn/xlnstorch.nn.LNSLazyLinear.html#xlnstorch.nn.LNSLazyLinear.weight">(xlnstorch.nn.LNSLazyLinear attribute)</a>
 </li>
@@ -1296,6 +1402,12 @@ document.write(`
 <h2 id="X">X</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.xavier_normal_.html#xlnstorch.nn.init.xavier_normal_">xavier_normal_() (in module xlnstorch.nn.init)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.xavier_uniform_.html#xlnstorch.nn.init.xavier_uniform_">xavier_uniform_() (in module xlnstorch.nn.init)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.LNSTensor.xlns.html#xlnstorch.LNSTensor.xlns">xlns() (xlnstorch.LNSTensor method)</a>
 </li>
   </ul></td>
@@ -1308,6 +1420,8 @@ document.write(`
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="xlnstorch/api/generated/nn/init/xlnstorch.nn.init.zeros_.html#xlnstorch.nn.init.zeros_">zeros_() (in module xlnstorch.nn.init)</a>
+</li>
       <li><a href="xlnstorch/api/generated/xlnstorch.zeros_like.html#xlnstorch.zeros_like">zeros_like() (in module xlnstorch)</a>
 </li>
   </ul></td>

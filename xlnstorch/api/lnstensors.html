@@ -172,11 +172,14 @@
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3"><a class="reference internal" href="transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -432,6 +435,12 @@ the use of this is discouraged.</p></li>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.view.html#xlnstorch.LNSTensor.view" title="xlnstorch.LNSTensor.view"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.view</span></code></a></p></td>
 <td><p>Returns a new tensor with the same data as this LNSTensor but with a different shape.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.contiguous.html#xlnstorch.LNSTensor.contiguous" title="xlnstorch.LNSTensor.contiguous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.contiguous</span></code></a></p></td>
+<td><p>Returns a contiguous copy of the LNSTensor in memory.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.repeat.html#xlnstorch.LNSTensor.repeat" title="xlnstorch.LNSTensor.repeat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.repeat</span></code></a></p></td>
+<td><p>Repeats the tensor along the specified dimensions.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/xlnstorch.LNSTensor.item.html#xlnstorch.LNSTensor.item" title="xlnstorch.LNSTensor.item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LNSTensor.item</span></code></a></p></td>
 <td><p>Returns the value of the LNSTensor as a Python number.</p></td>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>xlnstorch.transforms.ToLNSTensor &#8212; xlns 1.0.5 documentation</title>
+    <title>xlnstorch.csrc.load_backend &#8212; xlns 1.0.5 documentation</title>
   
   
   
@@ -40,11 +40,11 @@
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/transforms/xlnstorch.transforms.ToLNSTensor';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/generated/csrc/xlnstorch.csrc.load_backend';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="Benchmarking" href="../../benchmark.html" />
-    <link rel="prev" title="Transforms" href="../../transforms.html" />
+    <link rel="next" title="xlnstorch.csrc.float_to_lns_forward" href="xlnstorch.csrc.float_to_lns_forward.html" />
+    <link rel="prev" title="C++ Extensions" href="../../csrc.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -171,11 +171,14 @@
 <li class="toctree-l3"><a class="reference internal" href="../../autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
-<li class="toctree-l3 current active"><a class="reference internal" href="../../transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../transforms.html">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3 current active"><a class="reference internal" href="../../csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -234,7 +237,7 @@
       
       
       
-      <li><a href="../../../../_sources/xlnstorch/api/generated/transforms/xlnstorch.transforms.ToLNSTensor.rst" target="_blank"
+      <li><a href="../../../../_sources/xlnstorch/api/generated/csrc/xlnstorch.csrc.load_backend.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -318,7 +321,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>xlnstorch.transforms.ToLNSTensor</h1>
+    <h1>xlnstorch.csrc.load_backend</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -328,10 +331,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor.__init__"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor.__init__()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.csrc.load_backend"><code class="docutils literal notranslate"><span class="pre">load_backend()</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -343,61 +343,29 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="xlnstorch-transforms-tolnstensor">
-<h1>xlnstorch.transforms.ToLNSTensor<a class="headerlink" href="#xlnstorch-transforms-tolnstensor" title="Link to this heading">#</a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="xlnstorch.transforms.ToLNSTensor">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.transforms.</span></span><span class="sig-name descname"><span class="pre">ToLNSTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.transforms.ToLNSTensor" title="Link to this definition">#</a></dt>
-<dd><p>Convert an image-like object (PIL image or numpy.ndarray) with shape
-(H x W x C) in the range [0, 255] to an LNSTensor with shape (C x H x W)
-in the range [0., 1.]. This is analogous to torchvision.transforms.ToTensor
-but wraps the output in an LNSTensor.</p>
-<p>Non-floating point inputs are not converted to LNSTensor unless specified
-by the <cite>wrap_all</cite> parameter.</p>
+  <section id="xlnstorch-csrc-load-backend">
+<h1>xlnstorch.csrc.load_backend<a class="headerlink" href="#xlnstorch-csrc-load-backend" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="xlnstorch.csrc.load_backend">
+<span class="sig-prename descclassname"><span class="pre">xlnstorch.csrc.</span></span><span class="sig-name descname"><span class="pre">load_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">build_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cpp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.csrc.load_backend" title="Link to this definition">#</a></dt>
+<dd><p>Try to compile and load the C++ extension if it is not
+already built and loaded. If the extension is already
+loaded, this function exits and returns True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The precision of the output LNSTensor.</p></li>
-<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The base of the output LNSTensor.</p></li>
-<li><p><strong>wrap_all</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, all inputs are wrapped in an LNSTensor, even if they are not
-floating point. If False (default), only floating point inputs are
-wrapped.</p></li>
-<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><em>torch.device</em></a><em>, </em><em>optional</em>) – The device on which the output LNSTensor should be allocated. If None,
-it defaults to the current device.</p></li>
+<li><p><strong>build_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Directory to use for building the extension. If None, a temporary directory is used.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, enables verbose output during the build process.</p></li>
+<li><p><strong>enable_cpp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, sets the C++ operators as the default implementations for LNS operations.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ImportError" title="(in Python v3.13)"><strong>ImportError</strong></a> – If torchvision is not available, an ImportError is raised when trying
-    to use this class.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the C++ extension is successfully loaded, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)">bool</a></p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="xlnstorch.transforms.ToLNSTensor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.transforms.ToLNSTensor.__init__" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>wrap_all</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p></li>
-<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><em>device</em></a><em> | </em><em>None</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<p class="rubric">Methods</p>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#xlnstorch.transforms.ToLNSTensor.__init__" title="xlnstorch.transforms.ToLNSTensor.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([f, b, wrap_all, device])</p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</div>
 </dd></dl>
 
 </section>
@@ -414,20 +382,20 @@ it defaults to the current device.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../../transforms.html"
+       href="../../csrc.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Transforms</p>
+        <p class="prev-next-title">C++ Extensions</p>
       </div>
     </a>
     <a class="right-next"
-       href="../../benchmark.html"
+       href="xlnstorch.csrc.float_to_lns_forward.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Benchmarking</p>
+        <p class="prev-next-title">xlnstorch.csrc.float_to_lns_forward</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -447,10 +415,7 @@ it defaults to the current device.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor.__init__"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor.__init__()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.csrc.load_backend"><code class="docutils literal notranslate"><span class="pre">load_backend()</span></code></a></li>
 </ul>
   </nav></div>
 

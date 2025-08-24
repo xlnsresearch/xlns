@@ -43,7 +43,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'xlnstorch/api/transforms';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="xlnstorch.transforms.ToLNSTensor" href="generated/transforms/xlnstorch.transforms.ToLNSTensor.html" />
+    <link rel="next" title="Convert FP Models" href="convert_model.html" />
     <link rel="prev" title="xlnstorch.optim.lr_scheduler.LNSSequentialLR" href="generated/optim/lr_scheduler/xlnstorch.optim.lr_scheduler.LNSSequentialLR.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -171,11 +171,14 @@
 <li class="toctree-l3"><a class="reference internal" href="autograd.html">xlnstorch.autograd</a></li>
 <li class="toctree-l3"><a class="reference internal" href="operators.html">xlnstorch.operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="nn.html">xlnstorch.nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="init.html">xlnstorch.nn.init</a></li>
 <li class="toctree-l3"><a class="reference internal" href="optim.html">xlnstorch.optim</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lr_scheduler.html">xlnstorch.optim.lr_scheduler</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">xlnstorch.transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="convert_model.html">xlnstorch.convert_model</a></li>
 <li class="toctree-l3"><a class="reference internal" href="benchmark.html">xlnstorch.benchmark</a></li>
 <li class="toctree-l3"><a class="reference internal" href="viz.html">xlnstorch.viz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csrc.html">xlnstorch.csrc</a></li>
 </ul>
 </details></li>
 </ul>
@@ -328,6 +331,8 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.LNSNormalize"><code class="docutils literal notranslate"><span class="pre">LNSNormalize</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick Start</a></li>
 </ul>
             </nav>
@@ -342,28 +347,72 @@ document.write(`
                   
   <section id="transforms">
 <span id="transforms-doc"></span><h1>Transforms<a class="headerlink" href="#transforms" title="Link to this heading">#</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">xlnstorch.transforms</span></code> submodule provides a data transformation class,
-<code class="docutils literal notranslate"><span class="pre">ToLNSTensor</span></code>, which converts various input formats (like images and tensors)
-into LNSTensor objects. It is analogous to torchvision’s
-<a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.ToTensor.html#torchvision.transforms.ToTensor" title="(in Torchvision v0.23)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchvision.transforms.ToTensor</span></code></a> transform.</p>
+<p>This module provides a set of transforms for converting various data formats.
+It is primarily used to convert images and other data types into
+<a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">xlnstorch.LNSTensor</span></code></a> objects and is similar to the transforms
+provided by torchvision.</p>
 <p>This submodule requires the <code class="docutils literal notranslate"><span class="pre">torchvision</span></code> package to be installed, which can
 be done via pip:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchvision
 </pre></div>
 </div>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/transforms/xlnstorch.transforms.ToLNSTensor.html#xlnstorch.transforms.ToLNSTensor" title="xlnstorch.transforms.ToLNSTensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToLNSTensor</span></code></a></p></td>
-<td><p>Convert an image-like object (PIL image or numpy.ndarray) with shape (H x W x C) in the range [0, 255] to an LNSTensor with shape (C x H x W) in the range [0., 1.].</p></td>
-</tr>
-</tbody>
-</table>
-</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="xlnstorch.transforms.ToLNSTensor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.transforms.</span></span><span class="sig-name descname"><span class="pre">ToLNSTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.transforms.ToLNSTensor" title="Link to this definition">#</a></dt>
+<dd><p>Convert an image-like object (PIL image or numpy.ndarray) with shape
+(H x W x C) in the range [0, 255] to an LNSTensor with shape (C x H x W)
+in the range [0., 1.]. This is analogous to torchvision.transforms.ToTensor
+but wraps the output in an LNSTensor.</p>
+<p>Non-floating point inputs are not converted to LNSTensor unless specified
+by the <cite>wrap_all</cite> parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The precision of the output LNSTensor.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The base of the output LNSTensor.</p></li>
+<li><p><strong>wrap_all</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, all inputs are wrapped in an LNSTensor, even if they are not
+floating point. If False (default), only floating point inputs are
+wrapped.</p></li>
+<li><p><strong>device</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.8)"><em>torch.device</em></a><em>, </em><em>optional</em>) – The device on which the output LNSTensor should be allocated. If None,
+it defaults to the current device.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ImportError" title="(in Python v3.13)"><strong>ImportError</strong></a> – If torchvision is not available, an ImportError is raised when trying
+    to use this class.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>By default, the ToLNSTensor transform will only wrap floating point tensors.
 If you want to wrap all tensor types, set the <cite>wrap_all</cite> parameter to <cite>True</cite>.</p>
 </div>
+<dl class="py class">
+<dt class="sig sig-object py" id="xlnstorch.transforms.LNSNormalize">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">xlnstorch.transforms.</span></span><span class="sig-name descname"><span class="pre">LNSNormalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#xlnstorch.transforms.LNSNormalize" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Normalize an LNSTensor with mean and standard deviation. This is analogous
+to torchvision.transforms.Normalize but performs normalization on LNSTensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>...</em><em>]</em>) – The mean value(s) for normalization.</p></li>
+<li><p><strong>std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>, </em><em>...</em><em>]</em>) – The standard deviation value(s) for normalization.</p></li>
+<li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The precision of the input LNSTensor.</p></li>
+<li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The base of the input LNSTensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The normalized LNSTensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="lnstensors.html#xlnstorch.LNSTensor" title="xlnstorch.LNSTensor">LNSTensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
 <p>Here’s a simple example of using the LNS transforms with image data:</p>
@@ -425,11 +474,11 @@ If you want to wrap all tensor types, set the <cite>wrap_all</cite> parameter to
       </div>
     </a>
     <a class="right-next"
-       href="generated/transforms/xlnstorch.transforms.ToLNSTensor.html"
+       href="convert_model.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">xlnstorch.transforms.ToLNSTensor</p>
+        <p class="prev-next-title">Convert FP Models</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -449,6 +498,8 @@ If you want to wrap all tensor types, set the <cite>wrap_all</cite> parameter to
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.ToLNSTensor"><code class="docutils literal notranslate"><span class="pre">ToLNSTensor</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xlnstorch.transforms.LNSNormalize"><code class="docutils literal notranslate"><span class="pre">LNSNormalize</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick Start</a></li>
 </ul>
   </nav></div>
