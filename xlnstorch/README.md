@@ -28,6 +28,8 @@ xlnstorch also has several optional dependencies for additional features:
 
 # To Do list
 - Implement more transformer layers.
+- Improve support for saving and loading LNSTensor weights, and copying
+  weights between torch and xlnstorch.
 - Rework float64 storage to bitcast rather than reinterpret types.
 - Implement more layers in the C++ backend.
 - Implement positive and negative infinity sentinel values.
