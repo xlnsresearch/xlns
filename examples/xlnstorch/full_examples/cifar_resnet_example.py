@@ -11,7 +11,7 @@ import time
 import numpy as np
 
 # Parse command line arguments
-parser = argparse.ArgumentParser(description='CIFAR ResNet18 training with LNS')
+parser = argparse.ArgumentParser(description='CIFAR training with LNS')
 parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
 parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
 parser.add_argument('--table', '-t', type=bool, default=False, help='Whether to use table-based LNS computations')
@@ -127,7 +127,7 @@ train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
 
 model = ResNet18(10).to(device)
 loss_func = torch.nn.NLLLoss() # w/ log_softmax, this is equivalent to cross-entropy loss
-optimizer = xlt.optim.LNSAdam(model.lns_parameters(), lr=0.01)
+optimizer = xlt.optim.LNSAdam(model.lns_parameters(), lr=0.001, betas=(0.9, 0.99))
 
 print(f"Training with {num_per_class} samples per class (10 classes total). No validation set.")
 

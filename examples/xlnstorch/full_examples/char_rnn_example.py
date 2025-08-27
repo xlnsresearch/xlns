@@ -159,7 +159,7 @@ print(f"Dataset loaded with {len(train_set)} training and {len(test_set)} testin
 batch_size = 128
 model = LNSCharRNN(n_letters, 64, 1, len(dataset.labels_uniq)).to(device)
 criterion = torch.nn.NLLLoss()
-optimizer = xlt.optim.LNSAdam(model.lns_parameters(), lr=0.01)
+optimizer = xlt.optim.LNSAdam(model.lns_parameters(), lr=0.001, betas=(0.9, 0.99))
 
 print("Starting training...")
 start = time.time()
