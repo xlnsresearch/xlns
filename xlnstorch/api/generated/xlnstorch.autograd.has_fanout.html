@@ -351,7 +351,7 @@ document.write(`
 <dd><p>Determines if the autograd graph starting from <cite>root</cite> has any fan-out nodes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>root</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/autograd.html#torch.autograd.Function" title="(in PyTorch v2.8)"><em>torch.autograd.Function</em></a>) – A tensor whose <cite>.grad_fn</cite> is used as the graph root,
+<dd class="field-odd"><p><strong>root</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em>, </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/autograd.html#torch.autograd.Function" title="(in PyTorch v2.8)"><em>torch.autograd.Function</em></a><em>]</em>) – A tensor whose <cite>.grad_fn</cite> is used as the graph root,
 or a <cite>Function</cite> node itself.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
