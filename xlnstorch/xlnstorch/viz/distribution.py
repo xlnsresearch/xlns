@@ -1,11 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import torch
 import math
 from xlnstorch import LNSTensor, lnstensor, LNS_ZERO
 import xlnstorch.tensor_utils as tensor_utils
 
 def plot_lns_error_heatmap(
-        f_range: Tuple[int] | List[int] | int,
+        f_range: Union[Tuple[int], List[int], int],
         low: float,
         high: float,
         steps: int = 1000,

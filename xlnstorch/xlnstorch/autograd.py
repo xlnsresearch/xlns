@@ -1,6 +1,6 @@
 import torch
 from collections import deque
-from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING
+from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from xlnstorch.tensor import LNSTensor
@@ -129,13 +129,13 @@ def _children(fn: torch.autograd.Function) -> List[torch.autograd.Function]:
         return []
     return [n for n, _ in fn.next_functions if n is not None]
 
-def has_fanout(root: torch.Tensor | torch.autograd.Function) -> bool:
+def has_fanout(root: Union[torch.Tensor, torch.autograd.Function]) -> bool:
     """
     Determines if the autograd graph starting from `root` has any fan-out nodes.
 
     Parameters
     ----------
-    root : torch.Tensor | torch.autograd.Function
+    root : Union[torch.Tensor, torch.autograd.Function]
         A tensor whose `.grad_fn` is used as the graph root,
         or a `Function` node itself.
 
@@ -194,7 +194,7 @@ def find_fanout(root: Any) -> List[Dict[str, Any]]:
     
     Parameters
     ----------
-    root : torch.Tensor | torch.autograd.Function
+    root : Union[torch.Tensor, torch.autograd.Function]
         A tensor whose `.grad_fn` is used as the graph root,
         or a `Function` node itself.
 

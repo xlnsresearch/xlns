@@ -1,3 +1,4 @@
+from typing import Union, Optional
 import torch
 from xlnstorch import rand
 from . import LNSModule
@@ -37,11 +38,11 @@ class LNSLinear(LNSModule):
         The device on which to create the layer's parameters. If None, defaults to the current.
     weight_f : int, optional
         The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -111,11 +112,11 @@ class LNSBilinear(LNSModule):
         device.
     weight_f : int, optional
         The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
 
     Attributes

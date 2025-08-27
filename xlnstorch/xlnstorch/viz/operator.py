@@ -1,10 +1,10 @@
 from __future__ import annotations
 from decimal import Decimal, getcontext
-from typing import Callable, Tuple, List, Dict, Any
+from typing import Callable, Tuple, List, Dict, Any, Optional, Union
 import torch
 from xlnstorch import LNSTensor, lnstensor
 
-def _to_dec(x: float | torch.Tensor | LNSTensor) -> Decimal:
+def _to_dec(x: Union[float, torch.Tensor, LNSTensor]) -> Decimal:
     """Convert a float or tensor to an *exact* Decimal"""
     if isinstance(x, torch.Tensor):
         x = float(x)
@@ -39,14 +39,14 @@ operator_reference = {
 
 def make_error_grid(
         op: Callable,
-        ideal_op: Callable | None = None,
+        ideal_op: Optional[Callable] = None,
         *,
-        f: float | None = None,
-        b: float | None = None,
+        f: Optional[float] = None,
+        b: Optional[float] = None,
         x_range: Tuple[float, float] = (-1.0, 1.0),
-        y_range: Tuple[float, float] | None = None,
+        y_range: Optional[Tuple[float, float]] = None,
         steps: int = 201,
-        device: torch.device | str = "cpu",
+        device: Union[torch.device, str] = "cpu",
         absolute: bool = True,
         decimal_prec: int = 50,
     ):

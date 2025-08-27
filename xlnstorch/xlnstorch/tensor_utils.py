@@ -2,7 +2,7 @@
 Utility functions for LNSTensor operations and autograd functions.
 """
 from __future__ import annotations
-from typing import Any, Tuple, List, Sequence, TYPE_CHECKING
+from typing import Any, Tuple, List, Sequence, TYPE_CHECKING, Optional, Union
 from contextlib import nullcontext
 import math
 import re
@@ -50,7 +50,7 @@ def get_base_from_precision(f: int) -> torch.Tensor:
         raise ValueError(f"Precision f={f} not supported. Must be in range [1, 40].")
     return PRECISION_BASES[f - 1]
 
-def get_precision_from_base(base: torch.Tensor, tolerance: float | torch.Tensor = 0) -> int | None:
+def get_precision_from_base(base: torch.Tensor, tolerance: Union[float, torch.Tensor] = 0) -> Optional[int]:
     """
     Get the precision for a given logarithmic base, if it matches a precomputed base.
 
@@ -443,7 +443,7 @@ def handle_overflow(*tensors: LNSTensor, inplace=False, no_grad=False) -> List[L
 
 def align_lnstensor_bases(
         *tensors: LNSTensor,
-        base: torch.Tensor | None = None
+        base: Optional[torch.Tensor] = None
     ) -> Tuple[LNSTensor, ...]:
     """
     Aligns the bases of a sequence of LNSTensors to a common base.
@@ -564,7 +564,7 @@ def get_internal_lnstensor_operands(*operands: Any, base=None) -> Tuple[torch.Te
 
 def make_index_tensors(
         index: Any,
-        shape: torch.Size | Sequence[int]
+        shape: Union[torch.Size, Sequence[int]]
     ) -> Tuple[torch.Tensor, ...]:
 
     flat_count = math.prod(shape)

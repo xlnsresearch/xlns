@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, Tuple, Type, Callable
+from typing import Any, Dict, Tuple, Type, Callable, Union, Optional
 import torch
 from xlnstorch import LNSTensor, lnstensor
 
@@ -14,7 +14,7 @@ except ImportError:
 def collate_lnstensor_fn(
         batch,
         *,
-        collate_fn_map: Dict[Type | Tuple[Type, ...], Callable] | None = None,
+        collate_fn_map: Optional[Dict[Union[Type, Tuple[Type, ...]], Callable]] = None,
     ):
     return torch.stack(batch, 0)
 torch.utils.data._utils.collate.default_collate_fn_map.update({LNSTensor: collate_lnstensor_fn})
@@ -31,15 +31,15 @@ class ToLNSTensor:
 
     Parameters
     ----------
-    f : int | None, optional
+    f : Optional[int], optional
         The precision of the output LNSTensor.
-    b : float | None, optional
+    b : Optional[float], optional
         The base of the output LNSTensor.
     wrap_all : bool, optional
         If True, all inputs are wrapped in an LNSTensor, even if they are not
         floating point. If False (default), only floating point inputs are
         wrapped.
-    device : str | torch.device, optional
+    device : Optional[Union[str, torch.device]], optional
         The device on which the output LNSTensor should be allocated. If None,
         it defaults to the current device.
 
@@ -51,14 +51,14 @@ class ToLNSTensor:
     """
 
     # Build the underlying torchvision pipeline once and reuse it
-    _PIPELINE: torchvision.transforms.v2.Compose | None = None
+    _PIPELINE: Optional[torchvision.transforms.v2.Compose] = None
 
     def __init__(
             self,
-            f: int | None = None,
-            b: float | None = None,
+            f: Optional[int] = None,
+            b: Optional[float] = None,
             wrap_all: bool = False,
-            device: str | torch.device | None = None,
+            device: Optional[Union[str, torch.device]] = None,
         ) -> None:
         if not _TV_AVAILABLE:
             raise ImportError(
@@ -77,7 +77,7 @@ class ToLNSTensor:
                 torchvision.transforms.v2.ToDtype(torch.float64, scale=True),
             ))
 
-    def __call__(self, img: Any) -> LNSTensor | torch.Tensor:
+    def __call__(self, img: Any) -> Union[LNSTensor, torch.Tensor]:
         """
         Parameters
         ----------
@@ -88,7 +88,7 @@ class ToLNSTensor:
 
         Returns
         -------
-        LNSTensor | torch.Tensor
+        Union[LNSTensor, torch.Tensor]
             The converted image as an LNSTensor if `wrap_all` is True or if the
             input is a floating point tensor. Otherwise, it returns the input
             tensor unchanged.
@@ -110,13 +110,13 @@ class LNSNormalize:
 
     Parameters
     ----------
-    mean : float | tuple[float, ...]
+    mean : Union[float, Tuple[float, ...]]
         The mean value(s) for normalization.
-    std : float | tuple[float, ...]
+    std : Union[float, Tuple[float, ...]]
         The standard deviation value(s) for normalization.
-    f : int | None, optional
+    f : Optional[int] = None, optional
         The precision of the input LNSTensor.
-    b : float | None, optional
+    b : Optional[float] = None, optional
         The base of the input LNSTensor.
 
     Returns
@@ -127,10 +127,10 @@ class LNSNormalize:
 
     def __init__(
             self,
-            mean: float | Tuple[float, ...],
-            std: float | Tuple[float, ...],
-            f: int | None = None,
-            b: float | None = None,
+            mean: Union[float, Tuple[float, ...]],
+            std: Union[float, Tuple[float, ...]],
+            f: Optional[int] = None,
+            b: Optional[float] = None,
     ):
         self.mean = lnstensor(mean, f=f, b=b)
         self.std = lnstensor(std, f=f, b=b)

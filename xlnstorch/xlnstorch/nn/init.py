@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import torch
 from xlnstorch import LNSTensor, LNS_ZERO, LNS_ONE
 
@@ -16,7 +17,7 @@ def uniform_(
         tensor: LNSTensor,
         a: float = 0.0,
         b: float = 1.0,
-        generator: torch.Generator | None = None,
+        generator: Optional[torch.Generator] = None,
     ):
     """
     Fills the input tensor with random numbers from a uniform distribution.
@@ -45,7 +46,7 @@ def normal_(
         tensor: LNSTensor,
         mean: float = 0.0,
         std: float = 1.0,
-        generator: torch.Generator | None = None,
+        generator: Optional[torch.Generator] = None,
     ):
     """
     Fills the input tensor with random numbers from a normal distribution.
@@ -110,7 +111,7 @@ def ones_(
 
 def constant_(
         tensor: LNSTensor,
-        value: float | LNSTensor,
+        value: Union[float, LNSTensor],
     ):
     """
     Fills the input tensor with a constant value.
@@ -182,7 +183,7 @@ def _calculate_fan_in_and_fan_out(tensor: LNSTensor):
 def xavier_uniform_(
         tensor: LNSTensor,
         gain: float = 1.0,
-        generator: torch.Generator | None = None,
+        generator: Optional[torch.Generator] = None,
     ):
     """
     Fills the input tensor with values according to the Xavier uniform initialization.
@@ -210,7 +211,7 @@ def xavier_uniform_(
 def xavier_normal_(
         tensor: LNSTensor,
         gain: float = 1.0,
-        generator: torch.Generator | None = None,
+        generator: Optional[torch.Generator] = None,
     ):
     """
     Fills the input tensor with values according to the Xavier normal initialization.

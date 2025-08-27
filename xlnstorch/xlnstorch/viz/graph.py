@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 import torch
 from xlnstorch import LNSTensor, lnstensor
 
@@ -132,7 +132,7 @@ def is_tensor_like(obj: Any) -> bool:
     "True for torch.Tensor or a wrapper exposing a ._lns torch.Tensor."
     return torch.is_tensor(obj) or isinstance(obj, LNSTensor)
 
-def unwrap(obj: torch.Tensor | LNSTensor) -> torch.Tensor:
+def unwrap(obj: Union[torch.Tensor, LNSTensor]) -> torch.Tensor:
     """
     Unwrap an LNSTensor object to its underlying torch.Tensor.
     """
@@ -141,15 +141,15 @@ def unwrap(obj: torch.Tensor | LNSTensor) -> torch.Tensor:
     return obj
 
 def make_autograd_graph(
-        *vars: torch.Tensor | LNSTensor,
+        *vars: Union[torch.Tensor, LNSTensor],
         graph_name: str = "Autograd Graph",
         show_saved: bool = False,
         leaf_color: str = "orange",
         node_color: str = "lightgrey",
         output_color: str = "yellow",
-        params: Dict[str, torch.Tensor | LNSTensor] | None = None,
-        node_attr: Dict[str, str] | None = None,
-        edge_attr: Dict[str, str] | None = None,
+        params: Optional[Dict[str, Union[torch.Tensor, LNSTensor]]] = None,
+        node_attr: Optional[Dict[str, str]] = None,
+        edge_attr: Optional[Dict[str, str]] = None,
     ):
     """
     Build (and return) a `graphviz.Digraph` object that visualizes

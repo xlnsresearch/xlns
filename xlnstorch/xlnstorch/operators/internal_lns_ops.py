@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import Callable, Any, Iterable, Tuple
+from typing import Callable, Any, Iterable, Tuple, Union, Optional
 
 import torch
 from xlnstorch import apply_lns_op
@@ -55,8 +55,8 @@ def _create_lns_op_func(
     op_name: str,
     torch_op: Callable,
     *,
-    docstring: str | None = None,
-    signature: inspect.Signature | None = None,
+    docstring: Optional[str] = None,
+    signature: Optional[inspect.Signature] = None,
 ) -> Callable:
     """
     Factory function to create LNS operation functions. These functions are
@@ -175,21 +175,21 @@ lns_positive = _create_lns_op_func('positive', torch.positive, signature=_build_
 lns_sum = _create_lns_op_func('sum', torch.sum, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_prod = _create_lns_op_func('prod', torch.prod, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_mean = _create_lns_op_func('mean', torch.mean, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
@@ -197,7 +197,7 @@ lns_var = _create_lns_op_func('var', torch.var, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
     ("correction", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
@@ -267,13 +267,13 @@ lns_allclose = _create_lns_op_func('allclose', torch.allclose, signature=_build_
 ))
 lns_any = _create_lns_op_func('any', torch.any, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_all = _create_lns_op_func('all', torch.all, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
     torch.Tensor,
 ))
@@ -320,9 +320,9 @@ lns_minimum = _create_lns_op_func('minimum', torch.minimum, signature=_build_sig
 lns_max = _create_lns_op_func('max', torch.max, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
-    torch.return_types.max | torch.Tensor,
+    Union[torch.return_types.max, torch.Tensor],
 ))
 lns_argmax = _create_lns_op_func('argmax', torch.argmax, signature=_build_signature([
     ("x", "pk", torch.Tensor),
@@ -333,9 +333,9 @@ lns_argmax = _create_lns_op_func('argmax', torch.argmax, signature=_build_signat
 lns_min = _create_lns_op_func('min', torch.min, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("dim", "pk", int | Tuple[int], None),
+    ("dim", "pk", Union[int, Tuple[int]], None),
     ("keepdim", "pk", bool, False)],
-    torch.return_types.min | torch.Tensor,
+    Union[torch.return_types.min, torch.Tensor],
 ))
 lns_argmin = _create_lns_op_func('argmin', torch.argmin, signature=_build_signature([
     ("x", "pk", torch.Tensor),
@@ -345,14 +345,14 @@ lns_argmin = _create_lns_op_func('argmin', torch.argmin, signature=_build_signat
 ))
 lns_clamp = _create_lns_op_func('clamp', torch.clamp, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("min", "pk", torch.Tensor | None, None),
-    ("max", "pk", torch.Tensor | None, None)],
+    ("min", "pk", Optional[torch.Tensor], None),
+    ("max", "pk", Optional[torch.Tensor], None)],
     torch.Tensor,
 ))
 
 lns_broadcast_to = _create_lns_op_func('broadcast_to', torch.broadcast_to, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("shape", "pk", int | Tuple[int]),
+    ("shape", "pk", Union[int, Tuple[int]]),
     ("base", "pk", torch.Tensor)],
     torch.Tensor,
 ))
@@ -363,7 +363,7 @@ lns_clone = _create_lns_op_func('clone', torch.clone, signature=_build_signature
 ))
 lns_squeeze = _create_lns_op_func('squeeze', torch.squeeze, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("dim", "pk", int | None, None)],
+    ("dim", "pk", Optional[int], None)],
     torch.Tensor,
 ))
 lns_unsqueeze = _create_lns_op_func('unsqueeze', torch.unsqueeze, signature=_build_signature([
@@ -399,7 +399,7 @@ lns_pad = _create_lns_op_func('pad', torch.nn.functional.pad, signature=_build_s
     ("base", "pk", torch.Tensor),
     ("pad", "pk", Tuple[int]),
     ("mode", "pk", str, "constant"),
-    ("value", "pk", float | torch.Tensor | None, 0.0)],
+    ("value", "pk", Union[float, torch.Tensor, None], 0.0)],
     torch.Tensor,
 ))
 
@@ -750,9 +750,9 @@ lns_conv2d = _create_lns_op_func('conv2d', torch.nn.functional.conv2d, signature
     ("weight", "pk", torch.Tensor),
     ("bias", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("stride", "pk", int | Tuple[int], 1),
-    ("padding", "pk", int | Tuple[int], 0),
-    ("dilation", "pk", int | Tuple[int], 1),
+    ("stride", "pk", Union[int, Tuple[int]], 1),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
+    ("dilation", "pk", Union[int, Tuple[int]], 1),
     ("groups", "pk", int, 1)],
     torch.Tensor,
 ))
@@ -761,17 +761,17 @@ lns_conv3d = _create_lns_op_func('conv3d', torch.nn.functional.conv3d, signature
     ("weight", "pk", torch.Tensor),
     ("bias", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("stride", "pk", int | Tuple[int], 1),
-    ("padding", "pk", int | Tuple[int], 0),
-    ("dilation", "pk", int | Tuple[int], 1),
+    ("stride", "pk", Union[int, Tuple[int]], 1),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
+    ("dilation", "pk", Union[int, Tuple[int]], 1),
     ("groups", "pk", int, 1)],
     torch.Tensor,
 ))
 lns_avg_pool1d = _create_lns_op_func('avg_pool1d', torch.nn.functional.avg_pool1d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("kernel_size", "pk", int),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
     ("ceil_mode", "pk", bool, False),
     ("count_include_pad", "pk", bool, True)],
     torch.Tensor,
@@ -779,36 +779,36 @@ lns_avg_pool1d = _create_lns_op_func('avg_pool1d', torch.nn.functional.avg_pool1
 lns_avg_pool2d = _create_lns_op_func('avg_pool2d', torch.nn.functional.avg_pool2d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("kernel_size", "pk", int),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
     ("ceil_mode", "pk", bool, False),
     ("count_include_pad", "pk", bool, True),
-    ("divisor_override", "pk", torch.Tensor | None, None)],
+    ("divisor_override", "pk", Optional[torch.Tensor], None)],
     torch.Tensor,
 ))
 lns_avg_pool3d = _create_lns_op_func('avg_pool3d', torch.nn.functional.avg_pool3d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
     ("kernel_size", "pk", int),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
     ("ceil_mode", "pk", bool, False),
     ("count_include_pad", "pk", bool, True),
-    ("divisor_override", "pk", torch.Tensor | None, None)],
+    ("divisor_override", "pk", Optional[torch.Tensor], None)],
     torch.Tensor,
 ))
 lns_adaptive_avg_pool1d = _create_lns_op_func('adaptive_avg_pool1d', torch.nn.functional.adaptive_avg_pool1d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("output_size", "pk", int | Tuple[int])],
+    ("output_size", "pk", Union[int, Tuple[int]])],
     torch.Tensor,
 ))
 lns_adaptive_avg_pool2d = _create_lns_op_func('adaptive_avg_pool2d', torch.nn.functional.adaptive_avg_pool2d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("output_size", "pk", int | Tuple[int, int])],
+    ("output_size", "pk", Union[int, Tuple[int, int]])],
     torch.Tensor,
 ))
 lns_adaptive_avg_pool3d = _create_lns_op_func('adaptive_avg_pool3d', torch.nn.functional.adaptive_avg_pool3d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("output_size", "pk", int | Tuple[int, int, int])],
+    ("output_size", "pk", Union[int, Tuple[int, int, int]])],
     torch.Tensor,
 ))
 lns_batch_norm = _create_lns_op_func('batch_norm', torch.nn.functional.batch_norm, signature=_build_signature([
@@ -818,49 +818,49 @@ lns_batch_norm = _create_lns_op_func('batch_norm', torch.nn.functional.batch_nor
     ("momentum", "pk", torch.Tensor),
     ("eps", "pk", torch.Tensor),
     ("base", "pk", torch.Tensor),
-    ("weight", "pk", torch.Tensor | None, None),
-    ("bias", "pk", torch.Tensor | None, None),
+    ("weight", "pk", Optional[torch.Tensor], None),
+    ("bias", "pk", Optional[torch.Tensor], None),
     ("training", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_layer_norm = _create_lns_op_func('layer_norm', torch.nn.functional.layer_norm, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("normalized_shape", "pk", int | Tuple[int]),
+    ("normalized_shape", "pk", Union[int, Tuple[int]]),
     ("base", "pk", torch.Tensor),
-    ("weight", "pk", torch.Tensor | None, None),
-    ("bias", "pk", torch.Tensor | None, None),
+    ("weight", "pk", Optional[torch.Tensor], None),
+    ("bias", "pk", Optional[torch.Tensor], None),
     ("eps", "pk", torch.Tensor, 1e-5)],
     torch.Tensor,
 ))
 lns_max_pool1d = _create_lns_op_func('max_pool1d', torch.nn.functional.max_pool1d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("kernel_size", "pk", int | Tuple[int]),
+    ("kernel_size", "pk", Union[int, Tuple[int]]),
     ("base", "pk", torch.Tensor),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
-    ("dilation", "pk", int | Tuple[int], 1),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
+    ("dilation", "pk", Union[int, Tuple[int]], 1),
     ("ceil_mode", "pk", bool, False),
     ("return_indices", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_max_pool2d = _create_lns_op_func('max_pool2d', torch.nn.functional.max_pool2d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("kernel_size", "pk", int | Tuple[int]),
+    ("kernel_size", "pk", Union[int, Tuple[int]]),
     ("base", "pk", torch.Tensor),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
-    ("dilation", "pk", int | Tuple[int], 1),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
+    ("dilation", "pk", Union[int, Tuple[int]], 1),
     ("ceil_mode", "pk", bool, False),
     ("return_indices", "pk", bool, False)],
     torch.Tensor,
 ))
 lns_max_pool3d = _create_lns_op_func('max_pool3d', torch.nn.functional.max_pool3d, signature=_build_signature([
     ("x", "pk", torch.Tensor),
-    ("kernel_size", "pk", int | Tuple[int]),
+    ("kernel_size", "pk", Union[int, Tuple[int]]),
     ("base", "pk", torch.Tensor),
-    ("stride", "pk", int | Tuple[int] | None, None),
-    ("padding", "pk", int | Tuple[int], 0),
-    ("dilation", "pk", int | Tuple[int], 1),
+    ("stride", "pk", Union[int, Tuple[int], None], None),
+    ("padding", "pk", Union[int, Tuple[int]], 0),
+    ("dilation", "pk", Union[int, Tuple[int]], 1),
     ("ceil_mode", "pk", bool, False),
     ("return_indices", "pk", bool, False)],
     torch.Tensor,

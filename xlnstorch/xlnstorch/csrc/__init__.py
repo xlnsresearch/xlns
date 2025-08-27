@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import warnings
 from pathlib import Path
 from torch.utils.cpp_extension import load, include_paths
@@ -18,7 +18,7 @@ def _ensure_built() -> None:
         )
 
 def load_backend(
-        build_dir: str | None = None,
+        build_dir: Optional[str] = None,
         verbose: bool = False,
         enable_cpp: bool = True,
 ) -> bool:
@@ -29,7 +29,7 @@ def load_backend(
 
     Parameters
     ----------
-    build_dir : str | None, optional
+    build_dir : Optional[str], optional
         Directory to use for building the extension. If None, a temporary directory is used.
     verbose : bool, optional
         If True, enables verbose output during the build process.
@@ -570,7 +570,7 @@ def avg_pool1d_forward(
         x: torch.Tensor,
         kernel_size: int,
         base: torch.Tensor,
-        stride: int | None,
+        stride: Optional[int],
         padding: int,
         ceil_mode: bool,
         count_include_pad: bool,
@@ -608,7 +608,7 @@ def avg_pool1d_backward(
         x: torch.Tensor,
         kernel_size: int,
         base: torch.Tensor,
-        stride: int | None,
+        stride: Optional[int],
         padding: int,
         ceil_mode: bool,
         count_include_pad: bool,
