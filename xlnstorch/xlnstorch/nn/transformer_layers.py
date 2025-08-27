@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 from xlnstorch import LNSTensor, zeros, empty, LNS_NEG_INF
 import xlnstorch.nn as nn
@@ -57,8 +58,8 @@ class LNSMultiheadAttention(LNSModule):
             bias: bool = True,
             add_bias_kv: bool = False,
             add_zero_attn: bool = False,
-            kdim: int | None = None,
-            vdim: int | None = None,
+            kdim: Optional[int] = None,
+            vdim: Optional[int] = None,
             batch_first: bool = False,
     ):
         super().__init__()
@@ -113,9 +114,9 @@ class LNSMultiheadAttention(LNSModule):
             query: LNSTensor,
             key: LNSTensor,
             value: LNSTensor,
-            key_padding_mask: LNSTensor | None = None,
+            key_padding_mask: Optional[LNSTensor] = None,
             need_weights: bool = True,
-            attn_mask: LNSTensor | None = None,
+            attn_mask: Optional[LNSTensor] = None,
             average_attn_weights: bool = True,
     ):
         assert attn_mask is None, "Attn mask not supported yet."

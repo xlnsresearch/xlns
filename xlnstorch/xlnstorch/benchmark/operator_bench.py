@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, Dict
+from typing import Callable, Tuple, Dict, Union, Optional
 import torch
 from xlnstorch import randn, randn_like
 from . import Benchmark
@@ -33,11 +33,11 @@ class UnaryBench(Benchmark):
             func: Callable,
             shape: Tuple,
             lns: bool = True,
-            f: int | None = None,
-            b: float | None = None,
+            f: Optional[int] = None,
+            b: Optional[float] = None,
             backward: bool = False,
-            device: torch.device | str = "cpu",
-            kwargs: Dict | None = None
+            device: Union[torch.device, str] = "cpu",
+            kwargs: Optional[Dict] = None
         ):
         self.func = func
         self.shape = shape
@@ -88,11 +88,11 @@ class BinaryBench(Benchmark):
             func: Callable,
             shape: Tuple,
             lns: bool = True,
-            f: int | None = None,
-            b: float | None = None,
+            f: Optional[int] = None,
+            b: Optional[float] = None,
             backward: bool = False,
-            device: torch.device | str = "cpu",
-            kwargs: Dict | None = None
+            device: Union[torch.device, str] = "cpu",
+            kwargs: Optional[Dict] = None
         ):
         self.func = func
         self.shape = shape

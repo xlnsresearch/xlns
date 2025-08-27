@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Union, List, Type, Tuple
+from typing import Any, Union, List, Type, Tuple, Optional
 import weakref
 import math
 import numpy as np
@@ -337,7 +337,7 @@ class LNSTensor:
         return self._lns.requires_grad
 
     @property
-    def grad_fn(self) -> torch._C.Function | None:
+    def grad_fn(self) -> Optional[torch._C.Function]:
         """
         Returns the function that created this LNSTensor, if it was created
         by an operation that has a gradient function.
@@ -391,7 +391,7 @@ class LNSTensor:
         """
         return self.value.item()
 
-    def size(self, dim: int | None = None) -> torch.Size | int:
+    def size(self, dim: Optional[int] = None) -> Union[torch.Size, int]:
         """
         Returns the size of the LNSTensor along a specified dimension or all dimensions.
 
@@ -502,7 +502,7 @@ class LNSTensor:
         """
         return torch.clone(self, memory_format=memory_format)
 
-    def squeeze(self, dim: int | List[int] | None = None) -> LNSTensor:
+    def squeeze(self, dim: Optional[Union[int, List[int]]] = None) -> LNSTensor:
         """
         Returns a new LNSTensor with all specified dimensions of size
         1 removed. If no dimensions are specified, all dimensions of
@@ -597,11 +597,11 @@ class LNSTensor:
 
     def xlns(
             self,
-            dtype: Type | None = None,
+            dtype: Optional[Type] = None,
             array: bool = False,
             use_xlnsud: bool = False,
             use_xlnsnpv: bool = False,
-        ) -> xl.xlns | xl.xlnsud | xl.xlnsv | xl.xlnsb | xl.xlnsnp | xl.xlnsnpv | xl.xlnsnpb:
+        ) -> Union[xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb]:
         """
         Converts the LNSTensor to an xlns type. If no ``dtype`` is
         provided, the most suitable type is inferred.
@@ -993,8 +993,8 @@ def lnstensor(
         from_lns: bool = False,
         requires_grad: bool = False,
         detach=True,
-        f: int | None = None,
-        b: Union[float, int, Tensor, None] = None
+        f: Optional[int] = None,
+        b: Optional[Union[float, int, Tensor]] = None
         ) -> LNSTensor:
     r"""
     Constructs an :class:`LNSTensor` from some array-like *data*.

@@ -1,11 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import torch
 import math
 from xlnstorch import lnstensor
 
 def plot_staircase(
         ax,
-        f_range: Tuple[int] | List[int] | int,
+        f_range: Union[Tuple[int], List[int], int],
         low: float,
         high: float,
         step: float = 1,
@@ -54,7 +54,7 @@ def plot_staircase(
     ax.legend()
 
 def plot_spacing_heatmap(
-        f_range: Tuple[int] | List[int] | int,
+        f_range: Union[Tuple[int], List[int], int],
         low: float,
         high: float,
         step: float = 0.05,

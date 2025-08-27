@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import inspect
+from typing import Union
 import torch.nn as nn
 import xlnstorch.nn as xlns_nn
 
@@ -230,7 +231,7 @@ def parse_sequential(model, parent_name=""):
 
     Parameters
     ----------
-    model : torch.nn.Sequential | torch.nn.Module
+    model : Union[torch.nn.Sequential, torch.nn.Module]
         The model to parse, typically an instance of nn.Sequential or a custom
         nn.Module that contains nn.Module children.
     parent_name : str, optional

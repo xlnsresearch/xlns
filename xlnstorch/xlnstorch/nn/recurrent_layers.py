@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import torch
 from . import LNSModule
 from xlnstorch import rand, zeros
@@ -30,11 +31,11 @@ class LNSRNN(LNSModule):
         If True, becomes a bidirectional RNN. Default: False.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -201,11 +202,11 @@ class LNSRNNCell(LNSModule):
         Default: ``'tanh'``.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -320,11 +321,11 @@ class LNSLSTM(LNSModule):
         Note: must satisfy 0 <= proj_size < hidden_size.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -519,11 +520,11 @@ class LNSLSTMCell(LNSModule):
         If ``True``, adds learnable bias terms. Default: ``True``.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -640,11 +641,11 @@ class LNSGRU(LNSModule):
         If True, becomes a bidirectional GRU. Default: False.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes
@@ -810,11 +811,11 @@ class LNSGRUCell(LNSModule):
         If True, adds learnable bias terms. Default: True.
     weight_f : int, optional
         The number of fractional exponent bits for the weights. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weights; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the biases. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the biases; mutually exclusive with ``bias_f``.
 
     Attributes

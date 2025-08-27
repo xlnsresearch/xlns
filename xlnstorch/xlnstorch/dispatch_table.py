@@ -1,7 +1,7 @@
 import functools
 import contextlib
 from dataclasses import dataclass
-from typing import Callable, Generator, Tuple
+from typing import Callable, Generator, Tuple, Optional
 
 @dataclass
 class Implementation:
@@ -33,7 +33,7 @@ _DEFAULT_IMPLEMENTATIONS = {}
 def implements(
         torch_function: Callable,
         lns_operation: Callable,
-        key: str | None = None,
+        key: Optional[str] = None,
         default: bool = False,
     ) -> Callable:
     """

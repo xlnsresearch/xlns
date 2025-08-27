@@ -1,3 +1,4 @@
+from typing import Union, Optional, Tuple
 import torch
 import xlnstorch
 from . import LNSModule
@@ -108,19 +109,19 @@ class LNSBatchNorm1d(_BatchNorm):
         statistics in both training and eval modes. Default: True.
     weight_f : int, optional
         The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
     running_mean_f : int, optional
         The number of fractional exponent bits for the running mean. mutually exclusive with ``running_mean_b``.
-    running_mean_b : float, int, torch.Tensor, optional
+    running_mean_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running mean; mutually exclusive with ``running_mean_f``.
     running_var_f : int, optional
         The number of fractional exponent bits for the running variance. mutually exclusive with ``running_var_b``.
-    running_var_b : float, int, torch.Tensor, optional
+    running_var_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running variance; mutually exclusive with ``running_var_f``
 
     Attributes
@@ -166,19 +167,19 @@ class LNSBatchNorm2d(_BatchNorm):
         statistics in both training and eval modes. Default: True.
     weight_f : int, optional
         The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
     running_mean_f : int, optional
         The number of fractional exponent bits for the running mean. mutually exclusive with ``running_mean_b``.
-    running_mean_b : float, int, torch.Tensor, optional
+    running_mean_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running mean; mutually exclusive with ``running_mean_f``.
     running_var_f : int, optional
         The number of fractional exponent bits for the running variance. mutually exclusive with ``running_var_b``.
-    running_var_b : float, int, torch.Tensor, optional
+    running_var_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running variance; mutually exclusive with ``running_var_f``
 
     Attributes
@@ -224,19 +225,19 @@ class LNSBatchNorm3d(_BatchNorm):
         statistics in both training and eval modes. Default: True.
     weight_f : int, optional
         The number of fractional exponent bits for the weight. mutually exclusive with ``weight_b``.
-    weight_b : float, int, torch.Tensor, optional
+    weight_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the weight; mutually exclusive with ``weight_f``.
     bias_f : int, optional
         The number of fractional exponent bits for the bias. mutually exclusive with ``bias_b``.
-    bias_b : float, int, torch.Tensor, optional
+    bias_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the bias; mutually exclusive with ``bias_f``.
     running_mean_f : int, optional
         The number of fractional exponent bits for the running mean. mutually exclusive with ``running_mean_b``.
-    running_mean_b : float, int, torch.Tensor, optional
+    running_mean_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running mean; mutually exclusive with ``running_mean_f``.
     running_var_f : int, optional
         The number of fractional exponent bits for the running variance. mutually exclusive with ``running_var_b``.
-    running_var_b : float, int, torch.Tensor, optional
+    running_var_b : Optional[Union[float, int, torch.Tensor]], optional
         The explicit logarithm base for the running variance; mutually exclusive with ``running_var_f``
 
     Attributes
@@ -296,7 +297,7 @@ class LNSLayerNorm(LNSModule):
 
     def __init__(
             self,
-            normalized_shape: int | tuple[int],
+            normalized_shape: Union[int, tuple[int]],
             eps: float = 1e-5,
             elementwise_affine: bool = True,
             bias: bool = True,

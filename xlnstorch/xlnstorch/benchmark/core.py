@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-from typing import Any, Dict, Tuple, Callable, Iterable
+from typing import Any, Dict, Tuple, Callable, Iterable, Union, Optional
 from dataclasses import dataclass, fields
 import time
 import numpy as np
@@ -25,7 +25,7 @@ class BenchResult:
 
     Attributes
     ----------
-    prof : torch.profiler.profile | None
+    prof : Optional[torch.profiler.profile]
         The profiler output, if profiling was enabled. Otherwise ``None``.
     wall_ms: float
         Mean wall-clock latency in milliseconds.
@@ -40,7 +40,7 @@ class BenchResult:
         as above apply.
     """
 
-    prof : torch.profiler.profile | None
+    prof : Optional[torch.profiler.profile]
     wall_ms: float
     p50: float
     p90: float
@@ -94,7 +94,7 @@ class Benchmark:
     """
 
     # The device the benchmark will run on.  Can be overwritten in subclasses.
-    device: torch.device | str = "cpu"
+    device: Union[torch.device, str] = "cpu"
 
     def make_inputs(self):
         """
@@ -102,7 +102,7 @@ class Benchmark:
 
         Returns
         -------
-        tuple | dict
+        Union[tuple, dict]
             *Tuple* treated as ``(*args,)``.
             *Dict* treated as ``(**kwargs)``.
 

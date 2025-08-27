@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Union
 from typing_extensions import override
 from bisect import bisect_right
 import torch
@@ -15,7 +15,7 @@ from xlnstorch.operators import (
     lns_gt,
 )
 
-def _lns(value: float | LNSTensor, base) -> LNSTensor:
+def _lns(value: Union[float, LNSTensor], base) -> LNSTensor:
     if isinstance(value, LNSTensor):
         return lnstensor(value, b=base)._lns
     return LNSTensor.get_internal_tensor(value, base)
@@ -66,7 +66,7 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
+            lr_lambda: Union[Callable[[int], Union[float, LNSTensor]], List[Callable[[int], Union[float, LNSTensor]]]],
             last_epoch: int = -1,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -102,7 +102,7 @@ class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            lr_lambda: Callable[[int], float | LNSTensor] | List[Callable[[int], float | LNSTensor]],
+            lr_lambda: Union[Callable[[int], Union[float, LNSTensor]], List[Callable[[int], Union[float, LNSTensor]]]],
             last_epoch: int = -1,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -143,7 +143,7 @@ class LNSStepLR(torch.optim.lr_scheduler.StepLR):
             self,
             optimizer: LNSOptimizer,
             step_size: int,
-            gamma: float | LNSTensor = 0.1,
+            gamma: Union[float, LNSTensor] = 0.1,
             last_epoch: int = -1,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -191,7 +191,7 @@ class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR):
             self,
             optimizer: LNSOptimizer,
             milestones: List[int],
-            gamma: float | LNSTensor = 0.1,
+            gamma: Union[float, LNSTensor] = 0.1,
             last_epoch: int = -1,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -240,7 +240,7 @@ class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            factor: float | LNSTensor = 1.0 / 3,
+            factor: Union[float, LNSTensor] = 1.0 / 3,
             total_iters: int = 0,
             last_epoch: int = -1,
         ):
@@ -291,8 +291,8 @@ class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            start_factor: float | LNSTensor = 1.0 / 3,
-            end_factor: float | LNSTensor = 1.0,
+            start_factor: Union[float, LNSTensor] = 1.0 / 3,
+            end_factor: Union[float, LNSTensor] = 1.0,
             total_iters: int = 0,
             last_epoch: int = -1,
         ):
@@ -370,7 +370,7 @@ class LNSExponentialLR(torch.optim.lr_scheduler.ExponentialLR):
     def __init__(
             self,
             optimizer: LNSOptimizer,
-            gamma: float | LNSTensor,
+            gamma: Union[float, LNSTensor],
             last_epoch: int = -1
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -419,7 +419,7 @@ class LNSPolynomialLR(torch.optim.lr_scheduler.PolynomialLR):
             self,
             optimizer: LNSOptimizer,
             total_iters: int = 5,
-            power: float | LNSTensor = 0.9,
+            power: Union[float, LNSTensor] = 0.9,
             last_epoch: int = -1,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
@@ -504,13 +504,13 @@ class LNSReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
             self,
             optimizer: LNSOptimizer,
             mode: str = "min",
-            factor: float | LNSTensor = 0.1,
+            factor: Union[float, LNSTensor] = 0.1,
             patience: int = 10,
-            threshold: float | LNSTensor = 1e-4,
+            threshold: Union[float, LNSTensor] = 1e-4,
             threshold_mode: str = "rel",
             cooldown: int = 0,
-            min_lr: float | LNSTensor | List[float] | List[LNSTensor] = 0.0,
-            eps: float | LNSTensor = 1e-8,
+            min_lr: Union[float, LNSTensor, List[float], List[LNSTensor]] = 0.0,
+            eps: Union[float, LNSTensor] = 1e-8,
         ):
         self.lns_lr_bases = get_lr_bases(optimizer)
         self.factor_lns = [_lns(factor, base) for base in self.lns_lr_bases]

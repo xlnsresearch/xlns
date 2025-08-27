@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union, Optional
 import collections
 
 import torch
@@ -40,7 +40,7 @@ class LNSAvgPool1d(LNSModule):
     def __init__(
             self,
             kernel_size: int,
-            stride: int | None = None,
+            stride: Optional[int] = None,
             padding: int = 0,
             ceil_mode: bool = False,
             count_include_pad: bool = True
@@ -86,12 +86,12 @@ class LNSAvgPool2d(LNSModule):
 
     def __init__(
             self,
-            kernel_size: int | Tuple[int, int],
-            stride: int | Tuple[int, int] | None = None,
-            padding: int | Tuple[int, int] = 0,
+            kernel_size: Union[int, Tuple[int, int]],
+            stride: Optional[Union[int, Tuple[int, int]]] = None,
+            padding: Union[int, Tuple[int, int]] = 0,
             ceil_mode: bool = False,
             count_include_pad: bool = True,
-            divisor_override: int | None = None
+            divisor_override: Optional[int] = None
         ):
         super().__init__()
         self.kernel_size = _pair(kernel_size)
@@ -135,12 +135,12 @@ class LNSAvgPool3d(LNSModule):
 
     def __init__(
             self,
-            kernel_size: int | Tuple[int, int, int],
-            stride: int | Tuple[int, int, int] | None = None,
-            padding: int | Tuple[int, int, int] = 0,
+            kernel_size: Union[int, Tuple[int, int, int]],
+            stride: Optional[Union[int, Tuple[int, int, int]]] = None,
+            padding: Union[int, Tuple[int, int, int]] = 0,
             ceil_mode: bool = False,
             count_include_pad: bool = True,
-            divisor_override: int | None = None
+            divisor_override: Optional[int] = None
         ):
         super().__init__()
         self.kernel_size = _triple(kernel_size)
@@ -244,7 +244,7 @@ class LNSMaxPool1d(LNSModule):
     def __init__(
             self,
             kernel_size: int,
-            stride: int | None = None,
+            stride: Optional[int] = None,
             padding: int = 0,
             dilation: int = 1,
             return_indices: bool = False,
@@ -291,10 +291,10 @@ class LNSMaxPool2d(LNSModule):
 
     def __init__(
             self,
-            kernel_size: int | Tuple[int, int],
-            stride: int | Tuple[int, int] | None = None,
-            padding: int | Tuple[int, int] = 0,
-            dilation: int | Tuple[int, int] = 1,
+            kernel_size: Union[int, Tuple[int, int]],
+            stride: Optional[Union[int, Tuple[int, int]]] = None,
+            padding: Union[int, Tuple[int, int]] = 0,
+            dilation: Union[int, Tuple[int, int]] = 1,
             return_indices: bool = False,
             ceil_mode: bool = False,
         ):
@@ -339,10 +339,10 @@ class LNSMaxPool3d(LNSModule):
 
     def __init__(
             self,
-            kernel_size: int | Tuple[int, int, int],
-            stride: int | Tuple[int, int, int] | None = None,
-            padding: int | Tuple[int, int, int] = 0,
-            dilation: int | Tuple[int, int, int] = 1,
+            kernel_size: Union[int, Tuple[int, int, int]],
+            stride: Optional[Union[int, Tuple[int, int, int]]] = None,
+            padding: Union[int, Tuple[int, int, int]] = 0,
+            dilation: Union[int, Tuple[int, int, int]] = 1,
             return_indices: bool = False,
             ceil_mode: bool = False,
         ):
