@@ -1,6 +1,7 @@
 import torch
+import functools 
 from collections import deque
-from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING, Union
+from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING, Union, Callable
 
 if TYPE_CHECKING:
     from xlnstorch.tensor import LNSTensor
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
 _tensor_module = None
 
 __all__ = [
+    "with_bitcast",
     "LNSFunction",
     "has_fanout",
     "find_fanout",
@@ -22,6 +24,41 @@ def _get_tensor_module():
         from . import tensor
         _tensor_module = tensor
     return _tensor_module
+
+def _to_int64(x):
+    return x.view(torch.int64) if isinstance(x, torch.Tensor) and x.dtype == torch.float64 else x
+
+def _to_float64(x):
+    return x.view(torch.float64) if isinstance(x, torch.Tensor) and x.dtype == torch.int64 else x
+
+def with_bitcast(func: Callable):
+    """
+    Decorator to bitcast all input LNSTensors to int64 before passing them to
+    forward/backward functions, and bitcast all output tensors back to float64.
+    This is necessary because PyTorch's autograd engine does not support int64
+    tensors for gradient computations, but LNS operations are performed in int64.
+
+    Note: This decorator should only be used on the forward and backward static
+    methods of subclasses of `LNSFunction`.    
+
+    Parameters
+    ----------
+    func : Callable
+        The function to be decorated.
+    """
+    @functools.wraps(func)
+    def wrapper(*args):
+        int_args = tuple(_to_int64(a) for a in args)
+        out = func(*args)
+
+        if isinstance(out, tuple):
+            return tuple(_to_float64(o) for o in out)
+        elif isinstance(out, list):
+            return [_to_float64(o) for o in out]
+        else:
+            return _to_float64(out)
+
+    return wrapper
 
 class LNSFunction(torch.autograd.Function):
     """

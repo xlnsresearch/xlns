@@ -53,6 +53,14 @@ analogous to PyTorch's ``torch.autograd.Function``.
         b = xltorch.lnstensor([3.0, 4.0], f=23)
         c = MyLNSFunction.apply(a, b) # we pass the LNSTensor objects to apply
 
+If you want all float64 inputs to be automatically bitcasted to int64 and
+all int64 outputs to be automatically bitcasted to float64, you can use
+the ``with_bitcast`` decorator.
+
+.. autosummary::
+    :toctree: generated
+
+    with_bitcast
 
 Fanout Functions
 ----------------
