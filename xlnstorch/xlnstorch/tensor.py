@@ -283,7 +283,7 @@ class LNSTensor:
         torch.Tensor
             Real-valued tensor (dtype ``float64``).
         """
-        packed_int = self._lns.to(torch.int64)
+        packed_int = self._lns.view(torch.int64)
 
         exponent = (packed_int >> 1).to(torch.float64)
         sign = torch.where((packed_int & 1).bool(), -1.0, 1.0)
@@ -653,7 +653,7 @@ class LNSTensor:
                 else:
                     dtype = xl.xlnsnpb
 
-        lns_packed = self._lns.to(torch.int64).numpy()
+        lns_packed = self._lns.view(torch.int64).numpy()
 
         if dtype == xl.xlns:
             res = xl.xlns(0)
@@ -681,7 +681,7 @@ class LNSTensor:
 
         elif dtype == xl.xlnsnpv:
             res = xl.xlnsnp(0)
-            lns_full_prec = lnstensor(self, b=xl.xlnsB)._lns.to(torch.int64).numpy()
+            lns_full_prec = lnstensor(self, b=xl.xlnsB)._lns.view(torch.int64).numpy()
             res.nd = np.where(lns_packed == LNS_ZERO.item(), xl.XLNS_MIN_INT, lns_full_prec)
             res = xl.xlnsnpv(res, setF=tensor_utils.get_precision_from_base(self.base))
 
@@ -1072,13 +1072,13 @@ def lnstensor(
 
         if not torch.eq(data.base, base_tensor):
             with torch.no_grad():
-                packed_int = input_data.to(torch.int64)
+                packed_int = input_data.view(torch.int64)
                 sign_bit = packed_int & 1
                 exponent = (packed_int >> 1).to(torch.float64)
 
                 exponent_new = exponent * torch.log(data.base) / torch.log(base_tensor)
                 new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-                input_data = new_packed_int.to(torch.float64)
+                input_data = new_packed_int.view(torch.float64)
                 input_data = torch.where(torch.eq(data, LNS_ZERO), LNS_ZERO, input_data)
 
     # torch.Tensor
@@ -1086,6 +1086,8 @@ def lnstensor(
         requires_grad = data.requires_grad
         if detach and not from_lns:
             input_data = data.detach().to(torch.float64)
+        elif from_lns:
+            input_data = data.view(torch.float64)
         else:
             input_data = data.to(torch.float64)
 
@@ -1107,7 +1109,7 @@ def lnstensor(
                 log_part = data.x
 
             packed_int = (int(round(log_part)) << 1) | data.s
-            input_data = torch.tensor(packed_int, dtype=torch.float64)
+            input_data = torch.tensor(packed_int, dtype=torch.int64).view(torch.float64)
 
         from_lns = True
 
@@ -1126,8 +1128,8 @@ def lnstensor(
         packed_int = (np.int64(np.round(log_part)) << 1) | data_s
         input_data = torch.tensor(
             np.where(data.nd == xl.XLNS_MIN_INT, LNS_ZERO, packed_int),
-            dtype=torch.float64
-        )
+            dtype=torch.int64
+        ).view(torch.float64)
         from_lns = True
 
     # Everything else (scalars, lists, tuples, etc.)

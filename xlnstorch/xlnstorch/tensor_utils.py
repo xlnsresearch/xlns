@@ -112,38 +112,35 @@ def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.T
 
     sign_bit = (x < 0).to(torch.int64)
     packed_int = (exponent << 1) | sign_bit
-    packed = packed_int.to(torch.float64)
+    packed = packed_int.view(torch.float64)
     packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
 
     return packed
 
 def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
-    packed_grad_output = grad_output.to(torch.int64)
+    exponent = (grad_output >> 1).to(torch.float64)
+    sign = torch.where((grad_output & 1).bool(), -1.0, 1.0)
 
-    exponent = (packed_grad_output >> 1).to(torch.float64)
-    sign = torch.where((packed_grad_output & 1).bool(), -1.0, 1.0)
-
-    return torch.where(torch.eq(packed_grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent))
+    return torch.where(torch.eq(grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent))
 
 def _change_base_forward_python(x: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
-    packed_int = x.to(torch.int64)
+    packed_int = x.view(torch.int64)
     sign_bit = packed_int & 1
     exponent = (packed_int >> 1).to(torch.float64)
 
     exponent_new = exponent * torch.log(old_base) / torch.log(new_base)
     new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-    new_tensor = new_packed_int.to(torch.float64)
+    new_tensor = new_packed_int.view(torch.float64)
 
     return new_tensor
 
 def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
-    packed_int = grad_output.to(torch.int64)
-    sign_bit = packed_int & 1
-    exponent = (packed_int >> 1).to(torch.float64)
+    sign_bit = grad_output & 1
+    exponent = (grad_output >> 1).to(torch.float64)
 
     exponent_new = exponent * torch.log(new_base) / torch.log(old_base)
     old_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-    old_tensor = old_packed_int.to(torch.float64)
+    old_tensor = old_packed_int.view(torch.float64)
 
     return old_tensor
 

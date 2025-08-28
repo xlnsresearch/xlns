@@ -49,7 +49,7 @@ def with_bitcast(func: Callable):
     @functools.wraps(func)
     def wrapper(*args):
         int_args = tuple(_to_int64(a) for a in args)
-        out = func(*args)
+        out = func(*int_args)
 
         if isinstance(out, tuple):
             return tuple(_to_float64(o) for o in out)
