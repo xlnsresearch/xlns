@@ -259,7 +259,7 @@ class LNSTensor:
             The internal packed representation of the LNSTensor for a
             requested floating point value and base.
         """
-        return lnstensor(fp_value, b=base)._lns
+        return lnstensor(fp_value, b=base)._lns.view(torch.int64)
 
     @property
     def lns(self) -> Tensor:
@@ -1087,7 +1087,12 @@ def lnstensor(
         if detach and not from_lns:
             input_data = data.detach().to(torch.float64)
         elif from_lns:
-            input_data = data.view(torch.float64)
+            if data.dtype == torch.float64:
+                input_data = data
+            elif data.dtype == torch.int64:
+                input_data = data.view(torch.float64)
+            else:
+                raise TypeError("When from_lns is True, data must be of dtype float64 or int64.")
         else:
             input_data = data.to(torch.float64)
 

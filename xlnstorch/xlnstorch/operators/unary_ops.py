@@ -3,6 +3,9 @@ from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, lnstensor, implements
 from xlnstorch.autograd import LNSFunction
 from . import lns_neg
 
+def _neg(x):
+    return x ^ 1
+
 class LNSNegFunction(LNSFunction):
     """
     Negation becomes flipping the sign bit.
@@ -13,10 +16,9 @@ class LNSNegFunction(LNSFunction):
 
     @staticmethod
     def forward(x):
-        x_packed = x.to(torch.int64)
-        neg_x_packed = x_packed ^ 1
-
-        return neg_x_packed.to(torch.float64)
+        x = x.view(torch.int64)
+        result = _neg(x)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -26,7 +28,7 @@ class LNSNegFunction(LNSFunction):
     def backward(ctx, grad_output):
         return lns_neg(grad_output)
 
-@implements(torch.neg, LNSNegFunction.forward, key="default", default=True)
+@implements(torch.neg, _neg, key="default", default=True)
 def neg(x, *, out=None):
 
     result = LNSNegFunction.apply(x)
@@ -35,6 +37,10 @@ def neg(x, *, out=None):
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
+
+def _abs(x):
+    abs_x = x & (~1)
+    return torch.where(torch.eq(x | 1, LNS_ZERO), LNS_ZERO, abs_x)
 
 class LNSAbsFunction(LNSFunction):
     """
@@ -49,10 +55,9 @@ class LNSAbsFunction(LNSFunction):
 
     @staticmethod
     def forward(x):
-        x_packed = x.to(torch.int64)
-        x_packed_abs = x_packed & (~1)
-
-        return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, x_packed_abs.to(torch.float64))
+        x = x.view(torch.int64)
+        result = _abs(x)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -62,12 +67,11 @@ class LNSAbsFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
-        x_packed_sign = x_packed & 1
+        x = x.view(torch.int64)
 
-        return torch.where(torch.eq(x_packed_sign, 1), lns_neg(grad_output), grad_output)
+        return torch.where(torch.eq(x & 1, 1), lns_neg(grad_output), grad_output)
 
-@implements(torch.abs, LNSAbsFunction.forward, "default", default=True)
+@implements(torch.abs, _abs, "default", default=True)
 def abs(x, *, out=None):
 
     result = LNSAbsFunction.apply(x)
@@ -104,6 +108,14 @@ def positive(x):
     result = LNSPositiveFunction.apply(x)
     return lnstensor(result, from_lns=True, b=x.base)
 
+def _sign(x):
+    sign_x = x & 1
+
+    return torch.where(
+        torch.eq(x | 1, LNS_ZERO), LNS_ZERO,
+        torch.where(sign_x == 1,
+                    LNS_NEG_ONE, LNS_ONE))
+
 class LNSSignFunction(LNSFunction):
     """
     Sign becomes checking the sign bit (rightmost bit).
@@ -114,13 +126,9 @@ class LNSSignFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base):
-        x_packed = x.to(torch.int64)
-        x_packed_sign = x_packed & 1
-
-        return torch.where(
-            torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO,
-            torch.where(x_packed_sign == 1,
-                        LNS_NEG_ONE, LNS_ONE))
+        x = x.view(torch.int64)
+        result = _sign(x)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -130,7 +138,7 @@ class LNSSignFunction(LNSFunction):
     def backward(ctx, grad_output):
         return torch.full_like(grad_output, LNS_ZERO), None
 
-@implements(torch.sign, LNSSignFunction.forward, "default", default=True)
+@implements(torch.sign, _sign, "default", default=True)
 def sign(x, *, out=None):
 
     result = LNSSignFunction.apply(x, x.base)

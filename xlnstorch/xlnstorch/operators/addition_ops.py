@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements, implements_sbdb, sbdb
+from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements, implements_sbdb, sbdb
 from xlnstorch.autograd import LNSFunction
 from . import (
     lns_add,
@@ -17,9 +17,21 @@ def sbdb_ideal(z, s, base):
     magnitude = torch.abs(1.0 - 2.0 * s + power_term)
 
     log_term = torch.log(magnitude) / torch.log(base)
-    result = torch.round(log_term) * 2
+    result = torch.round(log_term).to(torch.int64) << 1
 
-    return result.to(torch.float64)
+    return result
+
+def _add(x, y, base):
+    max_operand = torch.max(x, y)
+
+    abs_diff = torch.abs((x >> 1) - (y >> 1))
+    sign_diff = (x ^ y) & 1
+
+    result = max_operand + sbdb(-abs_diff, sign_diff, base)
+    return torch.where(
+        torch.eq(x | 1, LNS_ZERO), y, torch.where(
+            torch.eq(y | 1, LNS_ZERO), x, torch.where(
+                x ^ 1 == y, LNS_ZERO, result)))
 
 class LNSAddFunction(LNSFunction):
     """
@@ -41,18 +53,9 @@ class LNSAddFunction(LNSFunction):
 
     @staticmethod
     def forward(x, y, base):
-
-        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-        max_operand = torch.max(x_packed, y_packed)
-
-        abs_diff = torch.abs((x_packed >> 1) - (y_packed >> 1))
-        sign_diff = (x_packed ^ y_packed) & 1
-
-        result = max_operand + sbdb(-abs_diff, sign_diff, base)
-        return torch.where(
-            torch.eq(x_packed | 1, LNS_ZERO), y, torch.where(
-                torch.eq(y_packed | 1, LNS_ZERO), x, torch.where(
-                    x_packed ^ 1 == y_packed, LNS_ZERO, result.to(torch.float64))))
+        x, y = x.view(torch.int64), y.view(torch.int64)
+        result = _add(x, y, base)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -62,13 +65,14 @@ class LNSAddFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         x, y, base = ctx.saved_tensors
+        x, y = x.view(torch.int64), y.view(torch.int64)
 
         grad_x = lns_sum_to_size(grad_output, base, x.shape)
         grad_y = lns_sum_to_size(grad_output, base, y.shape)
 
         return grad_x, grad_y, None
 
-@implements(torch.add, LNSAddFunction.forward, key='default', default=not CSRC_AVAILABLE)
+@implements(torch.add, _add, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
@@ -83,6 +87,10 @@ def add(x, y, *, alpha=1, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+def _sub(x, y, base):
+    neg_y = lns_neg(y)
+    return lns_add(x, neg_y, base)
+
 class LNSSubFunction(LNSFunction):
     """
     See LNSAddFunction for details on the internal computations.
@@ -94,8 +102,9 @@ class LNSSubFunction(LNSFunction):
 
     @staticmethod
     def forward(x, y, base):
-        neg_y = lns_neg(y)
-        return lns_add(x, neg_y, base)
+        x, y = x.view(torch.int64), y.view(torch.int64)
+        result = _sub(x, y, base)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -105,6 +114,8 @@ class LNSSubFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         x, y, base = ctx.saved_tensors
+        x, y = x.view(torch.int64), y.view(torch.int64)
+
         grad_y = lns_neg(grad_output)
 
         grad_x = lns_sum_to_size(grad_output, base, x.shape)
@@ -112,7 +123,7 @@ class LNSSubFunction(LNSFunction):
 
         return grad_x, grad_y, None
 
-@implements(torch.sub, LNSSubFunction.forward, key="default", default=True)
+@implements(torch.sub, _sub, key="default", default=True)
 def sub(x, y, *, alpha=1, out=None):
 
     x, y = format_lnstensor_operands(x, y)
@@ -127,6 +138,35 @@ def sub(x, y, *, alpha=1, out=None):
 
     return lnstensor(result, from_lns=True, b=x.base)
 
+def _sum(x, base, dim=None, keepdim=False):
+    if dim is None:
+        flat = x.reshape(-1)
+        out = flat[0]
+        for i in range(1, flat.numel()):
+            out = lns_add(out, flat[i], base)
+        if keepdim:
+            out = out.reshape([1] * x.dim())
+        return out
+
+    red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
+    red_dims = tuple(sorted(d % x.dim() for d in red_dims))
+
+    permute_order = [d for d in range(x.dim()) if d not in red_dims] + list(red_dims)
+    transposed = x.permute(*permute_order)
+
+    outer_shape = transposed.shape[:-len(red_dims)]
+    transposed = transposed.reshape(*outer_shape, -1)
+
+    out = transposed[..., 0]
+    for i in range(1, transposed.shape[-1]):
+        out = lns_add(out, transposed[..., i], base)
+
+    if keepdim:
+        for d in red_dims:
+            out = out.unsqueeze(d)
+
+    return out
+
 class LNSSumFunction(LNSFunction):
     """
     We use the addition operation to compute the sum.
@@ -137,33 +177,9 @@ class LNSSumFunction(LNSFunction):
 
     @staticmethod
     def forward(x, base, dim=None, keepdim=False):
-        if dim is None:
-            flat = x.reshape(-1)
-            out = flat[0]
-            for i in range(1, flat.numel()):
-                out = lns_add(out, flat[i], base)
-            if keepdim:
-                out = out.reshape([1] * x.dim())
-            return out
-
-        red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
-        red_dims = tuple(sorted(d % x.dim() for d in red_dims))
-
-        permute_order = [d for d in range(x.dim()) if d not in red_dims] + list(red_dims)
-        transposed = x.permute(*permute_order)
-
-        outer_shape = transposed.shape[:-len(red_dims)]
-        transposed = transposed.reshape(*outer_shape, -1)
-
-        out = transposed[..., 0]
-        for i in range(1, transposed.shape[-1]):
-            out = lns_add(out, transposed[..., i], base)
-
-        if keepdim:
-            for d in red_dims:
-                out = out.unsqueeze(d)
-
-        return out
+        x = x.view(torch.int64)
+        result = _sum(x, base, dim, keepdim)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -175,6 +191,7 @@ class LNSSumFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
+        x = x.view(torch.int64)
 
         grad_x = grad_output
         if ctx.dim is None:
@@ -192,7 +209,7 @@ class LNSSumFunction(LNSFunction):
 
         return grad_x, None, None, None
 
-@implements(torch.sum, LNSSumFunction.forward, "default", default=not CSRC_AVAILABLE)
+@implements(torch.sum, _sum, "default", default=not CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
 
     result = LNSSumFunction.apply(x, x.base, dim, keepdim)

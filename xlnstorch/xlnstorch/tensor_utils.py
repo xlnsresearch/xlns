@@ -112,10 +112,9 @@ def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.T
 
     sign_bit = (x < 0).to(torch.int64)
     packed_int = (exponent << 1) | sign_bit
-    packed = packed_int.view(torch.float64)
-    packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed)
+    packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed_int)
 
-    return packed
+    return packed.view(torch.float64)
 
 def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
     exponent = (grad_output >> 1).to(torch.float64)

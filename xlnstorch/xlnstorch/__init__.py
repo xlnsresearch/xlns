@@ -9,11 +9,11 @@ except ModuleNotFoundError as e:
 
 # These constants are independent of base so we can precompute
 # their internal representations.
-LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
-LNS_INF = torch.tensor(2**53, dtype=torch.float64)
-LNS_NEG_INF = torch.tensor(2**53 - 1, dtype=torch.float64)
-LNS_ONE = torch.tensor(0, dtype=torch.float64)
-LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
+LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.int64)
+LNS_INF = torch.tensor(2**53, dtype=torch.int64)
+LNS_NEG_INF = torch.tensor(2**53 - 1, dtype=torch.int64)
+LNS_ONE = torch.tensor(0, dtype=torch.int64)
+LNS_NEG_ONE = torch.tensor(1, dtype=torch.int64)
 
 try:
     from . import _csrc
