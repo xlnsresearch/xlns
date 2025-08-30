@@ -60,11 +60,88 @@ def with_bitcast(func: Callable):
 
     return wrapper
 
+# added to forward only if setup_context is not defined
+def forward_decorator(func):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # add lns_ops to ctx for later use in backward
+        args[0]._lns_ops = args[1]
+
+        # call the original function (no changes to args)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+# added to setup_context if it is defined
+def setup_context_decorator(func):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # pop lns_ops from inputs
+        lns_ops = args[1][0]
+        inputs = args[1][1:]
+
+        # add lns_ops to ctx
+        args[0]._lns_ops = lns_ops
+
+        # call the original function with lns_ops as the second argument
+        return func(args[0], lns_ops, inputs, *args[2:], **kwargs)
+
+    return wrapper
+
+# always added to backward
+def backward_decorator(func):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # extract lns_ops from ctx
+        lns_ops = args[0]._lns_ops
+
+        # call the original function with lns_ctx as second argument
+        output = func(args[0], lns_ops, *args[1:], **kwargs)
+
+        # To do: check if the number of gradients matches the number of inputs
+        # since leaving this up to torch would correctly raise an error but
+        # would claim there is an additional expected and received grad (for lns_ops
+        # and its None grad)
+
+        # return the output, adding None for the lns_ops position
+        if isinstance(output, tuple):
+            return (None,) + output
+        return None, output
+
+    return wrapper
+
 class LNSFunction(torch.autograd.Function):
     """
     Base class for LNS operations that require custom forward and backward methods.
     This class should be subclassed for specific LNS operations.
     """
+
+    @classmethod
+    def _register_ops_decorator(cls, func_name, decorator):
+        func = getattr(cls, func_name)
+
+        if not getattr(func, "_is_lns_decorated", False):
+            decorated = decorator(func)
+            decorated._is_lns_decorated = True
+            setattr(cls, func_name, decorated)
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        # check if setup_context is defined in subclass or inherited
+        # from torch.autograd.function._SingleLevelFunction. If it is
+        # inherited, we only need to decorate forward and backward.
+        # If it is defined, we need to decorate setup_context instead
+        # of forward.
+        if cls.setup_context is torch.autograd.function._SingleLevelFunction.setup_context:
+            cls._register_ops_decorator("forward", forward_decorator)
+        else:
+            cls._register_ops_decorator("setup_context", setup_context_decorator)
+
+        cls._register_ops_decorator("backward", backward_decorator)
 
     @staticmethod
     def forward(ctx, *args, **kwargs):
@@ -83,14 +160,18 @@ class LNSFunction(torch.autograd.Function):
         raise NotImplementedError("Backward method must be implemented in subclasses.")
 
     @classmethod
-    def apply(cls, *args, **kwargs):
+    def apply(cls, *args, common_base: torch.Tensor = None, **kwargs):
         """
         Applies the LNS operation defined by this class.
         This method is used to call the forward and backward methods.
 
-        Note that any keyword arguments passed to this method will raise an error,
-        as `torch.autograd.Function` does not support keyword arguments. Instead,
-        use positional arguments only.
+        The `common_base` parameter is used to explicitly specify the base
+        for LNSTensor operations. If not provided, it will be inferred from
+        the first LNSTensor argument.
+
+        Note that any keyword arguments passed to this method except for `common_base`
+        will raise an error, as `torch.autograd.Function` does not support keyword
+        arguments. Instead, use positional arguments only.
 
         In addition, this method converts any `LNSTensor` arguments to their
         internal representation (i.e., the underlying tensor) before calling the
@@ -107,13 +188,18 @@ class LNSFunction(torch.autograd.Function):
         # because the autograd.Function expects tensors, not LNSTensor objects.
         internal_args = []
         for arg in args:
+            if common_base is None and isinstance(args, tensor_module.LNSTensor):
+                common_base = arg.base
+
             if isinstance(arg, tensor_module.LNSTensor):
                 internal_args.append(arg._lns)
             else:
                 internal_args.append(arg)
 
+        ops = tensor_module.LNSOps(common_base) if common_base is not None else None
+
         # call the forward method of the class with the internal arguments
-        result = super().apply(*internal_args)
+        result = super().apply(ops, *internal_args)
 
         # get all output tensors and store them in a tuple
         if isinstance(result, torch.Tensor):

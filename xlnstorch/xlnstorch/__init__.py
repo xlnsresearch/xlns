@@ -39,6 +39,9 @@ from .sbdb_dispatch_table import (
     register_xlnsconf_implementation,
     sbdb,
 )
+from .ops import (
+    LNSOps,
+)
 from . import autograd
 from .tensor_utils import (
     align_lnstensor_bases,
@@ -91,6 +94,8 @@ __all__ = [
     "randn_like",
     "empty",
     "empty_like",
+
+    "LNSOps",
 
     "implements",
     "get_implementation",
