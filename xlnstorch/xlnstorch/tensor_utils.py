@@ -117,6 +117,7 @@ def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.T
     return packed.view(torch.float64)
 
 def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
+    grad_output = grad_output.view(torch.int64)
     exponent = (grad_output >> 1).to(torch.float64)
     sign = torch.where((grad_output & 1).bool(), -1.0, 1.0)
 
@@ -134,6 +135,7 @@ def _change_base_forward_python(x: torch.Tensor, old_base: torch.Tensor, new_bas
     return new_tensor
 
 def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
+    grad_output = grad_output.view(torch.int64)
     sign_bit = grad_output & 1
     exponent = (grad_output >> 1).to(torch.float64)
 
@@ -183,16 +185,16 @@ def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
 class FloatToLNS(LNSFunction):
 
     @staticmethod
-    def forward(x, base):
+    def forward(ops, x, base):
         return float_to_lns_forward(x, base)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         _, base = inputs
         ctx.save_for_backward(base)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         base, = ctx.saved_tensors
         return float_to_lns_backward(grad_output, base), None
 
@@ -200,16 +202,16 @@ class FloatToLNS(LNSFunction):
 class LNSChangeBaseFunction(LNSFunction):
 
     @staticmethod
-    def forward(tensor, old_base, new_base):
+    def forward(ops, tensor, old_base, new_base):
         return change_base_forward(tensor, old_base, new_base)
 
     @staticmethod
-    def setup_context(ctx, inputs, outputs):
+    def setup_context(ctx, ops, inputs, outputs):
         _, old_base, new_base = inputs
         ctx.save_for_backward(old_base, new_base)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         old_base, new_base = ctx.saved_tensors
         return change_base_backward(grad_output, old_base, new_base), None, None
 
@@ -217,11 +219,11 @@ class LNSChangeBaseFunction(LNSFunction):
 class LNSGetItemFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, idx):
+    def forward(ops, x, idx):
         return x[idx]
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, idx = inputs
         ctx.is_idx_tensor = torch.is_tensor(idx)
 
@@ -232,7 +234,9 @@ class LNSGetItemFunction(LNSFunction):
             ctx.idx = idx
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
+        grad_output = grad_output.view(torch.int64)
+
         if ctx.is_idx_tensor:
             x, idx = ctx.saved_tensors
         else:
@@ -242,22 +246,22 @@ class LNSGetItemFunction(LNSFunction):
         grad_x = torch.full_like(x, LNS_ZERO)
         grad_x[idx] = grad_output
 
-        return grad_x, None
+        return grad_x.view(torch.float64), None
 
 
 class LNSToFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, device):
+    def forward(ops, x, device):
         return x.to(device)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, _ = inputs
         ctx.orig_device = x.device
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_x = grad_output.to(ctx.orig_device)
         return grad_x, None
 
@@ -265,17 +269,17 @@ class LNSToFunction(LNSFunction):
 class LNSViewFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, shape):
+    def forward(ops, x, shape):
         return x.view(*shape)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, shape = inputs
         ctx.original_shape = x.shape
         ctx.n_shape = len(shape)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_x = grad_output.contiguous().view(ctx.original_shape)
 
         return grad_x, None
@@ -284,36 +288,33 @@ class LNSViewFunction(LNSFunction):
 class LNSContiguousFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, memory_format):
+    def forward(ops, x, memory_format):
         return x.contiguous(memory_format=memory_format)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         pass
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         return grad_output, None
 
 
 class LNSRepeatFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, repeats):
+    def forward(ops, x, repeats):
         return x.repeat(*repeats)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base, repeats = inputs
-        ctx.save_for_backward(base)
+    def setup_context(ctx, ops, inputs, output):
+        x, repeats = inputs
         ctx.input_shape = tuple(x.shape)
         ctx.repeats = tuple(repeats)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        ops = _get_operator_module()
-        base, = ctx.saved_tensors
-        grad_x = grad_output
+    def backward(ctx, ops, grad_output):
+        grad_x = grad_output.view(torch.int64)
 
         for dim, rep in enumerate(ctx.repeats):
             if rep == 1:
@@ -323,57 +324,52 @@ class LNSRepeatFunction(LNSFunction):
             new_shape[dim] = ctx.input_shape[dim]
             new_shape.insert(dim + 1, rep)
 
-            grad_x = ops.lns_sum(grad_x.view(*new_shape), base, dim=dim+1)
+            grad_x = ops.sum(grad_x.view(*new_shape), dim=dim+1)
 
-        return grad_x, None, None
+        return grad_x.view(torch.float64), None
 
 
 class LNSOverflowFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, max=None, min=None):
-        # import here to avoid circular imports
-        tensor_module = _get_tensor_module()
-        ops = _get_operator_module()
-
-        result = x.to(torch.int64)
+    def forward(ops, x, max=None, min=None):
+        x = x.view(torch.int64)
+        max = ops.to_lns(max) if max is not None else None
+        min = ops.to_lns(min) if min is not None else None
 
         if max is not None:
-            max_packed = tensor_module.LNSTensor.get_internal_tensor(max, base)
-            result = torch.where(ops.lns_gt(ops.lns_abs(result), max_packed),
-                                 ops.lns_mul(ops.lns_sign(result, base), max_packed, base), result)
+            result = torch.where(ops.gt(ops.abs(result), max),
+                                 ops.mul(ops.sign(result), max), result)
 
         if min is not None:
-            min_packed = tensor_module.LNSTensor.get_internal_tensor(min, base)
-            result = torch.where(ops.lns_lt(ops.lns_abs(result), min_packed),
+            result = torch.where(ops.lt(ops.abs(result), min),
                                  LNS_ZERO, result)
 
-        return result.to(torch.float64)
+        return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base, max, min = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, max, min = inputs
+        ctx.save_for_backward(x)
         ctx.max = max
         ctx.min = min
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        tensor_module = _get_tensor_module()
-        ops = _get_operator_module()
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
+        x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
-        x_packed, grad_x = x.to(torch.int64), grad_output.to(torch.int64)
+        max = ops.to_lns(ctx.max) if ctx.max is not None else None
+        min = ops.to_lns(ctx.min) if ctx.min is not None else None
 
-        if ctx.max is not None:
-            max_packed = tensor_module.LNSTensor.get_internal_tensor(ctx.max, base)
-            grad_x = torch.where(ops.lns_gt(ops.lns_abs(x_packed), max_packed), LNS_ZERO, grad_x)
+        if max is not None:
+            grad_x = torch.where(ops.gt(ops.abs(x), max), LNS_ZERO, grad_x)
 
-        if ctx.min is not None:
-            min_packed = tensor_module.LNSTensor.get_internal_tensor(ctx.min, base)
-            grad_x = torch.where(ops.lns_lt(ops.lns_abs(x_packed), min_packed), LNS_ZERO, grad_x)
+        if min is not None:
+            grad_x = torch.where(ops.lt(ops.abs(x), min), LNS_ZERO, grad_x)
 
-        return grad_x, None, None, None
+        grad_x = ops.mul(grad_output, grad_x)
+        return grad_x.view(torch.float64), None, None
 
 def set_overflow_limits(max: float = None, min: float = None):
     """
@@ -415,7 +411,7 @@ def handle_overflow(*tensors: LNSTensor, inplace=False, no_grad=False) -> List[L
     with torch.no_grad() if no_grad else nullcontext():
 
         for tensor in tensors:
-            handled_tensors.append(LNSOverflowFunction.apply(tensor, tensor.base, OVF_MAX, OVF_MIN))
+            handled_tensors.append(LNSOverflowFunction.apply(tensor, OVF_MAX, OVF_MIN))
 
     if inplace:
 

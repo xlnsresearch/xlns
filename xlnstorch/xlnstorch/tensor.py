@@ -381,7 +381,7 @@ class LNSTensor:
         """
         Repeats the tensor along the specified dimensions.
         """
-        result = tensor_utils.LNSRepeatFunction.apply(self, self.base, repeats)
+        result = tensor_utils.LNSRepeatFunction.apply(self, repeats)
         return lnstensor(result, from_lns=True, b=self.base)
 
     def item(self) -> float:
