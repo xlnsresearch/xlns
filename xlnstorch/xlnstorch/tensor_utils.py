@@ -335,6 +335,7 @@ class LNSOverflowFunction(LNSFunction):
         max = ops.to_lns(max) if max is not None else None
         min = ops.to_lns(min) if min is not None else None
 
+        result = x
         if max is not None:
             result = torch.where(ops.gt(ops.abs(result), max),
                                  ops.mul(ops.sign(result), max), result)
