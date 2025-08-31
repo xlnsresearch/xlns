@@ -39,9 +39,6 @@ from .sbdb_dispatch_table import (
     register_xlnsconf_implementation,
     sbdb,
 )
-from .ops import (
-    LNSOps,
-)
 from . import autograd
 from .tensor_utils import (
     align_lnstensor_bases,
@@ -50,6 +47,9 @@ from .tensor_utils import (
     toggle_cpp_tensor_utils,
 )
 toggle_cpp_tensor_utils(CSRC_AVAILABLE)
+from .ops import (
+    LNSOps,
+)
 from .tensor import (
     LNSTensor,
     lnstensor,

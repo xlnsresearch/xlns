@@ -3,7 +3,8 @@ import inspect
 from typing import Callable, Any, Iterable, Tuple, Union, Optional
 
 import torch
-from xlnstorch import apply_lns_op
+from xlnstorch import apply_lns_op, LNS_ZERO, LNS_ONE
+from xlnstorch.tensor_utils import FloatToLNS
 
 _KIND_MAP: dict[str, inspect._ParameterKind] = {
     "po": inspect.Parameter.POSITIONAL_ONLY,
@@ -109,6 +110,36 @@ class LNSOps:
 
     def __init__(self, base: torch.Tensor):
         self.base = base
+
+    # ====================
+    #    Helper Methods
+    # ====================
+
+    def to_lns(self, value: Union[int, float]) -> torch.LongTensor:
+        tensor_value = torch.tensor(value, dtype=torch.float64)
+        return FloatToLNS.apply(tensor_value, self.base).view(torch.int64)
+
+    def zeros(self, *size: int):
+        return torch.full(size, LNS_ZERO.item(), dtype=torch.int64)
+
+    def zeros_like(self, tensor: torch.LongTensor):
+        return torch.full_like(tensor, LNS_ZERO.item(), dtype=torch.int64)
+
+    def ones(self, *size: int):
+        return torch.full(size, LNS_ONE.item(), dtype=torch.int64)
+
+    def ones_like(self, tensor: torch.LongTensor):
+        return torch.full_like(tensor, LNS_ONE.item(), dtype=torch.int64)
+
+    def full(self, *size: int, fill_value: Union[int, float]):
+        lns_fill_value = self.to_lns(fill_value)
+        return torch.full(size, lns_fill_value.item(), dtype=torch.int64)
+
+    def full_like(self, tensor: torch.LongTensor, fill_value: Union[int, float]):
+        lns_fill_value = self.to_lns(fill_value)
+        return torch.full_like(tensor, lns_fill_value.item(), dtype=torch.int64)
+
+
 
     # ===========================
     #    Arithmetic Operations
