@@ -3,25 +3,11 @@ import math
 import torch
 from xlnstorch import LNS_ZERO, LNS_ONE, CSRC_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
 from xlnstorch.autograd import LNSFunction
-from . import (
-    lns_mul,
-    lns_sum,
-    lns_add,
-    lns_matmul,
-    lns_div,
-    lns_mean,
-    lns_var,
-    lns_sub,
-    lns_neg,
-    lns_sqrt,
-    lns_max,
-    lns_min,
-)
 
-def _linear(x, A, base, bias=None):
-    output = lns_matmul(x, A.transpose(-2, -1), base)
+def _linear(ops, x, A, bias=None):
+    output = ops.matmul(x, A.transpose(-2, -1))
     if bias is not None:
-        output = lns_add(output, bias, base)
+        output = ops.add(output, bias)
 
     return output
 
@@ -37,25 +23,25 @@ class LNSLinearFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, A, base, bias=None):
+    def forward(ops, x, A, bias=None):
         x, A = x.view(torch.int64), A.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _linear(x, A, base, bias)
+        result = _linear(ops, x, A, bias)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, A, base, bias = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, A, bias = inputs
         ctx.biased = True if bias is not None else False
-        ctx.save_for_backward(x, A, base)
+        ctx.save_for_backward(x, A)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, A, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, A = ctx.saved_tensors
         x, A, grad_output = x.view(torch.int64), A.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = lns_matmul(grad_output, A, base)
+        grad_x = ops.matmul(grad_output, A)
 
         out_features = A.shape[0]
         in_features = A.shape[1]
@@ -63,39 +49,35 @@ class LNSLinearFunction(LNSFunction):
         grad_output_2d = grad_output.reshape(-1, out_features)
         x_2d = x.reshape(-1, in_features)
         grad_output_T = grad_output_2d.transpose(0, 1)
-        grad_A = lns_matmul(grad_output_T, x_2d, base)
+        grad_A = ops.matmul(grad_output_T, x_2d)
 
         if ctx.biased:
             if grad_output.dim() == 1:
                 grad_bias = grad_output.view(torch.float64)
             else:
-                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1))).view(torch.float64)
+                grad_bias = ops.sum(grad_output, dim=tuple(range(grad_output.dim() - 1))).view(torch.float64)
         else:
             grad_bias = None
 
-        return grad_x.view(torch.float64), grad_A.view(torch.float64), None, grad_bias
+        return grad_x.view(torch.float64), grad_A.view(torch.float64), grad_bias
 
 @implements(torch.nn.functional.linear, _linear, key='default', default=True)
 def linear(x, weight, bias=None):
 
-    if bias is not None:
-        x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    else:
-        x, weight = format_lnstensor_operands(x, weight)
-
-    result = LNSLinearFunction.apply(x, weight, x.base, bias)
+    x, weight, bias = format_lnstensor_operands(x, weight, bias)
+    result = LNSLinearFunction.apply(x, weight, bias)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _bilinear(x, y, A, base, bias=None):
-    tmp = lns_matmul(A, y.unsqueeze(-1), base).squeeze(-1)
+def _bilinear(ops, x, y, A, bias=None):
+    tmp = ops.matmul(A, y.unsqueeze(-1)).squeeze(-1)
 
     if tmp.dim() == 1:
         tmp = tmp.unsqueeze(-2)
-    output = lns_matmul(x.unsqueeze(-2), tmp.transpose(-2, -1), base).squeeze(-2)
+    output = ops.matmul(x.unsqueeze(-2), tmp.transpose(-2, -1)).squeeze(-2)
 
     if bias is not None:
-        output = lns_add(output, bias, base)
+        output = ops.add(output, bias)
 
     return output
 
@@ -112,80 +94,76 @@ class LNSBilinearFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, y, A, base, bias=None):
+    def forward(ops, x, y, A, bias=None):
         x, y, A = x.view(torch.int64), y.view(torch.int64), A.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _bilinear(x, y, A, base, bias)
+        result = _bilinear(ops, x, y, A, bias)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, y, A, base, bias = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, y, A, bias = inputs
         ctx.biased = True if bias is not None else False
-        ctx.save_for_backward(x, y, A, base)
+        ctx.save_for_backward(x, y, A)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, y, A, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, y, A = ctx.saved_tensors
         x, y, A, grad_output = x.view(torch.int64), y.view(torch.int64), A.view(torch.int64), grad_output.view(torch.int64)
 
-        Ay = lns_matmul(A, y.unsqueeze(-1), base).squeeze(-1)
-        grad_x = lns_matmul(grad_output.unsqueeze(-2), Ay, base).squeeze(-2)
+        Ay = ops.matmul(A, y.unsqueeze(-1)).squeeze(-1)
+        grad_x = ops.matmul(grad_output.unsqueeze(-2), Ay).squeeze(-2)
 
-        ATx = lns_matmul(A.transpose(-2, -1), x.unsqueeze(-1), base).squeeze(-1)
-        grad_y = lns_matmul(grad_output.unsqueeze(-2), ATx, base).squeeze(-2)
+        ATx = ops.matmul(A.transpose(-2, -1), x.unsqueeze(-1)).squeeze(-1)
+        grad_y = ops.matmul(grad_output.unsqueeze(-2), ATx).squeeze(-2)
 
         if ctx.biased:
             if grad_output.dim() == 1:
                 grad_bias = grad_output.view(torch.float64)
             else:
-                grad_bias = lns_sum(grad_output, base, dim=tuple(range(grad_output.dim() - 1))).view(torch.float64)
+                grad_bias = ops.sum(grad_output, dim=tuple(range(grad_output.dim() - 1))).view(torch.float64)
         else:
             grad_bias = None
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None, grad_bias # todo: grad_A requires einsum
+        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, grad_bias # todo: grad_A requires einsum
 
 @implements(torch.nn.functional.bilinear, _bilinear, key='default', default=True)
 def bilinear(x, y, weight, bias=None):
 
-    if bias is not None:
-        x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
-    else:
-        x, y, weight = format_lnstensor_operands(x, y, weight)
-
-    result = LNSBilinearFunction.apply(x, y, weight, x.base, bias)
+    x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
+    result = LNSBilinearFunction.apply(x, y, weight, bias)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _dropout(x, base, p=0.5):
-    mask = LNSTensor.get_internal_tensor(torch.bernoulli(torch.full(x.shape, 1 - p)), base)
-    result = lns_mul(x, mask)
+def _dropout(ops, x, p=0.5):
+    mask = ops.to_lns(torch.bernoulli(torch.full(x.shape, 1 - p)))
+    result = ops.mul(x, mask)
     return result
 
 class LNSDropoutFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, p=0.5):
+    def forward(ops, x, p=0.5):
         x = x.view(torch.int64)
-        result = _dropout(x, base, p)
+        result = _dropout(ops, x, p)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, p = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, p = inputs
+        ctx.save_for_backward(output)
         ctx.p = p
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
         output, grad_output = output.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, ops.to_lns(1 / (1 - ctx.p)))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 @implements(torch.nn.functional.dropout, _dropout, "default", default=True)
 def dropout(x, p=0.5, training=True, inplace=False):
@@ -196,14 +174,14 @@ def dropout(x, p=0.5, training=True, inplace=False):
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
 
-    result = LNSDropoutFunction.apply(x, x.base, p)
+    result = LNSDropoutFunction.apply(x, p)
 
     if inplace:
         return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _dropout1d(x, base, p=0.5):
+def _dropout1d(ops, x, p=0.5):
     if x.dim() == 2:
         channel_shape = (x.size(0), 1)
     elif x.dim() == 3:
@@ -212,34 +190,34 @@ def _dropout1d(x, base, p=0.5):
     mask_flt = torch.bernoulli(
         torch.full(channel_shape, 1 - p, dtype=torch.float64, device=x.device)
     ).expand_as(x)
-    mask = LNSTensor.get_internal_tensor(mask_flt, base)
+    mask = ops.to_lns(mask_flt)
 
-    result = lns_mul(x, mask)
+    result = ops.mul(x, mask)
     return result
 
 class LNSDropout1dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, p=0.5):
+    def forward(ops, x, p=0.5):
         x = x.view(torch.int64)
-        result = _dropout1d(x, base, p)
+        result = _dropout1d(ops, x, p)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, p = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, p = inputs
+        ctx.save_for_backward(output)
         ctx.p = p
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
         output, grad_output = output.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, ops.to_lns(1 / (1 - ctx.p)))
+        grad_x = ops._mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
 @implements(torch.nn.functional.dropout1d, _dropout1d, "default", default=True)
 def dropout1d(x, p=0.5, training=True, inplace=False):
@@ -253,14 +231,14 @@ def dropout1d(x, p=0.5, training=True, inplace=False):
     if x.dim() < 2 or x.dim() > 3:
         raise ValueError(f"Dropout1d expects a 2D or 3D tensor, but got a tensor with {x.dim()} dimensions.")
 
-    result = LNSDropout1dFunction.apply(x, x.base, p)
+    result = LNSDropout1dFunction.apply(x, p)
 
     if inplace:
         return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _dropout2d(x, base, p=0.5):
+def _dropout2d(ops, x, p=0.5):
     if x.dim() == 3:
         channel_shape = (x.size(0), 1, 1)
     else:
@@ -269,32 +247,32 @@ def _dropout2d(x, base, p=0.5):
     mask_flt = torch.bernoulli(
         torch.full(channel_shape, 1 - p, dtype=torch.float64, device=x.device)
     ).expand_as(x)
-    mask = LNSTensor.get_internal_tensor(mask_flt, base)
+    mask = ops.to_lns(mask_flt)
 
-    result = lns_mul(x, mask)
+    result = ops.mul(x, mask)
     return result
 
 class LNSDropout2dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, p=0.5):
+    def forward(ops, x, p=0.5):
         x = x.view(torch.int64)
-        result = _dropout2d(x, base, p)
+        result = _dropout2d(ops, x, p)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, p = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, p = inputs
+        ctx.save_for_backward(output)
         ctx.p = p
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
         output, grad_output = output.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, ops.to_lns(1 / (1 - ctx.p)))
+        grad_x = ops.mul(grad_output, grad_x)
 
         return grad_x, None, None
 
@@ -318,14 +296,14 @@ def dropout2d(x, p=0.5, training=True, inplace=False):
                       "behavior, please switch to using dropout1d instead.")
         return torch.nn.functional.dropout1d(x, p=p, training=training, inplace=inplace)
 
-    result = LNSDropout2dFunction.apply(x, x.base, p)
+    result = LNSDropout2dFunction.apply(x, p)
 
     if inplace:
         return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _dropout3d(x, base, p=0.5):
+def _dropout3d(ops, x, p=0.5):
     if x.dim() == 4:
         channel_shape = (x.size(0), 1, 1, 1)
     else:
@@ -334,34 +312,34 @@ def _dropout3d(x, base, p=0.5):
     mask_flt = torch.bernoulli(
         torch.full(channel_shape, 1 - p, dtype=torch.float64, device=x.device)
     ).expand_as(x)
-    mask = LNSTensor.get_internal_tensor(mask_flt, base)
+    mask = ops.to_lns(mask_flt)
 
-    result = lns_mul(x, mask)
+    result = ops.mul(x, mask)
     return result
 
 class LNSDropout3dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, p=0.5):
+    def forward(ops, x, p=0.5):
         x = x.view(torch.int64)
-        result = _dropout3d(x, base, p)
+        result = _dropout3d(ops, x, p)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, p = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, p = inputs
+        ctx.save_for_backward(output)
         ctx.p = p
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
         output, grad_output = output.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, LNSTensor.get_internal_tensor(1 / (1 - ctx.p), base))
-        grad_x = lns_mul(grad_output, grad_x)
+        grad_x = torch.where(output == LNS_ZERO, LNS_ZERO, ops.to_lns(1 / (1 - ctx.p)))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
 @implements(torch.nn.functional.dropout3d, _dropout3d, "default", default=True)
 def dropout3d(x, p=0.5, training=True, inplace=False):
@@ -375,14 +353,14 @@ def dropout3d(x, p=0.5, training=True, inplace=False):
     if x.dim() < 4 or x.dim() > 5:
         raise ValueError(f"Dropout3d expects a 4D or 5D tensor, but got a tensor with {x.dim()} dimensions.")
 
-    result = LNSDropout3dFunction.apply(x, x.base, p)
+    result = LNSDropout3dFunction.apply(x, p)
 
     if inplace:
         return x._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _conv1d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+def _conv1d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # add batch dimension if needed
     squeeze_batch = False
     if x.dim() == 2:
@@ -407,7 +385,7 @@ def _conv1d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
 
     # Output length calculation based on kernel parameters (same as PyTorch)
     L_out = (L_in + 2 * padding - dilation * (K - 1) - 1) // stride + 1
-    out = zeros(N, C_out, L_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C_out, L_out)
 
     for n in range(N):
         for g in range(groups):
@@ -420,9 +398,9 @@ def _conv1d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
                     end = start + K * dilation
                     inp_slice = inp_group[:, start:end:dilation]
                     # Element-wise multiply and sum across in_channels and kernel size
-                    out[n, c_out, l] = lns_sum(lns_mul(inp_slice, weight[c_out]), base)
+                    out[n, c_out, l] = ops.sum(ops.mul(inp_slice, weight[c_out]))
                     if bias is not None:
-                        out[n, c_out, l] = lns_add(out[n, c_out, l], bias[c_out], base)
+                        out[n, c_out, l] = ops.add(out[n, c_out, l], bias[c_out])
 
     # If batch dimension was added, remove before returning
     if squeeze_batch:
@@ -433,25 +411,25 @@ def _conv1d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
 class LNSConv1dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+    def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
         x, weight = x.view(torch.int64), weight.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _conv1d(x, weight, bias, base, stride, padding, dilation, groups)
+        result = _conv1d(ops, x, weight, bias, stride, padding, dilation, groups)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, weight, bias, base, stride, padding, dilation, groups = inputs
-        ctx.save_for_backward(x, weight, bias, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, weight, bias, stride, padding, dilation, groups = inputs
+        ctx.save_for_backward(x, weight, bias)
         ctx.stride = stride
         ctx.padding = padding
         ctx.dilation = dilation
         ctx.groups = groups
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, weight, bias, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, weight, bias = ctx.saved_tensors
         x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
@@ -473,8 +451,8 @@ class LNSConv1dFunction(LNSFunction):
         else:
             x_padded = x
 
-        grad_x_padded = zeros(N, C_in, x.shape[-1] + 2 * ctx.padding, device=grad_output.device, b=base)._lns.view(torch.int64)
-        grad_weight = zeros_like(weight, b=base)._lns.view(torch.int64)
+        grad_x_padded = ops.zeros(N, C_in, x.shape[-1] + 2 * ctx.padding)
+        grad_weight = ops.zeros_like(weight)
 
         # Compute input gradient: for each padded input element, sum contributions from output grads via chain rule
         for n in range(N):
@@ -497,7 +475,7 @@ class LNSConv1dFunction(LNSFunction):
                                     l_out = l_out_nom // ctx.stride
                                     if l_out >= 0 and l_out < L_out:
                                         # Chain rule for gradients through conv
-                                        grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], w[k]), base)
+                                        grad = ops.add(grad, ops.mul(grad_output[n, c_out, l_out], w[k]))
                         grad_x_padded[n, in_start + c_in, l_in] = grad
 
         # Remove padding to match input shape, as in forward
@@ -523,12 +501,12 @@ class LNSConv1dFunction(LNSFunction):
                                 l_in = l_out * ctx.stride + k * ctx.dilation
                                 inp_padded = x_padded[n, in_start + c_in, :]
                                 if ctx.padding <= l_in < inp_padded.size(0) - ctx.padding:
-                                    grad = lns_add(grad, lns_mul(grad_output[n, c_out, l_out], inp_padded[l_in]), base)
+                                    grad = ops.add(grad, ops.mul(grad_output[n, c_out, l_out], inp_padded[l_in]))
                         grad_weight[c_out, c_in, k] = grad
 
         # Compute bias gradient by summing grad_output along batch and time (output length)
         if bias is not None:
-            grad_bias = lns_sum(grad_output, base, dim=[0, 2]).view(torch.float64)
+            grad_bias = ops.sum(grad_output, dim=[0, 2]).view(torch.float64)
         else:
             grad_bias = None
 
@@ -536,22 +514,18 @@ class LNSConv1dFunction(LNSFunction):
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), grad_weight.view(torch.float64), grad_bias, None, None, None, None, None
+        return grad_x.view(torch.float64), grad_weight.view(torch.float64), grad_bias, None, None, None, None
 
 @implements(torch.nn.functional.conv1d, _conv1d, "default", default=not CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
-    if bias is not None:
-        x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    else:
-        x, weight = format_lnstensor_operands(x, weight)
-
-    result = LNSConv1dFunction.apply(x, weight, bias, x.base, stride,
+    x, weight, bias = format_lnstensor_operands(x, weight, bias)
+    result = LNSConv1dFunction.apply(x, weight, bias, stride,
                                      padding, dilation, groups)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _conv2d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+def _conv2d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # Handle stride, padding, dilation as tuples
     if isinstance(stride, int):
         stride = (stride, stride)
@@ -591,7 +565,7 @@ def _conv2d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
     # Output shape calculation as per PyTorch
     H_out = (H_in + 2 * pad_h - dil_h * (K_H - 1) - 1) // stride_h + 1
     W_out = (W_in + 2 * pad_w - dil_w * (K_W - 1) - 1) // stride_w + 1
-    out = zeros(N, C_out, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C_out, H_out, W_out)
 
     for n in range(N):
         for g in range(groups):
@@ -605,9 +579,9 @@ def _conv2d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
                         w_end = w_start + K_W * dil_w
                         # Extract appropriate input window
                         inp_slice = inp_group[:, h_start:h_end:dil_h, w_start:w_end:dil_w] # shape [g_Cin, K_H, K_W]
-                        out[n, c_out, h, w] = lns_sum(lns_mul(inp_slice, weight[c_out]), base)
+                        out[n, c_out, h, w] = ops.sum(ops.mul(inp_slice, weight[c_out]))
                         if bias is not None:
-                            out[n, c_out, h, w] = lns_add(out[n, c_out, h, w], bias[c_out], base)
+                            out[n, c_out, h, w] = ops.add(out[n, c_out, h, w], bias[c_out])
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -617,25 +591,25 @@ def _conv2d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
 class LNSConv2dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+    def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
         x, weight = x.view(torch.int64), weight.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _conv2d(x, weight, bias, base, stride, padding, dilation, groups)
+        result = _conv2d(ops, x, weight, bias, stride, padding, dilation, groups)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, weight, bias, base, stride, padding, dilation, groups = inputs
-        ctx.save_for_backward(x, weight, bias, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, weight, bias, stride, padding, dilation, groups = inputs
+        ctx.save_for_backward(x, weight, bias)
         ctx.stride = stride
         ctx.padding = padding
         ctx.dilation = dilation
         ctx.groups = groups
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, weight, bias, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, weight, bias = ctx.saved_tensors
         x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
@@ -668,8 +642,8 @@ class LNSConv2dFunction(LNSFunction):
         H_pad = x_padded.shape[2]
         W_pad = x_padded.shape[3]
 
-        grad_x_padded = zeros(N, C_in, H_pad, W_pad, device=grad_output.device, b=base)._lns.view(torch.int64)
-        grad_weight = zeros_like(weight, b=base)._lns.view(torch.int64)
+        grad_x_padded = ops.zeros(N, C_in, H_pad, W_pad)
+        grad_weight = ops.zeros_like(weight)
 
         # Input gradient: for each pixel in input, sum all contributions from grad_output via the receptive field
         for n in range(N):
@@ -693,10 +667,9 @@ class LNSConv2dFunction(LNSFunction):
                                             h_out = h_out_nom // stride_h
                                             w_out = w_out_nom // stride_w
                                             if (0 <= h_out < H_out) and (0 <= w_out < W_out):
-                                                grad = lns_add(
+                                                grad = ops.add(
                                                     grad,
-                                                    lns_mul(grad_output[n, c_out, h_out, w_out], w[k_h, k_w]),
-                                                    base,
+                                                    ops.mul(grad_output[n, c_out, h_out, w_out], w[k_h, k_w])
                                                 )
                             grad_x_padded[n, in_start + c_in, h_in, w_in] = grad
 
@@ -724,38 +697,33 @@ class LNSConv2dFunction(LNSFunction):
                                         w_in = w_out * stride_w + k_w * dil_w
                                         inp_padded = x_padded[n, in_start + c_in, :, :]
                                         if (0 <= h_in < inp_padded.size(0)) and (0 <= w_in < inp_padded.size(1)):
-                                            grad = lns_add(
+                                            grad = ops.add(
                                                 grad,
-                                                lns_mul(grad_output[n, c_out, h_out, w_out], inp_padded[h_in, w_in], base),
-                                                base,
+                                                ops.mul(grad_output[n, c_out, h_out, w_out], inp_padded[h_in, w_in])
                                             )
                             grad_weight[c_out, c_in, k_h, k_w] = grad
 
         # Bias gradient: sum grad_output over batch, spatial dims
         if bias is not None:
-            grad_bias = lns_sum(grad_output, base, dim=[0, 2, 3]).view(torch.float64)
+            grad_bias = ops.sum(grad_output, dim=[0, 2, 3]).view(torch.float64)
         else:
             grad_bias = None
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), grad_weight.view(torch.float64), grad_bias, None, None, None, None, None
+        return grad_x.view(torch.float64), grad_weight.view(torch.float64), grad_bias, None, None, None, None
 
 @implements(torch.nn.functional.conv2d, _conv2d, "default", default=not CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
-    if bias is not None:
-        x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    else:
-        x, weight = format_lnstensor_operands(x, weight)
-
-    result = LNSConv2dFunction.apply(x, weight, bias, x.base, stride,
+    x, weight, bias = format_lnstensor_operands(x, weight, bias)
+    result = LNSConv2dFunction.apply(x, weight, bias, stride,
                                      padding, dilation, groups)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _conv3d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+def _conv3d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # Standardize params to tuples
     if isinstance(stride, int): stride = (stride, stride, stride)
     if isinstance(padding, int): padding = (padding, padding, padding)
@@ -796,7 +764,7 @@ def _conv3d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
     D_out = (D_in + 2 * pad_d - dil_d * (K_D - 1) - 1) // stride_d + 1
     H_out = (H_in + 2 * pad_h - dil_h * (K_H - 1) - 1) // stride_h + 1
     W_out = (W_in + 2 * pad_w - dil_w * (K_W - 1) - 1) // stride_w + 1
-    out = zeros(N, C_out, D_out, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C_out, D_out, H_out, W_out)
 
     for n in range(N):
         for g in range(groups):
@@ -816,12 +784,12 @@ def _conv3d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
                                 h_start:h_end:dil_h,
                                 w_start:w_end:dil_w
                             ]  # [g_Cin, K_D, K_H, K_W]
-                            out[n, c_out, d, h, w] = lns_sum(
-                                lns_mul(inp_slice, weight[c_out], base)
+                            out[n, c_out, d, h, w] = ops.sum(
+                                ops.mul(inp_slice, weight[c_out])
                             )
                             if bias is not None:
-                                out[n, c_out, d, h, w] = lns_add(
-                                    out[n, c_out, d, h, w], bias[c_out], base
+                                out[n, c_out, d, h, w] = ops.add(
+                                    out[n, c_out, d, h, w], bias[c_out]
                                 )
 
     if squeeze_batch:
@@ -831,25 +799,25 @@ def _conv3d(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
 
 class LNSConv3dFunction(LNSFunction):
     @staticmethod
-    def forward(x, weight, bias, base, stride=1, padding=0, dilation=1, groups=1):
+    def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
         x, weight = x.view(torch.int64), weight.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _conv3d(x, weight, bias, base, stride, padding, dilation, groups)
+        result = _conv3d(ops, x, weight, bias, stride, padding, dilation, groups)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, weight, bias, base, stride, padding, dilation, groups = inputs
-        ctx.save_for_backward(x, weight, bias, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, weight, bias, stride, padding, dilation, groups = inputs
+        ctx.save_for_backward(x, weight, bias)
         ctx.stride = stride
         ctx.padding = padding
         ctx.dilation = dilation
         ctx.groups = groups
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, weight, bias, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, weight, bias = ctx.saved_tensors
         x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
         bias = bias.view(torch.int64) if bias is not None else None
 
@@ -880,8 +848,8 @@ class LNSConv3dFunction(LNSFunction):
             x_padded = x
         D_pad, H_pad, W_pad = x_padded.shape[2:]
 
-        grad_x_padded = zeros(N, C_in, D_pad, H_pad, W_pad, device=grad_output.device, b=base)._lns.view(torch.int64)
-        grad_weight = zeros_like(weight, b=base)._lns.view(torch.int64)
+        grad_x_padded = ops.zeros(N, C_in, D_pad, H_pad, W_pad)
+        grad_weight = ops.zeros_like(weight)
 
         # dL/dx
         for n in range(N):
@@ -908,10 +876,9 @@ class LNSConv3dFunction(LNSFunction):
                                                     h_out = h_out_nom // stride_h
                                                     w_out = w_out_nom // stride_w
                                                     if (0 <= d_out < D_out) and (0 <= h_out < H_out) and (0 <= w_out < W_out):
-                                                        grad = lns_add(
+                                                        grad = ops.add(
                                                             grad,
-                                                            lns_mul(grad_output[n, c_out, d_out, h_out, w_out], wgt[k_d, k_h, k_w]),
-                                                            base
+                                                            ops.mul(grad_output[n, c_out, d_out, h_out, w_out], wgt[k_d, k_h, k_w])
                                                         )
                                 grad_x_padded[n, in_start + c_in, d_in, h_in, w_in] = grad
 
@@ -942,16 +909,15 @@ class LNSConv3dFunction(LNSFunction):
                                                 w_in = w_out * stride_w + k_w * dil_w
                                                 inp_padded = x_padded[n, in_start + c_in, :, :, :]
                                                 if (0 <= d_in < D_pad) and (0 <= h_in < H_pad) and (0 <= w_in < W_pad):
-                                                    grad = lns_add(
+                                                    grad = ops.add(
                                                         grad,
-                                                        lns_mul(grad_output[n, c_out, d_out, h_out, w_out], inp_padded[d_in, h_in, w_in]),
-                                                        base
+                                                        ops.mul(grad_output[n, c_out, d_out, h_out, w_out], inp_padded[d_in, h_in, w_in])
                                                     )
                                 grad_weight[c_out, c_in, k_d, k_h, k_w] = grad
 
         # Bias gradient: sum grad_output over batch, spatial dims
         if bias is not None:
-            grad_bias = lns_sum(grad_output, base, dim=[0, 2, 3, 4]).view(torch.float64)
+            grad_bias = ops.sum(grad_output, dim=[0, 2, 3, 4]).view(torch.float64)
         else:
             grad_bias = None
 
@@ -963,17 +929,13 @@ class LNSConv3dFunction(LNSFunction):
 @implements(torch.nn.functional.conv3d, _conv3d, "default", default=not CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
 
-    if bias is not None:
-        x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    else:
-        x, weight = format_lnstensor_operands(x, weight)
-
-    result = LNSConv3dFunction.apply(x, weight, bias, x.base, stride,
+    x, weight, bias = format_lnstensor_operands(x, weight, bias)
+    result = LNSConv3dFunction.apply(x, weight, bias, stride,
                                      padding, dilation, groups)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _avg_pool1d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
+def _avg_pool1d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
     if stride is None:
         stride = kernel_size
 
@@ -995,8 +957,8 @@ def _avg_pool1d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
     else:
         L_out = (L_in + 2 * padding - kernel_size) // stride + 1
 
-    out = zeros(N, C, L_out, device=x.device, b=base)._lns.view(torch.int64)
-    kernel_size_lns = LNSTensor.get_internal_tensor(kernel_size, base)
+    out = ops.zeros(N, C, L_out)
+    kernel_size_lns = ops.to_lns(kernel_size)
 
     for n in range(N):
         for c in range(C):
@@ -1007,7 +969,7 @@ def _avg_pool1d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                     break
 
                 window = x_padded[n, c, start:end]
-                sm = lns_sum(window, base)
+                sm = ops.sum(window)
 
                 if count_include_pad:
                     divisor = kernel_size_lns
@@ -1015,9 +977,9 @@ def _avg_pool1d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                     left_pad = max(0, padding - start)
                     right_pad = max(0, end - (L_in + padding))
                     valid_count = kernel_size - (left_pad + right_pad)
-                    divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                    divisor = ops.to_lns(max(valid_count, 1))
 
-                out[n, c, l_out] = lns_div(sm, divisor)
+                out[n, c, l_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1027,17 +989,17 @@ def _avg_pool1d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
 class LNSAvgPool1dFuncton(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
+    def forward(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
         x = x.view(torch.int64)
-        result = _avg_pool1d(x, kernel_size, base, stride, padding, ceil_mode, count_include_pad)
+        result = _avg_pool1d(ops, x, kernel_size, stride, padding, ceil_mode, count_include_pad)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, ceil_mode, count_include_pad = inputs
         if stride is None:
             stride = kernel_size
-        ctx.save_for_backward(x, base)
+        ctx.save_for_backward(x)
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.padding = padding
@@ -1045,8 +1007,8 @@ class LNSAvgPool1dFuncton(LNSFunction):
         ctx.count_include_pad = count_include_pad
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         if x.dim() == 2:
@@ -1059,8 +1021,8 @@ class LNSAvgPool1dFuncton(LNSFunction):
         N, C, L_in = x.shape
         L_out = grad_output.size(-1)
 
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
-        kernel_size_lns = LNSTensor.get_internal_tensor(ctx.kernel_size, base)
+        grad_x = ops.zeros_like(x)
+        kernel_size_lns = ops.to_lns(ctx.kernel_size)
 
         for n in range(N):
             for c in range(C):
@@ -1077,18 +1039,18 @@ class LNSAvgPool1dFuncton(LNSFunction):
                         left_pad = max(0, ctx.padding - start)
                         right_pad = max(0, end - (L_in + ctx.padding))
                         valid_count = ctx.kernel_size - (left_pad + right_pad)
-                        divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                        divisor = ops.to_lns(max(valid_count, 1))
 
                     grad = grad_output[n, c, l_out]
                     for i in range(ctx.kernel_size):
                         idx = start + i - ctx.padding
                         if 0 <= idx < L_in:
-                            grad_x[n, c, idx] = lns_add(grad_x[n, c, idx], lns_div(grad, divisor), base)
+                            grad_x[n, c, idx] = ops.add(grad_x[n, c, idx], ops.div(grad, divisor))
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None
 
 @implements(torch.nn.functional.avg_pool1d, _avg_pool1d, "default", default=not CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
@@ -1097,12 +1059,12 @@ def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_in
     stride = stride[0] if isinstance(stride, (list, tuple)) else stride
     padding = padding[0] if isinstance(padding, (list, tuple)) else padding
 
-    result = LNSAvgPool1dFuncton.apply(x, kernel_size, x.base, stride,
-                                       padding, ceil_mode, count_include_pad)
+    result = LNSAvgPool1dFuncton.apply(x, kernel_size, stride, padding,
+                                       ceil_mode, count_include_pad)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _avg_pool2d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+def _avg_pool2d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
     if stride is None:
         stride = kernel_size
 
@@ -1133,8 +1095,8 @@ def _avg_pool2d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
         H_out = (H_in + 2 * pad_h - kernel_h) // stride_h + 1
         W_out = (W_in + 2 * pad_w - kernel_w) // stride_w + 1
 
-    out = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
-    kernel_area_lns = LNSTensor.get_internal_tensor(kernel_h * kernel_w, base)
+    out = ops.zeros(N, C, H_out, W_out)
+    kernel_area_lns = ops.to_lns(kernel_h * kernel_w)
 
     for n in range(N):
         for c in range(C):
@@ -1148,7 +1110,7 @@ def _avg_pool2d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                         continue
 
                     window = x_padded[n, c, h_start:h_end, w_start:w_end]
-                    sm = lns_sum(window, base)
+                    sm = ops.sum(window)
 
                     if divisor_override is not None:
                         divisor = divisor_override
@@ -1162,9 +1124,9 @@ def _avg_pool2d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                         valid_h = kernel_h - (top_pad + bot_pad)
                         valid_w = kernel_w - (left_pad + right_pad)
                         valid_count = max(valid_h, 0) * max(valid_w, 0)
-                        divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                        divisor = ops.to_lns(max(valid_count, 1))
 
-                    out[n, c, h_out, w_out] = lns_div(sm, divisor)
+                    out[n, c, h_out, w_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1174,16 +1136,16 @@ def _avg_pool2d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
 class LNSAvgPool2dFuncton(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+    def forward(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
         x = x.view(torch.int64)
         divisor_override = divisor_override.view(torch.int64) if divisor_override is not None else None
 
-        result = _avg_pool2d(x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override)
+        result = _avg_pool2d(ops, x, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
         if stride is None:
             stride = kernel_size
         if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size)
@@ -1191,10 +1153,10 @@ class LNSAvgPool2dFuncton(LNSFunction):
         if isinstance(padding, int): padding = (padding, padding)
         if divisor_override is None:
             ctx.divisor_override = False
-            ctx.save_for_backward(x, base)
+            ctx.save_for_backward(x)
         else:
             ctx.divisor_override = True
-            ctx.save_for_backward(x, divisor_override, base)
+            ctx.save_for_backward(x, divisor_override)
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.padding = padding
@@ -1202,12 +1164,12 @@ class LNSAvgPool2dFuncton(LNSFunction):
         ctx.count_include_pad = count_include_pad
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         if ctx.divisor_override:
-            x, divisor_override, base = ctx.saved_tensors
+            x, divisor_override = ctx.saved_tensors
             divisor_override = divisor_override.view(torch.int64)
         else:
-            x, base = ctx.saved_tensors
+            x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         kernel_h, kernel_w = ctx.kernel_size
@@ -1224,8 +1186,8 @@ class LNSAvgPool2dFuncton(LNSFunction):
         N, C, H_in, W_in = x.shape
         H_out, W_out = grad_output.shape[-2:]
 
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
-        kernel_area_lns = LNSTensor.get_internal_tensor(kernel_h * kernel_w, base)
+        grad_x = ops.zeros_like(x)
+        kernel_area_lns = ops.to_lns(kernel_h * kernel_w)
 
         for n in range(N):
             for c in range(C):
@@ -1248,7 +1210,7 @@ class LNSAvgPool2dFuncton(LNSFunction):
                             valid_h = kernel_h - (top_pad + bot_pad)
                             valid_w = kernel_w - (left_pad + right_pad)
                             valid_count = max(valid_h, 0) * max(valid_w, 0)
-                            divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                            divisor = ops.to_lns(max(valid_count, 1))
 
                         grad = grad_output[n, c, h_out, w_out]
                         for i in range(kernel_h):
@@ -1256,29 +1218,26 @@ class LNSAvgPool2dFuncton(LNSFunction):
                                 h_idx = h_start + i - pad_h
                                 w_idx = w_start + j - pad_w
                                 if 0 <= h_idx < H_in and 0 <= w_idx < W_in:
-                                    grad_x[n, c, h_idx, w_idx] = lns_add(
+                                    grad_x[n, c, h_idx, w_idx] = ops.add(
                                         grad_x[n, c, h_idx, w_idx],
-                                        lns_div(grad, divisor),
-                                        base
+                                        ops.div(grad, divisor)
                                     )
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None, None
 
 @implements(torch.nn.functional.avg_pool2d, _avg_pool2d, "default", default=True)
 def avg_pool2d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
 
-    if divisor_override is not None:
-        x, divisor_override = format_lnstensor_operands(x, divisor_override)
-
-    result = LNSAvgPool2dFuncton.apply(x, kernel_size, x.base, stride, padding,
-                                       ceil_mode, count_include_pad, divisor_override)
+    x, divisor_override = format_lnstensor_operands(x, divisor_override)
+    result = LNSAvgPool2dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
+                                       count_include_pad, divisor_override)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _avg_pool3d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+def _avg_pool3d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
     if stride is None:
         stride = kernel_size
 
@@ -1311,8 +1270,8 @@ def _avg_pool3d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
         H_out = (H_in + 2 * pad_h - kernel_h) // stride_h + 1
         W_out = (W_in + 2 * pad_w - kernel_w) // stride_w + 1
 
-    out = zeros(N, C, D_out, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
-    kernel_vol_lns = LNSTensor.get_internal_tensor(kernel_d * kernel_h * kernel_w, base)
+    out = ops.zeros(N, C, D_out, H_out, W_out)
+    kernel_vol_lns = ops.to_lns(kernel_d * kernel_h * kernel_w)
 
     for n in range(N):
         for c in range(C):
@@ -1329,7 +1288,7 @@ def _avg_pool3d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                             continue
 
                         window = x_padded[n, c, d_start:d_end, h_start:h_end, w_start:w_end]
-                        sm = lns_sum(window, base)
+                        sm = ops.sum(window)
 
                         if divisor_override is not None:
                             divisor = divisor_override
@@ -1346,9 +1305,9 @@ def _avg_pool3d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
                             valid_h = kernel_h - (top_pad + bot_pad)
                             valid_w = kernel_w - (left_pad + right_pad)
                             valid_count = max(valid_d, 0) * max(valid_h, 0) * max(valid_w, 0)
-                            divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                            divisor = ops.to_lns(max(valid_count, 1))
 
-                        out[n, c, d_out, h_out, w_out] = lns_div(sm, divisor)
+                        out[n, c, d_out, h_out, w_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1358,16 +1317,16 @@ def _avg_pool3d(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, c
 class LNSAvgPool3dFuncton(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
+    def forward(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
         x = x.view(torch.int64)
         divisor_override = divisor_override.view(torch.int64) if divisor_override is not None else None
 
-        result = _avg_pool3d(x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override)
+        result = _avg_pool3d(ops, x, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override = inputs
         if stride is None:
             stride = kernel_size
         if isinstance(kernel_size, int): kernel_size = (kernel_size, kernel_size, kernel_size)
@@ -1375,10 +1334,10 @@ class LNSAvgPool3dFuncton(LNSFunction):
         if isinstance(padding, int): padding = (padding, padding, padding)
         if divisor_override is None:
             ctx.divisor_override = False
-            ctx.save_for_backward(x, base)
+            ctx.save_for_backward(x)
         else:
             ctx.divisor_override = True
-            ctx.save_for_backward(x, divisor_override, base)
+            ctx.save_for_backward(x, divisor_override)
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.padding = padding
@@ -1386,12 +1345,12 @@ class LNSAvgPool3dFuncton(LNSFunction):
         ctx.count_include_pad = count_include_pad
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         if ctx.divisor_override:
-            x, divisor_override, base = ctx.saved_tensors
+            x, divisor_override = ctx.saved_tensors
             divisor_override = divisor_override.view(torch.int64)
         else:
-            x, base = ctx.saved_tensors
+            x = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         kernel_d, kernel_h, kernel_w = ctx.kernel_size
@@ -1408,8 +1367,8 @@ class LNSAvgPool3dFuncton(LNSFunction):
         N, C, D_in, H_in, W_in = x.shape
         D_out, H_out, W_out = grad_output.shape[-3:]
 
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
-        kernel_vol_lns = LNSTensor.get_internal_tensor(kernel_d * kernel_h * kernel_w, base)
+        grad_x = ops.zeros_like(x)
+        kernel_vol_lns = ops.to_lns(kernel_d * kernel_h * kernel_w)
 
         for n in range(N):
             for c in range(C):
@@ -1438,7 +1397,7 @@ class LNSAvgPool3dFuncton(LNSFunction):
                                 valid_h = kernel_h - (top_pad + bot_pad)
                                 valid_w = kernel_w - (left_pad + right_pad)
                                 valid_count = max(valid_d, 0) * max(valid_h, 0) * max(valid_w, 0)
-                                divisor = LNSTensor.get_internal_tensor(max(valid_count, 1), base)
+                                divisor = ops.to_lns(max(valid_count, 1))
 
                             grad = grad_output[n, c, d_out, h_out, w_out]
                             for di in range(kernel_d):
@@ -1448,29 +1407,26 @@ class LNSAvgPool3dFuncton(LNSFunction):
                                         h_idx = h_start + hi - pad_h
                                         w_idx = w_start + wi - pad_w
                                         if 0 <= d_idx < D_in and 0 <= h_idx < H_in and 0 <= w_idx < W_in:
-                                            grad_x[n, c, d_idx, h_idx, w_idx] = lns_add(
+                                            grad_x[n, c, d_idx, h_idx, w_idx] = ops.add(
                                                 grad_x[n, c, d_idx, h_idx, w_idx],
-                                                lns_div(grad, divisor),
-                                                base
+                                                ops.div(grad, divisor)
                                             )
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None, None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None, None, None
 
 @implements(torch.nn.functional.avg_pool3d, _avg_pool3d, "default", default=True)
 def avg_pool3d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
 
-    if divisor_override is not None:
-        x, divisor_override = format_lnstensor_operands(x, divisor_override)
-
-    result = LNSAvgPool3dFuncton.apply(x, kernel_size, x.base, stride, padding,
-                                       ceil_mode, count_include_pad, divisor_override)
+    x, divisor_override = format_lnstensor_operands(x, divisor_override)
+    result = LNSAvgPool3dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
+                                       count_include_pad, divisor_override)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _adaptive_avg_pool1d(x, output_size, base):
+def _adaptive_avg_pool1d(ops, x, output_size):
     if isinstance(output_size, int):
         output_size = (output_size,)
 
@@ -1485,7 +1441,7 @@ def _adaptive_avg_pool1d(x, output_size, base):
 
     N, C, L_in = x.shape
 
-    out = zeros(N, C, L_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C, L_out)
 
     for n in range(N):
         for c in range(C):
@@ -1494,10 +1450,10 @@ def _adaptive_avg_pool1d(x, output_size, base):
                 end = int(math.ceil((l_out + 1) * L_in / L_out))
                 window = x[n, c, start:end]
 
-                sm = lns_sum(window, base)
-                divisor = LNSTensor.get_internal_tensor(max(end - start, 1), base)
+                sm = ops.sum(window)
+                divisor = ops.to_lns(max(end - start, 1))
 
-                out[n, c, l_out] = lns_div(sm, divisor)
+                out[n, c, l_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1507,20 +1463,20 @@ def _adaptive_avg_pool1d(x, output_size, base):
 class LNSAdaptiveAvgPool1dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, output_size, base):
+    def forward(ops, x, output_size):
         x = x.view(torch.int64)
-        result = _adaptive_avg_pool1d(x, output_size, base)
+        result = _adaptive_avg_pool1d(ops, x, output_size)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, output_size, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, output_size = inputs
+        ctx.save_for_backward(x)
         ctx.output_size = output_size
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         if isinstance(ctx.output_size, int):
@@ -1536,30 +1492,30 @@ class LNSAdaptiveAvgPool1dFunction(LNSFunction):
             squeeze_batch = False
 
         N, C, L_in = x.shape
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
+        grad_x = ops.zeros_like(x)
 
         for n in range(N):
             for c in range(C):
                 for l_out in range(L_out):
                     start = int(math.floor(l_out * L_in / L_out))
                     end = int(math.ceil((l_out + 1) * L_in / L_out))
-                    divisor = LNSTensor.get_internal_tensor(max(end - start, 1), base)
-                    grad = lns_div(grad_output[n, c, l_out], divisor)
+                    divisor = ops.to_lns(max(end - start, 1))
+                    grad = ops.div(grad_output[n, c, l_out], divisor)
                     for idx in range(start, end):
-                        grad_x[n, c, idx] = lns_add(grad_x[n, c, idx], grad, base)
+                        grad_x[n, c, idx] = ops.add(grad_x[n, c, idx], grad)
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 @implements(torch.nn.functional.adaptive_avg_pool1d, _adaptive_avg_pool1d, "default", default=True)
 def adaptive_avg_pool1d(x, output_size):
 
-    result = LNSAdaptiveAvgPool1dFunction.apply(x, output_size, x.base)
+    result = LNSAdaptiveAvgPool1dFunction.apply(x, output_size)
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _adaptive_avg_pool2d(x, output_size, base):
+def _adaptive_avg_pool2d(ops, x, output_size):
     if isinstance(output_size, int):
         H_out, W_out = output_size, output_size
     else:
@@ -1573,7 +1529,7 @@ def _adaptive_avg_pool2d(x, output_size, base):
         squeeze_batch = False
 
     N, C, H_in, W_in = x.shape
-    out = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C, H_out, W_out)
 
     for n in range(N):
         for c in range(C):
@@ -1585,12 +1541,10 @@ def _adaptive_avg_pool2d(x, output_size, base):
                     w_end = int(math.ceil((w_out + 1) * W_in / W_out))
 
                     window = x[n, c, h_start:h_end, w_start:w_end]
-                    sm = lns_sum(window, base)
-                    divisor = LNSTensor.get_internal_tensor(
-                        max((h_end - h_start) * (w_end - w_start), 1), base
-                    )
+                    sm = ops.sum(window)
+                    divisor = ops.to_lns(max((h_end - h_start) * (w_end - w_start), 1))
 
-                    out[n, c, h_out, w_out] = lns_div(sm, divisor)
+                    out[n, c, h_out, w_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1600,20 +1554,20 @@ def _adaptive_avg_pool2d(x, output_size, base):
 class LNSAdaptiveAvgPool2dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, output_size, base):
+    def forward(ops, x, output_size):
         x = x.view(torch.int64)
-        result = _adaptive_avg_pool2d(x, output_size, base)
+        result = _adaptive_avg_pool2d(ops, x, output_size)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, output_size, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, output_size = inputs
+        ctx.save_for_backward(x)
         ctx.output_size = output_size
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         if isinstance(ctx.output_size, int):
@@ -1629,7 +1583,7 @@ class LNSAdaptiveAvgPool2dFunction(LNSFunction):
             squeeze_batch = False
 
         N, C, H_in, W_in = x.shape
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
+        grad_x = ops.zeros_like(x)
 
         for n in range(N):
             for c in range(C):
@@ -1640,27 +1594,25 @@ class LNSAdaptiveAvgPool2dFunction(LNSFunction):
                         w_start = int(math.floor(w_out * W_in / W_out))
                         w_end = int(math.ceil((w_out + 1) * W_in / W_out))
 
-                        divisor = LNSTensor.get_internal_tensor(
-                            max((h_end - h_start) * (w_end - w_start), 1), base
-                        )
-                        grad = lns_div(grad_output[n, c, h_out, w_out], divisor)
+                        divisor = ops.to_lns(max((h_end - h_start) * (w_end - w_start), 1))
+                        grad = ops.div(grad_output[n, c, h_out, w_out], divisor)
 
                         for i in range(h_start, h_end):
                             for j in range(w_start, w_end):
-                                grad_x[n, c, i, j] = lns_add(grad_x[n, c, i, j], grad, base)
+                                grad_x[n, c, i, j] = ops.add(grad_x[n, c, i, j], grad)
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 @implements(torch.nn.functional.adaptive_avg_pool2d, _adaptive_avg_pool2d, "default", default=True)
 def adaptive_avg_pool2d(x, output_size):
 
-    result = LNSAdaptiveAvgPool2dFunction.apply(x, output_size, x.base)
+    result = LNSAdaptiveAvgPool2dFunction.apply(x, output_size)
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _adaptive_avg_pool3d(x, output_size, base):
+def _adaptive_avg_pool3d(ops, x, output_size):
     if isinstance(output_size, int):
         D_out, H_out, W_out = output_size, output_size, output_size
     else:
@@ -1674,7 +1626,7 @@ def _adaptive_avg_pool3d(x, output_size, base):
         squeeze_batch = False
 
     N, C, D_in, H_in, W_in = x.shape
-    out = zeros(N, C, D_out, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out = ops.zeros(N, C, D_out, H_out, W_out)
 
     for n in range(N):
         for c in range(C):
@@ -1689,11 +1641,9 @@ def _adaptive_avg_pool3d(x, output_size, base):
                         w_end = int(math.ceil((w_out + 1) * W_in / W_out))
 
                         window = x[n, c, d_start:d_end, h_start:h_end, w_start:w_end]
-                        sm = lns_sum(window, base)
-                        divisor = LNSTensor.get_internal_tensor(
-                            max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1), base
-                        )
-                        out[n, c, d_out, h_out, w_out] = lns_div(sm, divisor)
+                        sm = ops.sum(window)
+                        divisor = ops.to_lns(max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1))
+                        out[n, c, d_out, h_out, w_out] = ops.div(sm, divisor)
 
     if squeeze_batch:
         out = out.squeeze(0)
@@ -1703,20 +1653,20 @@ def _adaptive_avg_pool3d(x, output_size, base):
 class LNSAdaptiveAvgPool3dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, output_size, base):
+    def forward(ops, x, output_size):
         x = x.view(torch.int64)
-        result = _adaptive_avg_pool3d(x, output_size, base)
+        result = _adaptive_avg_pool3d(ops, x, output_size)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, output_size, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, output_size = inputs
+        ctx.save_for_backward(x)
         ctx.output_size = output_size
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         if isinstance(ctx.output_size, int):
@@ -1732,7 +1682,7 @@ class LNSAdaptiveAvgPool3dFunction(LNSFunction):
             squeeze_batch = False
 
         N, C, D_in, H_in, W_in = x.shape
-        grad_x = zeros_like(x, b=base)._lns.view(torch.int64)
+        grad_x = ops.zeros_like(x)
 
         for n in range(N):
             for c in range(C):
@@ -1746,49 +1696,49 @@ class LNSAdaptiveAvgPool3dFunction(LNSFunction):
                             w_start = int(math.floor(w_out * W_in / W_out))
                             w_end = int(math.ceil((w_out + 1) * W_in / W_out))
 
-                            divisor = LNSTensor.get_internal_tensor(
-                                max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1), base
+                            divisor = ops.to_lns(
+                                max((d_end - d_start) * (h_end - h_start) * (w_end - w_start), 1)
                             )
-                            grad = lns_div(grad_output[n, c, d_out, h_out, w_out], divisor)
+                            grad = ops.div(grad_output[n, c, d_out, h_out, w_out], divisor)
 
                             for di in range(d_start, d_end):
                                 for hi in range(h_start, h_end):
                                     for wi in range(w_start, w_end):
-                                        grad_x[n, c, di, hi, wi] = lns_add(
-                                            grad_x[n, c, di, hi, wi], grad, base
+                                        grad_x[n, c, di, hi, wi] = ops.add(
+                                            grad_x[n, c, di, hi, wi], grad
                                         )
 
         if squeeze_batch:
             grad_x = grad_x.squeeze(0)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 @implements(torch.nn.functional.adaptive_avg_pool3d, _adaptive_avg_pool3d, "default", default=True)
 def adaptive_avg_pool3d(x, output_size):
 
-    result = LNSAdaptiveAvgPool3dFunction.apply(x, output_size, x.base)
+    result = LNSAdaptiveAvgPool3dFunction.apply(x, output_size)
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _batch_norm(x, running_mean, running_var, momentum, eps, base, weight=None, bias=None, training=False):
+def _batch_norm(ops, x, running_mean, running_var, momentum, eps, weight=None, bias=None, training=False):
     red_dims = tuple(i for i in range(x.dim()) if i != 1)
 
     if training:
-        batch_mean = lns_mean(x, base, dim=red_dims, keepdim=True)
-        batch_var = lns_var(x, base, LNS_ZERO, dim=red_dims, keepdim=True)
-        batch_var_corrected = lns_var(x, base, LNS_ONE, dim=red_dims, keepdim=True)
+        batch_mean = ops.mean(x, dim=red_dims, keepdim=True)
+        batch_var = ops.var(x, LNS_ZERO, dim=red_dims, keepdim=True)
+        batch_var_corrected = ops.var(x, LNS_ONE, dim=red_dims, keepdim=True)
 
         with torch.no_grad():
 
-            one_minus_momentum = lns_sub(LNS_ONE, momentum, base)
+            one_minus_momentum = ops.sub(LNS_ONE, momentum)
 
-            new_running_mean = lns_add(
-                lns_mul(one_minus_momentum, running_mean),
-                lns_mul(momentum, batch_mean.squeeze()), base)
+            new_running_mean = ops.add(
+                ops.mul(one_minus_momentum, running_mean),
+                ops.mul(momentum, batch_mean.squeeze()))
             running_mean.copy_(new_running_mean)
 
-            new_running_var = lns_add(
-                lns_mul(one_minus_momentum, running_var),
-                lns_mul(momentum, batch_var_corrected.squeeze()), base)
+            new_running_var = ops.add(
+                ops.mul(one_minus_momentum, running_var),
+                ops.mul(momentum, batch_var_corrected.squeeze()))
             running_var.copy_(new_running_var)
 
         mean = batch_mean
@@ -1799,72 +1749,72 @@ def _batch_norm(x, running_mean, running_var, momentum, eps, base, weight=None, 
         mean = running_mean.view(1, -1, *([1] * (x.dim() - 2)))
         var = running_var.view(1, -1, *([1] * (x.dim() - 2)))
 
-    var_eps = lns_add(var, eps, base)
-    inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base))
+    var_eps = ops.add(var, eps)
+    inv_std = ops.div(LNS_ONE, ops.sqrt(var_eps))
 
-    x_centered = lns_sub(x, mean, base)
-    x_hat = lns_mul(x_centered, inv_std)
+    x_centered = ops.sub(x, mean)
+    x_hat = ops.mul(x_centered, inv_std)
 
     if weight is not None:
-        y = lns_mul(x_hat, weight.view(1, -1, *([1] * (x.dim() - 2))))
+        y = ops.mul(x_hat, weight.view(1, -1, *([1] * (x.dim() - 2))))
     else:
         y = x_hat
 
     if bias is not None:
-        y = lns_add(y, bias.view(1, -1, *([1] * (x.dim() - 2))), base)
+        y = ops.add(y, bias.view(1, -1, *([1] * (x.dim() - 2))))
 
     return y
 
 class LNSBatchNormFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, running_mean, running_var, momentum, eps, base, weight=None, bias=None, training=False):
+    def forward(ops, x, running_mean, running_var, momentum, eps, weight=None, bias=None, training=False):
         x, running_mean, running_var = x.view(torch.int64), running_mean.view(torch.int64), running_var.view(torch.int64)
         momentum, eps = momentum.view(torch.int64), eps.view(torch.int64)
         weight = weight.view(torch.int64) if weight is not None else None
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _batch_norm(x, running_mean, running_var, momentum, eps, base, weight, bias, training)
+        result = _batch_norm(ops, x, running_mean, running_var, momentum, eps, weight, bias, training)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, running_mean, running_var, _, eps, base, weight, bias, training = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, running_mean, running_var, _, eps, weight, bias, training = inputs
 
         ctx.red_dims = tuple(i for i in range(x.dim()) if i != 1)
         ctx.training = training
 
         if training:
-            mean = lns_mean(x, base, dim=ctx.red_dims, keepdim=True)
-            var = lns_var(x, base, LNS_ONE, dim=ctx.red_dims, keepdim=True)
+            mean = ops.mean(x, dim=ctx.red_dims, keepdim=True)
+            var = ops.var(x, LNS_ONE, dim=ctx.red_dims, keepdim=True)
 
         else:
             mean = running_mean.view(1, -1, *([1] * (x.dim() - 2)))
             var = running_var.view(1, -1, *([1] * (x.dim() - 2)))
 
-        ctx.save_for_backward(x, weight, bias, mean, var, eps, base)
+        ctx.save_for_backward(x, weight, bias, mean, var, eps)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, weight, bias, mean, var, eps, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, weight, bias, mean, var, eps = ctx.saved_tensors
         x, eps, grad_output = x.view(torch.int64), eps.view(torch.int64), grad_output.view(torch.int64)
         weight = weight.view(torch.int64) if weight is not None else None
         bias = bias.view(torch.int64) if bias is not None else None
 
-        var_eps = lns_add(var, eps, base)
-        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps, base))
-        x_centered = lns_sub(x, mean, base)
-        x_hat = lns_mul(x_centered, inv_std)
+        var_eps = ops.add(var, eps)
+        inv_std = ops.div(LNS_ONE, ops.sqrt(var_eps))
+        x_centered = ops.sub(x, mean)
+        x_hat = ops.mul(x_centered, inv_std)
 
         grad_x = grad_weight = grad_bias = None
 
         if bias is not None:
-            grad_bias = lns_sum(grad_output, base, dim=ctx.red_dims, keepdim=False).view(torch.float64)
+            grad_bias = ops.sum(grad_output, dim=ctx.red_dims, keepdim=False).view(torch.float64)
 
         if weight is not None:
-            grad_y_wrt_x_hat = lns_mul(grad_output, weight.view(1, -1, *([1] * (x.dim() - 2))))
-            grad_weight = lns_sum(lns_mul(grad_output, x_hat, base),
-                                  base, dim=ctx.red_dims, keepdim=False).view(torch.float64)
+            grad_y_wrt_x_hat = ops.mul(grad_output, weight.view(1, -1, *([1] * (x.dim() - 2))))
+            grad_weight = ops.sum(ops.mul(grad_output, x_hat),
+                                  dim=ctx.red_dims, keepdim=False).view(torch.float64)
         else:
             grad_y_wrt_x_hat = grad_output
 
@@ -1872,49 +1822,48 @@ class LNSBatchNormFunction(LNSFunction):
             N = 1
             for dim in ctx.red_dims:
                 N *= x.shape[dim]
-            n_elems = LNSTensor.get_internal_tensor(N, base)
+            n_elems = ops.to_lns(N)
 
-            var_eps = lns_add(var, eps, base)
-            inv_std_cubed = lns_mul(inv_std, lns_mul(inv_std, inv_std))
-            neg_half = LNSTensor.get_internal_tensor(-0.5, base)
+            var_eps = ops.add(var, eps)
+            inv_std_cubed = ops.mul(inv_std, ops.mul(inv_std, inv_std))
+            neg_half = ops.to_lns(-0.5)
 
-            grad_var = lns_sum(lns_mul(
-                lns_mul(grad_y_wrt_x_hat, x_centered),
-                lns_mul(neg_half, inv_std_cubed)),
-                base, dim=ctx.red_dims, keepdim=True)
+            grad_var = ops.sum(ops.mul(
+                ops.mul(grad_y_wrt_x_hat, x_centered),
+                ops.mul(neg_half, inv_std_cubed)),
+                dim=ctx.red_dims, keepdim=True)
 
-            neg_inv_std = lns_neg(inv_std)
-            grad_mean_term1 = lns_sum(lns_mul(grad_y_wrt_x_hat, neg_inv_std),
-                                      base, dim=ctx.red_dims, keepdim=True)
+            neg_inv_std = ops.neg(inv_std)
+            grad_mean_term1 = ops.sum(ops.mul(grad_y_wrt_x_hat, neg_inv_std),
+                                      dim=ctx.red_dims, keepdim=True)
 
-            neg_two = LNSTensor.get_internal_tensor(-2.0, base)
-            neg_two_over_N = lns_div(neg_two, n_elems)
-            sum_x_centered = lns_sum(x_centered, base, dim=ctx.red_dims, keepdim=True)
-            grad_mean_term2 = lns_mul(lns_mul(grad_var, neg_two_over_N), sum_x_centered)
+            neg_two = ops.to_lns(-2.0)
+            neg_two_over_N = ops.div(neg_two, n_elems)
+            sum_x_centered = ops.sum(x_centered, dim=ctx.red_dims, keepdim=True)
+            grad_mean_term2 = ops.mul(ops.mul(grad_var, neg_two_over_N), sum_x_centered)
 
-            grad_mean = lns_add(grad_mean_term1, grad_mean_term2, base)
+            grad_mean = ops.add(grad_mean_term1, grad_mean_term2)
 
-            two = LNSTensor.get_internal_tensor(2.0, base)
-            two_over_N = lns_div(two, n_elems)
-            one_over_N = lns_div(LNS_ONE, n_elems)
+            two = ops.to_lns(2.0)
+            two_over_N = ops.div(two, n_elems)
+            one_over_N = ops.div(LNS_ONE, n_elems)
 
-            grad_x_term1 = lns_mul(grad_y_wrt_x_hat, inv_std)
-            grad_x_term2 = lns_mul(lns_mul(grad_var, two_over_N), x_centered)
-            grad_x_term3 = lns_mul(grad_mean, one_over_N)
+            grad_x_term1 = ops.mul(grad_y_wrt_x_hat, inv_std)
+            grad_x_term2 = ops.mul(ops.mul(grad_var, two_over_N), x_centered)
+            grad_x_term3 = ops.mul(grad_mean, one_over_N)
 
-            grad_x = lns_add(grad_x_term1, lns_add(grad_x_term2, grad_x_term3, base), base)
+            grad_x = ops.add(grad_x_term1, ops.add(grad_x_term2, grad_x_term3))
 
         else:
-            grad_x = lns_mul(grad_y_wrt_x_hat, inv_std)
+            grad_x = ops.mul(grad_y_wrt_x_hat, inv_std)
 
-        return grad_x.view(torch.float64), None, None, None, None, None, grad_weight, grad_bias, None
+        return grad_x.view(torch.float64), None, None, None, None, grad_weight, grad_bias, None
 
 @implements(torch.nn.functional.batch_norm, _batch_norm, "default", default=True)
 def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
 
     x, running_mean_cpy, running_var_cpy, weight, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
-
-    result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy, momentum, eps, x.base, weight, bias, training)
+    result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy, momentum, eps, weight, bias, training)
 
     if training:
         running_mean._inplace_copy(running_mean_cpy._lns)
@@ -1922,24 +1871,24 @@ def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=Fa
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _layer_norm(x, eps, base, normalized_shape, weight=None, bias=None):
+def _layer_norm(ops, x, eps, normalized_shape, weight=None, bias=None):
     reduce_dims = tuple(range(x.dim() - len(normalized_shape), x.dim()))
 
-    mean = lns_mean(x, base, dim=reduce_dims, keepdim=True)
-    var = lns_var(x, base, LNS_ZERO, dim=reduce_dims, keepdim=True)
+    mean = ops.mean(x, dim=reduce_dims, keepdim=True)
+    var = ops.var(x, LNS_ZERO, dim=reduce_dims, keepdim=True)
 
-    var_eps = lns_add(var, eps, base)
-    inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps))
+    var_eps = ops.add(var, eps)
+    inv_std = ops.div(LNS_ONE, ops.sqrt(var_eps))
 
-    x_hat = lns_mul(lns_sub(x, mean, base), inv_std)
+    x_hat = ops.mul(ops.sub(x, mean), inv_std)
 
     if weight is not None:
         shape = [1] * (x.dim() - len(normalized_shape)) + list(normalized_shape)
-        x_hat = lns_mul(x_hat, weight.view(*shape))
+        x_hat = ops.mul(x_hat, weight.view(*shape))
 
     if bias is not None:
         shape = [1] * (x.dim() - len(normalized_shape)) + list(normalized_shape)
-        x_hat = lns_add(x_hat, bias.view(*shape))
+        x_hat = ops.add(x_hat, bias.view(*shape))
 
     return x_hat
 
@@ -1956,42 +1905,42 @@ class LNSLayerNorm(LNSFunction):
     weight, bias (optional): element-wise affine parameters, given in LNS
     """
     @staticmethod
-    def forward(x, eps, base, normalized_shape, weight=None, bias=None):
+    def forward(ops, x, eps, normalized_shape, weight=None, bias=None):
         x, eps = x.view(torch.int64), eps.view(torch.int64)
         weight = weight.view(torch.int64) if weight is not None else None
         bias = bias.view(torch.int64) if bias is not None else None
 
-        result = _layer_norm(x, eps, base, normalized_shape, weight, bias)
+        result = _layer_norm(ops, x, eps, normalized_shape, weight, bias)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, eps, base, normalized_shape, weight, bias = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, eps, normalized_shape, weight, bias = inputs
 
         ctx.red_dims = tuple(range(x.dim() - len(normalized_shape), x.dim()))
 
-        mean = lns_mean(x, base, dim=ctx.red_dims, keepdim=True)
-        var = lns_var(x, base, LNS_ZERO, dim=ctx.red_dims, keepdim=True)
+        mean = ops.mean(x, dim=ctx.red_dims, keepdim=True)
+        var = ops.var(x, LNS_ZERO, dim=ctx.red_dims, keepdim=True)
 
-        ctx.save_for_backward(x, weight, bias, mean, var, eps, base)
+        ctx.save_for_backward(x, weight, bias, mean, var, eps)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, weight, bias, mean, var, eps, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, weight, bias, mean, var, eps = ctx.saved_tensors
         x, eps, grad_output = x.view(torch.int64), eps.view(torch.int64), grad_output.view(torch.int64)
 
         red_dims = ctx.red_dims
 
-        var_eps = lns_add(var, eps, base)
-        inv_std = lns_div(LNS_ONE, lns_sqrt(var_eps))
-        x_centered = lns_sub(x, mean, base)
-        x_hat = lns_mul(x_centered, inv_std)
+        var_eps = ops.add(var, eps)
+        inv_std = ops.div(LNS_ONE, ops.sqrt(var_eps))
+        x_centered = ops.sub(x, mean)
+        x_hat = ops.mul(x_centered, inv_std)
 
         param_red_dims = tuple(i for i in range(x.dim()) if i not in red_dims)
 
         grad_bias = None
         if bias is not None:
-            grad_bias = lns_sum(grad_output, base, dim=param_red_dims, keepdim=False).view(torch.float64)
+            grad_bias = ops.sum(grad_output, dim=param_red_dims, keepdim=False).view(torch.float64)
 
         grad_weight = None
         if weight is not None:
@@ -2002,10 +1951,10 @@ class LNSLayerNorm(LNSFunction):
                 w_view[d] = x.size(d)
             weight_b = weight.view(*w_view)
 
-            grad_y_wrt_x_hat = lns_mul(grad_output, weight_b, base)
-            grad_weight = lns_sum(
-                lns_mul(grad_output, x_hat),
-                base, dim=param_red_dims, keepdim=False
+            grad_y_wrt_x_hat = ops.mul(grad_output, weight_b)
+            grad_weight = ops.sum(
+                ops.mul(grad_output, x_hat),
+                dim=param_red_dims, keepdim=False
             ).view(torch.float64)
 
         else:
@@ -2014,35 +1963,34 @@ class LNSLayerNorm(LNSFunction):
         N = 1
         for d in red_dims:
             N *= x.shape[d]
-        n_elems = LNSTensor.get_internal_tensor(N, base)
+        n_elems = ops.to_lns(N)
 
-        sum_grad = lns_sum(grad_y_wrt_x_hat, base, dim=red_dims, keepdim=True)
-        sum_grad_xhat = lns_sum(
-            lns_mul(grad_y_wrt_x_hat, x_hat),
-            base, dim=red_dims, keepdim=True
+        sum_grad = ops.sum(grad_y_wrt_x_hat, dim=red_dims, keepdim=True)
+        sum_grad_xhat = ops.sum(
+            ops.mul(grad_y_wrt_x_hat, x_hat),
+            dim=red_dims, keepdim=True
         )
 
-        Ng = lns_mul(n_elems, grad_y_wrt_x_hat)
-        term_inner = lns_sub(
-            lns_sub(Ng, sum_grad, base),
-            lns_mul(x_hat, sum_grad_xhat),
-            base
+        Ng = ops.mul(n_elems, grad_y_wrt_x_hat)
+        term_inner = ops.sub(
+            ops.sub(Ng, sum_grad),
+            ops.mul(x_hat, sum_grad_xhat)
         )
 
-        inv_N = lns_div(LNS_ONE, n_elems)
-        grad_x = lns_mul(lns_mul(inv_std, inv_N), term_inner)
+        inv_N = ops.div(LNS_ONE, n_elems)
+        grad_x = ops.mul(ops.mul(inv_std, inv_N), term_inner)
 
-        return grad_x.view(torch.float64), None, None, None, grad_weight, grad_bias
+        return grad_x.view(torch.float64), None, None, grad_weight, grad_bias
 
 @implements(torch.nn.functional.layer_norm, _layer_norm, "default", default=True)
 def layer_norm(x, normalized_shape, weight=None, bias=None, eps=1e-5):
 
     x, weight, bias, eps = format_lnstensor_operands(x, weight, bias, eps)
-    result = LNSLayerNorm.apply(x, eps, x.base, normalized_shape, weight, bias)
+    result = LNSLayerNorm.apply(x, eps, normalized_shape, weight, bias)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _max_pool1d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+def _max_pool1d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
         stride = kernel_size
 
@@ -2060,8 +2008,8 @@ def _max_pool1d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
     N, C, L_in = x.shape
 
     if padding > 0:
-        x_min = lns_min(x)
-        fill = lns_sub(x_min, LNS_ONE, base).item()
+        x_min = ops.min(x)
+        fill = ops.sub(x_min, LNS_ONE).item()
         x_padded = torch.nn.functional.pad(x, (padding, padding), value=fill)
     else:
         x_padded = x
@@ -2073,7 +2021,7 @@ def _max_pool1d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
     else:
         L_out = (L_in + 2 * padding - eff_k) // stride + 1
 
-    out_vals = zeros(N, C, L_out, device=x.device, b=base)._lns.view(torch.int64)
+    out_vals = ops.zeros(N, C, L_out)
     if return_indices:
         out_idx = torch.empty((N, C, L_out), dtype=torch.int64, device=x.device)
 
@@ -2094,7 +2042,7 @@ def _max_pool1d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
                 window_flat = window.reshape(-1)
 
                 # pass dim to get indices
-                mx_val, mx_idx = lns_max(window_flat, dim=0)
+                mx_val, mx_idx = ops.max(window_flat, dim=0)
                 out_vals[n, c, l_out] = mx_val
 
                 if return_indices:
@@ -2115,9 +2063,9 @@ def _max_pool1d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
 class LNSMaxPool1dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+    def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
-        result = _max_pool1d(x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices)
+        result = _max_pool1d(ops, x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
@@ -2125,8 +2073,8 @@ class LNSMaxPool1dFunction(LNSFunction):
             return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, dilation, ceil_mode, return_indices = inputs
 
         if stride is None:
             stride = kernel_size
@@ -2137,7 +2085,7 @@ class LNSMaxPool1dFunction(LNSFunction):
         if isinstance(padding, (tuple, list)): padding = int(padding[0])
         if isinstance(dilation, (tuple, list)): dilation = int(dilation[0])
 
-        ctx.save_for_backward(x, base)
+        ctx.save_for_backward(x)
         ctx.kernel_size = int(kernel_size)
         ctx.stride = int(stride)
         ctx.padding = int(padding)
@@ -2146,8 +2094,8 @@ class LNSMaxPool1dFunction(LNSFunction):
         ctx.return_indices = bool(return_indices)
 
     @staticmethod
-    def backward(ctx, grad_output, grad_out_indices=None):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output, grad_out_indices=None):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         kernel = ctx.kernel_size
@@ -2165,8 +2113,8 @@ class LNSMaxPool1dFunction(LNSFunction):
         N, C, L_in = x.shape
 
         if pad > 0:
-            x_min = lns_min(x)
-            fill  = lns_sub(x_min, LNS_ONE, base).item()
+            x_min = ops.min(x)
+            fill  = ops.sub(x_min, LNS_ONE).item()
             x_padded = torch.nn.functional.pad(x, (pad, pad), value=fill)
         else:
             x_padded = x
@@ -2179,7 +2127,7 @@ class LNSMaxPool1dFunction(LNSFunction):
         else:
             L_out = (L_in + 2 * pad - eff_k) // stride + 1
 
-        grad_padded = zeros_like(x_padded, b=base)._lns.view(torch.int64)
+        grad_padded = ops.zeros_like(x_padded)
 
         for n in range(N):
             for c in range(C):
@@ -2195,35 +2143,34 @@ class LNSMaxPool1dFunction(LNSFunction):
                     window = x_padded[n, c, l_start:l_end_eff:dil]
                     window_flat = window.reshape(-1)
 
-                    _, mx_idx = lns_max(window_flat, dim=0)
+                    _, mx_idx = ops.max(window_flat, dim=0)
 
                     i = int(mx_idx)
                     l_in_idx = l_start + i * dil
 
-                    grad_padded[n, c, l_in_idx] = lns_add(
+                    grad_padded[n, c, l_in_idx] = ops.add(
                         grad_padded[n, c, l_in_idx],
-                        grad_output[n, c, l_out],
-                        base
+                        grad_output[n, c, l_out]
                     )
 
         if pad > 0:
             grad_padded = grad_padded[:, :, pad:pad + L_in]
 
         grad_x = grad_padded.squeeze(0) if squeeze_batch else grad_padded
-        return grad_x.view(torch.float64), None, None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None, None
 
 @implements(torch.nn.functional.max_pool1d_with_indices, _max_pool1d, "default", default=True)
 @implements(torch.nn.functional.max_pool1d, _max_pool1d, "default", default=True)
 def max_pool1d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
 
-    result = LNSMaxPool1dFunction.apply(x, kernel_size, x.base, stride, padding, dilation, ceil_mode, return_indices)
+    result = LNSMaxPool1dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
     if return_indices:
         return lnstensor(result[0], from_lns=True, b=x.base), result[1]
     else:
         return lnstensor(result, from_lns=True, b=x.base)
 
-def _max_pool2d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+def _max_pool2d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
         stride = kernel_size
 
@@ -2245,8 +2192,8 @@ def _max_pool2d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
     N, C, H_in, W_in = x.shape
 
     if pad_h > 0 or pad_w > 0:
-        x_min = lns_min(x, base)
-        fill = lns_sub(x_min, LNS_ONE, base).item()
+        x_min = ops.min(x)
+        fill = ops.sub(x_min, LNS_ONE).item()
         x_padded = torch.nn.functional.pad(x, (pad_w, pad_w, pad_h, pad_h), value=fill)
     else:
         x_padded = x
@@ -2261,7 +2208,7 @@ def _max_pool2d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
         H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
         W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
 
-    out_vals = zeros(N, C, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out_vals = ops.zeros(N, C, H_out, W_out)
     if return_indices:
         out_idx = torch.empty((N, C, H_out, W_out), dtype=torch.int64, device=x.device)
 
@@ -2291,7 +2238,7 @@ def _max_pool2d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
                     window_flat = window.reshape(-1)
 
                     # pass dim to get indices
-                    mx_val, mx_idx = lns_max(window_flat, dim=0)
+                    mx_val, mx_idx = ops.max(window_flat, dim=0)
                     out_vals[n, c, h_out, w_out] = mx_val
 
                     len_w = (w_end_eff - w_start + dil_w - 1) // dil_w
@@ -2317,9 +2264,9 @@ def _max_pool2d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
 class LNSMaxPool2dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+    def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
-        result = _max_pool2d(x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices)
+        result = _max_pool2d(ops, x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
@@ -2327,8 +2274,8 @@ class LNSMaxPool2dFunction(LNSFunction):
             return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, dilation, ceil_mode, return_indices = inputs
 
         if stride is None:
             stride = kernel_size
@@ -2338,7 +2285,7 @@ class LNSMaxPool2dFunction(LNSFunction):
         if isinstance(padding, int): padding = (padding, padding)
         if isinstance(dilation, int): dilation = (dilation, dilation)
 
-        ctx.save_for_backward(x, base)
+        ctx.save_for_backward(x)
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.padding = padding
@@ -2347,8 +2294,8 @@ class LNSMaxPool2dFunction(LNSFunction):
         ctx.return_indices = return_indices
 
     @staticmethod
-    def backward(ctx, grad_output, grad_out_indices=None):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output, grad_out_indices=None):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         kernel_h, kernel_w = ctx.kernel_size
@@ -2366,8 +2313,8 @@ class LNSMaxPool2dFunction(LNSFunction):
         N, C, H_in, W_in = x.shape
 
         if pad_h > 0 or pad_w > 0:
-            x_min = lns_min(x)
-            fill  = lns_sub(x_min, LNS_ONE, base).item()
+            x_min = ops.min(x)
+            fill  = ops.sub(x_min, LNS_ONE).item()
             x_padded = torch.nn.functional.pad(x, (pad_w, pad_w, pad_h, pad_h), value=fill)
 
         else:
@@ -2384,7 +2331,7 @@ class LNSMaxPool2dFunction(LNSFunction):
             H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
             W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
 
-        grad_padded = zeros_like(x_padded, b=base)._lns.view(torch.int64)
+        grad_padded = ops.zeros_like(x_padded)
         for n in range(N):
             for c in range(C):
                 for h_out in range(H_out):
@@ -2412,7 +2359,7 @@ class LNSMaxPool2dFunction(LNSFunction):
                         window = x_padded[n, c, h_start:h_end_eff:dil_h, w_start:w_end_eff:dil_w]
                         window_flat = window.reshape(-1)
 
-                        _, mx_idx = lns_max(window_flat, dim=0)
+                        _, mx_idx = ops.max(window_flat, dim=0)
 
                         mx_idx = int(mx_idx)
                         i = mx_idx // len_w
@@ -2421,28 +2368,27 @@ class LNSMaxPool2dFunction(LNSFunction):
                         h_in_idx = h_start + i * dil_h
                         w_in_idx = w_start + j * dil_w
 
-                        grad_padded[n, c, h_in_idx, w_in_idx] = lns_add(grad_padded[n, c, h_in_idx, w_in_idx],
-                                                                        grad_output[n, c, h_out, w_out],
-                                                                        base)
+                        grad_padded[n, c, h_in_idx, w_in_idx] = ops.add(grad_padded[n, c, h_in_idx, w_in_idx],
+                                                                        grad_output[n, c, h_out, w_out])
 
         if pad_h > 0 or pad_w > 0:
             grad_padded = grad_padded[:, :, pad_h:pad_h + H_in, pad_w:pad_w + W_in]
 
         grad_x = grad_padded.squeeze(0) if squeeze_batch else grad_padded
-        return grad_x.view(torch.float64), None, None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None, None
 
 @implements(torch.nn.functional.max_pool2d_with_indices, _max_pool2d, "default", default=True)
 @implements(torch.nn.functional.max_pool2d, _max_pool2d, "default", default=True)
 def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
 
-    result = LNSMaxPool2dFunction.apply(x, kernel_size, x.base, stride, padding, dilation, ceil_mode, return_indices)
+    result = LNSMaxPool2dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
     if return_indices:
         return lnstensor(result[0], from_lns=True, b=x.base), result[1]
     else:
         return lnstensor(result, from_lns=True, b=x.base)
 
-def _max_pool3d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+def _max_pool3d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
         stride = kernel_size
 
@@ -2465,8 +2411,8 @@ def _max_pool3d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
     N, C, D_in, H_in, W_in = x.shape
 
     if pad_d > 0 or pad_h > 0 or pad_w > 0:
-        x_min = lns_min(x)
-        fill = lns_sub(x_min, LNS_ONE, base).item()
+        x_min = ops.min(x)
+        fill = ops.sub(x_min, LNS_ONE).item()
         x_padded = torch.nn.functional.pad(
             x,
             (pad_w, pad_w, pad_h, pad_h, pad_d, pad_d),
@@ -2488,7 +2434,7 @@ def _max_pool3d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
         H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
         W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
 
-    out_vals = zeros(N, C, D_out, H_out, W_out, device=x.device, b=base)._lns.view(torch.int64)
+    out_vals = ops.zeros(N, C, D_out, H_out, W_out)
     if return_indices:
         out_idx = torch.empty((N, C, D_out, H_out, W_out), dtype=torch.int64, device=x.device)
 
@@ -2529,7 +2475,7 @@ def _max_pool3d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
                                             w_start:w_end_eff:dil_w]
                         window_flat = window.reshape(-1)
 
-                        mx_val, mx_idx = lns_max(window_flat, dim=0)
+                        mx_val, mx_idx = ops.max(window_flat, dim=0)
                         out_vals[n, c, d_out, h_out, w_out] = mx_val
 
                         len_h = (h_end_eff - h_start + dil_h - 1) // dil_h
@@ -2561,9 +2507,9 @@ def _max_pool3d(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_m
 class LNSMaxPool3dFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, kernel_size, base, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+    def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
-        result = _max_pool3d(x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices)
+        result = _max_pool3d(ops, x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
@@ -2571,8 +2517,8 @@ class LNSMaxPool3dFunction(LNSFunction):
             return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, kernel_size, base, stride, padding, dilation, ceil_mode, return_indices = inputs
+    def setup_context(ctx, ops, inputs, output):
+        x, kernel_size, stride, padding, dilation, ceil_mode, return_indices = inputs
 
         if stride is None:
             stride = kernel_size
@@ -2582,7 +2528,7 @@ class LNSMaxPool3dFunction(LNSFunction):
         if isinstance(padding, int): padding = (padding, padding, padding)
         if isinstance(dilation, int): dilation = (dilation, dilation, dilation)
 
-        ctx.save_for_backward(x, base)
+        ctx.save_for_backward(x)
         ctx.kernel_size = kernel_size
         ctx.stride = stride
         ctx.padding = padding
@@ -2591,8 +2537,8 @@ class LNSMaxPool3dFunction(LNSFunction):
         ctx.return_indices = return_indices
 
     @staticmethod
-    def backward(ctx, grad_output, grad_out_indices=None):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output, grad_out_indices=None):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         kernel_d, kernel_h, kernel_w = ctx.kernel_size
@@ -2610,8 +2556,8 @@ class LNSMaxPool3dFunction(LNSFunction):
         N, C, D_in, H_in, W_in = x.shape
 
         if pad_d > 0 or pad_h > 0 or pad_w > 0:
-            x_min = lns_min(x, base)
-            fill = lns_sub(x_min, LNS_ONE, base).item()
+            x_min = ops.min(x)
+            fill = ops.sub(x_min, LNS_ONE).item()
             x_padded = torch.nn.functional.pad(
                 x,
                 (pad_w, pad_w, pad_h, pad_h, pad_d, pad_d),
@@ -2637,7 +2583,7 @@ class LNSMaxPool3dFunction(LNSFunction):
             H_out = (H_in + 2 * pad_h - eff_kh) // stride_h + 1
             W_out = (W_in + 2 * pad_w - eff_kw) // stride_w + 1
 
-        grad_padded = zeros_like(x_padded, b=base)._lns.view(torch.int64)
+        grad_padded = ops.zeros_like(x_padded)
 
         for n in range(N):
             for c in range(C):
@@ -2678,7 +2624,7 @@ class LNSMaxPool3dFunction(LNSFunction):
                                               w_start:w_end_eff:dil_w]
                             window_flat = window.reshape(-1)
 
-                            _, mx_idx = lns_max(window_flat, dim=0)
+                            _, mx_idx = ops.max(window_flat, dim=0)
 
                             mx_idx = int(mx_idx)
                             dhw = len_h * len_w
@@ -2691,10 +2637,9 @@ class LNSMaxPool3dFunction(LNSFunction):
                             h_in_idx = h_start + i_h * dil_h
                             w_in_idx = w_start + i_w * dil_w
 
-                            grad_padded[n, c, d_in_idx, h_in_idx, w_in_idx] = lns_add(
+                            grad_padded[n, c, d_in_idx, h_in_idx, w_in_idx] = ops.add(
                                 grad_padded[n, c, d_in_idx, h_in_idx, w_in_idx],
-                                grad_output[n, c, d_out, h_out, w_out],
-                                base
+                                grad_output[n, c, d_out, h_out, w_out]
                             )
 
         if pad_d > 0 or pad_h > 0 or pad_w > 0:
@@ -2704,13 +2649,13 @@ class LNSMaxPool3dFunction(LNSFunction):
                                       pad_w:pad_w + W_in]
 
         grad_x = grad_padded.squeeze(0) if squeeze_batch else grad_padded
-        return grad_x.view(torch.float64), None, None, None, None, None, None, None
+        return grad_x.view(torch.float64), None, None, None, None, None, None
 
 @implements(torch.nn.functional.max_pool3d_with_indices, _max_pool3d, "default", default=True)
 @implements(torch.nn.functional.max_pool3d, _max_pool3d, "default", default=True)
 def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
 
-    result = LNSMaxPool3dFunction.apply(x, kernel_size, x.base, stride, padding, dilation, ceil_mode, return_indices)
+    result = LNSMaxPool3dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
     if return_indices:
         return lnstensor(result[0], from_lns=True, b=x.base), result[1]
