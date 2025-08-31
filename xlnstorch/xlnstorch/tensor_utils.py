@@ -361,13 +361,13 @@ class LNSOverflowFunction(LNSFunction):
         max = ops.to_lns(ctx.max) if ctx.max is not None else None
         min = ops.to_lns(ctx.min) if ctx.min is not None else None
 
+        grad_x = grad_output
         if max is not None:
             grad_x = torch.where(ops.gt(ops.abs(x), max), LNS_ZERO, grad_x)
 
         if min is not None:
             grad_x = torch.where(ops.lt(ops.abs(x), min), LNS_ZERO, grad_x)
 
-        grad_x = ops.mul(grad_output, grad_x)
         return grad_x.view(torch.float64), None, None
 
 def set_overflow_limits(max: float = None, min: float = None):
