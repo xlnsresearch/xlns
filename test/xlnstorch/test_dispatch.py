@@ -43,7 +43,8 @@ def test_apply_lns_op():
     lns2 = xltorch.lnstensor(data2, f=23)
 
     # Test with default implementation
-    result = xltorch.apply_lns_op(torch.add, lns1._lns.view(torch.int64), lns2._lns.view(torch.int64), lns1.base)
+    result = xltorch.apply_lns_op(torch.add, xltorch.ops.LNSOps(lns1.base),
+                                  lns1._lns.view(torch.int64), lns2._lns.view(torch.int64))
     result_lns = xltorch.lnstensor(result, from_lns=True, b=lns1.base)
     expected = lns1.value + lns2.value
     assert torch.allclose(result_lns.value, expected)
