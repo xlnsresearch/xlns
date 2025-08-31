@@ -4,7 +4,7 @@ from typing import Callable, Any, Iterable, Tuple, Union, Optional
 
 import torch
 from xlnstorch import apply_lns_op, LNS_ZERO, LNS_ONE
-from xlnstorch.tensor_utils import FloatToLNS
+from xlnstorch.tensor_utils import float_to_lns_forward, float_to_lns_backward
 
 _KIND_MAP: dict[str, inspect._ParameterKind] = {
     "po": inspect.Parameter.POSITIONAL_ONLY,
@@ -115,9 +115,12 @@ class LNSOps:
     #    Helper Methods
     # ====================
 
-    def to_lns(self, value: Union[int, float]) -> torch.LongTensor:
-        tensor_value = torch.tensor(value, dtype=torch.float64)
-        return FloatToLNS.apply(tensor_value, self.base).view(torch.int64)
+    def to_lns(self, value: Union[int, float, torch.Tensor]) -> torch.LongTensor:
+        tensor_value = torch.tensor(value, dtype=torch.float64) if not isinstance(value, torch.Tensor) else value.to(torch.float64)
+        return float_to_lns_forward(tensor_value, self.base).view(torch.int64)
+
+    def from_lns(self, lns_value: torch.LongTensor) -> torch.Tensor:
+        return float_to_lns_backward(lns_value, self.base)
 
     def zeros(self, *size: int):
         return torch.full(size, LNS_ZERO.item(), dtype=torch.int64)

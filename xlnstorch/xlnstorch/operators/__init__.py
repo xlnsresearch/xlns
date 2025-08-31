@@ -121,7 +121,7 @@ from .internal_lns_ops import (
     lns_max_pool3d,
 )
 from . import addition_ops
-# from . import arithmetic_ops
+from . import arithmetic_ops
 # from . import unary_ops
 # from . import comparison_ops
 # from . import loss_ops

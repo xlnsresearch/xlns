@@ -180,14 +180,14 @@ class LNSSumFunction(LNSFunction):
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, dim, keepdim = inputs
         ctx.save_for_backward(x)
         ctx.dim = dim
         ctx.keepdim = keepdim
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
