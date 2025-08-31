@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 # Lazy import cache to avoid repeated imports
 _tensor_module = None
+_ops_module = None
 
 __all__ = [
     "with_bitcast",
@@ -24,6 +25,14 @@ def _get_tensor_module():
         from . import tensor
         _tensor_module = tensor
     return _tensor_module
+
+def _get_ops_module():
+    """Lazy import of ops module to avoid circular imports."""
+    global _ops_module
+    if _ops_module is None:
+        from . import ops
+        _ops_module = ops
+    return _ops_module
 
 def _to_int64(x):
     return x.view(torch.int64) if isinstance(x, torch.Tensor) and x.dtype == torch.float64 else x
@@ -178,6 +187,7 @@ class LNSFunction(torch.autograd.Function):
         forward method. This is necessary for LNSTensor internal behavior.
         """
         tensor_module = _get_tensor_module()
+        ops_module = _get_ops_module()
 
         # This check is also performed in the base class, but we do it here too
         # in case PyTorch decides to change the behavior of the apply method.
@@ -188,7 +198,7 @@ class LNSFunction(torch.autograd.Function):
         # because the autograd.Function expects tensors, not LNSTensor objects.
         internal_args = []
         for arg in args:
-            if common_base is None and isinstance(args, tensor_module.LNSTensor):
+            if common_base is None and isinstance(arg, tensor_module.LNSTensor):
                 common_base = arg.base
 
             if isinstance(arg, tensor_module.LNSTensor):
@@ -196,7 +206,7 @@ class LNSFunction(torch.autograd.Function):
             else:
                 internal_args.append(arg)
 
-        ops = tensor_module.LNSOps(common_base) if common_base is not None else None
+        ops = ops_module.LNSOps(common_base) if common_base is not None else None
 
         # call the forward method of the class with the internal arguments
         result = super().apply(ops, *internal_args)

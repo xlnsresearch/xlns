@@ -1,11 +1,6 @@
 import torch
 from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements, implements_sbdb, sbdb
 from xlnstorch.autograd import LNSFunction
-from . import (
-    lns_add,
-    lns_neg,
-    lns_sum_to_size,
-)
 
 @implements_sbdb('ideal', default=True)
 def sbdb_ideal(z, s, base):
@@ -21,13 +16,13 @@ def sbdb_ideal(z, s, base):
 
     return result
 
-def _add(x, y, base):
+def _add(ops, x, y):
     max_operand = torch.max(x, y)
 
     abs_diff = torch.abs((x >> 1) - (y >> 1))
     sign_diff = (x ^ y) & 1
 
-    result = max_operand + sbdb(-abs_diff, sign_diff, base)
+    result = max_operand + sbdb(-abs_diff, sign_diff, ops.base)
     return torch.where(
         torch.eq(x | 1, LNS_ZERO), y, torch.where(
             torch.eq(y | 1, LNS_ZERO), x, torch.where(
@@ -52,25 +47,25 @@ class LNSAddFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, y, base):
+    def forward(ops, x, y):
         x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _add(x, y, base)
+        result = _add(ops, x, y)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, y, base = inputs
-        ctx.save_for_backward(x, y, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, y = inputs
+        ctx.save_for_backward(x, y)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, y, base = ctx.saved_tensors
-        x, y = x.view(torch.int64), y.view(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, y = ctx.saved_tensors
+        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_x = lns_sum_to_size(grad_output, base, x.shape)
-        grad_y = lns_sum_to_size(grad_output, base, y.shape)
+        grad_x = ops.sum_to_size(grad_output, x.shape)
+        grad_y = ops.sum_to_size(grad_output, y.shape)
 
-        return grad_x, grad_y, None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
 
 @implements(torch.add, _add, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
@@ -80,16 +75,16 @@ def add(x, y, *, alpha=1, out=None):
     if alpha != 1:
         y = torch.mul(y, alpha)
 
-    result = LNSAddFunction.apply(x, y, x.base)
+    result = LNSAddFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _sub(x, y, base):
-    neg_y = lns_neg(y)
-    return lns_add(x, neg_y, base)
+def _sub(ops, x, y):
+    neg_y = ops.neg(y)
+    return ops.add(x, neg_y)
 
 class LNSSubFunction(LNSFunction):
     """
@@ -101,27 +96,27 @@ class LNSSubFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, y, base):
+    def forward(ops, x, y):
         x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _sub(x, y, base)
+        result = _sub(ops, x, y)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, y, base = inputs
-        ctx.save_for_backward(x, y, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, y = inputs
+        ctx.save_for_backward(x, y)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, y, base = ctx.saved_tensors
-        x, y = x.view(torch.int64), y.view(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, y = ctx.saved_tensors
+        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
-        grad_y = lns_neg(grad_output)
+        grad_y = ops.neg(grad_output)
 
-        grad_x = lns_sum_to_size(grad_output, base, x.shape)
-        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+        grad_x = ops.sum_to_size(grad_output, x.shape)
+        grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x, grad_y, None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
 
 @implements(torch.sub, _sub, key="default", default=True)
 def sub(x, y, *, alpha=1, out=None):
@@ -131,21 +126,24 @@ def sub(x, y, *, alpha=1, out=None):
     if alpha != 1:
         y = torch.mul(y, alpha)
 
-    result = LNSSubFunction.apply(x, y, x.base)
+    result = LNSSubFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _sum(x, base, dim=None, keepdim=False):
+def _sum(ops, x, dim=None, keepdim=False):
     if dim is None:
         flat = x.reshape(-1)
         out = flat[0]
+
         for i in range(1, flat.numel()):
-            out = lns_add(out, flat[i], base)
+            out = ops.add(out, flat[i])
+
         if keepdim:
             out = out.reshape([1] * x.dim())
+
         return out
 
     red_dims = (dim,) if isinstance(dim, int) else tuple(dim)
@@ -159,7 +157,7 @@ def _sum(x, base, dim=None, keepdim=False):
 
     out = transposed[..., 0]
     for i in range(1, transposed.shape[-1]):
-        out = lns_add(out, transposed[..., i], base)
+        out = ops.add(out, transposed[..., i])
 
     if keepdim:
         for d in red_dims:
@@ -176,14 +174,14 @@ class LNSSumFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base, dim=None, keepdim=False):
+    def forward(ops, x, dim=None, keepdim=False):
         x = x.view(torch.int64)
-        result = _sum(x, base, dim, keepdim)
+        result = _sum(ops, x, dim, keepdim)
         return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, _, dim, keepdim = inputs
+        x, dim, keepdim = inputs
         ctx.save_for_backward(x)
         ctx.dim = dim
         ctx.keepdim = keepdim
@@ -191,7 +189,7 @@ class LNSSumFunction(LNSFunction):
     @staticmethod
     def backward(ctx, grad_output):
         x, = ctx.saved_tensors
-        x = x.view(torch.int64)
+        x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = grad_output
         if ctx.dim is None:
@@ -207,12 +205,12 @@ class LNSSumFunction(LNSFunction):
 
             grad_x = grad_x.expand(x.shape)
 
-        return grad_x, None, None, None
+        return grad_x.view(torch.float64), None, None, None
 
 @implements(torch.sum, _sum, "default", default=not CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
 
-    result = LNSSumFunction.apply(x, x.base, dim, keepdim)
+    result = LNSSumFunction.apply(x, dim, keepdim)
 
     if out is not None:
         return out._inplace_copy(result)

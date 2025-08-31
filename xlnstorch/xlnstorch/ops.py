@@ -139,6 +139,48 @@ class LNSOps:
         lns_fill_value = self.to_lns(fill_value)
         return torch.full_like(tensor, lns_fill_value.item(), dtype=torch.int64)
 
+    def sum_to_size(self, tensor: torch.LongTensor, target_size: torch.Size) -> torch.LongTensor:
+        """
+        Sum-reduce a tensor to a target size by summing over excess dimensions.
+
+        Parameters
+        ----------
+        tensor : torch.LongTensor
+            The input internal representation tensor to be reduced.
+        target_size : torch.Size
+            The desired target size after reduction.
+
+        Returns
+        -------
+        torch.LongTensor
+            The reduced internal representation tensor with the specified target size.
+
+        Raises
+        ------
+        ValueError
+            If the target size is not compatible with the input tensor size.
+        """
+        if list(tensor.shape) == list(target_size):
+            return tensor
+
+        tensor_shape = list(tensor.shape)
+        tgt_shape = list(target_size)
+        if tensor.dim() > len(tgt_shape):
+            tgt_shape = [1] * (tensor.dim() - len(tgt_shape)) + tgt_shape
+
+        # reduce dimensions that were broadcasted
+        leading = tensor.dim() - len(tgt_shape)
+        if leading > 0:
+            tensor = self.sum(tensor, dim=tuple(range(leading)), keepdim=False)
+            tensor_shape = tensor_shape[leading:]
+
+        # reduce dimensions where target size is 1 but tensor has a larger size
+        reduce_dims = [i for i, (ts, gs) in enumerate(zip(tensor_shape, tgt_shape)) if gs == 1 and ts != 1]
+        if reduce_dims:
+            tensor = self.sum(tensor, dim=tuple(reduce_dims), keepdim=True)
+
+        return tensor.reshape(target_size)
+
 
 
     # ===========================
