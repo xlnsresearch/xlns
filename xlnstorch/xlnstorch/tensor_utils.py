@@ -114,36 +114,29 @@ def _float_to_lns_forward_python(x: torch.Tensor, base: torch.Tensor) -> torch.T
     packed_int = (exponent << 1) | sign_bit
     packed = torch.where(torch.eq(x, 0), LNS_ZERO, packed_int)
 
-    return packed.view(torch.float64)
+    return packed
 
 def _float_to_lns_backward_python(grad_output: torch.Tensor, base: torch.Tensor) -> torch.Tensor:
-    grad_output = grad_output.view(torch.int64)
     exponent = (grad_output >> 1).to(torch.float64)
     sign = torch.where((grad_output & 1).bool(), -1.0, 1.0)
 
     return torch.where(torch.eq(grad_output | 1, LNS_ZERO), 0.0, sign * torch.pow(base, exponent))
 
 def _change_base_forward_python(x: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
-    packed_int = x.view(torch.int64)
-    sign_bit = packed_int & 1
-    exponent = (packed_int >> 1).to(torch.float64)
+    sign_bit = x & 1
+    exponent = (x >> 1).to(torch.float64)
 
     exponent_new = exponent * torch.log(old_base) / torch.log(new_base)
     new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-    new_tensor = new_packed_int.view(torch.float64)
-
-    return new_tensor
+    return new_packed_int
 
 def _change_base_backward_python(grad_output: torch.Tensor, old_base: torch.Tensor, new_base: torch.Tensor) -> torch.Tensor:
-    grad_output = grad_output.view(torch.int64)
     sign_bit = grad_output & 1
     exponent = (grad_output >> 1).to(torch.float64)
 
     exponent_new = exponent * torch.log(new_base) / torch.log(old_base)
     old_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-    old_tensor = old_packed_int.view(torch.float64)
-
-    return old_tensor
+    return old_packed_int
 
 def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
     """
@@ -185,35 +178,40 @@ def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
 class FloatToLNS(LNSFunction):
 
     @staticmethod
-    def forward(ops, x, base):
-        return float_to_lns_forward(x, base)
+    def forward(ops, x):
+        result = float_to_lns_forward(x.to(torch.float64), ops.base)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
-        _, base = inputs
-        ctx.save_for_backward(base)
+        pass
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        base, = ctx.saved_tensors
-        return float_to_lns_backward(grad_output, base), None
+        grad_output = grad_output.view(torch.int64)
+        return float_to_lns_backward(grad_output, ops.base)
 
 
 class LNSChangeBaseFunction(LNSFunction):
 
     @staticmethod
-    def forward(ops, tensor, old_base, new_base):
-        return change_base_forward(tensor, old_base, new_base)
+    def forward(ops, tensor, new_base):
+        tensor = tensor.view(torch.int64)
+        result = change_base_forward(tensor, ops.base, new_base)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, outputs):
-        _, old_base, new_base = inputs
-        ctx.save_for_backward(old_base, new_base)
+        _, new_base = inputs
+        ctx.save_for_backward(new_base)
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        old_base, new_base = ctx.saved_tensors
-        return change_base_backward(grad_output, old_base, new_base), None, None
+        new_base, = ctx.saved_tensors
+        grad_output = grad_output.view(torch.int64)
+
+        result = change_base_backward(grad_output, ops.base, new_base)
+        return result.view(torch.float64), None
 
 
 class LNSGetItemFunction(LNSFunction):
@@ -477,7 +475,7 @@ def align_lnstensor_bases(
         elif torch.eq(tensor.base, new_base):
             aligned_tensors.append(tensor)
         else:
-            aligned_tensor = LNSChangeBaseFunction.apply(tensor, tensor.base, new_base)
+            aligned_tensor = LNSChangeBaseFunction.apply(tensor, new_base, common_base=tensor.base)
             aligned_tensors.append(tensor_module.lnstensor(aligned_tensor, from_lns=True, b=new_base))
 
     return tuple(aligned_tensors)

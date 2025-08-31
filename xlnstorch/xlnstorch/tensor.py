@@ -80,7 +80,7 @@ class LNSTensor:
         if from_lns:
             self._lns: Tensor = data
         else:
-            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, self.base)
+            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, common_base=self.base)
 
         self._lns.requires_grad_(requires_grad)
 

@@ -12,7 +12,7 @@ SBDB_CPP_FUNCS = [
 
 def _add_cpp(ops, x, y):
     if DEFAULT_SBDB_FUNC in SBDB_CPP_FUNCS:
-        return xlnstorch.csrc.add_forward(x, y, ops.base).view(torch.float64)
+        return xlnstorch.csrc.add_forward(x, y, ops.base)
 
     return _add(ops, x, y)
 
@@ -64,7 +64,7 @@ class LNSSumCPPFunction(LNSFunction):
     def forward(ops, x, dim=None, keepdim=False):
         x = x.view(torch.int64)
         result = _sum_cpp(ops, x, dim, keepdim)
-        result.view(torch.float64)
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):

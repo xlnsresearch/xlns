@@ -375,7 +375,10 @@ def softmax(x, dim=None, _stacklevel=3, dtype=None):
     return lnstensor(result, from_lns=True, b=x.base)
 
 def _log_softmax(ops, x, dim=None):
-    m = ops.max(x, dim=dim, keepdim=True)[0] # discard indices
+    if dim is None:
+        m = ops.max(x)
+    else:
+        m = ops.max(x, dim=dim, keepdim=True)[0] # discard indices
 
     # subtract the max to prevent overflow (logsumexp trick)
     x_sub_m = ops.sub(x, m)

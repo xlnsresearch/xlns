@@ -117,7 +117,7 @@ class LNSOps:
 
     def to_lns(self, value: Union[int, float, torch.Tensor]) -> torch.LongTensor:
         tensor_value = torch.tensor(value, dtype=torch.float64) if not isinstance(value, torch.Tensor) else value.to(torch.float64)
-        return float_to_lns_forward(tensor_value, self.base).view(torch.int64)
+        return float_to_lns_forward(tensor_value, self.base)
 
     def from_lns(self, lns_value: torch.LongTensor) -> torch.Tensor:
         return float_to_lns_backward(lns_value, self.base)
