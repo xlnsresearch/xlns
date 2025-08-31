@@ -65,7 +65,7 @@ class LNSAddFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_output, x.shape)
         grad_y = ops.sum_to_size(grad_output, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.add, _add, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
@@ -116,7 +116,7 @@ class LNSSubFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_output, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.sub, _sub, key="default", default=True)
 def sub(x, y, *, alpha=1, out=None):
@@ -205,7 +205,7 @@ class LNSSumFunction(LNSFunction):
 
             grad_x = grad_x.expand(x.shape)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x.view(torch.float64), None, None
 
 @implements(torch.sum, _sum, "default", default=not CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):

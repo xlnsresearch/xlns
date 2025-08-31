@@ -42,7 +42,7 @@ class LNSMulFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.mul, _mul, key='default', default=True)
 def mul(x, y, *, out=None):
@@ -85,7 +85,7 @@ class LNSSquareFunction(LNSFunction):
         grad_x = ops.mul(x, ops.to_lns(2.0))
         grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x.view(torch.float64), None
+        return grad_x.view(torch.float64)
 
 @implements(torch.square, _square, key='default', default=True)
 def square(x, *, out=None):
@@ -128,7 +128,7 @@ class LNSSqrtFunction(LNSFunction):
         grad_x = ops.mul(sqrt_x, ops.to_lns(2.0))
         grad_x = ops.div(grad_output, grad_x)
 
-        return grad_x.view(torch.float64), None
+        return grad_x.view(torch.float64)
 
 @implements(torch.sqrt, _sqrt, key='default', default=True)
 def sqrt(x, *, out=None):
@@ -177,7 +177,7 @@ class LNSPowFunction(LNSFunction):
         grad_x = ops.mul(grad_x, ops.to_lns(n))
         grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 @implements(torch.pow, _pow, key='default', default=True)
 def pow(x, n, *, out=None):
@@ -245,7 +245,7 @@ class LNSDivFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.div, _div, key='default', default=True)
 def div(x, y, *, out=None):
@@ -291,7 +291,7 @@ class LNSReciprocalFunction(LNSFunction):
         grad_x = ops.mul(grad_x, LNS_NEG_ONE)
         grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x.view(torch.float64), None
+        return grad_x.view(torch.float64)
 
 @implements(torch.reciprocal, _reciprocal, key='default', default=True)
 def reciprocal(x, *, out=None):
@@ -333,7 +333,7 @@ class LNSExpFunction(LNSFunction):
         exp_x, grad_output = exp_x.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = ops.mul(grad_output, exp_x)
-        return grad_x.view(torch.float64), None
+        return grad_x.view(torch.float64)
 
 @implements(torch.exp, _exp, key='default', default=True)
 def exp(x, *, out=None):
@@ -376,7 +376,7 @@ class LNSLogFunction(LNSFunction):
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = ops.div(grad_output, x)
-        return grad_x.view(torch.float64), None
+        return grad_x.view(torch.float64)
 
 @implements(torch.log, _log, key='default', default=True)
 def log(x, *, out=None):
@@ -467,7 +467,7 @@ class LNSProdFunction(LNSFunction):
         grad_output = grad_output.expand_as(x)
         grad_x = ops.mul(grad_output, ratio)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x.view(torch.float64), None, None
 
 @implements(torch.prod, _prod, "default", default=True)
 def prod(x, dim=None, keepdim=False, *, out=None):
@@ -547,7 +547,7 @@ class LNSMeanFunction(LNSFunction):
                     grad_x = grad_x.unsqueeze(d)
             grad_x = grad_x.expand(x.shape)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x.view(torch.float64), None, None
 
 @implements(torch.mean, _mean, "default", default=True)
 def mean(x, dim=None, keepdim=False, *, out=None):
@@ -639,7 +639,7 @@ class LNSVarFunction(LNSFunction):
 
         grad_x = ops.mul(grad_x, ops.mul(diff, scale))
 
-        return grad_x.view(torch.float64), None, None, None, None
+        return grad_x.view(torch.float64), None, None, None
 
 @implements(torch.var, _var, "default", default=True)
 def var(x, dim=None, *, correction=1, keepdim=False, out=None):
@@ -802,7 +802,7 @@ class LNSMatmulFunction(LNSFunction):
         if ctx.appended_B:
             grad_B = grad_B.squeeze(-1) # Remove extra N dimension
 
-        return grad_A.view(torch.float64), grad_B.view(torch.float64), None
+        return grad_A.view(torch.float64), grad_B.view(torch.float64)
 
 @implements(torch.matmul, _matmul, "default", default=not CSRC_AVAILABLE)
 def matmul(A, B, *, out=None):
