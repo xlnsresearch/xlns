@@ -127,7 +127,7 @@ from . import comparison_ops
 # from . import loss_ops
 # from . import activation_ops
 # from . import layer_ops
-# from . import misc_ops
+from . import misc_ops
 
 # from . import _C
 # from . import implementations

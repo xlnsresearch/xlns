@@ -260,7 +260,7 @@ class LNSSortFunction(LNSFunction):
         grad_x = grad_output.clone()
         grad_x[indices] = grad_output
 
-        return grad_x, None
+        return grad_x, None, None, None
 
 @implements(torch.sort, _sort, "default", default=True)
 def sort(x, dim=-1, descending=False, stable=False, *, out=None):
@@ -379,7 +379,7 @@ class LNSMaximumFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.maximum, _maximum, "default", default=True)
 def maximum(x, y, *, out=None):
@@ -426,7 +426,7 @@ class LNSMinimumFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.minimum, _minimum, "default", default=True)
 def minimum(x, y, *, out=None):
@@ -507,7 +507,7 @@ class LNSMaxFunction(LNSFunction):
                         idx_expanded.expand(x.shape),
                         grad_expanded.expand(x.shape))
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x.view(torch.float64), None, None
 
 @implements(torch.max, _max, "default", default=True)
 def max(x, dim=None, keepdim=False, *, out=None):
@@ -614,7 +614,7 @@ class LNSMinFunction(LNSFunction):
                         idx_expanded.expand(x.shape),
                         grad_expanded.expand(x.shape))
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x.view(torch.float64), None, None
 
 @implements(torch.min, _min, "default", default=True)
 def min(x, dim=None, keepdim=False, *, out=None):

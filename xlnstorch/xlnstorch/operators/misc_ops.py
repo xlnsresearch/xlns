@@ -1,27 +1,22 @@
 import torch
 from xlnstorch import LNS_ZERO, LNSTensor, lnstensor, format_lnstensor_operands, implements, ones
 from xlnstorch.autograd import LNSFunction
-from . import (
-    lns_sum,
-    lns_sum_to_size,
-    lns_add,
-)
 
 class LNSExpandFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, shape, base):
+    def forward(ops, x, shape):
         return torch.broadcast_to(x, shape)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, shape, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, shape = inputs
+        ctx.save_for_backward(x)
         ctx.shape = shape
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
         x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         # Sum over the broadcasted dimensions
@@ -29,34 +24,34 @@ class LNSExpandFunction(LNSFunction):
         ndims_added = grad_output.ndim - len(x.shape)
         grad_x = grad_output
         for i in range(ndims_added):
-            grad_x = lns_sum(grad_x, base, dim=0, keepdim=False)
+            grad_x = ops.sum(grad_x, dim=0, keepdim=False)
 
         # Then, handle expanded dimensions (where original dim was 1)
         for i, (orig_size, grad_size) in enumerate(zip(x.shape, grad_x.shape)):
             if orig_size == 1 and grad_size > 1:
-                grad_x = lns_sum(grad_x, base, dim=i, keepdim=True)
+                grad_x = ops.sum(grad_x, dim=i, keepdim=True)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None
 
 # note that torch.broadcast_to is equivalent to torch.Tensor.expand
 @implements(torch.broadcast_to, LNSExpandFunction.forward, "default", default=True)
 def broadcast_to(x, shape):
 
-    result = LNSExpandFunction.apply(x, shape, x.base)
+    result = LNSExpandFunction.apply(x, shape)
     return lnstensor(result, from_lns=True, b=x.base)
 
 class LNSCloneFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, memory_format=torch.preserve_format):
+    def forward(ops, x, memory_format=torch.preserve_format):
         return x.clone(memory_format=memory_format)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         pass
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         return grad_output, None
 
 @implements(torch.clone, LNSCloneFunction.forward, "default", default=True)
@@ -68,17 +63,17 @@ def clone(x, memory_format=torch.preserve_format):
 class LNSSqueezeFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, dim=None):
+    def forward(ops, x, dim=None):
         return torch.squeeze(x, dim=dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, dim = inputs
         ctx.save_for_backward(x)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
         # Unsqueeze to restore original shape
         grad_x = grad_output.view(x.shape)
@@ -93,16 +88,16 @@ def squeeze(x, dim=None):
 class LNSUnsqueezeFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, dim):
+    def forward(ops, x, dim):
         return torch.unsqueeze(x, dim=dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         _, dim = inputs
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_x = torch.squeeze(grad_output, dim=ctx.dim)
         return grad_x, None
 
@@ -115,28 +110,28 @@ def unsqueeze(x, dim):
 class LNSIndexPutFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, idx, value, base, accumulate=False):
+    def forward(ops, x, idx, value, accumulate=False):
         return torch.index_put(x, idx, value, accumulate=accumulate)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, idx, value, base, _ = inputs
+    def setup_context(ctx, ops, inputs, output):
+        _, idx, value, _ = inputs
         ctx.is_idx_tensor = torch.is_tensor(idx)
 
         if ctx.is_idx_tensor:
-            ctx.save_for_backward(idx, value, base)
+            ctx.save_for_backward(idx, value)
         else:
-            ctx.save_for_backward(value, base)
+            ctx.save_for_backward(value)
             ctx.idx = idx
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_output = grad_output.view(torch.int64)
 
         if ctx.is_idx_tensor:
-            idx, value, base = ctx.saved_tensors
+            idx, value = ctx.saved_tensors
         else:
-            value, base = ctx.saved_tensors
+            value, = ctx.saved_tensors
             idx = ctx.idx
 
         grad_x = grad_output.clone()
@@ -151,16 +146,16 @@ class LNSIndexPutFunction(LNSFunction):
                                                    value.shape)) if v == 1 and gv != 1]
                 + list(range(len(grad_value.shape) - len(value.shape)))  # leading dims
             )
-            grad_value = lns_sum(grad_value, base, dim=extra_dims, keepdim=True)
+            grad_value = ops.sum(grad_value, dim=extra_dims, keepdim=True)
             grad_value = grad_value.reshape(value.shape)
 
-        return grad_x.view(torch.float64), None, grad_value.view(torch.float64), None, None
+        return grad_x.view(torch.float64), None, grad_value.view(torch.float64), None
 
 @implements(torch.index_put, LNSIndexPutFunction.forward, "default", default=True)
 def index_put(x, indices, values, accumulate=False):
 
     x, values = format_lnstensor_operands(x, values)
-    result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
+    result = LNSIndexPutFunction.apply(x, indices, values, accumulate)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
@@ -168,24 +163,24 @@ def index_put(x, indices, values, accumulate=False):
 def index_put_(x, indices, values, accumulate=False):
 
     x, values = format_lnstensor_operands(x, values)
-    result = LNSIndexPutFunction.apply(x, indices, values, x.base, accumulate)
+    result = LNSIndexPutFunction.apply(x, indices, values, accumulate)
 
     return x._inplace_copy(result)
 
 class LNSStackFunction(LNSFunction):
 
     @staticmethod
-    def forward(dim, *tensors):
+    def forward(ops, dim, *tensors):
         return torch.stack(tensors, dim=dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         dim, *tensors = inputs
         ctx.save_for_backward(*tensors)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_tensor = grad_output.unbind(ctx.dim)
         return (None, *grad_tensor)
 
@@ -200,17 +195,17 @@ def stack(tensors, dim=0):
 class LNSCatFunction(LNSFunction):
 
     @staticmethod
-    def forward(dim, *tensors):
+    def forward(ops, dim, *tensors):
         return torch.cat(tensors, dim=dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         dim, *tensors = inputs
         ctx.sizes = [t.size(dim) for t in tensors]
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         grad_tensors = torch.split(grad_output, ctx.sizes, dim=ctx.dim)
         return (None, *grad_tensors)
 
@@ -225,23 +220,23 @@ def cat(tensors, dim=0):
 class LNSChunkFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, chunks, dim=0):
+    def forward(ops, x, chunks, dim=0):
         return torch.chunk(x, chunks, dim=dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         _, _, dim = inputs
         ctx.dim = dim
         ctx.out_shapes = [o.shape for o in output]
         ctx.set_materialize_grads(False)
 
     @staticmethod
-    def backward(ctx, *grad_outputs):
+    def backward(ctx, ops, *grad_outputs):
         parts = []
 
         for g, shape in zip(grad_outputs, ctx.out_shapes):
             if g is None:
-                g = torch.full(shape, LNS_ZERO)
+                g = ops.zeros(*shape)
             parts.append(g)
 
         grad_x = torch.cat(parts, dim=ctx.dim)
@@ -253,47 +248,47 @@ def chunk(x, chunks, dim=0):
     result = LNSChunkFunction.apply(x, chunks, dim)
     return tuple(lnstensor(r, from_lns=True, b=x.base) for r in result)
 
-def _where(condition, x, y):
+def _where(ops, condition, x, y):
     return torch.where(condition, x, y)
 
 class LNSWhereFunction(LNSFunction):
 
     @staticmethod
-    def forward(condition, x, y, base):
+    def forward(ops, condition, x, y):
         x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _where(condition, x, y)
+        result = _where(ops, condition, x, y)
         return result.view(torch.float64)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        condition, x, y, base = inputs
-        ctx.save_for_backward(condition, x, y, base)
+    def setup_context(ctx, ops, inputs, output):
+        condition, x, y = inputs
+        ctx.save_for_backward(condition, x, y)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        condition, x, y, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        condition, x, y = ctx.saved_tensors
         x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = torch.where(condition, grad_output, LNS_ZERO)
         grad_y = torch.where(condition, LNS_ZERO, grad_output)
 
-        grad_x = lns_sum_to_size(grad_x, base, x.shape)
-        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+        grad_x = ops.sum_to_size(grad_x, x.shape)
+        grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return None, grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return None, grad_x.view(torch.float64), grad_y.view(torch.float64)
 
 @implements(torch.where, _where, "default", default=True)
 def where(condition, x, y, *, out=None):
 
     x, y = format_lnstensor_operands(x, y)
-    result = LNSWhereFunction.apply(condition, x, y, x.base)
+    result = LNSWhereFunction.apply(condition, x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
     return lnstensor(result, from_lns=True, b=x.base)
 
-def _unpad_along_dim(g, base, left, right, dim, mode):
+def _unpad_along_dim(ops, g, left, right, dim, mode):
 
     if left == right == 0:
         return g
@@ -309,45 +304,45 @@ def _unpad_along_dim(g, base, left, right, dim, mode):
 
     if mode == "replicate":
         if left:
-            grad_x.select(dim, first).copy_(lns_add(
+            grad_x.select(dim, first).copy_(ops.add(
                 grad_x.select(dim, first),
-                lns_sum(g.narrow(dim, 0, left), base, dim=dim),
-            base))
+                ops.sum(g.narrow(dim, 0, left), dim=dim),
+            ))
         if right:
-            grad_x.select(dim, last).copy_(lns_add(
+            grad_x.select(dim, last).copy_(ops.add(
                 grad_x.select(dim, last),
-                lns_sum(g.narrow(dim, g.size(dim) - right, right), base, dim=dim),
-            base))
+                ops.sum(g.narrow(dim, g.size(dim) - right, right), dim=dim),
+            ))
 
     elif mode == "reflect":
 
         for i in range(left):
             target = left - i
-            grad_x.select(dim, target).copy_(lns_add(
+            grad_x.select(dim, target).copy_(ops.add(
                 grad_x.select(dim, target),
                 g.select(dim, i),
-            base))
+            ))
 
         for i in range(right):
             target = last - 1 - i
-            grad_x.select(dim, target).copy_(lns_add(
+            grad_x.select(dim, target).copy_(ops.add(
                 grad_x.select(dim, target),
                 g.select(dim, g.size(dim) - 1 - i),
-            base))
+            ))
 
     elif mode == "circular":
 
         if left:
-            grad_x.narrow(dim, interior_len-left, left).copy_(lns_add(
+            grad_x.narrow(dim, interior_len-left, left).copy_(ops.add(
                 grad_x.narrow(dim, interior_len - left, left),
                 g.narrow(dim, 0, left),
-            base))
+            ))
 
         if right:
-            grad_x.narrow(dim, 0, right).copy_(lns_add(
+            grad_x.narrow(dim, 0, right).copy_(ops.add(
                 grad_x.narrow(dim, 0, right),
                 g.narrow(dim, g.size(dim) - right, right),
-            base))
+            ))
 
     return grad_x
 
@@ -357,19 +352,17 @@ def _pad(x, pad, mode="constant", value=None):
 class LNSPadFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, base, pad, mode="constant", value=None):
+    def forward(ops, x, pad, mode="constant", value=None):
         return _pad(x, pad, mode=mode, value=value)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, pad, mode, _ = inputs
-        ctx.save_for_backward(base)
+    def setup_context(ctx, ops, inputs, output):
+        _, pad, mode, _ = inputs
         ctx.pad = pad
         ctx.mode = mode
 
     @staticmethod
-    def backward(ctx, grad_output):
-        base, = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
         grad_output = grad_output.view(torch.int64)
 
         ndim_pad = len(ctx.pad) // 2
@@ -379,9 +372,9 @@ class LNSPadFunction(LNSFunction):
             right = ctx.pad[2 * i + 1]
 
             dim = grad_output.dim() - 1 - i
-            grad_x = _unpad_along_dim(grad_x, base, left, right, dim, ctx.mode)
+            grad_x = _unpad_along_dim(ops, grad_x, left, right, dim, ctx.mode)
 
-        return grad_x.view(torch.float64), None, None, None, None
+        return grad_x.view(torch.float64), None, None, None
 
 @implements(torch.nn.functional.pad, _pad, "default", default=True)
 def pad(x, pad, mode="constant", value=0):
@@ -389,5 +382,5 @@ def pad(x, pad, mode="constant", value=0):
     if mode == "constant":
         x, value = format_lnstensor_operands(x, value)
 
-    result = LNSPadFunction.apply(x, x.base, pad, mode, value)
+    result = LNSPadFunction.apply(x, pad, mode, value)
     return lnstensor(result, from_lns=True, b=x.base)
