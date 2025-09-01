@@ -17,7 +17,6 @@ class LNSExpandFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
-        x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
         # Sum over the broadcasted dimensions
         # First, handle prepended dimensions (when original tensor had fewer dims)
@@ -31,7 +30,7 @@ class LNSExpandFunction(LNSFunction):
             if orig_size == 1 and grad_size > 1:
                 grad_x = ops.sum(grad_x, dim=i, keepdim=True)
 
-        return grad_x.view(torch.float64), None
+        return grad_x, None
 
 # note that torch.broadcast_to is equivalent to torch.Tensor.expand
 @implements(torch.broadcast_to, LNSExpandFunction.forward, "default", default=True)
@@ -126,7 +125,6 @@ class LNSIndexPutFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.is_idx_tensor:
             idx, value = ctx.saved_tensors
@@ -149,7 +147,7 @@ class LNSIndexPutFunction(LNSFunction):
             grad_value = ops.sum(grad_value, dim=extra_dims, keepdim=True)
             grad_value = grad_value.reshape(value.shape)
 
-        return grad_x.view(torch.float64), None, grad_value.view(torch.float64), None
+        return grad_x, None, grad_value, None
 
 @implements(torch.index_put, LNSIndexPutFunction.forward, "default", default=True)
 def index_put(x, indices, values, accumulate=False):
@@ -240,7 +238,7 @@ class LNSChunkFunction(LNSFunction):
             parts.append(g)
 
         grad_x = torch.cat(parts, dim=ctx.dim)
-        return grad_x.view(torch.float64), None, None
+        return grad_x, None, None
 
 @implements(torch.chunk, LNSChunkFunction.forward, "default", default=True)
 def chunk(x, chunks, dim=0):
@@ -255,9 +253,7 @@ class LNSWhereFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, condition, x, y):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _where(ops, condition, x, y)
-        return result.view(torch.float64)
+        return _where(ops, condition, x, y)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -267,7 +263,6 @@ class LNSWhereFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         condition, x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = torch.where(condition, grad_output, LNS_ZERO)
         grad_y = torch.where(condition, LNS_ZERO, grad_output)
@@ -275,7 +270,7 @@ class LNSWhereFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return None, grad_x.view(torch.float64), grad_y.view(torch.float64)
+        return None, grad_x, grad_y
 
 @implements(torch.where, _where, "default", default=True)
 def where(condition, x, y, *, out=None):
@@ -363,7 +358,6 @@ class LNSPadFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         ndim_pad = len(ctx.pad) // 2
         grad_x = grad_output
@@ -374,7 +368,7 @@ class LNSPadFunction(LNSFunction):
             dim = grad_output.dim() - 1 - i
             grad_x = _unpad_along_dim(ops, grad_x, left, right, dim, ctx.mode)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x, None, None, None
 
 @implements(torch.nn.functional.pad, _pad, "default", default=True)
 def pad(x, pad, mode="constant", value=0):
