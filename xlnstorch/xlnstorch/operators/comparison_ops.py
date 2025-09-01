@@ -246,9 +246,7 @@ class LNSSortFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, dim=-1, descending=False, stable=False):
-        x = x.view(torch.int64)
-        result = _sort(ops, x, dim, descending, stable)
-        return result[0].view(torch.float64), result[1]
+        return _sort(ops, x, dim, descending, stable)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -314,9 +312,7 @@ class LNSKthvalueFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, k, dim=-1, keepdim=False):
-        x = x.view(torch.int64)
-        result = _kthvalue(ops, x, k, dim, keepdim)
-        return result[0].view(torch.float64), result[1]
+        return _kthvalue(ops, x, k, dim, keepdim)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -356,9 +352,7 @@ class LNSMaximumFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _maximum(ops, x, y)
-        return result.view(torch.float64)
+        return _maximum(ops, x, y)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -368,7 +362,6 @@ class LNSMaximumFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         x_y_equal = ops.eq(x, y)
         half_grad_output = ops.mul(grad_output, ops.to_lns(0.5))
@@ -383,7 +376,7 @@ class LNSMaximumFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64)
+        return grad_x, grad_y
 
 @implements(torch.maximum, _maximum, "default", default=True)
 def maximum(x, y, *, out=None):
@@ -403,9 +396,7 @@ class LNSMinimumFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _minimum(ops, x, y)
-        return result.view(torch.float64)
+        return _minimum(ops, x, y)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -415,7 +406,6 @@ class LNSMinimumFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         x_y_equal = ops.eq(x, y)
         half_grad_output = ops.mul(grad_output, ops.to_lns(0.5))
@@ -430,7 +420,7 @@ class LNSMinimumFunction(LNSFunction):
         grad_x = ops.sum_to_size(grad_x, x.shape)
         grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64)
+        return grad_x, grad_y
 
 @implements(torch.minimum, _minimum, "default", default=True)
 def minimum(x, y, *, out=None):
@@ -472,13 +462,7 @@ class LNSMaxFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
-        x = x.view(torch.int64)
-        result = _sort(ops, x, dim, descending=True, stable=True)
-
-        if len(result) == 1:
-            return result.view(torch.float64)
-
-        return result[0].view(torch.float64), result[1]
+        return _sort(ops, x, dim, descending=True, stable=True)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -585,13 +569,7 @@ class LNSMinFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
-        x = x.view(torch.int64)
-        result = _min(ops, x, dim, keepdim)
-
-        if len(result) == 1:
-            return result.view(torch.float64)
-
-        return result[0].view(torch.float64), result[1]
+        return _min(ops, x, dim, keepdim)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -606,7 +584,6 @@ class LNSMinFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output, grad_indicies=None): # grad_indices is not used
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.dim is None:
             x, result = ctx.saved_tensors
@@ -614,7 +591,7 @@ class LNSMinFunction(LNSFunction):
             min_values = torch.eq(x, result)
             grad_x = ops.div(grad_output, ops.to_lns(min_values.sum()))
 
-            return torch.where(min_values, grad_x, LNS_ZERO).view(torch.float64), None, None, None
+            return torch.where(min_values, grad_x, LNS_ZERO), None, None, None
 
         x, indices = ctx.saved_tensors
 
@@ -630,7 +607,7 @@ class LNSMinFunction(LNSFunction):
                         idx_expanded.expand(x.shape),
                         grad_expanded.expand(x.shape))
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x, None, None
 
 @implements(torch.min, _min, "default", default=True)
 def min(x, dim=None, keepdim=False, *, out=None):
@@ -685,12 +662,7 @@ class LNSClampFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, min=None, max=None):
-        x = x.view(torch.int64)
-        min = min.view(torch.int64) if min is not None else None
-        max = max.view(torch.int64) if max is not None else None
-
-        result = _clamp(ops, x, min, max)
-        return result.view(torch.float64)
+        return _clamp(ops, x, min, max)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -700,12 +672,8 @@ class LNSClampFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, min, max = ctx.saved_tensors
-        x = x.view(torch.int64)
-        min = min.view(torch.int64) if min is not None else None
-        max = max.view(torch.int64) if max is not None else None
 
-        grad_x = grad_output.view(torch.int64)
-
+        grad_x = grad_output.clone()
         if min is not None:
             lt_mask = ops.lt(x, min)
             grad_x = torch.where(lt_mask, LNS_ZERO, grad_x)
@@ -714,7 +682,7 @@ class LNSClampFunction(LNSFunction):
             gt_mask = ops.gt(x, max)
             grad_x = torch.where(gt_mask, LNS_ZERO, grad_x)
 
-        return grad_x.view(torch.float64), None, None
+        return grad_x, None, None
 
 @implements(torch.clamp, _clamp, "default", default=True)
 def clamp(x, min=None, max=None, *, out=None):
