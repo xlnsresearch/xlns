@@ -13,6 +13,7 @@ _ops_module = None
 
 __all__ = [
     "LNSFunction",
+    "LNSNonDifferentiableFunction",
     "has_fanout",
     "find_fanout",
     "raise_fanout_error"
@@ -297,6 +298,50 @@ class LNSFunction(torch.autograd.Function):
             break
 
         return result
+
+
+class LNSNonDifferentiableFunction:
+
+    _lnstensor_outputs: Optional[Tuple[int, ...]] = None
+
+    @staticmethod
+    def forward(ctx, *args, **kwargs):
+        """
+        Forward pass for the non-differentiable LNS operation.
+        Should be implemented in subclasses.
+        """
+        raise NotImplementedError("Forward method must be implemented in subclasses.")
+
+    @classmethod
+    def apply(cls, *args, common_base: torch.Tensor = None, **kwargs):
+
+        if kwargs:
+            raise ValueError(
+                "LNSNonDifferentiableFunction does not support keyword arguments. "
+                "Please use positional arguments only."
+            )
+
+        tensor_module = _get_tensor_module()
+        ops_module = _get_ops_module()
+
+        internal_args = []
+        for i in range(len(args)):
+            arg = args[i]
+
+            if common_base is None and isinstance(arg, tensor_module.LNSTensor):
+                common_base = arg.base
+
+            if isinstance(arg, tensor_module.LNSTensor):
+                internal_args.append(arg._lns.view(torch.int64))
+            else:
+                internal_args.append(arg)
+
+        ops = ops_module.LNSOps(common_base) if common_base is not None else None
+        result = cls.forward(ops, *internal_args, **kwargs)
+        cast_result = _cast_values(result, cls._lnstensor_outputs, _cast_float64)
+
+        return cast_result
+
 
 # This file contains functions to analyze the autograd graph in PyTorch.
 # In particular, it can detect nodes with fan-out, i.e., nodes that have
