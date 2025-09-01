@@ -11,12 +11,8 @@ class LNSConv1dCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
-        x, weight = x.view(torch.int64), weight.view(torch.int64)
-        bias = bias.view(torch.int64) if bias is not None else None
-
-        result = _conv1d_cpp(ops, x, weight, bias, stride,
-                             padding, dilation, groups)
-        return result.view(torch.float64)
+        return _conv1d_cpp(ops, x, weight, bias, stride,
+                           padding, dilation, groups)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
@@ -31,18 +27,15 @@ class LNSConv1dCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, weight = ctx.saved_tensors
-        x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
 
         grads = xlnstorch.csrc.conv1d_backward(
             grad_output, x, weight, ops.base, ctx.bias_defined,
             ctx.stride, ctx.padding, ctx.dilation, ctx.groups)
 
         if ctx.bias_defined:
-            return (grads[0].view(torch.float64), grads[1].view(torch.float64), 
-                    grads[2].view(torch.float64), None, None, None, None)
+            return grads[0], grads[1], grads[2], None, None, None, None
 
-        return (grads[0].view(torch.float64), grads[1].view(torch.float64),
-                None, None, None, None, None)
+        return grads[0], grads[1], None, None, None, None, None
 
 @implements(torch.nn.functional.conv1d, _conv1d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
@@ -68,12 +61,8 @@ class LNSConv2dCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
-        x, weight = x.view(torch.int64), weight.view(torch.int64)
-        bias = bias.view(torch.int64) if bias is not None else None
-
-        result = _conv2d_cpp(ops, x, weight, bias, stride,
-                             padding, dilation, groups)
-        return result.view(torch.float64)
+        return _conv2d_cpp(ops, x, weight, bias, stride,
+                           padding, dilation, groups)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -88,7 +77,6 @@ class LNSConv2dCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, weight = ctx.saved_tensors
-        x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
 
         if isinstance(ctx.stride, int):
             ctx.stride = (ctx.stride, ctx.stride)
@@ -103,11 +91,9 @@ class LNSConv2dCPPFunction(LNSFunction):
             *ctx.padding, *ctx.dilation, ctx.groups)
 
         if ctx.bias_defined:
-            return (grads[0].view(torch.float64), grads[1].view(torch.float64), 
-                    grads[2].view(torch.float64), None, None, None, None)
+            return grads[0], grads[1], grads[2], None, None, None, None
 
-        return (grads[0].to(torch.float64), grads[1].to(torch.float64),
-                None, None, None, None, None)
+        return grads[0], grads[1], None, None, None, None, None
 
 @implements(torch.nn.functional.conv2d, _conv2d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
@@ -133,12 +119,8 @@ class LNSConv3dCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
-        x, weight = x.view(torch.int64), weight.view(torch.int64)
-        bias = bias.view(torch.int64) if bias is not None else None
-
-        result = _conv3d_cpp(ops, x, weight, bias, stride,
-                             padding, dilation, groups)
-        return result.view(torch.float64)
+        return _conv3d_cpp(ops, x, weight, bias, stride,
+                           padding, dilation, groups)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -153,7 +135,6 @@ class LNSConv3dCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, weight = ctx.saved_tensors
-        x, weight, grad_output = x.view(torch.int64), weight.view(torch.int64), grad_output.view(torch.int64)
 
         if isinstance(ctx.stride, int):
             ctx.stride = (ctx.stride, ctx.stride, ctx.stride)
@@ -168,11 +149,9 @@ class LNSConv3dCPPFunction(LNSFunction):
             *ctx.padding, *ctx.dilation, ctx.groups)
 
         if ctx.bias_defined:
-            return (grads[0].view(torch.float64), grads[1].view(torch.float64), 
-                    grads[2].view(torch.float64), None, None, None, None)
+            return grads[0], grads[1], grads[2], None, None, None, None
 
-        return (grads[0].view(torch.float64), grads[1].view(torch.float64),
-                None, None, None, None, None)
+        return grads[0], grads[1], None, None, None, None, None
 
 @implements(torch.nn.functional.conv3d, _conv3d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):

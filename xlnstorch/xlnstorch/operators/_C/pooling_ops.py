@@ -11,10 +11,8 @@ class LNSAvgPool1dCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
-        x = x.view(torch.int64)
-        result = _avg_pool1d_cpp(ops, x, kernel_size, stride,
-                                 padding, ceil_mode, count_include_pad)
-        return result.view(torch.float64)
+        return _avg_pool1d_cpp(ops, x, kernel_size, stride,
+                               padding, ceil_mode, count_include_pad)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -37,12 +35,10 @@ class LNSAvgPool1dCPPFunction(LNSFunction):
         ceil_mode = ctx.ceil_mode
         count_include_pad = ctx.count_include_pad
 
-        x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
-
         grad_x = xlnstorch.csrc.avg_pool1d_backward(grad_output, x, kernel_size, ops.base, stride,
-                                                    padding, ceil_mode, count_include_pad).view(torch.float64)
+                                                    padding, ceil_mode, count_include_pad)
 
-        return grad_x.view(torch.float64), None, None, None, None, None
+        return grad_x, None, None, None, None, None
 
 @implements(torch.nn.functional.avg_pool1d, _avg_pool1d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):

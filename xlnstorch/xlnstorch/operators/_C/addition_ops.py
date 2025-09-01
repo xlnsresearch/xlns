@@ -20,9 +20,7 @@ class LNSAddCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _add_cpp(ops, x, y)
-        return result.view(torch.float64)
+        return _add_cpp(ops, x, y)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -32,12 +30,11 @@ class LNSAddCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = ops.sum_to_size(grad_output, x.shape)
         grad_y = ops.sum_to_size(grad_output, y.shape)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64)
+        return grad_x, grad_y
 
 @implements(torch.add, _add_cpp, key='default_cpp', default=CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
@@ -62,9 +59,7 @@ class LNSSumCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
-        x = x.view(torch.int64)
-        result = _sum_cpp(ops, x, dim, keepdim)
-        return result.view(torch.float64)
+        return _sum_cpp(ops, x, dim, keepdim)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -76,7 +71,6 @@ class LNSSumCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
-        grad_output = grad_output.view(torch.int64)
 
         grad_x = grad_output
         if ctx.dim is None:
@@ -111,9 +105,7 @@ class LNSMatmulCPPFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, A, B):
-        A, B = A.view(torch.int64), B.view(torch.int64)
-        result = _matmul_cpp(ops, A, B)
-        return result.view(torch.float64)
+        return _matmul_cpp(ops, A, B)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -123,10 +115,8 @@ class LNSMatmulCPPFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         A, B = ctx.saved_tensors
-        A, B, grad_output = A.view(torch.int64), B.view(torch.int64), grad_output.view(torch.int64)
-
         grad_A, grad_B = xlnstorch.csrc.matmul_backward(grad_output, A, B, ops.base)
-        return grad_A.view(torch.float64), grad_B.view(torch.float64)
+        return grad_A, grad_B
 
 @implements(torch.matmul, _matmul_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def matmul(A, B, *, out=None):
