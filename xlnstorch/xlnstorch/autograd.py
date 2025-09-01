@@ -1,7 +1,8 @@
 import torch
 import functools 
 from collections import deque
-from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING, Union, Callable
+import inspect
+from typing import List, Dict, Iterable, Set, Any, TYPE_CHECKING, Union, Callable, Optional, Tuple
 
 if TYPE_CHECKING:
     from xlnstorch.tensor import LNSTensor
@@ -11,7 +12,6 @@ _tensor_module = None
 _ops_module = None
 
 __all__ = [
-    "with_bitcast",
     "LNSFunction",
     "has_fanout",
     "find_fanout",
@@ -34,81 +34,115 @@ def _get_ops_module():
         _ops_module = ops
     return _ops_module
 
-def _to_int64(x):
+def _cast_int64(x):
     return x.view(torch.int64) if isinstance(x, torch.Tensor) and x.dtype == torch.float64 else x
 
-def _to_float64(x):
+def _cast_float64(x):
     return x.view(torch.float64) if isinstance(x, torch.Tensor) and x.dtype == torch.int64 else x
 
-def with_bitcast(func: Callable):
-    """
-    Decorator to bitcast all input LNSTensors to int64 before passing them to
-    forward/backward functions, and bitcast all output tensors back to float64.
-    This is necessary because PyTorch's autograd engine does not support int64
-    tensors for gradient computations, but LNS operations are performed in int64.
+def _cast_values(values, indices, cast_fn):
 
-    Note: This decorator should only be used on the forward and backward static
-    methods of subclasses of `LNSFunction`.    
+    all_indices = indices is None
 
-    Parameters
-    ----------
-    func : Callable
-        The function to be decorated.
-    """
-    @functools.wraps(func)
-    def wrapper(*args):
-        int_args = tuple(_to_int64(a) for a in args)
-        out = func(*int_args)
+    if isinstance(values, tuple):
+        return tuple(
+            cast_fn(values[i]) if all_indices or i in indices else values[i]
+            for i in range(len(values))
+        )
 
-        if isinstance(out, tuple):
-            return tuple(_to_float64(o) for o in out)
-        elif isinstance(out, list):
-            return [_to_float64(o) for o in out]
-        else:
-            return _to_float64(out)
+    elif isinstance(values, list):
+        return [
+            cast_fn(values[i]) if all_indices or i in indices else values[i]
+            for i in range(len(values))
+        ]
 
-    return wrapper
+    else:
+        return cast_fn(values) if all_indices or 0 in indices else values
 
 # added to forward only if setup_context is not defined
-def forward_decorator(func):
+def forward_ctx_decorator(func, cls):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # add lns_ops to ctx for later use in backward
-        args[0]._lns_ops = args[1]
+        ctx = args[0]
+        lns_ops = args[1]
+        inputs = args[2:]
 
-        # call the original function (no changes to args)
-        return func(*args, **kwargs)
+        # add lns_ops to ctx for later use in backward
+        ctx._lns_ops = lns_ops
+
+        # store the indices of LNSTensor inputs on the ctx for backward
+        input_indices = cls._lnstensor_inputs
+        ctx._lnstensor_inputs = input_indices
+
+        # call the original function with cast inputs
+        cast_inputs = _cast_values(inputs, input_indices, _cast_int64)
+        out = func(ctx, lns_ops, *cast_inputs, **kwargs)
+
+        return _cast_values(out, cls._lnstensor_outputs, _cast_float64)
+
+    return wrapper
+
+def forward_no_ctx_decorator(func, cls):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        ctx = args[0]
+        inputs = args[1:]
+
+        # call the original function with cast inputs
+        cast_inputs = _cast_values(inputs, cls._lnstensor_inputs, _cast_int64)
+        out = func(ctx, *cast_inputs, **kwargs)
+
+        return _cast_values(out, cls._lnstensor_outputs, _cast_float64)
 
     return wrapper
 
 # added to setup_context if it is defined
-def setup_context_decorator(func):
+def setup_context_decorator(func, cls):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # pop lns_ops from inputs
+        ctx = args[0]
         lns_ops = args[1][0]
         inputs = args[1][1:]
+        output = args[2]
 
-        # add lns_ops to ctx
-        args[0]._lns_ops = lns_ops
+        # add lns_ops to ctx for later use in backward
+        ctx._lns_ops = lns_ops
+
+        # store the indices of LNSTensor inputs on the ctx for backward
+        input_indices = cls._lnstensor_inputs
+        ctx._lnstensor_inputs = input_indices
+
+        # call the original function with cast inputs and output
+        cast_inputs = _cast_values(inputs, input_indices, _cast_int64)
+        cast_output = _cast_values(output, cls._lnstensor_outputs, _cast_int64)
 
         # call the original function with lns_ops as the second argument
-        return func(args[0], lns_ops, inputs, *args[2:], **kwargs)
+        return func(ctx, lns_ops, cast_inputs, cast_output, **kwargs)
 
     return wrapper
 
 # always added to backward
-def backward_decorator(func):
+def backward_decorator(func, cls):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # extract lns_ops from ctx
-        lns_ops = args[0]._lns_ops
+        ctx = args[0]
+        grads = args[1:]
+
+        # extract quantities from ctx
+        lns_ops = ctx._lns_ops
+        input_indices = ctx._lnstensor_inputs
+
+        # cast grad_outputs
+        cast_grads = _cast_values(grads, cls._lnstensor_outputs, _cast_int64)
 
         # call the original function with lns_ctx as second argument
-        output = func(args[0], lns_ops, *args[1:], **kwargs)
+        output = func(args[0], lns_ops, *cast_grads, **kwargs)
+        cast_output = _cast_values(output, input_indices, _cast_float64)
 
         # To do: check if the number of gradients matches the number of inputs
         # since leaving this up to torch would correctly raise an error but
@@ -117,8 +151,8 @@ def backward_decorator(func):
 
         # return the output, adding None for the lns_ops position
         if isinstance(output, tuple):
-            return (None,) + output
-        return None, output
+            return (None,) + cast_output
+        return None, cast_output
 
     return wrapper
 
@@ -128,12 +162,14 @@ class LNSFunction(torch.autograd.Function):
     This class should be subclassed for specific LNS operations.
     """
 
+    _lnstensor_outputs: Optional[Tuple[int, ...]] = None
+
     @classmethod
     def _register_ops_decorator(cls, func_name, decorator):
         func = getattr(cls, func_name)
 
         if not getattr(func, "_is_lns_decorated", False):
-            decorated = decorator(func)
+            decorated = decorator(func, cls)
             decorated._is_lns_decorated = True
             setattr(cls, func_name, decorated)
 
@@ -146,8 +182,9 @@ class LNSFunction(torch.autograd.Function):
         # If it is defined, we need to decorate setup_context instead
         # of forward.
         if cls.setup_context is torch.autograd.function._SingleLevelFunction.setup_context:
-            cls._register_ops_decorator("forward", forward_decorator)
+            cls._register_ops_decorator("forward", forward_ctx_decorator)
         else:
+            cls._register_ops_decorator("forward", forward_no_ctx_decorator)
             cls._register_ops_decorator("setup_context", setup_context_decorator)
 
         cls._register_ops_decorator("backward", backward_decorator)
@@ -197,19 +234,30 @@ class LNSFunction(torch.autograd.Function):
         # Convert LNSTensor arguments to internal representation. This is necessary
         # because the autograd.Function expects tensors, not LNSTensor objects.
         internal_args = []
-        for arg in args:
+        lnstensor_inputs = []
+        for i in range(len(args)):
+            arg = args[i]
+
             if common_base is None and isinstance(arg, tensor_module.LNSTensor):
                 common_base = arg.base
 
             if isinstance(arg, tensor_module.LNSTensor):
                 internal_args.append(arg._lns)
+                lnstensor_inputs.append(i)
             else:
                 internal_args.append(arg)
 
         ops = ops_module.LNSOps(common_base) if common_base is not None else None
 
+        # store the indices of LNSTensor inputs on the class to be accessed
+        # by forward decorator and (if defined) setup_context decorators
+        cls._lnstensor_inputs = lnstensor_inputs
+
         # call the forward method of the class with the internal arguments
         result = super().apply(ops, *internal_args)
+
+        # delete the stored input indices to avoid confusion later
+        del cls._lnstensor_inputs
 
         # get all output tensors and store them in a tuple
         if isinstance(result, torch.Tensor):
