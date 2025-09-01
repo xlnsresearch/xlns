@@ -35,11 +35,7 @@ class LNSMSELossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, reduction='mean', weight=None):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        weight = weight.view(torch.int64) if weight is not None else None
-
-        result = _mse_loss(ops, x, y, reduction, weight)
-        return result.view(torch.float64)
+        return _mse_loss(ops, x, y, reduction, weight)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -53,11 +49,9 @@ class LNSMSELossFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.weighted:
             x, y, weight = ctx.saved_tensors
-            x, y, weight = x.view(torch.int64), y.view(torch.int64), weight.view(torch.int64)
 
             grad = ops.sub(x, y)
             grad = ops.mul(grad, ops.to_lns(2.0))
@@ -69,7 +63,6 @@ class LNSMSELossFunction(LNSFunction):
 
         else:
             x, y = ctx.saved_tensors
-            x, y = x.view(torch.int64), y.view(torch.int64)
 
             grad = ops.sub(x, y)
             grad = ops.mul(grad, ops.to_lns(2.0))
@@ -81,7 +74,7 @@ class LNSMSELossFunction(LNSFunction):
         grad_x = ops.mul(grad, grad_output)
         grad_y = ops.neg(grad_x)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None
+        return grad_x, grad_y, None, None
 
 @implements(torch.nn.functional.mse_loss, _mse_loss, key="default", default=True)
 def mse_loss(x, y, size_average=None, reduce=None, reduction='mean', weight=None):
@@ -112,9 +105,7 @@ class LNSL1LossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, reduction='mean'):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _l1_loss(ops, x, y, reduction)
-        return result.view(torch.float64)
+        return _l1_loss(ops, x, y, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -125,7 +116,6 @@ class LNSL1LossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         grad = ops.sub(x, y)
         grad = ops.sign(grad)
@@ -137,7 +127,7 @@ class LNSL1LossFunction(LNSFunction):
         grad_x = ops.mul(grad, grad_output)
         grad_y = ops.neg(grad_x)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None
+        return grad_x, grad_y, None
 
 @implements(torch.nn.functional.l1_loss, _l1_loss, key="default", default=True)
 def l1_loss(x, y, size_average=None, reduce=None, reduction='mean'):
@@ -186,11 +176,7 @@ class LNSBCELossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, weight=None, reduction='mean'):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        weight = weight.view(torch.int64) if weight is not None else None
-
-        result = _bce_loss(ops, x, y, weight, reduction)
-        return result.view(torch.float64)
+        return _bce_loss(ops, x, y, weight, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -204,11 +190,9 @@ class LNSBCELossFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.weighted:
             x, y, weight = ctx.saved_tensors
-            x, y, weight = x.view(torch.int64), y.view(torch.int64), weight.view(torch.int64)
 
             one_minus_x = ops.sub(LNS_ONE, x)
             one_minus_y = ops.sub(LNS_ONE, y)
@@ -230,7 +214,6 @@ class LNSBCELossFunction(LNSFunction):
 
         else:
             x, y = ctx.saved_tensors
-            x, y = x.view(torch.int64), y.view(torch.int64)
 
             one_minus_x = ops.sub(LNS_ONE, x)
             one_minus_y = ops.sub(LNS_ONE, y)
@@ -250,7 +233,7 @@ class LNSBCELossFunction(LNSFunction):
         grad_x = ops.mul(grad_x, grad_output)
         grad_y = ops.mul(grad_y, grad_output)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None
+        return grad_x, grad_y, None, None
 
 @implements(torch.nn.functional.binary_cross_entropy, _bce_loss, key="default", default=True)
 def binary_cross_entropy(x, y, weight=None, size_average=None, reduce=None, reduction='mean'):
@@ -300,11 +283,7 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, weight=None, reduction='mean'):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        weight = weight.view(torch.int64) if weight is not None else None
-
-        result = _bce_with_logits_loss(ops, x, y, weight, reduction)
-        return result.view(torch.float64)
+        return _bce_with_logits_loss(ops, x, y, weight, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -318,11 +297,9 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.weighted:
             x, y, weight = ctx.saved_tensors
-            x, y, weight = x.view(torch.int64), y.view(torch.int64), weight.view(torch.int64)
 
             sigmoid_x = ops.sigmoid(x)
             grad_x = ops.sub(sigmoid_x, y)
@@ -338,7 +315,6 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
         else:
             x, y = ctx.saved_tensors
-            x, y = x.view(torch.int64), y.view(torch.int64)
 
             sigmoid_x = ops.sigmoid(x)
             grad_x = ops.sub(sigmoid_x, y)
@@ -402,11 +378,7 @@ class LNSNLLLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, weight=None, reduction='mean'):
-        x = x.view(torch.int64)
-        weight = weight.view(torch.int64) if weight is not None else None
-
-        result = _nll_loss(ops, x, y, weight, reduction)
-        return result.view(torch.float64)
+        return _nll_loss(ops, x, y, weight, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -420,13 +392,11 @@ class LNSNLLLossFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
 
         if ctx.weighted:
             x, y, weight = ctx.saved_tensors
-            x, weight = x.view(torch.int64), weight.view(torch.int64)
 
-            grad_x = zeros_like(x)._lns.view(torch.int64)
+            grad_x = ops.zeros_like(x)
             if grad_x.dim() == 1:
                 grad_x[y] = ops.neg(weight[y])
 
@@ -441,9 +411,8 @@ class LNSNLLLossFunction(LNSFunction):
 
         else:
             x, y = ctx.saved_tensors
-            x = x.view(torch.int64)
 
-            grad_x = zeros_like(x)._lns.view(torch.int64)
+            grad_x = ops.zeros_like(x)
             if grad_x.dim() == 1:
                 grad_x[y] = LNS_NEG_ONE.clone()
 
@@ -468,7 +437,7 @@ class LNSNLLLossFunction(LNSFunction):
         else:
             grad_x = ops.mul(grad_x, grad_output)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x, None, None, None
 
 @implements(torch.nn.functional.nll_loss, _nll_loss, key="default", default=True)
 def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
@@ -518,9 +487,7 @@ class PoissonNLLLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, eps, log_input=True, full=False, reduction='mean'):
-        x, y, eps = x.view(torch.int64), y.view(torch.int64), eps.view(torch.int64)
-        result = _poisson_nll_loss(ops, x, y, eps, log_input, full, reduction)
-        return result.view(torch.float64)
+        return _poisson_nll_loss(ops, x, y, eps, log_input, full, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -533,7 +500,6 @@ class PoissonNLLLossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y, eps = ctx.saved_tensors
-        x, y, eps, grad_output = x.view(torch.int64), y.view(torch.int64), eps.view(torch.int64), grad_output.view(torch.int64)
 
         if ctx.log_input:
             grad_x = ops.sub(ops.exp(x), y)
@@ -558,7 +524,7 @@ class PoissonNLLLossFunction(LNSFunction):
         grad_x = ops.mul(grad_x, grad_output)
         grad_y = ops.mul(grad_y, grad_output)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None, None, None
+        return grad_x, grad_y, None, None, None, None
 
 @implements(torch.nn.functional.poisson_nll_loss, _poisson_nll_loss, key="default", default=True)
 def poisson_nll_loss(x, y, log_input=True, full=False, size_average=None, eps=1e-08, reduce=None, reduction='mean'):
@@ -589,9 +555,7 @@ class LNSHingeEmbeddingLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, margin, reduction='mean'):
-        x, y, margin = x.view(torch.int64), y.view(torch.int64), margin.view(torch.int64)
-        result = _hinge_embedding_loss(ops, x, y, margin, reduction)
-        return result.view(torch.float64)
+        return _hinge_embedding_loss(ops, x, y, margin, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -602,7 +566,6 @@ class LNSHingeEmbeddingLossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y, margin = ctx.saved_tensors
-        x, y, margin, grad_output = x.view(torch.int64), y.view(torch.int64), margin.view(torch.int64), grad_output.view(torch.int64)
 
         grad_x = torch.where(ops.eq(y, LNS_ONE),
                              LNS_ONE,
@@ -615,7 +578,7 @@ class LNSHingeEmbeddingLossFunction(LNSFunction):
 
         grad_x = ops.mul(grad_x, grad_output)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x, None, None, None
 
 @implements(torch.nn.functional.hinge_embedding_loss, _hinge_embedding_loss, key="default", default=True)
 def hinge_embedding_loss(x, y, margin=1.0, size_average=None, reduce=None, reduction='mean'):
@@ -654,9 +617,7 @@ class LNSKLDivLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, reduction='mean', log_target=False):
-        x, y = x.view(torch.int64), y.view(torch.int64)
-        result = _kl_div_loss(ops, x, y, reduction, log_target)
-        return result.view(torch.float64)
+        return _kl_div_loss(ops, x, y, reduction, log_target)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -668,7 +629,6 @@ class LNSKLDivLossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y = ctx.saved_tensors
-        x, y, grad_output = x.view(torch.int64), y.view(torch.int64), grad_output.view(torch.int64)
 
         if ctx.log_target:
             exp_y = ops.exp(y)
@@ -691,7 +651,7 @@ class LNSKLDivLossFunction(LNSFunction):
         grad_x = ops.mul(grad_x, grad_output)
         grad_y = ops.mul(grad_y, grad_output)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None
+        return grad_x, grad_y, None, None
 
 @implements(torch.nn.functional.kl_div, _kl_div_loss, key="default", default=True)
 def kl_div(x, y, size_average=None, reduce=None, reduction='mean', log_target=False):
@@ -724,9 +684,7 @@ class LNSMarginRankingLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x1, x2, y, margin, reduction='mean'):
-        x1, x2, y, margin = x1.view(torch.int64), x2.view(torch.int64), y.view(torch.int64), margin.view(torch.int64)
-        result = _margin_ranking_loss(ops, x1, x2, y, margin, reduction)
-        return result.view(torch.float64)
+        return _margin_ranking_loss(ops, x1, x2, y, margin, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -737,7 +695,6 @@ class LNSMarginRankingLossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x1, x2, y, margin = ctx.saved_tensors
-        x1, x2, y, margin, grad_output = x1.view(torch.int64), x2.view(torch.int64), y.view(torch.int64), margin.view(torch.int64), grad_output.view(torch.int64)
 
         loss = ops.sub(x1, x2)
         loss = ops.mul(loss, y)
@@ -758,7 +715,7 @@ class LNSMarginRankingLossFunction(LNSFunction):
         grad_x2 = ops.mul(grad_x2, grad_output)
         grad_y = ops.mul(grad_y, grad_output)
 
-        return grad_x1.view(torch.float64), grad_x2.view(torch.float64), grad_y.view(torch.float64), None, None
+        return grad_x1, grad_x2, grad_y, None, None
 
 @implements(torch.nn.functional.margin_ranking_loss, _margin_ranking_loss, key="default", default=True)
 def margin_ranking_loss(x1, x2, y, margin=0.0, size_average=None, reduce=None, reduction='mean'):
@@ -796,9 +753,7 @@ class LNSGaussianNLLLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, var, eps, full=False, reduction='mean'):
-        x, y, var, eps = x.view(torch.int64), y.view(torch.int64), var.view(torch.int64), eps.view(torch.int64)
-        result = _gaussian_nll_loss(ops, x, y, var, eps, full, reduction)
-        return result.view(torch.float64)
+        return _gaussian_nll_loss(ops, x, y, var, eps, full, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -809,7 +764,6 @@ class LNSGaussianNLLLossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y, var, eps = ctx.saved_tensors
-        x, y, var, eps, grad_output = x.view(torch.int64), y.view(torch.int64), var.view(torch.int64), eps.view(torch.int64), grad_output.view(torch.int64)
 
         var_eps = ops.maximum(var, eps)
         grad_x = ops.div(ops.sub(x, y), var_eps)
@@ -829,7 +783,7 @@ class LNSGaussianNLLLossFunction(LNSFunction):
         grad_y = ops.mul(grad_y, grad_output)
         grad_var = ops.mul(grad_var, grad_output)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), grad_var.view(torch.float64), None, None, None
+        return grad_x, grad_y, grad_var, None, None, None
 
 @implements(torch.nn.functional.gaussian_nll_loss, _gaussian_nll_loss, key="default", default=True)
 def gaussian_nll_loss(x, y, var, full=False, eps=1e-6, reduction='mean'):
@@ -870,11 +824,7 @@ class LNSHuberLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, delta, reduction='mean', weight=None):
-        x, y, delta = x.view(torch.int64), y.view(torch.int64), delta.view(torch.int64)
-        weight = weight.view(torch.int64) if weight is not None else None
-
-        result = _huber_loss(x, y, delta, reduction, weight)
-        return result.view(torch.float64)
+        return _huber_loss(x, y, delta, reduction, weight)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -893,7 +843,6 @@ class LNSHuberLossFunction(LNSFunction):
         else:
             x, y, delta = ctx.saved_tensors
 
-        x, y, delta, grad_output = x.view(torch.int64), y.view(torch.int64), delta.view(torch.int64), grad_output.view(torch.int64)
         two = ops.to_lns(2.0)
 
         l2_loss_grad_x = ops.sub(x, y)
@@ -907,7 +856,6 @@ class LNSHuberLossFunction(LNSFunction):
         grad_y = torch.where(l2_mask, l2_loss_grad_y, l1_loss_grad_y)
 
         if ctx.weighted:
-            weight = weight.view(torch.int64)
 
             abs_diff = ops.abs(ops.sub(x, y))
             l1_term = ops.sub(abs_diff, ops.div(delta, two))
@@ -934,9 +882,8 @@ class LNSHuberLossFunction(LNSFunction):
         grad_y = ops.mul(grad_y, grad_output)
         if grad_w is not None:
             grad_w = ops.mul(grad_w, grad_output)
-            grad_w = grad_w.view(torch.float64)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None, grad_w
+        return grad_x, grad_y, None, None, grad_w
 
 @implements(torch.nn.functional.huber_loss, _huber_loss, key="default", default=True)
 def huber_loss(x, y, delta=1.0, reduction='mean', weight=None):
@@ -974,9 +921,7 @@ class LNSSmoothL1LossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, beta, reduction='mean'):
-        x, y, beta = x.view(torch.int64), y.view(torch.int64), beta.view(torch.int64)
-        result = _smooth_l1_loss(ops, x, y, beta, reduction)
-        return result.view(torch.float64)
+        return _smooth_l1_loss(ops, x, y, beta, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -987,7 +932,6 @@ class LNSSmoothL1LossFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, y, beta = ctx.saved_tensors
-        x, y, beta, grad_output = x.view(torch.int64), y.view(torch.int64), beta.view(torch.int64), grad_output.view(torch.int64)
 
         l2_loss_grad_x = ops.div(ops.sub(x, y), beta)
         l2_loss_grad_y = ops.neg(l2_loss_grad_x)
@@ -1007,7 +951,7 @@ class LNSSmoothL1LossFunction(LNSFunction):
         grad_x = ops.mul(grad_x, grad_output)
         grad_y = ops.mul(grad_y, grad_output)
 
-        return grad_x.view(torch.float64), grad_y.view(torch.float64), None, None
+        return grad_x, grad_y, None, None
     
 @implements(torch.nn.functional.smooth_l1_loss, _smooth_l1_loss, key="default", default=True)
 def smooth_l1_loss(x, y, size_average=None, reduce=None, reduction='mean', beta=1.0):
@@ -1064,9 +1008,7 @@ class LNSCrossEntropyLossFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, y, weight=None, reduction='mean'):
-        x = x.view(torch.int64)
-        result = _cross_entropy(x, y, weight, reduction)
-        return result.view(torch.float64)
+        return _cross_entropy(x, y, weight, reduction)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -1083,12 +1025,10 @@ class LNSCrossEntropyLossFunction(LNSFunction):
     def backward(ctx, ops, grad_output):
         if ctx.weighted:
             x, y, weight = ctx.saved_tensors
-            x, weight = x.view(torch.int64), weight.view(torch.int64)
             sample_weights = weight[y]
 
         else:
             x, y = ctx.saved_tensors
-            x = x.view(torch.int64)
             sample_weights = None
 
         dim = -1 if x.dim() > 1 else 0
@@ -1143,7 +1083,7 @@ class LNSCrossEntropyLossFunction(LNSFunction):
         else:
             grad_x = ops.mul(grad_x, grad_output)
 
-        return grad_x.view(torch.float64), None, None, None
+        return grad_x, None, None, None
 
 @implements(torch.nn.functional.cross_entropy, _cross_entropy, key="default", default=True)
 def cross_entropy(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean', label_smoothing=0.0):
