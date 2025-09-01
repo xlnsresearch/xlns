@@ -242,6 +242,8 @@ def _sort(ops, x, dim=-1, descending=False, stable=False):
 
 class LNSSortFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, dim=-1, descending=False, stable=False):
         x = x.view(torch.int64)
@@ -307,6 +309,8 @@ def _kthvalue(ops, x, k, dim=-1, keepdim=False):
     return torch.return_types.kthvalue((x, indices))
 
 class LNSKthvalueFunction(LNSFunction):
+
+    _lnstensor_outputs = [0]
 
     @staticmethod
     def forward(ops, x, k, dim=-1, keepdim=False):
@@ -464,10 +468,16 @@ def _max(ops, x, dim=None, keepdim=False):
 
 class LNSMaxFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
         x = x.view(torch.int64)
         result = _sort(ops, x, dim, descending=True, stable=True)
+
+        if len(result) == 1:
+            return result.view(torch.float64)
+
         return result[0].view(torch.float64), result[1]
 
     @staticmethod
@@ -571,10 +581,16 @@ def _min(ops, x, dim=None, keepdim=False):
 
 class LNSMinFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
         x = x.view(torch.int64)
         result = _min(ops, x, dim, keepdim)
+
+        if len(result) == 1:
+            return result.view(torch.float64)
+
         return result[0].view(torch.float64), result[1]
 
     @staticmethod

@@ -2062,6 +2062,8 @@ def _max_pool1d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mo
 
 class LNSMaxPool1dFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
@@ -2069,8 +2071,8 @@ class LNSMaxPool1dFunction(LNSFunction):
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
-        else:
-            return result.view(torch.float64)
+
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -2263,6 +2265,8 @@ def _max_pool2d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mo
 
 class LNSMaxPool2dFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
@@ -2270,8 +2274,8 @@ class LNSMaxPool2dFunction(LNSFunction):
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
-        else:
-            return result.view(torch.float64)
+
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -2506,6 +2510,8 @@ def _max_pool3d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mo
 
 class LNSMaxPool3dFunction(LNSFunction):
 
+    _lnstensor_outputs = [0]
+
     @staticmethod
     def forward(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
         x = x.view(torch.int64)
@@ -2513,8 +2519,8 @@ class LNSMaxPool3dFunction(LNSFunction):
 
         if return_indices:
             return result[0].view(torch.float64), result[1]
-        else:
-            return result.view(torch.float64)
+
+        return result.view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
