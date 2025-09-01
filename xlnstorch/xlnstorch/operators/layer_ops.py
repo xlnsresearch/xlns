@@ -1,7 +1,7 @@
 import warnings
 import math
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, CSRC_AVAILABLE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, zeros_like
+from xlnstorch import LNS_ZERO, LNS_ONE, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 def _linear(ops, x, A, bias=None):

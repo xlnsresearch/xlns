@@ -1,6 +1,6 @@
 import math
 import torch
-from xlnstorch import CSRC_AVAILABLE, LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, full_like
+from xlnstorch import CSRC_AVAILABLE, LNS_ZERO, LNS_ONE, LNS_NEG_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 def _mul(ops, x, y):

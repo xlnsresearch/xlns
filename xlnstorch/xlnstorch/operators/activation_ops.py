@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand
+from xlnstorch import LNS_ZERO, LNS_ONE, lnstensor, format_lnstensor_operands, implements, rand
 from xlnstorch.autograd import LNSFunction
 
 def _relu(ops, x):
