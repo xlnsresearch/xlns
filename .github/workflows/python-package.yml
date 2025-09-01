@@ -65,10 +65,19 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: System packages needed by docs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make git
+
       - name: Install docs requirements
         run: |
           python -m pip install --upgrade pip
           if [ -f docs/requirements.txt ]; then pip install -r docs/requirements.txt; fi
+
+      - name: Install local packages
+        run: |
+          pip install . ./xlnstorch
 
       - name: Build docs with Sphinx
         run: |
