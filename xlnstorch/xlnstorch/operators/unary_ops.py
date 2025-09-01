@@ -15,9 +15,7 @@ class LNSNegFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x):
-        x = x.view(torch.int64)
-        result = _neg(ops, x)
-        return result.view(torch.float64)
+        return _neg(ops, x)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -25,9 +23,8 @@ class LNSNegFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_output = grad_output.view(torch.int64)
-        result = ops.neg(grad_output)
-        return result.view(torch.float64)
+        grad_x = ops.neg(grad_output)
+        return grad_x
 
 @implements(torch.neg, _neg, key="default", default=True)
 def neg(x, *, out=None):
@@ -56,9 +53,7 @@ class LNSAbsFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x):
-        x = x.view(torch.int64)
-        result = _abs(ops, x)
-        return result.view(torch.float64)
+        return _abs(ops, x)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -68,10 +63,10 @@ class LNSAbsFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
-        x, grad_output = x.view(torch.int64), grad_output.view(torch.int64)
 
-        result = torch.where(torch.eq(x & 1, 1), ops.neg(grad_output), grad_output)
-        return result.view(torch.float64)
+        grad_x = torch.where(torch.eq(x & 1, 1), ops.neg(grad_output), grad_output)
+
+        return grad_x
 
 @implements(torch.abs, _abs, "default", default=True)
 def abs(x, *, out=None):
@@ -131,9 +126,7 @@ class LNSSignFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x):
-        x = x.view(torch.int64)
-        result = _sign(ops, x)
-        return result.view(torch.float64)
+        return _sign(ops, x)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
@@ -141,8 +134,8 @@ class LNSSignFunction(LNSFunction):
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        grad_x = torch.full(grad_output.shape, LNS_ZERO, dtype=torch.int64)
-        return grad_x.view(torch.float64)
+        grad_x = ops.zeros_like(grad_output)
+        return grad_x
 
 @implements(torch.sign, _sign, "default", default=True)
 def sign(x, *, out=None):
