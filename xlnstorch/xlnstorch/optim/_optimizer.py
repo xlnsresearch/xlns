@@ -1,5 +1,6 @@
 import torch
 from xlnstorch import LNS_ZERO, lnstensor
+from xlnstorch.ops import LNSOps
 
 class LNSOptimizer(torch.optim.Optimizer):
 
@@ -32,3 +33,7 @@ class LNSOptimizer(torch.optim.Optimizer):
             for name in param_names:
                 if name in group:
                     group[name] = lnstensor(group[name], b=base)._lns
+
+    def lns_param_groups(self):
+        for group in self.param_groups:
+            yield group, LNSOps(group["base"])
