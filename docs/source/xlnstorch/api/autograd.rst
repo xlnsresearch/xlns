@@ -24,10 +24,13 @@ analogous to PyTorch's ``torch.autograd.Function``.
     When using the LNSFunction class, you should pass the LNSTensor objects
     as inputs to the apply method, not their internal values. This allows
     the autograd system to correctly track the operations and compute gradients.
-    However, in the forward method, the inputs will be the internal values
+    However, in the forward method, the inputs will be the int64 internal values
     of the LNSTensor objects, so that you can perform the necessary LNS
-    operations directly. All differentiable outputs should be returned as
-    float64 tensors. For example:
+    operations directly. The indices of LNSTensor outputs should be denoted
+    in the ``_lnstensor_outputs`` list field of your function class. This
+    allows the autograd system to correctly handle the outputs of your custom
+    operation. Leaving the _lnstensor_outputs list empty indicates that
+    all outputs are LNSTensors.
 
     .. code-block:: python
 
@@ -35,11 +38,14 @@ analogous to PyTorch's ``torch.autograd.Function``.
 
         class MyLNSFunction(xltorch.autograd.LNSFunction):
 
+            # First output is an LNSTensor. This field is optional here
+            # since by default all outputs are assumed to be LNSTensors.
+            _lnstensor_outputs = [0]
+
             @staticmethod
-            def forward(x, y): # x and y are float64 tensors
-                x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-                result = f(x_packed, y_packed).to(torch.float64)
-                return result # result is a float64 tensor
+            def forward(x, y): # x and y are int64 tensors
+                result = f(x, y)
+                return result # result is an int64 tensor
 
             @staticmethod
             def setup_context(ctx, inputs, output):
@@ -53,14 +59,26 @@ analogous to PyTorch's ``torch.autograd.Function``.
         b = xltorch.lnstensor([3.0, 4.0], f=23)
         c = MyLNSFunction.apply(a, b) # we pass the LNSTensor objects to apply
 
-If you want all float64 inputs to be automatically bitcasted to int64 and
-all int64 outputs to be automatically bitcasted to float64, you can use
-the ``with_bitcast`` decorator.
+We also provide an analogous class ``xlnstorch.autograd.LNSNonDifferentiableFunction``
+for operations that are not differentiable. This class is similar to ``LNSFunction``
+but does not require the implementation of backward or setup_context methods. This
+is useful since it handles the pre and post processing of inputs and outputs for you.
+For example,
 
-.. autosummary::
-    :toctree: generated
+.. code-block:: python
 
-    with_bitcast
+    import xlnstorch as xltorch
+
+    class MyNonDiffFunction(xltorch.autograd.LNSNonDifferentiableFunction):
+
+        @staticmethod
+        def forward(x, y): # x and y are int64 tensors
+            result = f(x, y)
+            return result # result is an int64 tensor
+
+    a = xltorch.lnstensor([1.0, 2.0], f=23)
+    b = xltorch.lnstensor([3.0, 4.0], f=23)
+    c = MyLNSNonDifferentiableFunction.apply(a, b) # we pass the LNSTensor objects to apply
 
 Fanout Functions
 ----------------

@@ -97,8 +97,8 @@ def _create_lns_op_func(
     else:
         func.__doc__ = (
             f"See docs for :py:func:`{torch_op.__module__}.{torch_op.__name__}` for "
-            f"parameter/return details. Typically, torch.Tensor arguments are the "
-            f"equivalent internal representations of LNStensors."
+            f"more information. LongTensor parameters/return types refer to int64 "
+            "internal representation tensors."
         )
 
     if signature is not None:

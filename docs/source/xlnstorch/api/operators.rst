@@ -1,4 +1,4 @@
-.. currentmodule:: xlnstorch.operators
+.. currentmodule:: xlnstorch.ops
 
 .. _operators-doc:
 
@@ -91,7 +91,7 @@ precision, and a filestem to store the table.
 
     import xlnstorch as xltorch
 
-    xltorch.operators.implementations.tab.get_table("filestem", f=10)
+    xltorch.operators.tab.get_table("filestem", f=10)
     xltorch.set_default_sbdb_implementation("tab")
 
     a = xltorch.lnstensor([1.0, 2.0], f=10)
@@ -121,177 +121,173 @@ and can be used as follows:
 Internal Operators
 -------------------
 
-These are the internal operations performed on ``torch.Tensor`` internal
-representations of ``LNSTensor`` objects related to arithmetic operations.
-These operations are useful if you want to implement your own custom
-operations. For the most part, these internal operator functions wrap the
-``apply_lns_op()`` function.
+For advanced users, we provide a set of internal operator functions.
+These are defined under the ``xlnstorch.ops.LNSOps`` object. Any types
+denoted by ``torch.LongTensor`` refer to inputs that should be the
+internal int64 representations of ``LNSTensor`` objects. Any types
+denoted by just ``torch.Tensor`` refer to standard PyTorch tensors
+(typically with dtype torch.float64 but this is context dependent).
+
+If you are implementing custom functionality, you may find these
+functions useful. However, for most users, the standard PyTorch
+operations (e.g., ``torch.add()``, ``torch.matmul()``, etc.) should
+be sufficient.
+
+One example of using ``LNSOps`` is:
+
+.. code-block:: python
+
+    import xlnstorch as xltorch
+    import torch
+
+    a = torch.tensor(0, dtype=torch.int64) # internal representation of 1.0
+    b = torch.tensor(1, dtype=torch.int64) # internal representation of -1.0
+
+    ops = xltorch.ops.LNSOps(xltorch.tensor_utils.get_base_from_precision(10))
+
+    c = ops.mul(a, b) # 1 i.e. the internal representation of -1.0
+
+Helper Methods
+~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/ops
+   :nosignatures:
+
+    LNSOps.to_lns
+    LNSOps.from_lns
+    LNSOps.zeros
+    LNSOps.zeros_like
+    LNSOps.ones
+    LNSOps.ones_like
+    LNSOps.full
+    LNSOps.full_like
+    LNSOps.sum_to_size
 
 Arithmetic Operations
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
+   :toctree: generated/ops
+   :nosignatures:
 
-    lns_add
-    lns_sub
-    lns_mul
-    lns_div
-    lns_neg
-    lns_abs
-    lns_sqrt
-    lns_square
-    lns_pow
-    lns_exp
-    lns_log
-    lns_reciprocal
-    lns_sign
-    lns_positive
-    lns_sum
-    lns_prod
-    lns_mean
-    lns_var
-    lns_matmul
-    lns_transpose
+    LNSOps.add
+    LNSOps.sub
+    LNSOps.mul
+    LNSOps.div
+    LNSOps.neg
+    LNSOps.abs
+    LNSOps.sqrt
+    LNSOps.square
+    LNSOps.pow
+    LNSOps.exp
+    LNSOps.log
+    LNSOps.reciprocal
+    LNSOps.sign
+    LNSOps.positive
+    LNSOps.sum
+    LNSOps.prod
+    LNSOps.mean
+    LNSOps.var
+    LNSOps.matmul
+    LNSOps.transpose
 
 Comparison Operations
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
+   :toctree: generated/ops
+   :nosignatures:
 
-    lns_equal
-    lns_eq
-    lns_ne
-    lns_ge
-    lns_gt
-    lns_le
-    lns_lt
-    lns_isclose
-    lns_allclose
-    lns_any
-    lns_all
-    lns_isin
-    lns_sort
-    lns_argsort
-    lns_kthvalue
-    lns_maximum
-    lns_minimum
+    LNSOps.equal
+    LNSOps.eq
+    LNSOps.ne
+    LNSOps.ge
+    LNSOps.gt
+    LNSOps.le
+    LNSOps.lt
+    LNSOps.isclose
+    LNSOps.allclose
+    LNSOps.any
+    LNSOps.all
+    LNSOps.isin
+    LNSOps.sort
+    LNSOps.argsort
+    LNSOps.kthvalue
+    LNSOps.maximum
+    LNSOps.minimum
+    LNSOps.max
+    LNSOps.argmax
+    LNSOps.min
+    LNSOps.argmin
+    LNSOps.clamp
 
 Miscellaneous Operations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
+   :toctree: generated/ops
+   :nosignatures:
 
-    lns_broadcast_to
-    lns_clone
-    lns_squeeze
-    lns_unsqueeze
-    lns_stack
-    lns_cat
-    lns_chunk
-    lns_where
-    lns_pad
+    LNSOps.broadcast_to
+    LNSOps.clone
+    LNSOps.squeeze
+    LNSOps.unsqueeze
+    LNSOps.stack
+    LNSOps.cat
+    LNSOps.chunk
+    LNSOps.where
+    LNSOps.pad
 
 Loss Operations
 ~~~~~~~~~~~~~~~
 
-Note that in practice, you should use the standard PyTorch
-loss classes, such as ``torch.nn.MSELoss``, which are already
-implemented to work with ``LNSTensor`` objects. However, if you
-want to implement your own custom loss functions, or want more
-control over the loss computation, you can use the following
-functions.
-
 .. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
+   :toctree: generated/ops
+   :nosignatures:
 
-    lns_mse_loss
-    lns_l1_loss
-    lns_binary_cross_entropy
-    lns_binary_cross_entropy_with_logits
-    lns_nll_loss
-    lns_poisson_nll_loss
-    lns_hinge_embedding_loss
-    lns_kl_div
-    lns_margin_ranking_loss
-    lns_gaussian_nll_loss
-    lns_huber_loss
-    lns_smooth_l1_loss
-    lns_cross_entropy
+    LNSOps.mse_loss
+    LNSOps.l1_loss
+    LNSOps.binary_cross_entropy
+    LNSOps.binary_cross_entropy_with_logits
+    LNSOps.nll_loss
+    LNSOps.poisson_nll_loss
+    LNSOps.hinge_embedding_loss
+    LNSOps.kl_div
+    LNSOps.margin_ranking_loss
+    LNSOps.gaussian_nll_loss
+    LNSOps.huber_loss
+    LNSOps.smooth_l1_loss
+    LNSOps.cross_entropy
 
 Activation Operations
 ~~~~~~~~~~~~~~~~~~~~~
 
-Again, in practice, you should use the standard PyTorch
-activation classes, such as ``torch.nn.ReLU``, which are
-already implemented to work with ``LNSTensor`` objects.
-
 .. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
+   :toctree: generated/ops
+   :nosignatures:
 
-    lns_relu
-    lns_relu_
-    lns_leaky_relu
-    lns_leaky_relu_
-    lns_threshold
-    lns_threshold_
-    lns_tanh
-    lns_sigmoid
-    lns_logsigmoid
-    lns_softmin
-    lns_softmax
-    lns_log_softmax
-    lns_hardtanh
-    lns_hardswish
-    lns_elu
-    lns_selu
-    lns_celu
-    lns_prelu
-    lns_rrelu
-    lns_glu
-    lns_hardshrink
-    lns_tanhshrink
-    lns_softsign
-    lns_softplus
-    lns_softshrink
-    lns_hardsigmoid
-    lns_silu
-
-Layer Operations
-~~~~~~~~~~~~~~~~
-
-As per usual, you should use the standard PyTorch
-layer classes, such as ``torch.nn.Linear``, which
-support ``LNSTensor`` objects.
-
-.. autosummary::
-    :toctree: generated/operators
-    :nosignatures:
-
-    lns_linear
-    lns_bilinear
-    lns_dropout
-    lns_dropout1d
-    lns_dropout2d
-    lns_dropout3d
-    lns_conv1d
-    lns_conv2d
-    lns_conv3d
-    lns_avg_pool1d
-    lns_avg_pool2d
-    lns_avg_pool3d
-    lns_adaptive_avg_pool1d
-    lns_adaptive_avg_pool2d
-    lns_adaptive_avg_pool3d
-    lns_batch_norm
-    lns_layer_norm
-    lns_max_pool1d
-    lns_max_pool2d
-    lns_max_pool3d
+    LNSOps.relu
+    LNSOps.leaky_relu
+    LNSOps.threshold
+    LNSOps.tanh
+    LNSOps.sigmoid
+    LNSOps.logsigmoid
+    LNSOps.softmin
+    LNSOps.softmax
+    LNSOps.log_softmax
+    LNSOps.hardtanh
+    LNSOps.hardswish
+    LNSOps.elu
+    LNSOps.selu
+    LNSOps.celu
+    LNSOps.prelu
+    LNSOps.rrelu
+    LNSOps.glu
+    LNSOps.hardshrink
+    LNSOps.tanhshrink
+    LNSOps.softsign
+    LNSOps.softplus
+    LNSOps.softshrink
+    LNSOps.hardsigmoid
+    LNSOps.silu
