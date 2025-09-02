@@ -21,7 +21,7 @@ if args.table:
     if args.precision is None and args.base is None:
         raise ValueError("Must specify precision or base with --table option")
     xlt.set_default_sbdb_implementation("tab")
-    xlt.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+    xlt.operators.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class BasicBlock(nn.LNSModule):
     def __init__(self, in_channels, out_channels, stride=1):

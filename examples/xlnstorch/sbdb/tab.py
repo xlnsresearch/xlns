@@ -28,7 +28,7 @@ make_heatmap = lambda: xltorch.viz.make_error_grid(
 # load the table for the xlnstorch and xlnsconf implementations
 xlns.xlnssetF(f)
 xlnsconf.tab_ufunc.get_table("tmp")
-xltorch.operators.implementations.tab.get_table("tmp", f=f)
+xltorch.operators.tab.get_table("tmp", f=f)
 
 bench = BinaryBench(torch.add, shape, lns=True, device="cpu")
 runner = BenchmarkRunner(bench, warmup=warmup, iters=iters)

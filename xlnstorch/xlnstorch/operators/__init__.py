@@ -12,7 +12,10 @@ from . import layer_ops
 from . import misc_ops
 
 from . import _C
-from . import implementations
+from .implementations import (
+    tab,
+    utah_tayco
+)
 
 def toggle_cpp_implementations(use_cpp: bool) -> None:
     """
@@ -40,5 +43,6 @@ def toggle_cpp_implementations(use_cpp: bool) -> None:
 
 __all__ = [
     "toggle_cpp_implementations",
-    "lns_sum_to_size",
+    "tab",
+    "utah_tayco",
 ]
