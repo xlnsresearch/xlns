@@ -37,3 +37,7 @@ class LNSOptimizer(torch.optim.Optimizer):
     def lns_param_groups(self):
         for group in self.param_groups:
             yield group, LNSOps(group["base"])
+
+    def lns_ops(self):
+        for group in self.param_groups:
+            yield LNSOps(group["base"])
