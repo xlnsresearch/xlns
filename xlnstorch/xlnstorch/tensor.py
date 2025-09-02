@@ -1160,7 +1160,7 @@ def zeros(
     properties. See `torch.zeros` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, LNS_ZERO.item(), dtype=torch.float64,
+        torch.full(size, LNS_ZERO.view(torch.float64).item(), dtype=torch.float64,
                    device=device, layout=layout,
                    requires_grad=requires_grad),
         f=f, b=b, from_lns=True,
@@ -1192,7 +1192,7 @@ def zeros_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, LNS_ZERO.item(), device=device, layout=layout, 
+        torch.full_like(input, LNS_ZERO.view(torch.float64).item(), device=device, layout=layout, 
                         dtype=torch.float64, memory_format=memory_format,
                         requires_grad=requires_grad),
         f=f, b=b, from_lns=True
@@ -1212,7 +1212,7 @@ def ones(
     properties. See `torch.ones` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, LNS_ONE.item(), dtype=torch.float64,
+        torch.full(size, LNS_ONE.view(torch.float64).item(), dtype=torch.float64,
                    device=device, layout=layout,
                    requires_grad=requires_grad),
         f=f, b=b, from_lns=True,
@@ -1244,7 +1244,7 @@ def ones_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, LNS_ONE.item(), device=device, layout=layout, 
+        torch.full_like(input, LNS_ONE.view(torch.float64).item(), device=device, layout=layout, 
                         dtype=torch.float64, memory_format=memory_format,
                         requires_grad=requires_grad),
         f=f, b=b, from_lns=True
