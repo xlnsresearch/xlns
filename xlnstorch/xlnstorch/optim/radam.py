@@ -1,16 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, LNS_ZERO, LNS_ONE, zeros_like
-from xlnstorch.operators import (
-    lns_equal,
-    lns_sub,
-    lns_mul,
-    lns_add,
-    lns_pow,
-    lns_div,
-    lns_sqrt,
-    lns_neg,
-    lns_gt,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE
 from . import LNSOptimizer
 
 class LNSRAdam(LNSOptimizer):
@@ -89,7 +78,7 @@ class LNSRAdam(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             beta1 = group["beta1"]
             beta2 = group["beta2"]
@@ -97,43 +86,43 @@ class LNSRAdam(LNSOptimizer):
             weight_decay = group["weight_decay"]
             decoupled_weight_decay = group["decoupled_weight_decay"]
             maximize = group["maximize"]
-            base = group["base"]
 
-            two = LNSTensor.get_internal_tensor(2.0, base)
-            four = LNSTensor.get_internal_tensor(4.0, base)
-            five = LNSTensor.get_internal_tensor(5.0, base)
+            two = ops.to_lns(2.0)
+            four = ops.to_lns(4.0)
+            five = ops.to_lns(5.0)
 
-            one_minus_beta1 = lns_sub(LNS_ONE, beta1, base)
-            one_minus_beta2 = lns_sub(LNS_ONE, beta2, base)
-            rho_inf = lns_sub(lns_div(two, lns_sub(LNS_ONE, beta2, base), base), LNS_ONE, base)
+            one_minus_beta1 = ops.sub(LNS_ONE, beta1)
+            one_minus_beta2 = ops.sub(LNS_ONE, beta2)
+            rho_inf = ops.sub(ops.div(two, ops.sub(LNS_ONE, beta2)), LNS_ONE)
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
                 state = self.state[p]
 
                 # 1. flip sign if we want to maximise
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
                 # 2. weight decay:
-                if not lns_equal(weight_decay, LNS_ZERO):
+                if not ops.equal(weight_decay, LNS_ZERO):
                     if decoupled_weight_decay:
                         # θ ← θ − γ λ θ
-                        wd_step = lns_mul(lr, weight_decay, base)
-                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step, base), base)
+                        wd_step = ops.mul(lr, weight_decay)
+                        data = ops.sub(data, ops.mul(data, wd_step))
                     else:
                         # g ← g + λ θ
-                        grad = lns_add(grad, lns_mul(weight_decay, p.data, base), base)
+                        grad = ops.add(grad, ops.mul(weight_decay, data))
 
                 if len(state) == 0:
                     # First time we see this parameter
                     state["step"] = torch.tensor(0, dtype=torch.int64)
-                    state["exp_avg"] = zeros_like(p, b=base)._lns # m_0
-                    state["exp_avg_sq"] = zeros_like(p, b=base)._lns # v_0
+                    state["exp_avg"] = ops.zeros_like(data) # m_0
+                    state["exp_avg_sq"] = ops.zeros_like(data) # v_0
 
                 # Retrieve running stats
                 t = state["step"] + 1
@@ -143,54 +132,50 @@ class LNSRAdam(LNSOptimizer):
                 # 3. first and second moments:
                 # m_t ← β_1*m_{t-1} + (1-β_1)*g_t
                 # v_t ← β_2*v_{t-1} + (1-β_2)*g_t^2
-                exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1, base),
-                    lns_mul(grad, one_minus_beta1, base),
-                    base
+                exp_avg = ops.add(
+                    ops.mul(exp_avg, beta1),
+                    ops.mul(grad, one_minus_beta1)
                 )
-                grad_sq = lns_mul(grad, grad, base)
-                exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2, base),
-                    lns_mul(grad_sq, one_minus_beta2, base),
-                    base
+                grad_sq = ops.mul(grad, grad)
+                exp_avg_sq = ops.add(
+                    ops.mul(exp_avg_sq, beta2),
+                    ops.mul(grad_sq, one_minus_beta2)
                 )
 
                 # 5. bias-corrected first moment: m'_t ← m_t / (1 - β_1^t)
-                beta1_pow = lns_pow(beta1, t, base)
-                one_minus_beta1_pow = lns_sub(LNS_ONE, beta1_pow, base)
-                exp_avg_hat = lns_div(exp_avg, one_minus_beta1_pow, base)
+                beta1_pow = ops.pow(beta1, t)
+                one_minus_beta1_pow = ops.sub(LNS_ONE, beta1_pow)
+                exp_avg_hat = ops.div(exp_avg, one_minus_beta1_pow)
 
                 # 6. ρ_t ← ρ_∞ - 2t*β_2^t / (1 - β_2^t)
-                t_lns = LNSTensor.get_internal_tensor(t, base)
-                beta2_pow = lns_pow(beta2, t, base)
-                one_minus_beta2_pow = lns_sub(LNS_ONE, beta2_pow, base)
-                corr_term = lns_div(
-                    lns_mul(two, lns_mul(t_lns, beta2_pow, base), base),
-                    one_minus_beta2_pow,
-                    base
+                t_lns = ops.to_lns(t)
+                beta2_pow = ops.pow(beta2, t)
+                one_minus_beta2_pow = ops.sub(LNS_ONE, beta2_pow)
+                corr_term = ops.div(
+                    ops.mul(two, ops.mul(t_lns, beta2_pow)),
+                    one_minus_beta2_pow
                 )
-                rho_t = lns_sub(rho_inf, corr_term, base)
+                rho_t = ops.sub(rho_inf, corr_term)
 
                 # 7. update rule based on ρ_t:
-                if lns_gt(rho_t, five):
+                if ops.gt(rho_t, five):
                     # l_t ← sqrt(1-β_2^t) / (sqrt(v_t) + ε)
-                    l_t = lns_div(
-                        lns_sqrt(one_minus_beta2_pow, base),
-                        lns_add(lns_sqrt(exp_avg_sq, base), eps, base),
-                        base
+                    l_t = ops.div(
+                        ops.sqrt(one_minus_beta2_pow),
+                        ops.add(ops.sqrt(exp_avg_sq), eps)
                     )
                     # r_t ← sqrt((ρ_t−4)(ρ_t−2)ρ_∞ / ((ρ_∞−4)(ρ_∞−2)ρ_t))
-                    r_t_num = lns_mul(rho_inf, lns_mul(lns_sub(rho_t, four, base), lns_sub(rho_t, two, base), base), base)
-                    r_t_den = lns_mul(rho_t, lns_mul(lns_sub(rho_inf, four, base), lns_sub(rho_inf, two, base), base), base)
-                    r_t = lns_sqrt(lns_div(r_t_num, r_t_den, base), base)
+                    r_t_num = ops.mul(rho_inf, ops.mul(ops.sub(rho_t, four), ops.sub(rho_t, two)))
+                    r_t_den = ops.mul(rho_t, ops.mul(ops.sub(rho_inf, four), ops.sub(rho_inf, two)))
+                    r_t = ops.sqrt(ops.div(r_t_num, r_t_den))
                     # step ← γ * m'_t * l_t * r_t
-                    step = lns_mul(lr, lns_mul(exp_avg_hat, lns_mul(l_t, r_t, base), base), base)
+                    step = ops.mul(lr, ops.mul(exp_avg_hat, ops.mul(l_t, r_t)))
                 else:
                     # step ← γ * m'_t
-                    step = lns_mul(lr, exp_avg_hat, base)
+                    step = ops.mul(lr, exp_avg_hat)
 
                 # 8. Update parameters: θ ← θ − step
-                p.data = lns_sub(p.data, step, base)
+                p.data = ops.sub(data, step).view(torch.float64)
 
                 state["step"] = t
                 state["exp_avg"] = exp_avg

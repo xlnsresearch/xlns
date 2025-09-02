@@ -1,19 +1,6 @@
 import torch
-from xlnstorch import LNSTensor, LNS_ONE, zeros_like
+from xlnstorch import LNS_ONE
 from . import LNSOptimizer
-from xlnstorch.operators import (
-    lns_mul,
-    lns_sum,
-    lns_div,
-    lns_sqrt,
-    lns_sub,
-    lns_pow,
-    lns_add,
-    lns_neg,
-    lns_clamp,
-    lns_sign,
-    lns_exp,
-)
 
 class LNSMadam(LNSOptimizer):
     r"""
@@ -134,7 +121,7 @@ class LNSMadam(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             beta = group["beta"]
             eps = group["eps"]
@@ -142,55 +129,53 @@ class LNSMadam(LNSOptimizer):
             g_bound = group["g_bound"]
             use_pow = group["use_pow"]
             maximize = group["maximize"]
-            base = group["base"]
 
             for p in group["params"]:
                 if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
 
                 state = self.state[p]
                 if len(state) == 0:
                     # First time we see this parameter
-                    rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p, base), base),
-                                           LNSTensor.get_internal_tensor(p.numel(), base),
-                                           base), base)
-                    state['max'] = lns_mul(p_scale, rms, base)
+                    rms = ops.sqrt(ops.div(ops.sum(ops.mul(data, data)),
+                                           ops.to_lns(data.numel())))
+                    state['max'] = ops.mul(p_scale, rms)
                     state['step'] = 0
-                    state['exp_avg_sq'] = zeros_like(p.data, b=base)._lns
+                    state['exp_avg_sq'] = ops.zeros_like(data)
 
                 # retrieve running stats
                 max = state['max']
                 step = state['step'] + 1
                 exp_avg_sq = state['exp_avg_sq']
 
-                bias_correction = lns_sub(LNS_ONE, lns_pow(beta, torch.tensor(step), base), base)
-                exp_avg_sq = lns_add(
-                    lns_mul(beta, exp_avg_sq, base),
-                    lns_mul(lns_sub(LNS_ONE, beta, base), lns_mul(grad, grad, base), base),
-                    base
+                bias_correction = ops.sub(LNS_ONE, ops.pow(beta, torch.tensor(step)))
+                exp_avg_sq = ops.add(
+                    ops.mul(beta, exp_avg_sq),
+                    ops.mul(ops.sub(LNS_ONE, beta), ops.mul(grad, grad))
                 )
-                corrected_exp_avg_sq = lns_add(lns_div(exp_avg_sq, bias_correction, base), eps, base)
+                corrected_exp_avg_sq = ops.add(ops.div(exp_avg_sq, bias_correction), eps)
 
-                g_normed = lns_div(grad, lns_sqrt(corrected_exp_avg_sq, base), base)
-                g_normed = lns_clamp(g_normed, lns_neg(g_bound), g_bound)
+                g_normed = ops.div(grad, ops.sqrt(corrected_exp_avg_sq))
+                g_normed = ops.clamp(g_normed, ops.neg(g_bound), g_bound)
 
                 if use_pow:
                     if maximize:
-                        exponent = lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base)
+                        exponent = ops.mul(lr, ops.mul(g_normed, ops.sign(data)))
                     else:
-                        exponent = lns_mul(lns_neg(lr), lns_mul(g_normed, lns_sign(p, base), base), base)
-                    p.data = lns_mul(p.data, lns_exp(exponent, base), base)
+                        exponent = ops.mul(ops.neg(lr), ops.mul(g_normed, ops.sign(data)))
+                    data = ops.mul(data, ops.exp(exponent))
 
                 else:
                     if maximize:
-                        mul_term = lns_add(LNS_ONE, lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base), base)
+                        mul_term = ops.add(LNS_ONE, ops.mul(lr, ops.mul(g_normed, ops.sign(data))))
                     else:
-                        mul_term = lns_sub(LNS_ONE, lns_mul(lr, lns_mul(g_normed, lns_sign(p, base), base), base), base)
-                    p.data = lns_mul(p.data, mul_term, base)
+                        mul_term = ops.sub(LNS_ONE, ops.mul(lr, ops.mul(g_normed, ops.sign(data))))
+                    data = ops.mul(data, mul_term)
 
-                p.data = lns_clamp(p.data, lns_neg(max), max)
+                p.data = ops.clamp(data, ops.neg(max), max).view(torch.float64)
 
                 # update running stats
                 state['step'] = step

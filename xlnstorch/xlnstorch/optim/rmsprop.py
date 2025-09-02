@@ -1,14 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
-from xlnstorch.operators import (
-    lns_equal,
-    lns_sub,
-    lns_mul,
-    lns_add,
-    lns_neg,
-    lns_sqrt,
-    lns_div,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE
 from . import LNSOptimizer
 
 class LNSRMSprop(LNSOptimizer):
@@ -90,7 +81,7 @@ class LNSRMSprop(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             alpha = group["alpha"]
             eps = group["eps"]
@@ -98,27 +89,27 @@ class LNSRMSprop(LNSOptimizer):
             momentum = group["momentum"]
             centered = group["centered"]
             maximize = group["maximize"]
-            base = group["base"]
 
-            one_minus_alpha = lns_sub(LNS_ONE, alpha, base)
+            one_minus_alpha = ops.sub(LNS_ONE, alpha)
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad  = p.grad # g_t
+                grad  = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
                 state = self.state[p]
 
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
-                if not lns_equal(weight_decay, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
+                if not ops.equal(weight_decay, LNS_ZERO):
+                    grad = ops.add(grad, ops.mul(data, weight_decay))
 
                 if len(state) == 0:
                     # First time we see this parameter
-                    zeros = zeros_like(p.data, b=base)._lns
+                    zeros = ops.zeros_like(data)
                     state["square_avg"] = zeros.clone()
                     state["grad_avg"] = zeros.clone()
                     state["momentum_buffer"] = zeros.clone()
@@ -129,47 +120,45 @@ class LNSRMSprop(LNSOptimizer):
                 buf = state["momentum_buffer"]
 
                 # 1. square_avg: v_t ← α v_{t-1} + (1-α) * g_t²
-                grad_sq = lns_mul(grad, grad, base)
-                square_avg = lns_add(
-                    lns_mul(square_avg, alpha, base), # α v_{t-1}
-                    lns_mul(grad_sq, one_minus_alpha, base), # (1-α) g_t²
-                    base
+                grad_sq = ops.mul(grad, grad)
+                square_avg = ops.add(
+                    ops.mul(square_avg, alpha), # α v_{t-1}
+                    ops.mul(grad_sq, one_minus_alpha), # (1-α) g_t²
                 )
 
                 # 2. centered:
                 # g_avg ← α g_avg + (1-α) * g_t
                 # v'_t = v_t - (g_avg) ^ 2
                 if centered:
-                    grad_avg = lns_add(
-                        lns_mul(grad_avg, alpha, base), # α g_avg
-                        lns_mul(grad, one_minus_alpha, base), # (1-α) * g_t
-                        base
+                    grad_avg = ops.add(
+                        ops.mul(grad_avg, alpha), # α g_avg
+                        ops.mul(grad, one_minus_alpha), # (1-α) * g_t
                     )
-                    avg_sq = lns_mul(grad_avg, grad_avg, base)
-                    denom = lns_sub(square_avg, avg_sq, base)
+                    avg_sq = ops.mul(grad_avg, grad_avg)
+                    denom = ops.sub(square_avg, avg_sq)
 
                 else:
                     denom = square_avg
 
                 # denominator: sqrt((v'_t) + ε)
-                denom = lns_add(lns_sqrt(denom, base), eps, base)
+                denom = ops.add(ops.sqrt(denom), eps)
 
                 # 3. momentum buffering:
-                if not lns_equal(momentum, LNS_ZERO):
+                if not ops.equal(momentum, LNS_ZERO):
                     # b_t ← μ b_{t-1} + g_t / denom
-                    buf_div = lns_div(grad, denom, base)
-                    buf = lns_add(lns_mul(buf, momentum, base), buf_div, base)
+                    buf_div = ops.div(grad, denom)
+                    buf = ops.add(ops.mul(buf, momentum), buf_div)
 
                     # θ ← θ - γ * b_t
-                    delta = lns_mul(buf, lr, base)
+                    delta = ops.mul(buf, lr)
 
                 else:
                     # θ ← θ - γ * g_t / denom
-                    step_dir = lns_div(grad, denom, base)
-                    delta = lns_mul(step_dir, lr, base)
+                    step_dir = ops.div(grad, denom)
+                    delta = ops.mul(step_dir, lr)
 
                 # 4. parameter update: θ ← θ - γ * b_t
-                p.data = lns_sub(p.data, delta, base)
+                p.data = ops.sub(data, delta).view(torch.float64)
 
                 state["square_avg"] = square_avg
                 state["grad_avg"] = grad_avg

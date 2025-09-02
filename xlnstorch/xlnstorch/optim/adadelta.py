@@ -1,14 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, zeros_like
-from xlnstorch.operators import (
-    lns_equal,
-    lns_sub,
-    lns_mul,
-    lns_add,
-    lns_neg,
-    lns_div,
-    lns_sqrt,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE
 from . import LNSOptimizer
 
 class LNSAdadelta(LNSOptimizer):
@@ -79,33 +70,33 @@ class LNSAdadelta(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             rho = group["rho"]
             eps = group["eps"]
             weight_decay = group["weight_decay"]
             maximize = group["maximize"]
-            base = group["base"]
 
-            one_minus_rho = lns_sub(LNS_ONE, rho, base)
+            one_minus_rho = ops.sub(LNS_ONE, rho)
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad # g_t
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
                 state = self.state[p]
 
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
-                if not lns_equal(weight_decay, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
+                if not ops.equal(weight_decay, LNS_ZERO):
+                    grad = ops.add(grad, ops.mul(data, weight_decay))
 
                 if len(state) == 0:
                     # First time we see this parameter
-                    zeros = zeros_like(p.data, b=base)._lns
+                    zeros = ops.zeros_like(data)
                     state["square_avg"] = zeros.clone()
                     state["acc_delta"] = zeros.clone()
 
@@ -114,30 +105,28 @@ class LNSAdadelta(LNSOptimizer):
                 acc_delta = state["acc_delta"] # E[Δ^2]
 
                 # 1. square average: v_t ← ρ v_{t-1} + (1-ρ) g_t^2
-                grad_sq = lns_mul(grad, grad, base)
-                square_avg = lns_add(
-                    lns_mul(square_avg, rho, base),
-                    lns_mul(grad_sq, one_minus_rho, base),
-                    base
+                grad_sq = ops.mul(grad, grad)
+                square_avg = ops.add(
+                    ops.mul(square_avg, rho),
+                    ops.mul(grad_sq, one_minus_rho)
                 )
 
                 # 2. Compute update: Δx_t ← sqrt((acc_delta + ε) / (square_avg + ε)) * g_t
-                numer = lns_add(acc_delta, eps, base)
-                denom = lns_add(square_avg, eps, base)
-                rms_ratio = lns_sqrt(lns_div(numer, denom, base), base)
-                delta = lns_mul(rms_ratio, grad, base)
+                numer = ops.add(acc_delta, eps)
+                denom = ops.add(square_avg, eps)
+                rms_ratio = ops.sqrt(ops.div(numer, denom))
+                delta = ops.mul(rms_ratio, grad)
 
                 # 3. accumulate delta: u_t ← ρ u_{t-1} + (1-ρ) Δx_t^2
-                delta_sq = lns_mul(delta, delta, base)
-                acc_delta = lns_add(
-                    lns_mul(acc_delta, rho, base),
-                    lns_mul(delta_sq, one_minus_rho, base),
-                    base
+                delta_sq = ops.mul(delta, delta)
+                acc_delta = ops.add(
+                    ops.mul(acc_delta, rho),
+                    ops.mul(delta_sq, one_minus_rho)
                 )
 
                 # 4. Parameter update: θ ← θ - η * Δx_t
-                step = lns_mul(delta, lr, base)
-                p.data = lns_sub(p.data, step, base)
+                step = ops.mul(delta, lr)
+                p.data = ops.sub(data, step).view(torch.float64)
 
                 state["square_avg"] = square_avg
                 state["acc_delta"] = acc_delta

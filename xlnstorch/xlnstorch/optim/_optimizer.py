@@ -15,7 +15,7 @@ class LNSOptimizer(torch.optim.Optimizer):
         """Clears the gradients of all optimized parameters."""
         for group in self.param_groups:
             for param in group['params']:
-                param._lns_grad._lns.fill_(LNS_ZERO)
+                param._lns_grad._lns.fill_(LNS_ZERO.view(torch.float64))
                 if param.grad is not None:
                     if set_to_none:
                         param.grad = None
@@ -24,7 +24,7 @@ class LNSOptimizer(torch.optim.Optimizer):
                             param.grad.detach_()
                         else:
                             param.grad.requires_grad_(False)
-                        param.grad.fill_(LNS_ZERO)
+                        param.grad.fill_(LNS_ZERO.view(torch.float64))
 
     def make_lnstensor_params(self, *param_names):
         """Convert specified parameters in defaults to LNS tensors."""
@@ -32,7 +32,7 @@ class LNSOptimizer(torch.optim.Optimizer):
             base = group["base"]
             for name in param_names:
                 if name in group:
-                    group[name] = lnstensor(group[name], b=base)._lns
+                    group[name] = lnstensor(group[name], b=base)._lns.view(torch.int64)
 
     def lns_param_groups(self):
         for group in self.param_groups:
