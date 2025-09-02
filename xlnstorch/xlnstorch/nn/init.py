@@ -1,6 +1,6 @@
 from typing import Optional, Union
 import torch
-from xlnstorch import LNSTensor, LNS_ZERO, LNS_ONE
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE
 
 __all__ = [
     "uniform_",
@@ -39,7 +39,8 @@ def uniform_(
         The input tensor filled with random numbers from the uniform distribution.
     """
     torch_tensor = torch.empty(tensor.shape).uniform_(a, b, generator=generator)
-    tensor._lns.data.copy_(LNSTensor.get_internal_tensor(torch_tensor, tensor.base))
+    lns_tensor = lnstensor(torch_tensor, b=tensor.base)
+    tensor._lns.data.copy_(lns_tensor._lns)
     return tensor
 
 def normal_(
@@ -68,7 +69,8 @@ def normal_(
         The input tensor filled with random numbers from the normal distribution.
     """
     torch_tensor = torch.normal(mean, std, size=tensor.shape, generator=generator)
-    tensor._lns.data.copy_(LNSTensor.get_internal_tensor(torch_tensor, tensor.base))
+    lns_tensor = lnstensor(torch_tensor, b=tensor.base)
+    tensor._lns.data.copy_(lns_tensor._lns)
     return tensor
 
 def zeros_(
@@ -87,7 +89,7 @@ def zeros_(
     LNSTensor
         The input tensor filled with zeros.
     """
-    tensor._lns.data.fill_(LNS_ZERO)
+    tensor._lns.data.fill_(LNS_ZERO.view(torch.float64))
     return tensor
 
 def ones_(
@@ -106,7 +108,7 @@ def ones_(
     LNSTensor
         The input tensor filled with ones.
     """
-    tensor._lns.data.fill_(LNS_ONE)
+    tensor._lns.data.fill_(LNS_ONE.view(torch.float64))
     return tensor
 
 def constant_(
@@ -130,7 +132,7 @@ def constant_(
             raise ValueError("If 'value' is an LNSTensor, it must be a scalar (i.e., have a single element).")
         value_lns = value._lns.data.item()
     else:
-        value_lns = LNSTensor.get_internal_tensor(value, tensor.base).data.item()
+        value_lns = lnstensor(value, b=tensor.base)._lns.data.item()
 
     tensor._lns.data.fill_(value_lns)
     return tensor
@@ -154,11 +156,11 @@ def eye_(
     if tensor.ndim != 2:
         raise ValueError("Input tensor must be 2-dimensional.")
 
-    tensor._lns.data.fill_(LNS_ZERO)
+    tensor._lns.data.fill_(LNS_ZERO.view(torch.float64))
 
     n = min(tensor.shape)
     for i in range(n):
-        tensor._lns.data[i, i] = LNS_ONE
+        tensor._lns.data[i, i] = LNS_ONE.view(torch.float64)
 
     return tensor
 
