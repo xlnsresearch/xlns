@@ -11,14 +11,9 @@ namespace lns {
     different bases.
     */
 
-    inline constexpr int64_t zero_int = (-(1LL << 53)) | 1LL;
-    inline constexpr double zero = static_cast<double>(zero_int);
-
+    inline constexpr int64_t zero_int = -9223372036854775807LL;
     inline constexpr int64_t one_int = 0LL;
-    inline constexpr double one = static_cast<double>(one_int);
-
     inline constexpr int64_t neg_one_int = 1LL;
-    inline constexpr double neg_one = static_cast<double>(neg_one_int);
 
 }
 

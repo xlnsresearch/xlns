@@ -36,7 +36,7 @@ Constants
 
     An int64 scalar tensor representing zero in the LNS. This is a
     special value defined to be
-    :math:`\left( -2^{52} \ll 1 \right) \mid 1 = -9007199254740991`.
+    :math:`-2^{63} + 1 = -9223372036854775807`.
     It is independent of an LNS object's base.
 
 .. data:: LNS_ZERO_FP
@@ -47,7 +47,7 @@ Constants
 
     An int64 scalar tensor representing positive infinity in the LNS.
     This is a special value defined to be
-    :math:`2^{53} = 9007199254740992`.
+    :math:`2^{63} - 2 = 9223372036854775806`.
     It is independent of an LNS object's base.
 
 .. data:: LNS_INF_FP
@@ -58,7 +58,7 @@ Constants
 
     An int64 scalar tensor representing negative infinity in the LNS.
     This is a special value defined to be
-    :math:`2^{53} - 1 = 9007199254740991`.
+    :math:`2^{63} - 1 = 9223372036854775807`.
     It is independent of an LNS object's base.
 
 .. data:: LNS_NEG_INF_FP
