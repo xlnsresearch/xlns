@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, lnstensor
+from xlnstorch import LNS_ZERO_FP, lnstensor
 from xlnstorch.ops import LNSOps
 
 class LNSOptimizer(torch.optim.Optimizer):
@@ -15,7 +15,7 @@ class LNSOptimizer(torch.optim.Optimizer):
         """Clears the gradients of all optimized parameters."""
         for group in self.param_groups:
             for param in group['params']:
-                param._lns_grad._lns.fill_(LNS_ZERO.view(torch.float64))
+                param._lns_grad._lns.fill_(LNS_ZERO_FP)
                 if param.grad is not None:
                     if set_to_none:
                         param.grad = None
@@ -24,7 +24,7 @@ class LNSOptimizer(torch.optim.Optimizer):
                             param.grad.detach_()
                         else:
                             param.grad.requires_grad_(False)
-                        param.grad.fill_(LNS_ZERO.view(torch.float64))
+                        param.grad.fill_(LNS_ZERO_FP)
 
     def make_lnstensor_params(self, *param_names):
         """Convert specified parameters in defaults to LNS tensors."""

@@ -1,6 +1,6 @@
 from typing import Optional, Union
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE
+from xlnstorch import LNSTensor, lnstensor, LNS_ZERO_FP, LNS_ONE_FP
 
 __all__ = [
     "uniform_",
@@ -89,7 +89,7 @@ def zeros_(
     LNSTensor
         The input tensor filled with zeros.
     """
-    tensor._lns.data.fill_(LNS_ZERO.view(torch.float64))
+    tensor._lns.data.fill_(LNS_ZERO_FP)
     return tensor
 
 def ones_(
@@ -108,7 +108,7 @@ def ones_(
     LNSTensor
         The input tensor filled with ones.
     """
-    tensor._lns.data.fill_(LNS_ONE.view(torch.float64))
+    tensor._lns.data.fill_(LNS_ONE_FP)
     return tensor
 
 def constant_(
@@ -156,11 +156,11 @@ def eye_(
     if tensor.ndim != 2:
         raise ValueError("Input tensor must be 2-dimensional.")
 
-    tensor._lns.data.fill_(LNS_ZERO.view(torch.float64))
+    tensor._lns.data.fill_(LNS_ZERO_FP)
 
     n = min(tensor.shape)
     for i in range(n):
-        tensor._lns.data[i, i] = LNS_ONE.view(torch.float64)
+        tensor._lns.data[i, i] = LNS_ONE_FP
 
     return tensor
 
