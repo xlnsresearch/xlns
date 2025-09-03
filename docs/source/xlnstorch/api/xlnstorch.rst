@@ -39,6 +39,10 @@ Constants
     :math:`\left( -2^{52} \ll 1 \right) \mid 1 = -9007199254740991`.
     It is independent of an LNS object's base.
 
+.. data:: LNS_ZERO_FP
+
+    A float64 scalar tensor sharing the same memory as LNS_ZERO.
+
 .. data:: LNS_INF
 
     An int64 scalar tensor representing positive infinity in the LNS.
@@ -46,12 +50,20 @@ Constants
     :math:`2^{53} = 9007199254740992`.
     It is independent of an LNS object's base.
 
+.. data:: LNS_INF_FP
+
+    A float64 scalar tensor sharing the same memory as LNS_INF.
+
 .. data:: LNS_NEG_INF
 
     An int64 scalar tensor representing negative infinity in the LNS.
     This is a special value defined to be
-    :math:`\left( 2^{53} \right) - 1 = 9007199254740991`.
+    :math:`2^{53} - 1 = 9007199254740991`.
     It is independent of an LNS object's base.
+
+.. data:: LNS_NEG_INF_FP
+
+    A float64 scalar tensor sharing the same memory as LNS_NEG_INF.
 
 .. data:: LNS_ONE
 
@@ -60,12 +72,20 @@ Constants
     is independent of base. It is defined to be
     :math:`\left( 0 \ll 1 \right) \mid 0 = 0`.
 
+.. data:: LNS_ONE_FP
+
+    A float64 scalar tensor sharing the same memory as LNS_ONE.
+
 .. data:: LNS_NEG_ONE
 
     An int64 scalar tensor representing one in the LNS. For any
     LNS base :math:`B`, we have :math:`\log_B(1) = 0`, so this value
     is independent of base. It is defined to be
     :math:`\left( 0 \ll 1 \right) \mid 1 = 1`.
+
+.. data:: LNS_NEG_ONE_FP
+
+    A float64 scalar tensor sharing the same memory as LNS_NEG_ONE.
 
 .. data:: CSRC_AVAILABLE
 
