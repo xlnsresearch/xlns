@@ -264,14 +264,14 @@ class LNSTensor:
     @property
     def lns(self) -> Tensor:
         """
-        The packed representation that **does** carry gradients.
+        The packed representation viewed as a ``torch.int64`` tensor.
 
         Returns
         -------
         torch.Tensor
-            Tensor of dtype ``float64`` holding the packed integers.
+            Tensor of dtype ``int64`` holding the packed integers.
         """
-        return self._lns
+        return self._lns.view(torch.int64)
 
     @property
     def value(self) -> Tensor:
@@ -283,7 +283,7 @@ class LNSTensor:
         torch.Tensor
             Real-valued tensor (dtype ``float64``).
         """
-        packed_int = self._lns.view(torch.int64)
+        packed_int = self.lns # view as int64
 
         exponent = (packed_int >> 1).to(torch.float64)
         sign = torch.where((packed_int & 1).bool(), -1.0, 1.0)
@@ -653,7 +653,7 @@ class LNSTensor:
                 else:
                     dtype = xl.xlnsnpb
 
-        lns_packed = self._lns.view(torch.int64).numpy()
+        lns_packed = self.lns.numpy() # .lns views to int64
 
         if dtype == xl.xlns:
             res = xl.xlns(0)
@@ -681,7 +681,7 @@ class LNSTensor:
 
         elif dtype == xl.xlnsnpv:
             res = xl.xlnsnp(0)
-            lns_full_prec = lnstensor(self, b=xl.xlnsB)._lns.view(torch.int64).numpy()
+            lns_full_prec = lnstensor(self, b=xl.xlnsB).lns.numpy() # .lns views to int64
             res.nd = np.where(lns_packed == LNS_ZERO.item(), xl.XLNS_MIN_INT, lns_full_prec)
             res = xl.xlnsnpv(res, setF=tensor_utils.get_precision_from_base(self.base))
 
@@ -1066,9 +1066,9 @@ def lnstensor(
 
     # xlnstorch.LNSTensor
     if isinstance(data, LNSTensor):
-        input_data = data.lns
+        input_data = data._lns
         from_lns = True
-        requires_grad = data.lns.requires_grad or requires_grad
+        requires_grad = data._lns.requires_grad or requires_grad
 
         if not torch.eq(data.base, base_tensor):
             with torch.no_grad():

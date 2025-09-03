@@ -332,7 +332,7 @@ class LNSNonDifferentiableFunction:
                 common_base = arg.base
 
             if isinstance(arg, tensor_module.LNSTensor):
-                internal_args.append(arg._lns.view(torch.int64))
+                internal_args.append(arg.lns) # .lns views to int64
             else:
                 internal_args.append(arg)
 

@@ -7,7 +7,7 @@ from . import LNSOptimizer
 
 def _lns(value: Union[float, LNSTensor], base) -> LNSTensor:
     if isinstance(value, LNSTensor):
-        return lnstensor(value, b=base)._lns.view(torch.int64)
+        return lnstensor(value, b=base).lns # .lns views to int64
     return LNSTensor.get_internal_tensor(value, base)
 
 def get_lr_bases(optimizer: LNSOptimizer) -> List[torch.Tensor]:

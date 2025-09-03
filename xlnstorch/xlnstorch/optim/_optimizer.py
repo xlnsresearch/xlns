@@ -32,7 +32,7 @@ class LNSOptimizer(torch.optim.Optimizer):
             base = group["base"]
             for name in param_names:
                 if name in group:
-                    group[name] = lnstensor(group[name], b=base)._lns.view(torch.int64)
+                    group[name] = lnstensor(group[name], b=base).lns # .lns views to int64
 
     def lns_param_groups(self):
         for group in self.param_groups:
