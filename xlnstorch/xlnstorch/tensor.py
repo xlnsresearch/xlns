@@ -1098,7 +1098,10 @@ def lnstensor(
 
     # numpy.ndarray
     elif isinstance(data, np.ndarray):
-        input_data = torch.from_numpy(data).to(torch.float64)
+        if from_lns:
+            input_data = torch.from_numpy(data).to(torch.int64).view(torch.float64)
+        else:
+            input_data = torch.from_numpy(data).to(torch.float64)
 
     # xlns scalar objects
     elif isinstance(data, (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb)):
@@ -1140,7 +1143,10 @@ def lnstensor(
     # Everything else (scalars, lists, tuples, etc.)
     else:
         try:
-            input_data = torch.tensor(data, dtype=torch.float64)
+            if from_lns:
+                input_data = torch.tensor(data, dtype=torch.int64).view(torch.float64)
+            else:
+                input_data = torch.tensor(data, dtype=torch.float64)
         except Exception as e:
             raise TypeError(f"Unsupported data type for LNSTensor: {type(data).__name__}") from e
 
