@@ -80,7 +80,7 @@ class LNSTensor:
         if from_lns:
             self._lns: Tensor = data
         else:
-            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, common_base=self.base)
+            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, self.base).view(torch.float64)
 
         self._lns.requires_grad_(requires_grad)
 
@@ -109,7 +109,7 @@ class LNSTensor:
 
         return result
 
-    def _inplace_copy(self, lns) -> LNSTensor:
+    def _inplace_copy(self, other: LNSTensor) -> LNSTensor:
         """
         Copies the internal packed representation ``lns`` to the current
         LNSTensor. This is used for inplace operations to handle gradients
@@ -117,9 +117,8 @@ class LNSTensor:
 
         Parameters
         ----------
-        lns : torch.Tensor
-            The packed representation to copy to the current LNSTensor.
-            Must have dtype ``float64`` and be a scalar tensor.
+        lns : LNSTensor
+            The other LNSTensor to copy from.
 
         Returns
         -------
@@ -127,8 +126,8 @@ class LNSTensor:
             The current LNSTensor with the internal packed representation
             updated to ``lns``.
         """
-        self._lns = lns
-        if lns.requires_grad:
+        self._lns = other._lns
+        if other.requires_grad:
             self.register_grad_hook()
 
         return self

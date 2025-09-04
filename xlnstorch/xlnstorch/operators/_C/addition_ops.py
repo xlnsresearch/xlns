@@ -49,7 +49,7 @@ def add(x, y, *, alpha=1, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _sum_cpp(ops, x, dim=None, keepdim=False):
     dim = [] if dim is None else ((dim,) if isinstance(dim, int) else dim)
@@ -96,7 +96,7 @@ def sum(x, dim=None, keepdim=False, *, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _matmul_cpp(ops, A, B):
     return xlnstorch.csrc.matmul_forward(A, B, ops.base)

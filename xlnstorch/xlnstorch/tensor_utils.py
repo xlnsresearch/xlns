@@ -177,34 +177,40 @@ def toggle_cpp_tensor_utils(use_cpp: bool) -> None:
 
 class FloatToLNS(LNSFunction):
 
+    _lnstensor_outputs = []
+
     @staticmethod
-    def forward(ops, x):
-        return float_to_lns_forward(x.to(torch.float64), ops.base)
+    def forward(ops, x, base):
+        return float_to_lns_forward(x.to(torch.float64), base)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):
-        pass
+        _, base = inputs
+        ctx.save_for_backward(base)
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        return float_to_lns_backward(grad_output, ops.base)
+        base, = ctx.saved_tensors
+        return float_to_lns_backward(grad_output, base)
 
 
 class LNSChangeBaseFunction(LNSFunction):
 
+    _lnstensor_outputs = []
+
     @staticmethod
-    def forward(ops, tensor, new_base):
-        return change_base_forward(tensor, ops.base, new_base)
+    def forward(ops, tensor, old_base, new_base):
+        return change_base_forward(tensor, old_base, new_base)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, outputs):
-        _, new_base = inputs
-        ctx.save_for_backward(new_base)
+        _, old_base, new_base = inputs
+        ctx.save_for_backward(old_base, new_base)
 
     @staticmethod
     def backward(ctx, ops, grad_output):
-        new_base, = ctx.saved_tensors
-        result = change_base_backward(grad_output, ops.base, new_base)
+        old_base, new_base = ctx.saved_tensors
+        result = change_base_backward(grad_output, old_base, new_base)
         return result, None
 
 
@@ -467,7 +473,7 @@ def align_lnstensor_bases(
         elif torch.eq(tensor.base, new_base):
             aligned_tensors.append(tensor)
         else:
-            aligned_tensor = LNSChangeBaseFunction.apply(tensor, new_base, common_base=tensor.base)
+            aligned_tensor = LNSChangeBaseFunction.apply(tensor, tensor.base, new_base)
             aligned_tensors.append(tensor_module.lnstensor(aligned_tensor, from_lns=True, b=new_base))
 
     return tuple(aligned_tensors)

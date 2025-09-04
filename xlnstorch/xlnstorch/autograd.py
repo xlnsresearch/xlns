@@ -261,15 +261,13 @@ class LNSFunction(torch.autograd.Function):
         del cls._lnstensor_inputs
 
         # get all output tensors and store them in a tuple
-        if isinstance(result, torch.Tensor):
-            result_tuple = (result,)
-        elif isinstance(result, (tuple, list)):
-            result_tuple = tuple(result)
+        if isinstance(result, (list, tuple)):
+            result_iter = result
         else:
-            result_tuple = tuple()
+            result_iter = [result]
 
         # we register hooks on each input to each output for gradient accumulation
-        for output in result_tuple:
+        for output in result_iter:
 
             # only register hooks for tensors outputs that require gradients
             if not (isinstance(output, torch.Tensor) and output.requires_grad):
@@ -297,7 +295,27 @@ class LNSFunction(torch.autograd.Function):
             # otherwise hooks are duplicated unnecessarily
             break
 
-        return result
+        if isinstance(result, torch.Tensor):
+            return _tensor_module.lnstensor(
+                result, from_lns=True, b=common_base
+            ) if cls._lnstensor_outputs is None or 0 in cls._lnstensor_outputs else result
+
+        elif isinstance(result, list):
+            return [
+                _tensor_module.lnstensor(result[i], from_lns=True, b=common_base)
+                if cls._lnstensor_outputs is None or i in cls._lnstensor_outputs else result[i]
+                for i in range(len(result))
+            ]
+
+        elif isinstance(result, tuple):
+            return tuple(
+                _tensor_module.lnstensor(result[i], from_lns=True, b=common_base)
+                if cls._lnstensor_outputs is None or i in cls._lnstensor_outputs else result[i]
+                for i in range(len(result))
+            )
+
+        else:
+            return result
 
 
 class LNSNonDifferentiableFunction:
@@ -338,9 +356,30 @@ class LNSNonDifferentiableFunction:
 
         ops = ops_module.LNSOps(common_base) if common_base is not None else None
         result = cls.forward(ops, *internal_args, **kwargs)
-        cast_result = _cast_values(result, cls._lnstensor_outputs, _cast_float64)
 
-        return cast_result
+        if isinstance(result, torch.Tensor):
+            return _tensor_module.lnstensor(
+                result, from_lns=True, b=common_base
+            ) if cls._lnstensor_outputs is None or 0 in cls._lnstensor_outputs else result
+
+        elif isinstance(result, list):
+            return [
+                _tensor_module.lnstensor(result[i], from_lns=True, b=common_base)
+                if cls._lnstensor_outputs is None or i in cls._lnstensor_outputs else result[i]
+                for i in range(len(result))
+            ]
+
+        elif isinstance(result, tuple):
+            return tuple(
+                _tensor_module.lnstensor(result[i], from_lns=True, b=common_base)
+                if cls._lnstensor_outputs is None or i in cls._lnstensor_outputs else result[i]
+                for i in range(len(result))
+            )
+
+        else:
+            return result
+
+        return wrapped_result
 
 
 # This file contains functions to analyze the autograd graph in PyTorch.
