@@ -38,7 +38,6 @@ class LNSAddCPPFunction(LNSFunction):
 
 @implements(torch.add, _add_cpp, key='default_cpp', default=CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
-
     x, y = format_lnstensor_operands(x, y)
 
     if alpha != 1:
@@ -120,11 +119,10 @@ class LNSMatmulCPPFunction(LNSFunction):
 
 @implements(torch.matmul, _matmul_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def matmul(A, B, *, out=None):
-
     A, B = format_lnstensor_operands(A, B)
     result = LNSMatmulCPPFunction.apply(A, B)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=A.base)
+    return result

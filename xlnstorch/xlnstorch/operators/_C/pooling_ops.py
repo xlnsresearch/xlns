@@ -42,12 +42,9 @@ class LNSAvgPool1dCPPFunction(LNSFunction):
 
 @implements(torch.nn.functional.avg_pool1d, _avg_pool1d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
-
     kernel_size = kernel_size[0] if isinstance(kernel_size, (list, tuple)) else kernel_size
     stride = stride[0] if isinstance(stride, (list, tuple)) else stride
     padding = padding[0] if isinstance(padding, (list, tuple)) else padding
 
-    result = LNSAvgPool1dCPPFunction.apply(x, kernel_size, stride, padding,
-                                           ceil_mode, count_include_pad)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAvgPool1dCPPFunction.apply(x, kernel_size, stride, padding,
+                                         ceil_mode, count_include_pad)

@@ -39,12 +39,9 @@ class LNSConv1dCPPFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv1d, _conv1d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv1dCPPFunction.apply(x, weight, bias, stride,
-                                        padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv1dCPPFunction.apply(x, weight, bias, stride,
+                                      padding, dilation, groups)
 
 def _conv2d_cpp(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     if isinstance(stride, int):
@@ -97,12 +94,9 @@ class LNSConv2dCPPFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv2d, _conv2d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv2dCPPFunction.apply(x, weight, bias, stride,
-                                        padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv2dCPPFunction.apply(x, weight, bias, stride,
+                                      padding, dilation, groups)
 
 def _conv3d_cpp(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     if isinstance(stride, int):
@@ -155,9 +149,6 @@ class LNSConv3dCPPFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv3d, _conv3d_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv3dCPPFunction.apply(x, weight, bias, stride,
-                                        padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv3dCPPFunction.apply(x, weight, bias, stride,
+                                      padding, dilation, groups)

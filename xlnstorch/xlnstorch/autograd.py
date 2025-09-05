@@ -379,8 +379,6 @@ class LNSNonDifferentiableFunction:
         else:
             return result
 
-        return wrapped_result
-
 
 # This file contains functions to analyze the autograd graph in PyTorch.
 # In particular, it can detect nodes with fan-out, i.e., nodes that have

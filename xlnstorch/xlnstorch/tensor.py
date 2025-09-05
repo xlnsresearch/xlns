@@ -127,6 +127,7 @@ class LNSTensor:
             updated to ``lns``.
         """
         self._lns = other._lns
+        self.base = other.base
         if other.requires_grad:
             self.register_grad_hook()
 
@@ -144,6 +145,7 @@ class LNSTensor:
         # If we reference self._lns here gradients will not be tracked correctly
         # for inplace operations (which modify self._lns)
         weak_self_lns = weakref.ref(self._lns)
+        self_base = self.base
 
         def _edge_hook(grad_inputs, grad_outputs):
             self_lns = weak_self_lns()
@@ -151,7 +153,7 @@ class LNSTensor:
                 return None # should not happen, but just in case
 
             if grad_inputs[index] is not None:
-                self_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+                self_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self_base)
 
         edge.node.register_hook(_edge_hook)
 
