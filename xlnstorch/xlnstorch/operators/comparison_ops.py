@@ -508,7 +508,7 @@ class LNSMaxFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, x, dim=None, keepdim=False):
-        return _sort(ops, x, dim, descending=True, stable=True)
+        return _max(ops, x, dim=dim, keepdim=keepdim)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, output):

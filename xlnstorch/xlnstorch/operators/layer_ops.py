@@ -1758,8 +1758,8 @@ def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=Fa
                                         momentum, eps, weight, bias, training)
 
     if training:
-        running_mean._inplace_copy(running_mean_cpy._lns)
-        running_var._inplace_copy(running_var_cpy._lns)
+        running_mean._inplace_copy(running_mean_cpy)
+        running_var._inplace_copy(running_var_cpy)
 
     return result
 
