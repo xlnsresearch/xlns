@@ -34,17 +34,15 @@ class LNSReLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.relu, _relu, "default", default=True)
 def relu(x, inplace=False):
-
     result = LNSReLUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.relu_, _relu, "default", default=True)
 def relu_(x):
-
     result = LNSReLUFunction.apply(x)
     return x._inplace_copy(result)
 
@@ -84,18 +82,16 @@ class LNSLeakyReLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.leaky_relu, _leaky_relu, "default", default=True)
 def leaky_relu(x, negative_slope=0.01, inplace=False):
-
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
     result = LNSLeakyReLUFunction.apply(x, negative_slope)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.leaky_relu_, _leaky_relu, "default", default=True)
 def leaky_relu_(x, negative_slope=0.01):
-
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
     result = LNSLeakyReLUFunction.apply(x, negative_slope)
 
@@ -127,7 +123,6 @@ class LNSThresholdFunction(LNSFunction):
 
 @implements(torch.nn.functional.threshold, _threshold, "default", default=True)
 def threshold(x, threshold, value, inplace=False):
-
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
     result = LNSThresholdFunction.apply(x, threshold, value)
 
@@ -135,11 +130,10 @@ def threshold(x, threshold, value, inplace=False):
         x._inplace_copy(result)
         return x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.threshold_, _threshold, "default", default=True)
 def threshold_(x, threshold, value):
-
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
     result = LNSThresholdFunction.apply(x, threshold, value)
 
@@ -181,9 +175,7 @@ class LNSTanhFunction(LNSFunction):
 @implements(torch.tanh, _tanh, "default", default=True)
 @implements(torch.nn.functional.tanh, _tanh, "default", default=True)
 def tanh(x):
-
-    result = LNSTanhFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSTanhFunction.apply(x)
 
 def _sigmoid(ops, x):
     x_fp = ops.from_lns(x)
@@ -221,9 +213,7 @@ class LNSSigmoidFunction(LNSFunction):
 @implements(torch.sigmoid, _sigmoid, "default", default=True)
 @implements(torch.nn.functional.sigmoid, _sigmoid, "default", default=True)
 def sigmoid(x):
-
-    result = LNSSigmoidFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSigmoidFunction.apply(x)
 
 def _logsigmoid(ops, x):
     x_fp = ops.from_lns(x)
@@ -261,9 +251,7 @@ class LNSLogSigmoidFunction(LNSFunction):
 
 @implements(torch.nn.functional.logsigmoid, _logsigmoid, "default", default=True)
 def logsigmoid(x):
-
-    result = LNSLogSigmoidFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLogSigmoidFunction.apply(x)
 
 def _softmin(ops, x, dim=None):
     neg_x = ops.neg(x)
@@ -304,9 +292,7 @@ class LNSSoftminFunction(LNSFunction):
 
 @implements(torch.nn.functional.softmin, _softmin, "default", default=True)
 def softmin(x, dim=None, _stacklevel=3, dtype=None):
-
-    result = LNSSoftminFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftminFunction.apply(x, dim)
 
 def _softmax(ops, x, dim=None):
     exp_x = ops.exp(x)
@@ -346,9 +332,7 @@ class LNSSoftmaxFunction(LNSFunction):
 
 @implements(torch.nn.functional.softmax, _softmax, "default", default=True)
 def softmax(x, dim=None, _stacklevel=3, dtype=None):
-
-    result = LNSSoftmaxFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftmaxFunction.apply(x, dim)
 
 def _log_softmax(ops, x, dim=None):
     if dim is None:
@@ -398,9 +382,7 @@ class LNSLogSoftmaxFunction(LNSFunction):
 
 @implements(torch.nn.functional.log_softmax, _log_softmax, "default", default=True)
 def log_softmax(x, dim=None, _stacklevel=3, dtype=None):
-
-    result = LNSLogSoftmaxFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLogSoftmaxFunction.apply(x, dim)
 
 def _hardtanh(ops, x, min_val, max_val):
     result = torch.where(ops.lt(x, min_val), min_val, x)
@@ -436,21 +418,18 @@ class LNSHardtanhFunction(LNSFunction):
 
 @implements(torch.nn.functional.hardtanh, _hardtanh, "default", default=True)
 def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
-
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
     result = LNSHardtanhFunction.apply(x, min_val, max_val)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.hardtanh_, _hardtanh, "default", default=True)
 def hardtanh_(x, min_val=-1.0, max_val=1.0):
-
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
     result = LNSHardtanhFunction.apply(x, min_val, max_val)
-
     return x._inplace_copy(result)
 
 def _hardswish(ops, x):
@@ -498,13 +477,12 @@ class LNSHardswishFunction(LNSFunction):
 
 @implements(torch.nn.functional.hardswish, _hardswish, "default", default=True)
 def hardswish(x, inplace=False):
-
     result = LNSHardswishFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _relu6(ops, x):
     six = ops.to_lns(6.0)
@@ -541,13 +519,12 @@ class LNSReLU6Function(LNSFunction):
 
 @implements(torch.nn.functional.relu6, _relu6, "default", default=True)
 def relu6(x, inplace=False):
-
     result = LNSReLU6Function.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _elu(ops, x, alpha):
     negative_part = ops.mul(alpha, ops.sub(ops.exp(x), LNS_ONE))
@@ -583,21 +560,18 @@ class LNSELUFunction(LNSFunction):
 
 @implements(torch.nn.functional.elu, _elu, "default", default=True)
 def elu(x, alpha=1.0, inplace=False):
-
     x, alpha = format_lnstensor_operands(x, alpha)
     result = LNSELUFunction.apply(x, alpha)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.elu_, _elu, "default", default=True)
 def elu_(ops, x, alpha=1.0):
-
     x, alpha = format_lnstensor_operands(x, alpha)
     result = LNSELUFunction.apply(x, alpha)
-
     return x._inplace_copy(result)
 
 def _selu(ops, x):
@@ -643,13 +617,12 @@ class LNSSELUFunction(LNSFunction):
 
 @implements(torch.nn.functional.selu, _selu, "default", default=True)
 def selu(x, inplace=False):
-
     result = LNSSELUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _celu(ops, x, alpha):
     negative_part = ops.mul(alpha, ops.sub(ops.exp(ops.div(x, alpha)), LNS_ONE))
@@ -685,14 +658,13 @@ class LNSCELUFunction(LNSFunction):
 
 @implements(torch.nn.functional.celu, _celu, "default", default=True)
 def celu(x, alpha=1.0, inplace=False):
-
     x, alpha = format_lnstensor_operands(x, alpha)
     result = LNSCELUFunction.apply(x, alpha)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _prelu(ops, x, a):
     negative_part = ops.mul(x, a)
@@ -743,14 +715,13 @@ class LNSPReLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.prelu, _prelu, "default", default=True)
 def prelu(x, a, inplace=False):
-
     x, a = format_lnstensor_operands(x, a)
     result = LNSPReLUFunction.apply(x, a)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _rrelu(ops, x, a):
     negative_part = ops.mul(x, a)
@@ -792,7 +763,6 @@ class LNSRReLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.rrelu, _rrelu, "default", default=True)
 def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
-
     if training:
         a = rand(*x.shape, b=x.base) * (upper - lower) + lower
     else:
@@ -803,11 +773,10 @@ def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.rrelu_, LNSRReLUFunction.forward, "default", default=True)
 def rrelu_(x, lower=1/8, upper=1/3, training=False):
-
     if training:
         a = rand(x.shape, b=x.base) * (upper - lower) + lower
     else:
@@ -867,8 +836,7 @@ class LNSGLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.glu, _glu, "default", default=True)
 def glu(x, dim=-1):
-    result = LNSGLUFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSGLUFunction.apply(x, dim)
 
 def _hardshrink(ops, x, lambd):
     result = torch.where(ops.le(ops.abs(x), lambd), LNS_ZERO, x)
@@ -902,11 +870,8 @@ class LNSHardshrinkFunction(LNSFunction):
 
 @implements(torch.nn.functional.hardshrink, _hardshrink, "default", default=True)
 def hardshrink(x, lambd=0.5):
-
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSHardshrinkFunction.apply(x, lambd)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSHardshrinkFunction.apply(x, lambd)
 
 def _tanhshrink(ops, x):
     tanh_x = ops.tanh(x)
@@ -943,9 +908,7 @@ class LNSTanhshrinkFunction(LNSFunction):
 
 @implements(torch.nn.functional.tanhshrink, _tanhshrink, "default", default=True)
 def tanhshrink(x):
-
-    result = LNSTanhshrinkFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSTanhshrinkFunction.apply(x)
 
 def _softsign(ops, x):
     abs_x = ops.abs(x)
@@ -983,9 +946,7 @@ class LNSSoftsignFunction(LNSFunction):
 
 @implements(torch.nn.functional.softsign, _softsign, "default", default=True)
 def softsign(x):
-
-    result = LNSSoftsignFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftsignFunction.apply(x)
 
 def _softplus(ops, x, beta, threshold):
     threshold_mask = ops.gt(ops.mul(x, beta), threshold)
@@ -1025,11 +986,8 @@ class LNSSoftplusFunction(LNSFunction):
 
 @implements(torch.nn.functional.softplus, _softplus, "default", default=True)
 def softplus(x, beta=1.0, threshold=20.0):
-
     x, beta, threshold = format_lnstensor_operands(x, beta, threshold)
-    result = LNSSoftplusFunction.apply(x, beta, threshold)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftplusFunction.apply(x, beta, threshold)
 
 def _softshrink(ops, x, lambd):
     result = torch.where(ops.gt(ops.abs(x), lambd),
@@ -1065,11 +1023,8 @@ class LNSSoftshrinkFunction(LNSFunction):
 
 @implements(torch.nn.functional.softshrink, _softshrink, "default", default=True)
 def softshrink(x, lambd=0.5):
-
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSSoftshrinkFunction.apply(x, lambd)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftshrinkFunction.apply(x, lambd)
 
 def _hardsigmoid(ops, x):
     three = ops.to_lns(3.0)
@@ -1108,13 +1063,12 @@ class LNSHardsigmoidFunction(LNSFunction):
 
 @implements(torch.nn.functional.hardsigmoid, _hardsigmoid, "default", default=True)
 def hardsigmoid(x, inplace=False):
-
     result = LNSHardsigmoidFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _silu(ops, x):
     sigmoid_x = ops.sigmoid(x)
@@ -1153,10 +1107,9 @@ class LNSSiLUFunction(LNSFunction):
 
 @implements(torch.nn.functional.silu, _silu, "default", default=True)
 def silu(x, inplace=False):
-
     result = LNSSiLUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
