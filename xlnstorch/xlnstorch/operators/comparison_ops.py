@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import LNS_ZERO, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction, LNSNonDifferentiableFunction
 
 class LNSEqualFunction(LNSNonDifferentiableFunction):
@@ -737,4 +737,4 @@ def clamp(x, min=None, max=None, *, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result

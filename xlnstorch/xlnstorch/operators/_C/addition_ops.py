@@ -1,6 +1,6 @@
 import torch
 import xlnstorch.csrc
-from xlnstorch import lnstensor, format_lnstensor_operands, implements, CSRC_AVAILABLE
+from xlnstorch import format_lnstensor_operands, implements, CSRC_AVAILABLE
 from xlnstorch.sbdb_dispatch_table import DEFAULT_SBDB_FUNC
 from xlnstorch.operators.addition_ops import _add
 from xlnstorch.autograd import LNSFunction

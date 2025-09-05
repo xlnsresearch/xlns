@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import LNS_ZERO, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 class LNSExpandFunction(LNSFunction):

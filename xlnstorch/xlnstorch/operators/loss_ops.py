@@ -1,7 +1,7 @@
 import math
 
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 def _mse_loss(ops, x, y, reduction='mean', weight=None):

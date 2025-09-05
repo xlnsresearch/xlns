@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, lnstensor, implements
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, implements
 from xlnstorch.autograd import LNSFunction
 
 def _neg(ops, x):

@@ -1,6 +1,6 @@
 import torch
 import xlnstorch.csrc
-from xlnstorch import lnstensor, implements, CSRC_AVAILABLE
+from xlnstorch import implements, CSRC_AVAILABLE
 from xlnstorch.autograd import LNSFunction
 
 def _avg_pool1d_cpp(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):

@@ -1,5 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements, implements_sbdb, sbdb
+from xlnstorch import LNS_ZERO, CSRC_AVAILABLE, format_lnstensor_operands, implements, implements_sbdb, sbdb
 from xlnstorch.autograd import LNSFunction
 
 @implements_sbdb('ideal', default=True)

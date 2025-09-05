@@ -1,6 +1,6 @@
 import torch
 import xlnstorch.csrc
-from xlnstorch import CSRC_AVAILABLE, lnstensor, format_lnstensor_operands, implements
+from xlnstorch import CSRC_AVAILABLE, format_lnstensor_operands, implements
 from xlnstorch.autograd import LNSFunction
 
 def _conv1d_cpp(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
