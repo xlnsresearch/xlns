@@ -1,14 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, zeros_like
-from xlnstorch.operators import (
-    lns_sub,
-    lns_mul,
-    lns_neg,
-    lns_sign,
-    lns_eq,
-    lns_minimum,
-    lns_maximum,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE
 from . import LNSOptimizer
 
 class LNSRprop(LNSOptimizer):
@@ -77,29 +68,29 @@ class LNSRprop(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             eta_m = group["eta_minus"]
             eta_p = group["eta_plus"]
             step_min = group["step_min"]
             step_max = group["step_max"]
             maximize = group["maximize"]
-            base = group["base"]
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad # g_t
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
 
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
                 state = self.state[p]
                 if len(state) == 0:
                     # First time we see this parameter
-                    state["prev_grad"] = zeros_like(p, b=base)._lns
+                    state["prev_grad"] = ops.zeros_like(data)
                     state["step_size"] = p.clone().fill_(lr)
 
                 # Retrieve running stats
@@ -107,26 +98,26 @@ class LNSRprop(LNSOptimizer):
                 step_size = state["step_size"]
 
                 # 1. Element-wise sign comparison of grads
-                grad_prod = lns_mul(prev_grad, grad, base)
-                grad_prod_sign = lns_sign(grad_prod, base)
+                grad_prod = ops.mul(prev_grad, grad)
+                grad_prod_sign = ops.sign(grad_prod)
 
                 # positive mask and clamp to Γ_max: η ← η * η_+
-                pos_mask = lns_eq(grad_prod_sign, LNS_ONE)
-                step_size_pos = lns_mul(step_size, eta_p, base)
-                step_size_pos = lns_minimum(step_size_pos, step_max, base)
+                pos_mask = ops.eq(grad_prod_sign, LNS_ONE)
+                step_size_pos = ops.mul(step_size, eta_p)
+                step_size_pos = ops.minimum(step_size_pos, step_max)
                 step_size = torch.where(pos_mask, step_size_pos, step_size)
 
                 # negative mask and clamp to Γ_min: η ← η * η_-
-                neg_mask = lns_eq(grad_prod_sign, LNS_NEG_ONE)
-                step_size_neg = lns_mul(step_size, eta_m, base)
-                step_size_neg = lns_maximum(step_size_neg, step_min, base)
+                neg_mask = ops.eq(grad_prod_sign, LNS_NEG_ONE)
+                step_size_neg = ops.mul(step_size, eta_m)
+                step_size_neg = ops.maximum(step_size_neg, step_min)
                 step_size = torch.where(neg_mask, step_size_neg, step_size)
                 grad = torch.where(neg_mask, LNS_ZERO, grad) # when flipped signs, ignore grad
 
                 # 2. Parameter update: θ ← θ - sign(g_t) * η_t
-                grad_sign = lns_sign(grad, base)
-                delta = lns_mul(step_size, grad_sign, base)
-                p.data = lns_sub(p.data, delta, base)
+                grad_sign = ops.sign(grad)
+                delta = ops.mul(step_size, grad_sign)
+                p.data = ops.sub(data, delta).view(torch.float64)
 
                 state["step_size"] = step_size
                 state["prev_grad"] = grad.clone()

@@ -1,15 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE, zeros_like
-from xlnstorch.operators import (
-    lns_equal,
-    lns_sub,
-    lns_mul,
-    lns_add,
-    lns_pow,
-    lns_div,
-    lns_sqrt,
-    lns_neg,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE
 from . import LNSOptimizer
 
 class LNSNAdam(LNSOptimizer):
@@ -95,7 +85,7 @@ class LNSNAdam(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             beta1 = group["beta1"]
             beta2 = group["beta2"]
@@ -104,40 +94,40 @@ class LNSNAdam(LNSOptimizer):
             momentum_decay = group["momentum_decay"]
             decoupled_weight_decay = group["decoupled_weight_decay"]
             maximize = group["maximize"]
-            base = group["base"]
 
-            half = LNSTensor.get_internal_tensor(0.5, base)
-            point_nine_six = LNSTensor.get_internal_tensor(0.96, base)
+            half = ops.to_lns(0.5)
+            point_nine_six = ops.to_lns(0.96)
 
-            one_minus_beta1 = lns_sub(LNS_ONE, beta1, base)
-            one_minus_beta2 = lns_sub(LNS_ONE, beta2, base)
+            one_minus_beta1 = ops.sub(LNS_ONE, beta1)
+            one_minus_beta2 = ops.sub(LNS_ONE, beta2)
 
             for p in group["params"]:
                 if p.grad is None:
                     continue
 
-                grad = p.grad # g_t
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
                 state = self.state[p]
 
                 # 1. flip sign if we want to maximise
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
                 # 2. weight decay:
-                if not lns_equal(weight_decay, LNS_ZERO):
+                if not ops.equal(weight_decay, LNS_ZERO):
                     if decoupled_weight_decay:
                         # θ ← θ − γ λ θ
-                        wd_step = lns_mul(lr, weight_decay, base)
-                        p.data  = lns_sub(p.data, lns_mul(p.data, wd_step, base), base)
+                        wd_step = ops.mul(lr, weight_decay)
+                        data  = ops.sub(data, ops.mul(data, wd_step))
                     else:
                         # g ← g + λ θ
-                        grad = lns_add(grad, lns_mul(weight_decay, p.data, base), base)
+                        grad = ops.add(grad, ops.mul(weight_decay, data))
 
                 if len(state) == 0:
                     # First time we see this parameter
                     state["step"] = torch.tensor(0, dtype=torch.int64)
-                    state["exp_avg"] = zeros_like(p.data, b=base)._lns # m_0
-                    state["exp_avg_sq"] = zeros_like(p.data, b=base)._lns # v_0
+                    state["exp_avg"] = ops.zeros_like(data) # m_0
+                    state["exp_avg_sq"] = ops.zeros_like(data) # v_0
                     state["mu_product"] = LNS_ONE.clone() # Πμ
 
                 # Retrieve running stats
@@ -147,47 +137,45 @@ class LNSNAdam(LNSOptimizer):
                 mu_product = state["mu_product"]
 
                 # 3. compute μ_t and μ_{t+1}
-                momentum_decay_fp = lnstensor(momentum_decay, from_lns=True, b=base).value
-                pow_t = lns_pow(point_nine_six, t * momentum_decay_fp, base)
-                pow_next = lns_pow(point_nine_six, (t + 1) * momentum_decay_fp, base)
-                mu = lns_mul(beta1, lns_sub(LNS_ONE, lns_mul(half, pow_t, base), base), base)
-                mu_next = lns_mul(beta1, lns_sub(LNS_ONE, lns_mul(half, pow_next, base), base), base)
+                momentum_decay_fp = ops.from_lns(momentum_decay)
+                pow_t = ops.pow(point_nine_six, t * momentum_decay_fp)
+                pow_next = ops.pow(point_nine_six, (t + 1) * momentum_decay_fp)
+                mu = ops.mul(beta1, ops.sub(LNS_ONE, ops.mul(half, pow_t)))
+                mu_next = ops.mul(beta1, ops.sub(LNS_ONE, ops.mul(half, pow_next)))
 
                 # 4. first and second moments:
                 # m_t ← β_1*m_{t-1} + (1 − β_1)*g_t
                 # v_t ← β_2*v_{t-1} + (1 − β_2)*g_t^2
-                exp_avg = lns_add(
-                    lns_mul(exp_avg, beta1, base),
-                    lns_mul(grad, one_minus_beta1, base),
-                    base
+                exp_avg = ops.add(
+                    ops.mul(exp_avg, beta1),
+                    ops.mul(grad, one_minus_beta1)
                 )
-                grad_sq = lns_mul(grad, grad, base)
-                exp_avg_sq = lns_add(
-                    lns_mul(exp_avg_sq, beta2, base),
-                    lns_mul(grad_sq, one_minus_beta2, base),
-                    base
+                grad_sq = ops.mul(grad, grad)
+                exp_avg_sq = ops.add(
+                    ops.mul(exp_avg_sq, beta2),
+                    ops.mul(grad_sq, one_minus_beta2)
                 )
 
                 # 5. calculate next mu product: Π_{t+1}
-                mu_product = lns_mul(mu_product, mu, base)
-                mu_product_next = lns_mul(mu_product, mu_next, base)
-                one_minus_mu_product = lns_sub(LNS_ONE, mu_product, base)
-                one_minus_mu_product_next = lns_sub(LNS_ONE, mu_product_next, base)
+                mu_product = ops.mul(mu_product, mu)
+                mu_product_next = ops.mul(mu_product, mu_next)
+                one_minus_mu_product = ops.sub(LNS_ONE, mu_product)
+                one_minus_mu_product_next = ops.sub(LNS_ONE, mu_product_next)
 
                 # 6. bias correction: m'_t = m_t / (1 − Π_{t+1})
-                term1 = lns_div(lns_mul(mu_next, exp_avg, base), one_minus_mu_product_next, base)
-                one_minus_mu_t = lns_sub(LNS_ONE, mu, base)
-                term2 = lns_div(lns_mul(one_minus_mu_t, grad, base), one_minus_mu_product, base)
-                exp_avg_hat = lns_add(term1, term2, base)
+                term1 = ops.div(ops.mul(mu_next, exp_avg), one_minus_mu_product_next)
+                one_minus_mu_t = ops.sub(LNS_ONE, mu)
+                term2 = ops.div(ops.mul(one_minus_mu_t, grad), one_minus_mu_product)
+                exp_avg_hat = ops.add(term1, term2)
 
                 # 7. bias correction: v'_t = v_t / (1 − β_2^t)
-                beta_2_pow = lns_pow(beta2, t, base)
-                exp_avg_sq_hat = lns_div(exp_avg_sq, lns_sub(LNS_ONE, beta_2_pow, base), base)
+                beta_2_pow = ops.pow(beta2, t)
+                exp_avg_sq_hat = ops.div(exp_avg_sq, ops.sub(LNS_ONE, beta_2_pow))
 
                 # 8. Update parameters: θ ← θ − γ*m' / (sqrt(v') + ε)
-                denom = lns_add(lns_sqrt(exp_avg_sq_hat, base), eps, base)
-                step_size = lns_mul(lr, lns_div(exp_avg_hat, denom, base), base)
-                p.data = lns_sub(p.data, step_size, base)
+                denom = ops.add(ops.sqrt(exp_avg_sq_hat), eps)
+                step_size = ops.mul(lr, ops.div(exp_avg_hat, denom))
+                p.data = ops.sub(data, step_size).view(torch.float64)
 
                 state["step"] = t
                 state["exp_avg"] = exp_avg

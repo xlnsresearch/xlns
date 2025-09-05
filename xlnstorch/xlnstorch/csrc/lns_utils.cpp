@@ -27,25 +27,26 @@ representation.
 torch::Tensor float_to_lns_forward(const torch::Tensor& x, const torch::Tensor& base) {
 
     const double inv_log_b = inv_log_base(base);
-    auto out = torch::empty_like(x, x.options().dtype(torch::kFloat64));
+    auto out = torch::empty_like(x, x.options().dtype(torch::kInt64));
 
     at::TensorIterator iter = at::TensorIteratorConfig()
         .add_output(out)
         .add_input(x)
+        .check_all_same_dtype(false)
         .build();
 
     at::native::cpu_kernel(
         iter,
-        [inv_log_b](double v) -> double {
+        [inv_log_b](double v) -> int64_t {
 
             if (v == 0.0) {
-                return lns::zero;
+                return lns::zero_int;
             }
 
             int64_t e = llround(std::log(std::abs(v)) * inv_log_b);
             int64_t s = (v < 0.0) ? 1LL : 0LL;
 
-            return static_cast<double>((e << 1) | s);
+            return (e << 1) | s;
 
         });
 
@@ -61,13 +62,12 @@ torch::Tensor float_to_lns_backward(const torch::Tensor& grad_output, const torc
     at::TensorIterator iter = at::TensorIteratorConfig()
         .add_output(out)
         .add_input(grad_output)
+        .check_all_same_dtype(false)
         .build();
 
     at::native::cpu_kernel(
         iter,
-        [b](double grad) -> double {
-
-            int64_t p = static_cast<int64_t>(grad);
+        [b](int64_t p) -> double {
 
             if ((p | 1LL) == lns::zero_int) {
                 return 0.0;
@@ -97,7 +97,7 @@ just its representation.
 torch::Tensor change_base_forward(const torch::Tensor& x, const torch::Tensor& old_base, const torch::Tensor& new_base) {
 
     const double ratio_log_b = ratio_log_base(old_base, new_base);
-    auto out = torch::empty_like(x, x.options().dtype(torch::kFloat64));
+    auto out = torch::empty_like(x, x.options().dtype(torch::kInt64));
 
     at::TensorIterator iter = at::TensorIteratorConfig()
         .add_output(out)
@@ -106,19 +106,17 @@ torch::Tensor change_base_forward(const torch::Tensor& x, const torch::Tensor& o
 
     at::native::cpu_kernel(
         iter,
-        [ratio_log_b](double v) -> double {
-
-            int64_t p = static_cast<int64_t>(v);
+        [ratio_log_b](int64_t p) -> int64_t {
 
             if ((p | 1LL) == lns::zero_int) {
-                return lns::zero;
+                return lns::zero_int;
             }
 
             double exponent = static_cast<double>(p >> 1);
             int64_t exponent_new = llround(exponent * ratio_log_b);
             int64_t sign_bit = p & 1LL;
 
-            return static_cast<double>((exponent_new << 1) | sign_bit);
+            return (exponent_new << 1) | sign_bit;
 
         });
 
@@ -129,7 +127,7 @@ torch::Tensor change_base_forward(const torch::Tensor& x, const torch::Tensor& o
 torch::Tensor change_base_backward(const torch::Tensor& grad_output, const torch::Tensor& old_base, const torch::Tensor& new_base) {
 
     const double ratio_log_b = ratio_log_base(new_base, old_base);
-    auto out = torch::empty_like(grad_output, grad_output.options().dtype(torch::kFloat64));
+    auto out = torch::empty_like(grad_output, grad_output.options().dtype(torch::kInt64));
 
     at::TensorIterator iter = at::TensorIteratorConfig()
         .add_output(out)
@@ -138,19 +136,17 @@ torch::Tensor change_base_backward(const torch::Tensor& grad_output, const torch
 
     at::native::cpu_kernel(
         iter,
-        [ratio_log_b](double grad) -> double {
-
-            int64_t p = static_cast<int64_t>(grad);
+        [ratio_log_b](int64_t p) -> int64_t {
 
             if ((p | 1LL) == lns::zero_int) {
-                return lns::zero;
+                return lns::zero_int;
             }
 
             double exponent = static_cast<double>(p >> 1);
             int64_t exponent_new = llround(exponent * ratio_log_b);
             int64_t sign_bit = p & 1LL;
 
-            return static_cast<double>((exponent_new << 1) | sign_bit);
+            return (exponent_new << 1) | sign_bit;
 
         });
 

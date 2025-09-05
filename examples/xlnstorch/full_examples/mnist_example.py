@@ -19,7 +19,7 @@ if args.table:
     if args.precision is None and args.base is None:
         raise ValueError("Must specify precision or base with --table option")
     xltorch.set_default_sbdb_implementation("tab")
-    xltorch.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+    xltorch.operators.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class LNSNet(xltorch.nn.LNSModule):
 

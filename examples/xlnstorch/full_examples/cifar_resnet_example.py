@@ -21,22 +21,42 @@ if args.table:
     if args.precision is None and args.base is None:
         raise ValueError("Must specify precision or base with --table option")
     xlt.set_default_sbdb_implementation("tab")
-    xlt.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+    xlt.operators.tab.get_table("tmp", f=args.precision, b=args.base)
 
 class BasicBlock(nn.LNSModule):
     def __init__(self, in_channels, out_channels, stride=1):
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.LNSConv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.LNSBatchNorm2d(out_channels)
+        self.conv1 = nn.LNSConv2d(in_channels, out_channels, kernel_size=3,
+                                  stride=stride, padding=1, bias=False,
+                                  weight_f=args.precision, weight_b=args.base)
+        self.bn1 = nn.LNSBatchNorm2d(out_channels,
+                                     running_mean_f=args.precision, running_mean_b=args.base,
+                                     running_var_f=args.precision, running_var_b=args.base,
+                                     weight_f=args.precision, weight_b=args.base,
+                                     bias_f=args.precision, bias_b=args.base)
         self.relu = torch.nn.ReLU(inplace=True)
-        self.conv2 = nn.LNSConv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.LNSBatchNorm2d(out_channels)
+        self.conv2 = nn.LNSConv2d(out_channels, out_channels, kernel_size=3,
+                                  stride=1, padding=1, bias=False,
+                                  weight_f=args.precision, weight_b=args.base,
+                                  bias_f=args.precision, bias_b=args.base)
+        self.bn2 = nn.LNSBatchNorm2d(out_channels,
+                                     running_mean_f=args.precision, running_mean_b=args.base,
+                                     running_var_f=args.precision, running_var_b=args.base,
+                                     weight_f=args.precision, weight_b=args.base,
+                                     bias_f=args.precision, bias_b=args.base)
 
         self.shortcut = nn.LNSSequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.LNSSequential(
-                nn.LNSConv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.LNSBatchNorm2d(out_channels)
+                nn.LNSConv2d(in_channels, out_channels,
+                             kernel_size=1, stride=stride, bias=False,
+                             weight_f=args.precision, weight_b=args.base,
+                             bias_f=args.precision, bias_b=args.base),
+                nn.LNSBatchNorm2d(out_channels,
+                                  running_mean_f=args.precision, running_mean_b=args.base,
+                                  running_var_f=args.precision, running_var_b=args.base,
+                                  weight_f=args.precision, weight_b=args.base,
+                                  bias_f=args.precision, bias_b=args.base)
             )
 
     def forward(self, x):
@@ -53,8 +73,15 @@ class ResNet18(nn.LNSModule):
     def __init__(self, num_classes=10):
         super(ResNet18, self).__init__()
         self.in_channels = 64
-        self.conv1 = nn.LNSConv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.LNSBatchNorm2d(64)
+        self.conv1 = nn.LNSConv2d(3, 64, kernel_size=3,
+                                  stride=1, padding=1, bias=False,
+                                  weight_f=args.precision, weight_b=args.base,
+                                  bias_f=args.precision, bias_b=args.base)
+        self.bn1 = nn.LNSBatchNorm2d(64,
+                                     running_mean_f=args.precision, running_mean_b=args.base,
+                                     running_var_f=args.precision, running_var_b=args.base,
+                                     weight_f=args.precision, weight_b=args.base,
+                                     bias_f=args.precision, bias_b=args.base)
         self.relu = torch.nn.ReLU(inplace=True)
         self.maxpool = nn.LNSMaxPool2d(kernel_size=3, stride=2, padding=1)
 
@@ -64,7 +91,9 @@ class ResNet18(nn.LNSModule):
         self.layer4 = self._make_layer(BasicBlock, 512, 2, stride=2)
 
         self.avgpool = nn.LNSAdaptiveAvgPool2d((1, 1))
-        self.fc = nn.LNSLinear(512, num_classes)
+        self.fc = nn.LNSLinear(512, num_classes,
+                               weight_f=args.precision, weight_b=args.base,
+                               bias_f=args.precision, bias_b=args.base)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -142,6 +171,8 @@ for epoch in range(1, num_epochs + 1):
     train_correct = 0
     train_total = 0
 
+    batch_group_start = time.time()
+
     for i, (data, target) in enumerate(train_loader):
 
         optimizer.zero_grad()
@@ -161,7 +192,9 @@ for epoch in range(1, num_epochs + 1):
         batch_correct = (predicted == target).sum().item()
         train_correct += batch_correct
 
-        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct.")
+        batch_group_end = time.time()
+        print(f"Batch {i+1}: {batch_correct}/{target.size(0)} correct ({(batch_group_end - batch_group_start):.2f}s).")
+        batch_group_start = time.time()
 
     # Calculate average loss and accuracy for the epoch
     train_epoch_loss = running_train_loss / train_total

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch import Tensor
 import xlns as xl
-from xlnstorch import LNS_ZERO, LNS_ONE, get_default_implementation_key, get_implementation
+from xlnstorch import LNS_ZERO, LNS_ZERO_FP, LNS_ONE_FP, get_default_implementation_key, get_implementation
 import xlnstorch.tensor_utils as tensor_utils
 
 _xlns_types = (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb, xl.xlnsnp, xl.xlnsnpv, xl.xlnsnpb)
@@ -80,7 +80,7 @@ class LNSTensor:
         if from_lns:
             self._lns: Tensor = data
         else:
-            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, self.base)
+            self._lns: Tensor = tensor_utils.FloatToLNS.apply(data, self.base).view(torch.float64)
 
         self._lns.requires_grad_(requires_grad)
 
@@ -109,7 +109,7 @@ class LNSTensor:
 
         return result
 
-    def _inplace_copy(self, lns) -> LNSTensor:
+    def _inplace_copy(self, other: LNSTensor) -> LNSTensor:
         """
         Copies the internal packed representation ``lns`` to the current
         LNSTensor. This is used for inplace operations to handle gradients
@@ -117,9 +117,8 @@ class LNSTensor:
 
         Parameters
         ----------
-        lns : torch.Tensor
-            The packed representation to copy to the current LNSTensor.
-            Must have dtype ``float64`` and be a scalar tensor.
+        lns : LNSTensor
+            The other LNSTensor to copy from.
 
         Returns
         -------
@@ -127,8 +126,9 @@ class LNSTensor:
             The current LNSTensor with the internal packed representation
             updated to ``lns``.
         """
-        self._lns = lns
-        if lns.requires_grad:
+        self._lns = other._lns
+        self.base = other.base
+        if other.requires_grad:
             self.register_grad_hook()
 
         return self
@@ -145,6 +145,7 @@ class LNSTensor:
         # If we reference self._lns here gradients will not be tracked correctly
         # for inplace operations (which modify self._lns)
         weak_self_lns = weakref.ref(self._lns)
+        self_base = self.base
 
         def _edge_hook(grad_inputs, grad_outputs):
             self_lns = weak_self_lns()
@@ -152,7 +153,7 @@ class LNSTensor:
                 return None # should not happen, but just in case
 
             if grad_inputs[index] is not None:
-                self_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self.base)
+                self_lns._lns_grad += lnstensor(grad_inputs[index], from_lns=True, b=self_base)
 
         edge.node.register_hook(_edge_hook)
 
@@ -259,19 +260,19 @@ class LNSTensor:
             The internal packed representation of the LNSTensor for a
             requested floating point value and base.
         """
-        return lnstensor(fp_value, b=base)._lns
+        return lnstensor(fp_value, b=base)._lns.view(torch.int64)
 
     @property
     def lns(self) -> Tensor:
         """
-        The packed representation that **does** carry gradients.
+        The packed representation viewed as a ``torch.int64`` tensor.
 
         Returns
         -------
         torch.Tensor
-            Tensor of dtype ``float64`` holding the packed integers.
+            Tensor of dtype ``int64`` holding the packed integers.
         """
-        return self._lns
+        return self._lns.view(torch.int64)
 
     @property
     def value(self) -> Tensor:
@@ -283,7 +284,7 @@ class LNSTensor:
         torch.Tensor
             Real-valued tensor (dtype ``float64``).
         """
-        packed_int = self._lns.to(torch.int64)
+        packed_int = self.lns # view as int64
 
         exponent = (packed_int >> 1).to(torch.float64)
         sign = torch.where((packed_int & 1).bool(), -1.0, 1.0)
@@ -381,7 +382,7 @@ class LNSTensor:
         """
         Repeats the tensor along the specified dimensions.
         """
-        result = tensor_utils.LNSRepeatFunction.apply(self, self.base, repeats)
+        result = tensor_utils.LNSRepeatFunction.apply(self, repeats)
         return lnstensor(result, from_lns=True, b=self.base)
 
     def item(self) -> float:
@@ -653,7 +654,7 @@ class LNSTensor:
                 else:
                     dtype = xl.xlnsnpb
 
-        lns_packed = self._lns.to(torch.int64).numpy()
+        lns_packed = self.lns.numpy() # .lns views to int64
 
         if dtype == xl.xlns:
             res = xl.xlns(0)
@@ -681,7 +682,7 @@ class LNSTensor:
 
         elif dtype == xl.xlnsnpv:
             res = xl.xlnsnp(0)
-            lns_full_prec = lnstensor(self, b=xl.xlnsB)._lns.to(torch.int64).numpy()
+            lns_full_prec = lnstensor(self, b=xl.xlnsB).lns.numpy() # .lns views to int64
             res.nd = np.where(lns_packed == LNS_ZERO.item(), xl.XLNS_MIN_INT, lns_full_prec)
             res = xl.xlnsnpv(res, setF=tensor_utils.get_precision_from_base(self.base))
 
@@ -1066,19 +1067,19 @@ def lnstensor(
 
     # xlnstorch.LNSTensor
     if isinstance(data, LNSTensor):
-        input_data = data.lns
+        input_data = data._lns
         from_lns = True
-        requires_grad = data.lns.requires_grad or requires_grad
+        requires_grad = data._lns.requires_grad or requires_grad
 
         if not torch.eq(data.base, base_tensor):
             with torch.no_grad():
-                packed_int = input_data.to(torch.int64)
+                packed_int = input_data.view(torch.int64)
                 sign_bit = packed_int & 1
                 exponent = (packed_int >> 1).to(torch.float64)
 
                 exponent_new = exponent * torch.log(data.base) / torch.log(base_tensor)
                 new_packed_int = (exponent_new.round().to(torch.int64) << 1) | sign_bit
-                input_data = new_packed_int.to(torch.float64)
+                input_data = new_packed_int.view(torch.float64)
                 input_data = torch.where(torch.eq(data, LNS_ZERO), LNS_ZERO, input_data)
 
     # torch.Tensor
@@ -1086,12 +1087,22 @@ def lnstensor(
         requires_grad = data.requires_grad
         if detach and not from_lns:
             input_data = data.detach().to(torch.float64)
+        elif from_lns:
+            if data.dtype == torch.float64:
+                input_data = data
+            elif data.dtype == torch.int64:
+                input_data = data.view(torch.float64)
+            else:
+                raise TypeError("When from_lns is True, data must be of dtype float64 or int64.")
         else:
             input_data = data.to(torch.float64)
 
     # numpy.ndarray
     elif isinstance(data, np.ndarray):
-        input_data = torch.from_numpy(data).to(torch.float64)
+        if from_lns:
+            input_data = torch.from_numpy(data).to(torch.int64).view(torch.float64)
+        else:
+            input_data = torch.from_numpy(data).to(torch.float64)
 
     # xlns scalar objects
     elif isinstance(data, (xl.xlns, xl.xlnsud, xl.xlnsv, xl.xlnsb)):
@@ -1107,7 +1118,7 @@ def lnstensor(
                 log_part = data.x
 
             packed_int = (int(round(log_part)) << 1) | data.s
-            input_data = torch.tensor(packed_int, dtype=torch.float64)
+            input_data = torch.tensor(packed_int, dtype=torch.int64).view(torch.float64)
 
         from_lns = True
 
@@ -1126,14 +1137,17 @@ def lnstensor(
         packed_int = (np.int64(np.round(log_part)) << 1) | data_s
         input_data = torch.tensor(
             np.where(data.nd == xl.XLNS_MIN_INT, LNS_ZERO, packed_int),
-            dtype=torch.float64
-        )
+            dtype=torch.int64
+        ).view(torch.float64)
         from_lns = True
 
     # Everything else (scalars, lists, tuples, etc.)
     else:
         try:
-            input_data = torch.tensor(data, dtype=torch.float64)
+            if from_lns:
+                input_data = torch.tensor(data, dtype=torch.int64).view(torch.float64)
+            else:
+                input_data = torch.tensor(data, dtype=torch.float64)
         except Exception as e:
             raise TypeError(f"Unsupported data type for LNSTensor: {type(data).__name__}") from e
 
@@ -1153,7 +1167,7 @@ def zeros(
     properties. See `torch.zeros` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, LNS_ZERO.item(), dtype=torch.float64,
+        torch.full(size, LNS_ZERO_FP.item(), dtype=torch.float64,
                    device=device, layout=layout,
                    requires_grad=requires_grad),
         f=f, b=b, from_lns=True,
@@ -1185,7 +1199,7 @@ def zeros_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, LNS_ZERO.item(), device=device, layout=layout, 
+        torch.full_like(input, LNS_ZERO_FP.item(), device=device, layout=layout, 
                         dtype=torch.float64, memory_format=memory_format,
                         requires_grad=requires_grad),
         f=f, b=b, from_lns=True
@@ -1205,7 +1219,7 @@ def ones(
     properties. See `torch.ones` for more details on the parameters.
     """
     result = lnstensor(
-        torch.full(size, LNS_ONE.item(), dtype=torch.float64,
+        torch.full(size, LNS_ONE_FP.item(), dtype=torch.float64,
                    device=device, layout=layout,
                    requires_grad=requires_grad),
         f=f, b=b, from_lns=True,
@@ -1237,7 +1251,7 @@ def ones_like(
         input = input._lns
 
     return lnstensor(
-        torch.full_like(input, LNS_ONE.item(), device=device, layout=layout, 
+        torch.full_like(input, LNS_ONE_FP.item(), device=device, layout=layout, 
                         dtype=torch.float64, memory_format=memory_format,
                         requires_grad=requires_grad),
         f=f, b=b, from_lns=True

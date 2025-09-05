@@ -1,318 +1,365 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, zeros, ones
-from xlnstorch.autograd import LNSFunction
-from . import (
-    lns_sub,
-    lns_abs,
-    lns_add,
-    lns_mul,
-    lns_le,
-    lns_isclose,
-    lns_gt,
-    lns_lt,
-    lns_eq,
-    lns_div,
-    lns_sum_to_size,
-)
+from xlnstorch import LNS_ZERO, format_lnstensor_operands, implements
+from xlnstorch.autograd import LNSFunction, LNSNonDifferentiableFunction
 
-def _lns_equal(x, y):
-    return torch.equal(x, y)
+class LNSEqualFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.equal, _lns_equal, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y):
+        return torch.equal(x, y)
+
+@implements(torch.equal, LNSEqualFunction.forward, "default", default=True)
 def equal(x, y):
     x, y = format_lnstensor_operands(x, y)
-    return _lns_equal(x._lns, y._lns)
+    return LNSEqualFunction.apply(x, y)
 
-def _lns_eq(x, y):
-    return torch.eq(x, y)
+class LNSEqFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.eq, _lns_eq, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y):
+        return torch.eq(x, y)
+
+@implements(torch.eq, LNSEqFunction.forward, "default", default=True)
 def eq(x, y, *, out=None):
+
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_eq(x._lns, y._lns)
+    result = LNSEqFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_ne(x, y):
-    return torch.ne(x, y)
+class LNSNeFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.ne, _lns_ne, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y):
+        return torch.ne(x, y)
+
+@implements(torch.ne, LNSNeFunction.forward, "default", default=True)
 def ne(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_ne(x._lns, y._lns)
+    result = LNSNeFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_ge(x, y):
-    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-    x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
-    x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
+class LNSGeFunction(LNSNonDifferentiableFunction):
 
-    both_pos = (x_packed_sign == 0) & (y_packed_sign == 0)
-    result_both_pos = torch.ge(x_packed_log, y_packed_log)
+    _lnstensor_outputs = []
 
-    x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.ones_like(x_packed_sign, dtype=torch.bool)
+    @staticmethod
+    def forward(ops, x, y):
+        x_log, y_log = x >> 1, y >> 1
+        x_sign, y_sign = x & 1, y & 1
 
-    x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+        both_pos = (x_sign == 0) & (y_sign == 0)
+        result_both_pos = torch.ge(x_log, y_log)
 
-    # no need to check explicitly for both negative case, as it's the final case
-    result_both_neg = torch.ge(y_packed_log, x_packed_log)
+        x_pos_y_neg = (x_sign == 0) & (y_sign == 1)
+        result_x_pos = torch.ones_like(x_sign, dtype=torch.bool)
 
-    return torch.where(both_pos, result_both_pos,
-           torch.where(x_pos_y_neg, result_x_pos,
-           torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+        x_neg_y_pos = (x_sign == 1) & (y_sign == 0)
+        result_x_neg = torch.zeros_like(x_sign, dtype=torch.bool)
 
-@implements(torch.ge, _lns_ge, "default", default=True)
+        # no need to check explicitly for both negative case, as it's the final case
+        result_both_neg = torch.ge(y_log, x_log)
+
+        return torch.where(both_pos, result_both_pos,
+            torch.where(x_pos_y_neg, result_x_pos,
+            torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+
+@implements(torch.ge, LNSGeFunction.forward, "default", default=True)
 def ge(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_ge(x._lns, y._lns)
+    result = LNSGeFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_gt(x, y):
-    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-    x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
-    x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
+class LNSGtFunction(LNSNonDifferentiableFunction):
 
-    both_pos = (x_packed_sign == 0) & (y_packed_sign == 0)
-    result_both_pos = torch.gt(x_packed_log, y_packed_log)
+    _lnstensor_outputs = []
 
-    x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.ones_like(x_packed_sign, dtype=torch.bool)
+    @staticmethod
+    def forward(ops, x, y):
+        x_log, y_log = x >> 1, y >> 1
+        x_sign, y_sign = x & 1, y & 1
 
-    x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+        both_pos = (x_sign == 0) & (y_sign == 0)
+        result_both_pos = torch.gt(x_log, y_log)
 
-    # no need to check explicitly for both negative case, as it's the final case
-    result_both_neg = torch.gt(y_packed_log, x_packed_log)
+        x_pos_y_neg = (x_sign == 0) & (y_sign == 1)
+        result_x_pos = torch.ones_like(x_sign, dtype=torch.bool)
 
-    return torch.where(both_pos, result_both_pos,
-           torch.where(x_pos_y_neg, result_x_pos,
-           torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+        x_neg_y_pos = (x_sign == 1) & (y_sign == 0)
+        result_x_neg = torch.zeros_like(x_sign, dtype=torch.bool)
 
-@implements(torch.gt, _lns_gt, "default", default=True)
+        # no need to check explicitly for both negative case, as it's the final case
+        result_both_neg = torch.gt(y_log, x_log)
+
+        return torch.where(both_pos, result_both_pos,
+            torch.where(x_pos_y_neg, result_x_pos,
+            torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+
+@implements(torch.gt, LNSGtFunction.forward, "default", default=True)
 def gt(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_gt(x._lns, y._lns)
+    result = LNSGtFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_le(x, y):
+class LNSLeFunction(LNSNonDifferentiableFunction):
 
-    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-    x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
-    x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
+    _lnstensor_outputs = []
 
-    both_pos = (x_packed_sign == 0) & (y_packed_sign == 0)
-    result_both_pos = torch.le(x_packed_log, y_packed_log)
+    @staticmethod
+    def forward(ops, x, y):
+        x_log, y_log = x >> 1, y >> 1
+        x_sign, y_sign = x & 1, y & 1
 
-    x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+        both_pos = (x_sign == 0) & (y_sign == 0)
+        result_both_pos = torch.le(x_log, y_log)
 
-    x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.ones_like(x_packed_sign, dtype=torch.bool)
+        x_pos_y_neg = (x_sign == 0) & (y_sign == 1)
+        result_x_pos = torch.zeros_like(x_sign, dtype=torch.bool)
 
-    # no need to check explicitly for both negative case, as it's the final case
-    result_both_neg = torch.le(y_packed_log, x_packed_log)
+        x_neg_y_pos = (x_sign == 1) & (y_sign == 0)
+        result_x_neg = torch.ones_like(x_sign, dtype=torch.bool)
 
-    return torch.where(both_pos, result_both_pos,
-           torch.where(x_pos_y_neg, result_x_pos,
-           torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+        # no need to check explicitly for both negative case, as it's the final case
+        result_both_neg = torch.le(y_log, x_log)
 
-@implements(torch.le, _lns_le, "default", default=True)
+        return torch.where(both_pos, result_both_pos,
+            torch.where(x_pos_y_neg, result_x_pos,
+            torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+
+@implements(torch.le, LNSLeFunction.forward, "default", default=True)
 def le(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_le(x._lns, y._lns)
+    result = LNSLeFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_lt(x, y):
-    x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-    x_packed_log, y_packed_log = x_packed >> 1, y_packed >> 1
-    x_packed_sign, y_packed_sign = x_packed & 1, y_packed & 1
+class LNSLtFunction(LNSNonDifferentiableFunction):
 
-    both_pos = (x_packed_sign == 0) & (y_packed_sign == 0)
-    result_both_pos = torch.lt(x_packed_log, y_packed_log)
+    _lnstensor_outputs = []
 
-    x_pos_y_neg = (x_packed_sign == 0) & (y_packed_sign == 1)
-    result_x_pos = torch.zeros_like(x_packed_sign, dtype=torch.bool)
+    @staticmethod
+    def forward(ops, x, y):
+        x_log, y_log = x >> 1, y >> 1
+        x_sign, y_sign = x & 1, y & 1
 
-    x_neg_y_pos = (x_packed_sign == 1) & (y_packed_sign == 0)
-    result_x_neg = torch.ones_like(x_packed_sign, dtype=torch.bool)
+        both_pos = (x_sign == 0) & (y_sign == 0)
+        result_both_pos = torch.lt(x_log, y_log)
 
-    # no need to check explicitly for both negative case, as it's the final case
-    result_both_neg = torch.lt(y_packed_log, x_packed_log)
+        x_pos_y_neg = (x_sign == 0) & (y_sign == 1)
+        result_x_pos = torch.zeros_like(x_sign, dtype=torch.bool)
 
-    return torch.where(both_pos, result_both_pos,
-           torch.where(x_pos_y_neg, result_x_pos,
-           torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+        x_neg_y_pos = (x_sign == 1) & (y_sign == 0)
+        result_x_neg = torch.ones_like(x_sign, dtype=torch.bool)
 
-@implements(torch.lt, _lns_lt, "default", default=True)
+        # no need to check explicitly for both negative case, as it's the final case
+        result_both_neg = torch.lt(y_log, x_log)
+
+        return torch.where(both_pos, result_both_pos,
+            torch.where(x_pos_y_neg, result_x_pos,
+            torch.where(x_neg_y_pos, result_x_neg, result_both_neg)))
+
+@implements(torch.lt, LNSLtFunction.forward, "default", default=True)
 def lt(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    y = y.broadcast_to(x.shape)
-    result = _lns_lt(x._lns, y._lns)
+    result = LNSLtFunction.apply(x, y)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_isclose(x, y, base, rtol, atol):
-    abs_diff = lns_abs(lns_sub(x, y, base))
-    eps = lns_add(atol, lns_mul(rtol, lns_abs(y), base), base)
-    return lns_le(abs_diff, eps)
+class LNSIscloseFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.isclose, _lns_isclose, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y, atol, rtol):
+        abs_diff = ops.abs(ops.sub(x, y))
+        eps = ops.add(atol, ops.mul(rtol, ops.abs(y)))
+        return ops.le(abs_diff, eps)
+
+@implements(torch.isclose, LNSIscloseFunction.forward, "default", default=True)
 def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
     x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
-    return _lns_isclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
+    return LNSIscloseFunction.apply(x, y, atol, rtol)
 
-def _lns_allclose(x, y, base, rtol, atol):
-    return torch.all(lns_isclose(x, y, base, rtol, atol))
+class LNSAllcloseFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.allclose, _lns_allclose, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y, atol, rtol):
+        return torch.all(ops.isclose(x, y, rtol, atol))
+
+@implements(torch.allclose, LNSAllcloseFunction.forward, "default", default=True)
 def allclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
     x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
-    return _lns_allclose(x._lns, y._lns, x.base, rtol._lns, atol._lns)
+    return LNSAllcloseFunction.apply(x, y, atol, rtol)
 
-def _lns_any(x, dim=None, keepdim=False):
-    x_packed = x.to(torch.int64)
-    return torch.any(torch.ne(x_packed | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+class LNSAnyFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.any, _lns_any, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, dim=None, keepdim=False):
+        return torch.any(torch.ne(x | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+
+@implements(torch.any, LNSAnyFunction.forward, "default", default=True)
 def any(x, dim=None, keepdim=False, *, out=None):
-    result = _lns_any(x._lns, dim, keepdim)
+    result = LNSAnyFunction.apply(x, dim, keepdim)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_all(x, dim=None, keepdim=False):
-    x_packed = x.to(torch.int64)
-    return torch.all(torch.ne(x_packed | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+class LNSAllFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.all, _lns_all, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, dim=None, keepdim=False):
+        return torch.all(torch.ne(x | 1, LNS_ZERO), dim=dim, keepdim=keepdim)
+
+@implements(torch.all, LNSAllFunction.forward, "default", default=True)
 def all(x, dim=None, keepdim=False, *, out=None):
-    result = _lns_all(x._lns, dim, keepdim)
+    result = LNSAllFunction.apply(x, dim, keepdim)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
-def _lns_isin(x, y, assume_unique=False, invert=False):
-    return torch.isin(x, y, assume_unique=assume_unique, invert=invert)
+class LNSIsinFunction(LNSNonDifferentiableFunction):
 
-@implements(torch.isin, _lns_isin, "default", default=True)
+    _lnstensor_outputs = []
+
+    @staticmethod
+    def forward(ops, x, y, assume_unique=False, invert=False):
+        return torch.isin(x, y, assume_unique=assume_unique, invert=invert)
+
+@implements(torch.isin, LNSIsinFunction.forward, "default", default=True)
 def isin(x, y, *, assume_unique=False, invert=False):
     x, y = format_lnstensor_operands(x, y)
-    result = torch.isin(x._lns, y._lns, assume_unique=assume_unique, invert=invert)
+    return LNSIsinFunction.apply(x, y, assume_unique, invert)
 
-    return result
+def _sort(ops, x, dim=-1, descending=False, stable=False):
+    x_log = x >> 1
+    x_sign = x & 1
+
+    offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+    x_logsign = torch.where(x_sign == 1, -offset-x_log, x_log)
+    indices = torch.argsort(x_logsign, dim=dim, descending=descending, stable=stable)
+
+    return torch.return_types.sort((torch.gather(x, dim, indices), indices))
 
 class LNSSortFunction(LNSFunction):
 
-    @staticmethod
-    def forward(x, dim=-1, descending=False, stable=False):
-        x_packed = x.to(torch.int64)
-        x_packed_log = x_packed >> 1
-        x_packed_sign = x_packed & 1
-
-        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-        indices = torch.argsort(x_packed_logsign, dim=dim, descending=descending, stable=stable)
-
-        return torch.return_types.sort((torch.gather(x, dim, indices), indices))
+    _lnstensor_outputs = [0]
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def forward(ops, x, dim=-1, descending=False, stable=False):
+        return _sort(ops, x, dim, descending, stable)
+
+    @staticmethod
+    def setup_context(ctx, ops, inputs, output):
         _, indices = output
         ctx.save_for_backward(indices)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         indices, = ctx.saved_tensors
 
         grad_x = grad_output.clone()
         grad_x[indices] = grad_output
 
-        return grad_x, None
+        return grad_x, None, None, None
 
-@implements(torch.sort, LNSSortFunction.forward, "default", default=True)
+@implements(torch.sort, _sort, "default", default=True)
 def sort(x, dim=-1, descending=False, stable=False, *, out=None):
     result = LNSSortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
-        return out._inplace_copy(result)
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
 
-def _lns_argsort(x, dim=-1, descending=False, stable=False):
-    x_packed = x.to(torch.int64)
-    x_packed_log = x_packed >> 1
-    x_packed_sign = x_packed & 1
+class LNSArgsortFunction(LNSNonDifferentiableFunction):
 
-    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-    return torch.argsort(x_packed_logsign, dim=dim, descending=descending, stable=stable)
+    _lnstensor_outputs = []
 
-@implements(torch.argsort, _lns_argsort, "default", default=True)
+    @staticmethod
+    def forward(ops, x, dim=-1, descending=False, stable=False):
+        x_log = x >> 1
+        x_sign = x & 1
+
+        offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+        x_logsign = torch.where(x_sign == 1, -offset-x_log, x_log)
+        return torch.argsort(x_logsign, dim=dim, descending=descending, stable=stable)
+
+@implements(torch.argsort, LNSArgsortFunction.forward, "default", default=True)
 def argsort(x, dim=-1, descending=False, stable=False, *, out=None):
-    result = _lns_argsort(x._lns, dim, descending, stable)
+    result = LNSArgsortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
+def _kthvalue(ops, x, k, dim=-1, keepdim=False):
+    x_log = x >> 1
+    x_sign = x & 1
+
+    offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+    x_logsign = torch.where(x_sign == 1, -offset-x_log, x_log)
+    _, indices = torch.kthvalue(x_logsign, k, dim=dim, keepdim=keepdim)
+
+    if not keepdim:
+        indices = indices.unsqueeze(dim)
+    x = torch.take_along_dim(x, indices, dim)
+
+    if not keepdim:
+        x = x.squeeze(dim)
+        indices = indices.squeeze(dim)
+
+    return torch.return_types.kthvalue((x, indices))
+
 class LNSKthvalueFunction(LNSFunction):
 
-    @staticmethod
-    def forward(x, k, dim=-1, keepdim=False):
-        x_packed = x.to(torch.int64)
-        x_packed_log = x_packed >> 1
-        x_packed_sign = x_packed & 1
-
-        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-        _, indices = torch.kthvalue(x_packed_logsign, k, dim=dim, keepdim=keepdim)
-
-        if not keepdim:
-            indices = indices.unsqueeze(dim)
-        x = torch.take_along_dim(x, indices, dim)
-
-        if not keepdim:
-            x = x.squeeze(dim)
-            indices = indices.squeeze(dim)
-
-        return torch.return_types.kthvalue((x, indices))
+    _lnstensor_outputs = [0]
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def forward(ops, x, k, dim=-1, keepdim=False):
+        return _kthvalue(ops, x, k, dim, keepdim)
+
+    @staticmethod
+    def setup_context(ctx, ops, inputs, output):
         x, _, dim, keepdim = inputs
         _, indices = output
         ctx.save_for_backward(x, indices)
@@ -320,148 +367,154 @@ class LNSKthvalueFunction(LNSFunction):
         ctx.keepdim = keepdim
 
     @staticmethod
-    def backward(ctx, grad_output_values, grad_output_indices):
+    def backward(ctx, ops, grad_output_values, grad_output_indices):
         x, indices = ctx.saved_tensors
 
         if not ctx.keepdim:
             indices = indices.unsqueeze(ctx.dim)
             grad_output_values = grad_output_values.unsqueeze(ctx.dim)
 
-        grad_x = torch.full_like(x, LNS_ZERO)
+        grad_x = ops.zeros_like(x)
         grad_x = grad_x.scatter_(ctx.dim, indices, grad_output_values)
 
         return grad_x, None, None, None
 
-@implements(torch.kthvalue, LNSKthvalueFunction.forward, "default", default=True)
+@implements(torch.kthvalue, _kthvalue, "default", default=True)
 def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
     result = LNSKthvalueFunction.apply(x, k, dim, keepdim)
 
     if out is not None:
-        return out._inplace_copy(result[0])
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
+
+def _maximum(ops, x, y):
+    x_greater = ops.gt(x, y)
+    return torch.where(x_greater, x, y)
 
 class LNSMaximumFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, y, base):
-        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-        x_packed_larger = lns_gt(x_packed, y_packed)
-
-        return torch.where(x_packed_larger, x, y)
+    def forward(ops, x, y):
+        return _maximum(ops, x, y)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, y, base = inputs
-        ctx.save_for_backward(x, y, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, y = inputs
+        ctx.save_for_backward(x, y)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, y, base = ctx.saved_tensors
-        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, y = ctx.saved_tensors
 
-        x_y_equal = lns_eq(x_packed, y_packed)
-        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base), base)
+        x_y_equal = ops.eq(x, y)
+        half_grad_output = ops.mul(grad_output, ops.to_lns(0.5))
 
         grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
-            lns_gt(x_packed, y_packed), grad_output, LNS_ZERO
+            ops.gt(x, y), grad_output, LNS_ZERO
         ))
         grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
-            lns_gt(y_packed, x_packed), grad_output, LNS_ZERO
+            ops.gt(y, x), grad_output, LNS_ZERO
         ))
 
-        grad_x = lns_sum_to_size(grad_x, base, x.shape)
-        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+        grad_x = ops.sum_to_size(grad_x, x.shape)
+        grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x, grad_y, None
+        return grad_x, grad_y
 
-@implements(torch.maximum, LNSMaximumFunction.forward, "default", default=True)
+@implements(torch.maximum, _maximum, "default", default=True)
 def maximum(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMaximumFunction.apply(x, y, x.base)
+    result = LNSMaximumFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _minimum(ops, x, y):
+    x_smaller = ops.lt(x, y)
+    return torch.where(x_smaller, x, y)
 
 class LNSMinimumFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, y, base):
-        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
-        x_packed_smaller = lns_lt(x_packed, y_packed)
-
-        return torch.where(x_packed_smaller, x, y)
+    def forward(ops, x, y):
+        return _minimum(ops, x, y)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, y, base = inputs
-        ctx.save_for_backward(x, y, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, y = inputs
+        ctx.save_for_backward(x, y)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, y, base = ctx.saved_tensors
-        x_packed, y_packed = x.to(torch.int64), y.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, y = ctx.saved_tensors
 
-        x_y_equal = lns_eq(x_packed, y_packed)
-        half_grad_output = lns_mul(grad_output, LNSTensor.get_internal_tensor(0.5, base), base)
+        x_y_equal = ops.eq(x, y)
+        half_grad_output = ops.mul(grad_output, ops.to_lns(0.5))
 
         grad_x = torch.where(x_y_equal, half_grad_output, torch.where(
-            lns_lt(x_packed, y_packed), grad_output, LNS_ZERO
+            ops.lt(x, y), grad_output, LNS_ZERO
         ))
         grad_y = torch.where(x_y_equal, half_grad_output, torch.where(
-            lns_lt(y_packed, x_packed), grad_output, LNS_ZERO
+            ops.lt(y, x), grad_output, LNS_ZERO
         ))
 
-        grad_x = lns_sum_to_size(grad_x, base, x.shape)
-        grad_y = lns_sum_to_size(grad_y, base, y.shape)
+        grad_x = ops.sum_to_size(grad_x, x.shape)
+        grad_y = ops.sum_to_size(grad_y, y.shape)
 
-        return grad_x, grad_y, None
+        return grad_x, grad_y
 
-@implements(torch.minimum, LNSMinimumFunction.forward, "default", default=True)
+@implements(torch.minimum, _minimum, "default", default=True)
 def minimum(x, y, *, out=None):
     x, y = format_lnstensor_operands(x, y)
-    result = LNSMinimumFunction.apply(x, y, x.base)
+    result = LNSMinimumFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _max(ops, x, dim=None, keepdim=False):
+    x_log = x >> 1
+    x_sign = x & 1
+
+    offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+    x_logsign = torch.where(x_sign == 1, -offset - x_log, x_log)
+
+    if dim is None:
+        flat_indices = torch.argmax(x_logsign)
+        result = x.flatten()[flat_indices]
+
+        return result
+
+    indices_kept = torch.argmax(x_logsign, dim=dim, keepdim=True)
+    result = torch.gather(x, dim, indices_kept)
+
+    if not keepdim:
+        indices = indices_kept.squeeze(dim)
+        result = result.squeeze(dim)
+    else:
+        indices = indices_kept
+
+    return torch.return_types.max((result, indices))
 
 class LNSMaxFunction(LNSFunction):
 
-    @staticmethod
-    def forward(x, base, dim=None, keepdim=False):
-        x_packed = x.to(torch.int64)
-        x_packed_log = x_packed >> 1
-        x_packed_sign = x_packed & 1
-
-        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-
-        if dim is None:
-            flat_indices = torch.argmax(x_packed_logsign)
-            result = x.flatten()[flat_indices]
-
-            return result
-
-        indices_kept = torch.argmax(x_packed_logsign, dim=dim, keepdim=True)
-        result = torch.gather(x, dim, indices_kept)
-
-        if not keepdim:
-            indices = indices_kept.squeeze(dim)
-            result = result.squeeze(dim)
-        else:
-            indices = indices_kept
-
-        return torch.return_types.max((result, indices))
+    _lnstensor_outputs = [0]
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base, dim, keepdim = inputs
+    def forward(ops, x, dim=None, keepdim=False):
+        return _max(ops, x, dim=dim, keepdim=keepdim)
+
+    @staticmethod
+    def setup_context(ctx, ops, inputs, output):
+        x, dim, keepdim = inputs
         if dim is None:
-            ctx.save_for_backward(x, output, base)
+            ctx.save_for_backward(x, output)
         else:
             _, indices = output
             ctx.save_for_backward(x, indices)
@@ -469,18 +522,19 @@ class LNSMaxFunction(LNSFunction):
         ctx.keepdim = keepdim
 
     @staticmethod
-    def backward(ctx, grad_output, grad_indicies=None): # grad_indices is not used
+    def backward(ctx, ops, grad_output, grad_indicies=None): # grad_indices is not used
+
         if ctx.dim is None:
-            x, result, base = ctx.saved_tensors
+            x, result = ctx.saved_tensors
 
             max_values = torch.eq(x, result)
-            grad = lns_div(LNS_ONE, LNSTensor.get_internal_tensor(max_values.sum(), base), base)
+            grad_x = ops.div(grad_output, ops.to_lns(max_values.sum()))
 
-            return torch.where(max_values, grad, LNS_ZERO), None, None, None
+            return torch.where(max_values, grad_x, LNS_ZERO), None, None, None
 
         x, indices = ctx.saved_tensors
 
-        grad_x = zeros(x.shape)._lns
+        grad_x = ops.zeros_like(x)
         if ctx.keepdim:
             idx_expanded  = indices
             grad_expanded = grad_output
@@ -492,15 +546,13 @@ class LNSMaxFunction(LNSFunction):
                         idx_expanded.expand(x.shape),
                         grad_expanded.expand(x.shape))
 
-        return grad_x, None, None, None
+        return grad_x, None, None
 
-@implements(torch.max, LNSMaxFunction.forward, "default", default=True)
+@implements(torch.max, _max, "default", default=True)
 def max(x, dim=None, keepdim=False, *, out=None):
-
-    result = LNSMaxFunction.apply(x, x.base, dim, keepdim)
+    result = LNSMaxFunction.apply(x, dim, keepdim)
 
     if out is not None:
-
         if dim is None:
             return out._inplace_copy(result)
 
@@ -508,62 +560,67 @@ def max(x, dim=None, keepdim=False, *, out=None):
         out[1].copy_(result[1])
         return out
 
-    if dim is None:
-        return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+class LNSArgmaxFunction(LNSNonDifferentiableFunction):
 
-def _lns_argmax(x, dim=None, keepdim=False):
-    x_packed = x.to(torch.int64)
-    x_packed_log = x_packed >> 1
-    x_packed_sign = x_packed & 1
+    _lnstensor_outputs = []
 
-    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-    return torch.argmax(x_packed_logsign, dim=dim, keepdim=keepdim)
+    @staticmethod
+    def forward(ops, x, dim=None, keepdim=False):
+        x_log = x >> 1
+        x_sign = x & 1
 
-@implements(torch.argmax, _lns_argmax, "default", default=True)
+        offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+        x_logsign = torch.where(x_sign == 1, -offset - x_log, x_log)
+        return torch.argmax(x_logsign, dim=dim, keepdim=keepdim)
+
+@implements(torch.argmax, LNSArgmaxFunction.forward, "default", default=True)
 def argmax(x, dim=None, keepdim=False, *, out=None):
-    result = _lns_argmax(x._lns, dim, keepdim)
+    result = LNSArgmaxFunction.apply(x, dim, keepdim)
 
     if out is not None:
         out.copy_(result)
 
     return result
 
+def _min(ops, x, dim=None, keepdim=False):
+    x_log = x >> 1
+    x_sign = x & 1
+
+    offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+    x_logsign = torch.where(x_sign == 1, -offset - x_log, x_log)
+
+    if dim is None:
+        flat_indices = torch.argmin(x_logsign)
+        result = x.flatten()[flat_indices]
+
+        return result
+
+    indices_kept = torch.argmin(x_logsign, dim=dim, keepdim=True)
+    result = torch.gather(x, dim, indices_kept)
+
+    if not keepdim:
+        indices = indices_kept.squeeze(dim)
+        result = result.squeeze(dim)
+    else:
+        indices = indices_kept
+
+    return torch.return_types.max((result, indices))
+
 class LNSMinFunction(LNSFunction):
 
-    @staticmethod
-    def forward(x, base, dim=None, keepdim=False):
-        x_packed = x.to(torch.int64)
-        x_packed_log = x_packed >> 1
-        x_packed_sign = x_packed & 1
-
-        offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-        x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-
-        if dim is None:
-            flat_indices = torch.argmin(x_packed_logsign)
-            result = x.flatten()[flat_indices]
-
-            return result
-
-        indices_kept = torch.argmin(x_packed_logsign, dim=dim, keepdim=True)
-        result = torch.gather(x, dim, indices_kept)
-
-        if not keepdim:
-            indices = indices_kept.squeeze(dim)
-            result = result.squeeze(dim)
-        else:
-            indices = indices_kept
-
-        return torch.return_types.max((result, indices))
+    _lnstensor_outputs = [0]
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base, dim, keepdim = inputs
+    def forward(ops, x, dim=None, keepdim=False):
+        return _min(ops, x, dim, keepdim)
+
+    @staticmethod
+    def setup_context(ctx, ops, inputs, output):
+        x, dim, keepdim = inputs
         if dim is None:
-            ctx.save_for_backward(x, output, base)
+            ctx.save_for_backward(x, output)
         else:
             _, indices = output
             ctx.save_for_backward(x, indices)
@@ -571,18 +628,19 @@ class LNSMinFunction(LNSFunction):
         ctx.keepdim = keepdim
 
     @staticmethod
-    def backward(ctx, grad_output, grad_indicies=None): # grad_indices is not used
+    def backward(ctx, ops, grad_output, grad_indicies=None): # grad_indices is not used
+
         if ctx.dim is None:
-            x, result, base = ctx.saved_tensors
+            x, result = ctx.saved_tensors
 
             min_values = torch.eq(x, result)
-            grad = lns_div(LNS_ONE, LNSTensor.get_internal_tensor(min_values.sum(), base), base)
+            grad_x = ops.div(grad_output, ops.to_lns(min_values.sum()))
 
-            return torch.where(min_values, grad, LNS_ZERO), None, None, None
+            return torch.where(min_values, grad_x, LNS_ZERO), None, None, None
 
         x, indices = ctx.saved_tensors
 
-        grad_x = zeros(x.shape)._lns
+        grad_x = ops.zeros_like(x)
         if ctx.keepdim:
             idx_expanded  = indices
             grad_expanded = grad_output
@@ -594,15 +652,13 @@ class LNSMinFunction(LNSFunction):
                         idx_expanded.expand(x.shape),
                         grad_expanded.expand(x.shape))
 
-        return grad_x, None, None, None
+        return grad_x, None, None
 
-@implements(torch.min, LNSMinFunction.forward, "default", default=True)
+@implements(torch.min, _min, "default", default=True)
 def min(x, dim=None, keepdim=False, *, out=None):
-
-    result = LNSMinFunction.apply(x, x.base, dim, keepdim)
+    result = LNSMinFunction.apply(x, dim, keepdim)
 
     if out is not None:
-
         if dim is None:
             return out._inplace_copy(result)
 
@@ -610,85 +666,75 @@ def min(x, dim=None, keepdim=False, *, out=None):
         out[1].copy_(result[1])
         return out
 
-    if dim is None:
-        return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+class LNSArgminFunction(LNSNonDifferentiableFunction):
 
-def _lns_argmin(x, dim=None, keepdim=False):
-    x_packed = x.to(torch.int64)
-    x_packed_log = x_packed >> 1
-    x_packed_sign = x_packed & 1
+    _lnstensor_outputs = []
 
-    offset = 2 * (torch.max(torch.abs(x_packed_log)) + 1)
-    x_packed_logsign = torch.where(x_packed_sign == 1, -offset-x_packed_log, x_packed_log)
-    return torch.argmin(x_packed_logsign, dim=dim, keepdim=keepdim)
+    @staticmethod
+    def forward(ops, x, dim=None, keepdim=False):
+        x_log = x >> 1
+        x_sign = x & 1
 
-@implements(torch.argmin, _lns_argmin, "default", default=True)
+        offset = 2 * (torch.max(torch.abs(x_log)) + 1)
+        x_logsign = torch.where(x_sign == 1, -offset-x_log, x_log)
+        return torch.argmin(x_logsign, dim=dim, keepdim=keepdim)
+
+@implements(torch.argmin, LNSArgminFunction.forward, "default", default=True)
 def argmin(x, dim=None, keepdim=False, *, out=None):
-    result = _lns_argmin(x._lns, dim, keepdim)
+    result = LNSArgminFunction.apply(x, dim, keepdim)
 
     if out is not None:
         out.copy_(result)
+
+    return result
+
+def _clamp(ops, x, min=None, max=None):
+    result = x.clone()
+
+    if min is not None:
+        lt_mask = ops.lt(result, min)
+        result = torch.where(lt_mask, min, result)
+
+    if max is not None:
+        gt_mask = ops.gt(result, max)
+        result = torch.where(gt_mask, max, result)
 
     return result
 
 class LNSClampFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, min=None, max=None):
-        x_packed = x.to(torch.int64)
-        result = x_packed.clone()
-
-        if min is not None:
-            min_packed = min.to(torch.int64)
-            lt_mask = lns_lt(result, min_packed)
-            result = torch.where(lt_mask, min_packed, result)
-
-        if max is not None:
-            max_packed = max.to(torch.int64)
-            gt_mask = lns_gt(result, max_packed)
-            result = torch.where(gt_mask, max_packed, result)
-
-        return result.to(torch.float64)
+    def forward(ops, x, min=None, max=None):
+        return _clamp(ops, x, min, max)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, min, max = inputs
         ctx.save_for_backward(x, min, max)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         x, min, max = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
 
         grad_x = grad_output.clone()
-
         if min is not None:
-            min_packed = min.to(torch.int64)
-            lt_mask = lns_lt(x_packed, min_packed)
+            lt_mask = ops.lt(x, min)
             grad_x = torch.where(lt_mask, LNS_ZERO, grad_x)
 
         if max is not None:
-            max_packed = max.to(torch.int64)
-            gt_mask = lns_gt(x_packed, max_packed)
+            gt_mask = ops.gt(x, max)
             grad_x = torch.where(gt_mask, LNS_ZERO, grad_x)
 
         return grad_x, None, None
 
-@implements(torch.clamp, LNSClampFunction.forward, "default", default=True)
+@implements(torch.clamp, _clamp, "default", default=True)
 def clamp(x, min=None, max=None, *, out=None):
-
-    if min is not None and max is not None:
-        x, min, max = format_lnstensor_operands(x, min, max)
-    elif min is not None:
-        x, min = format_lnstensor_operands(x, min)
-    elif max is not None:
-        x, max = format_lnstensor_operands(x, max)
-
+    x, min, max = format_lnstensor_operands(x, min, max)
     result = LNSClampFunction.apply(x, min, max)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result

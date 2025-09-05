@@ -1,16 +1,5 @@
 import torch
 from xlnstorch import LNS_ONE
-from xlnstorch.operators import (
-    lns_mul,
-    lns_sign,
-    lns_eq,
-    lns_lt,
-    lns_abs,
-    lns_div,
-    lns_add,
-    lns_reciprocal,
-    lns_maximum,
-)
 from . import LNSOptimizer
 
 class LNSHybridMul(LNSOptimizer):
@@ -81,28 +70,28 @@ class LNSHybridMul(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             signmul_term = group["signmul_term"]
-            base = group["base"]
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
 
-                same_sign = lns_eq(lns_sign(grad, base), lns_sign(p, base))
-                small_values = lns_lt(lns_abs(grad), lr) | lns_lt(lns_abs(p.data), lr)
+                same_sign = ops.eq(ops.sign(grad), ops.sign(data))
+                small_values = ops.lt(ops.abs(grad), lr) | ops.lt(ops.abs(data), lr)
                 mul_mask = same_sign | small_values
 
-                lr_mul_grad = lns_mul(lr, lns_abs(grad), base)
-                mul_update = lns_add(LNS_ONE, lr_mul_grad, base)
-                gd_update = lns_add(LNS_ONE, lns_div(lr_mul_grad, lns_abs(p), base), base)
-                mul_term = torch.where(mul_mask, lns_reciprocal(mul_update, base),
-                                       lns_maximum(signmul_term, gd_update, base))
+                lr_mul_grad = ops.mul(lr, ops.abs(grad))
+                mul_update = ops.add(LNS_ONE, lr_mul_grad)
+                gd_update = ops.add(LNS_ONE, ops.div(lr_mul_grad, ops.abs(data)))
+                mul_term = torch.where(mul_mask, ops.reciprocal(mul_update),
+                                       ops.maximum(signmul_term, gd_update))
 
-            p.data = lns_mul(p.data, mul_term, base)
+                p.data = ops.mul(data, mul_term).view(torch.float64)
 
         return loss

@@ -1,7 +1,9 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, lnstensor, implements
+from xlnstorch import LNS_ZERO, LNS_ONE, LNS_NEG_ONE, implements
 from xlnstorch.autograd import LNSFunction
-from . import lns_neg
+
+def _neg(ops, x):
+    return x ^ 1
 
 class LNSNegFunction(LNSFunction):
     """
@@ -12,29 +14,30 @@ class LNSNegFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x):
-        x_packed = x.to(torch.int64)
-        neg_x_packed = x_packed ^ 1
-
-        return neg_x_packed.to(torch.float64)
+    def forward(ops, x):
+        return _neg(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         pass # no context needed for this operation
 
     @staticmethod
-    def backward(ctx, grad_output):
-        return lns_neg(grad_output)
+    def backward(ctx, ops, grad_output):
+        grad_x = ops.neg(grad_output)
+        return grad_x
 
-@implements(torch.neg, LNSNegFunction.forward, key="default", default=True)
+@implements(torch.neg, _neg, key="default", default=True)
 def neg(x, *, out=None):
-
     result = LNSNegFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _abs(ops, x):
+    abs_x = x & (~1)
+    return torch.where(torch.eq(x | 1, LNS_ZERO), LNS_ZERO, abs_x)
 
 class LNSAbsFunction(LNSFunction):
     """
@@ -48,34 +51,33 @@ class LNSAbsFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x):
-        x_packed = x.to(torch.int64)
-        x_packed_abs = x_packed & (~1)
-
-        return torch.where(torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO, x_packed_abs.to(torch.float64))
+    def forward(ops, x):
+        return _abs(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         x, = inputs
         ctx.save_for_backward(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         x, = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
-        x_packed_sign = x_packed & 1
 
-        return torch.where(torch.eq(x_packed_sign, 1), lns_neg(grad_output), grad_output)
+        grad_x = torch.where(torch.eq(x & 1, 1), ops.neg(grad_output), grad_output)
 
-@implements(torch.abs, LNSAbsFunction.forward, "default", default=True)
+        return grad_x
+
+@implements(torch.abs, _abs, "default", default=True)
 def abs(x, *, out=None):
-
     result = LNSAbsFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _positive(ops, x):
+    return x
 
 class LNSPositiveFunction(LNSFunction):
     """
@@ -87,22 +89,28 @@ class LNSPositiveFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x):
+    def forward(ops, x):
         return x
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         pass # no context needed for this operation
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, ops, grad_output):
         return grad_output
 
-@implements(torch.positive, LNSPositiveFunction.forward, "default", default=True)
+@implements(torch.positive, _positive, "default", default=True)
 def positive(x):
+    return LNSPositiveFunction.apply(x)
 
-    result = LNSPositiveFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+def _sign(ops, x):
+    sign_x = x & 1
+
+    return torch.where(
+        torch.eq(x | 1, LNS_ZERO), LNS_ZERO,
+        torch.where(sign_x == 1,
+                    LNS_NEG_ONE, LNS_ONE))
 
 class LNSSignFunction(LNSFunction):
     """
@@ -113,29 +121,23 @@ class LNSSignFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-        x_packed_sign = x_packed & 1
-
-        return torch.where(
-            torch.eq(x_packed | 1, LNS_ZERO), LNS_ZERO,
-            torch.where(x_packed_sign == 1,
-                        LNS_NEG_ONE, LNS_ONE))
+    def forward(ops, x):
+        return _sign(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
+    def setup_context(ctx, ops, inputs, output):
         pass # no context needed for this operation
 
     @staticmethod
-    def backward(ctx, grad_output):
-        return torch.full_like(grad_output, LNS_ZERO), None
+    def backward(ctx, ops, grad_output):
+        grad_x = ops.zeros_like(grad_output)
+        return grad_x
 
-@implements(torch.sign, LNSSignFunction.forward, "default", default=True)
+@implements(torch.sign, _sign, "default", default=True)
 def sign(x, *, out=None):
-
-    result = LNSSignFunction.apply(x, x.base)
+    result = LNSSignFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result

@@ -9,7 +9,7 @@
 #include "lns_addition.h"
 
 torch::Tensor conv1d_forward(
-    const torch::Tensor& input,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const c10::optional<torch::Tensor>& bias,
     const torch::Tensor& base_t,
@@ -23,7 +23,7 @@ torch::Tensor conv1d_forward(
 
     bool squeeze_batch = false;
     if (input.dim() == 2) {
-        input.unsqueeze_(0); // Add batch dimension if missing
+        input = input.unsqueeze(0); // Add batch dimension if missing
         squeeze_batch = true;
     }
 
@@ -112,8 +112,8 @@ torch::Tensor conv1d_forward(
 }
 
 std::vector<torch::Tensor> conv1d_backward(
-    const torch::Tensor& grad_output,
-    const torch::Tensor& input,
+    torch::Tensor& grad_output,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const torch::Tensor& base_t,
     const bool bias_defined,
@@ -128,8 +128,8 @@ std::vector<torch::Tensor> conv1d_backward(
     bool squeeze_batch = false;
 
     if (input.dim() == 2) {
-        input.unsqueeze_(0);
-        grad_output.unsqueeze_(0);
+        input = input.unsqueeze(0);
+        grad_output = grad_output.unsqueeze(0);
         squeeze_batch = true;
     }
 
@@ -244,7 +244,7 @@ std::vector<torch::Tensor> conv1d_backward(
 }
 
 torch::Tensor conv2d_forward(
-    const torch::Tensor& input,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const c10::optional<torch::Tensor>& bias,
     const torch::Tensor& base_t,
@@ -260,7 +260,7 @@ torch::Tensor conv2d_forward(
 
     bool squeeze_batch = false;
     if (input.dim() == 3) {
-        input.unsqueeze_(0);
+        input = input.unsqueeze(0);
         squeeze_batch = true;
     }
 
@@ -375,8 +375,8 @@ torch::Tensor conv2d_forward(
 }
 
 std::vector<torch::Tensor> conv2d_backward(
-    const torch::Tensor& grad_output,
-    const torch::Tensor& input,
+    torch::Tensor& grad_output,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const torch::Tensor& base_t,
     const bool bias_defined,
@@ -392,8 +392,8 @@ std::vector<torch::Tensor> conv2d_backward(
 
     bool squeeze_batch = false;
     if (input.dim() == 3) {
-        input.unsqueeze_(0);
-        grad_output.unsqueeze_(0);
+        input = input.unsqueeze(0);
+        grad_output = grad_output.unsqueeze(0);
         squeeze_batch = true;
     }
 
@@ -540,7 +540,7 @@ std::vector<torch::Tensor> conv2d_backward(
 }
 
 torch::Tensor conv3d_forward(
-    const torch::Tensor& input,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const c10::optional<torch::Tensor>& bias,
     const torch::Tensor& base_t,
@@ -560,7 +560,7 @@ torch::Tensor conv3d_forward(
 
     bool squeeze_batch = false;
     if (input.dim() == 4) {
-        input.unsqueeze_(0);
+        input = input.unsqueeze(0);
         squeeze_batch = true;
     }
 
@@ -692,8 +692,8 @@ torch::Tensor conv3d_forward(
 }
 
 std::vector<torch::Tensor> conv3d_backward(
-    const torch::Tensor& grad_output,
-    const torch::Tensor& input,
+    torch::Tensor& grad_output,
+    torch::Tensor& input,
     const torch::Tensor& weight,
     const torch::Tensor& base_t,
     const bool bias_defined,
@@ -713,8 +713,8 @@ std::vector<torch::Tensor> conv3d_backward(
 
     bool squeeze_batch = false;
     if (input.dim() == 4) {
-        input.unsqueeze_(0);
-        grad_output.unsqueeze_(0);
+        input = input.unsqueeze(0);
+        grad_output = grad_output.unsqueeze(0);
         squeeze_batch = true;
     }
 

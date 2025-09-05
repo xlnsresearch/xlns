@@ -1,12 +1,5 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE
-from xlnstorch.operators import (
-    lns_equal,
-    lns_sub,
-    lns_mul,
-    lns_add,
-    lns_neg,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE, lnstensor
 from . import LNSOptimizer
 
 class LNSSGD(LNSOptimizer):
@@ -87,32 +80,32 @@ class LNSSGD(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             momentum = group["momentum"]
             dampening = group["dampening"]
             weight_decay = group["weight_decay"]
             nesterov = group["nesterov"]
             maximize = group["maximize"]
-            base = group["base"]
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad # g_t
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
                 state = self.state[p]
 
                 if maximize:
-                    grad = lns_neg(grad)
+                    grad = ops.neg(grad)
 
                 # 1. weight_decay: g ← g + λθ
-                if not lns_equal(weight_decay, LNS_ZERO):
-                    grad = lns_add(grad, lns_mul(p.data, weight_decay, base), base)
+                if not ops.equal(weight_decay, LNS_ZERO):
+                    grad = ops.add(grad, ops.mul(data, weight_decay))
 
                 # 2. momentum buffering: b ← μb + (1 - τ)g
-                if not lns_equal(momentum, LNS_ZERO):
+                if not ops.equal(momentum, LNS_ZERO):
                     buf = state.get("momentum_buffer", None)
 
                     if buf is None:
@@ -120,23 +113,22 @@ class LNSSGD(LNSOptimizer):
                         state["momentum_buffer"] = buf
 
                     else:
-                        one_minus_tau = lns_sub(LNS_ONE, dampening, base)
-                        buf = lns_add(
-                            lns_mul(buf, momentum, base),
-                            lns_mul(grad, one_minus_tau, base),
-                            base
+                        one_minus_tau = ops.sub(LNS_ONE, dampening)
+                        buf = ops.add(
+                            ops.mul(buf, momentum),
+                            ops.mul(grad, one_minus_tau)
                         )
                         state["momentum_buffer"] = buf
 
                     # 3a. nesterov momentum: g ← g + μb
                     if nesterov:
-                        grad = lns_add(grad, lns_mul(buf, momentum, base), base)
+                        grad = ops.add(grad, ops.mul(buf, momentum))
                     # 3b. classical momentum: g ← b 
                     else:
                         grad = buf
 
                 # 4. parameter update: θ ← θ ± γg
-                delta = lns_mul(grad, lr, base)
-                p.data = lns_sub(p.data, delta, base)
+                delta = ops.mul(grad, lr)
+                p.data = ops.sub(data, delta).view(torch.float64)
 
         return loss

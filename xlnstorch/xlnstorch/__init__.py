@@ -9,11 +9,17 @@ except ModuleNotFoundError as e:
 
 # These constants are independent of base so we can precompute
 # their internal representations.
-LNS_ZERO = torch.tensor(-2**53 | 1, dtype=torch.float64)
-LNS_INF = torch.tensor(2**53, dtype=torch.float64)
-LNS_NEG_INF = torch.tensor(2**53 - 1, dtype=torch.float64)
-LNS_ONE = torch.tensor(0, dtype=torch.float64)
-LNS_NEG_ONE = torch.tensor(1, dtype=torch.float64)
+LNS_ZERO = torch.tensor(-2**63 + 1, dtype=torch.int64)
+LNS_INF = torch.tensor(2**63 - 2, dtype=torch.int64)
+LNS_NEG_INF = torch.tensor(2**63 - 1, dtype=torch.int64)
+LNS_ONE = torch.tensor(0, dtype=torch.int64)
+LNS_NEG_ONE = torch.tensor(1, dtype=torch.int64)
+
+LNS_ZERO_FP = LNS_ZERO.view(torch.float64)
+LNS_INF_FP = LNS_INF.view(torch.float64)
+LNS_NEG_INF_FP = LNS_NEG_INF.view(torch.float64)
+LNS_ONE_FP = LNS_ONE.view(torch.float64)
+LNS_NEG_ONE_FP = LNS_NEG_ONE.view(torch.float64)
 
 try:
     from . import _csrc
@@ -47,6 +53,9 @@ from .tensor_utils import (
     toggle_cpp_tensor_utils,
 )
 toggle_cpp_tensor_utils(CSRC_AVAILABLE)
+from .ops import (
+    LNSOps,
+)
 from .tensor import (
     LNSTensor,
     lnstensor,
@@ -91,6 +100,8 @@ __all__ = [
     "randn_like",
     "empty",
     "empty_like",
+
+    "LNSOps",
 
     "implements",
     "get_implementation",

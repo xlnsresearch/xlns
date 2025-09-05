@@ -1,15 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ONE
-from xlnstorch.operators import (
-    lns_mul,
-    lns_sign,
-    lns_ne,
-    lns_neg,
-    lns_abs,
-    lns_pow,
-    lns_add,
-    lns_reciprocal,
-)
+from xlnstorch import LNS_ONE
 from . import LNSOptimizer
 
 class LNSMul(LNSOptimizer):
@@ -90,35 +80,34 @@ class LNSMul(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
+        for group, ops in self.lns_param_groups():
             lr = group["lr"]
             use_pow = group["use_pow"]
             maximize = group["maximize"]
-            base = group["base"]
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
 
                 if use_pow:
-                    mul_term = lns_mul(lns_neg(lr), lns_mul(grad, lns_sign(p, base), base), base)
+                    mul_term = ops.mul(ops.neg(lr), ops.mul(grad, ops.sign(data)))
                     if maximize:
-                        mul_term = lns_neg(mul_term)
-                    mul_term = lns_pow(
-                        LNSTensor.get_internal_tensor(2.0, base),
-                        lnstensor(mul_term, from_lns=True, b=base).value,
-                        base
+                        mul_term = ops.neg(mul_term)
+                    mul_term = ops.pow(
+                        ops.to_lns(2.0),
+                        ops.from_lns(mul_term)
                     )
 
                 else:
-                    mul_term = lns_add(LNS_ONE, lns_mul(lr, lns_abs(grad), base), base)
-                    diff_sign = lns_ne(lns_sign(grad, base), lns_sign(p, base))
+                    mul_term = ops.add(LNS_ONE, ops.mul(lr, ops.abs(grad)))
+                    diff_sign = ops.ne(ops.sign(grad), ops.sign(data))
                     mul_term = torch.where(diff_sign ^ maximize, mul_term,
-                                           lns_reciprocal(mul_term, base))
+                                           ops.reciprocal(mul_term))
 
-            p.data = lns_mul(p.data, mul_term, base)
+            p.data = ops.mul(data, mul_term).view(torch.float64)
 
         return loss

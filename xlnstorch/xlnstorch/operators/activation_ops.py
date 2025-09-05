@@ -1,27 +1,10 @@
 import torch
-from xlnstorch import LNS_ZERO, LNS_ONE, LNSTensor, lnstensor, format_lnstensor_operands, implements, rand
+from xlnstorch import LNS_ZERO, LNS_ONE, lnstensor, format_lnstensor_operands, implements, rand
 from xlnstorch.autograd import LNSFunction
-from . import (
-    lns_mul,
-    lns_add,
-    lns_gt,
-    lns_square,
-    lns_sub,
-    lns_exp,
-    lns_sum,
-    lns_div,
-    lns_neg,
-    lns_log,
-    lns_lt,
-    lns_gt,
-    lns_le,
-    lns_ge,
-    lns_sigmoid,
-    lns_abs,
-    lns_eq,
-    lns_tanh,
-    lns_max,
-)
+
+def _relu(ops, x):
+    result = torch.where(x & 1 == 1, LNS_ZERO, x)
+    return result
 
 class LNSReLUFunction(LNSFunction):
     """
@@ -33,42 +16,40 @@ class LNSReLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        result = torch.where(x_packed & 1 == 1, LNS_ZERO, x_packed)
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _relu(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = torch.where(output_packed | 1 == LNS_ZERO, LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(output | 1 == LNS_ZERO, LNS_ZERO, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.relu, LNSReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.relu, _relu, "default", default=True)
 def relu(x, inplace=False):
-
-    result = LNSReLUFunction.apply(x, x.base)
+    result = LNSReLUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-@implements(torch.nn.functional.relu_, LNSReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.relu_, _relu, "default", default=True)
 def relu_(x):
-
-    result = LNSReLUFunction.apply(x, x.base)
+    result = LNSReLUFunction.apply(x)
     return x._inplace_copy(result)
+
+def _leaky_relu(ops, x, negative_slope):
+    negative_part = ops.mul(x, negative_slope)
+    result = torch.where(x & 1 == 1, negative_part, x)
+    return result
 
 class LNSLeakyReLUFunction(LNSFunction):
     """
@@ -81,94 +62,88 @@ class LNSLeakyReLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, negative_slope, base):
-        x_packed, negative_slope_packed = x.to(torch.int64), negative_slope.to(torch.int64)
-
-        negative_part = lns_mul(x_packed, negative_slope_packed, base)
-        result = torch.where(x_packed & 1 == 1, negative_part, x_packed)
-
-        return result.to(torch.float64)
+    def forward(ops, x, negative_slope):
+        return _leaky_relu(ops, x, negative_slope)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, negative_slope, base = inputs
-        ctx.save_for_backward(negative_slope, output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, negative_slope = inputs
+        ctx.save_for_backward(negative_slope, output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        negative_slope, output, base = ctx.saved_tensors
-        negative_slope_packed, output_packed = negative_slope.to(torch.int64), output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        negative_slope, output = ctx.saved_tensors
 
-        grad_x = torch.where((output_packed | 1 == LNS_ZERO) | (output_packed & 1 == 1),
-                             negative_slope_packed, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where((output | 1 == LNS_ZERO) | (output & 1 == 1),
+                             negative_slope, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.leaky_relu, LNSLeakyReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.leaky_relu, _leaky_relu, "default", default=True)
 def leaky_relu(x, negative_slope=0.01, inplace=False):
-
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
-    result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
+    result = LNSLeakyReLUFunction.apply(x, negative_slope)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-@implements(torch.nn.functional.leaky_relu_, LNSLeakyReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.leaky_relu_, _leaky_relu, "default", default=True)
 def leaky_relu_(x, negative_slope=0.01):
-
     x, negative_slope = format_lnstensor_operands(x, negative_slope)
-    result = LNSLeakyReLUFunction.apply(x, negative_slope, x.base)
+    result = LNSLeakyReLUFunction.apply(x, negative_slope)
 
     return x._inplace_copy(result)
+
+def _threshold(ops, x, threshold, value):
+    result = torch.where(ops.gt(x, threshold), x, value)
+    return result
 
 class LNSThresholdFunction(LNSFunction):
 
     @staticmethod
-    def forward(x, threshold, value, base):
-        x_packed, threshold_packed = x.to(torch.int64), threshold.to(torch.int64)
-
-        result = torch.where(lns_gt(x_packed, threshold_packed), x, value)
-        return result.to(torch.float64)
+    def forward(ops, x, threshold, value):
+        return _threshold(ops, x, threshold, value)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, _, value, base = inputs
-        ctx.save_for_backward(value, output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, _, value = inputs
+        ctx.save_for_backward(value, output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        value, output, base = ctx.saved_tensors
-        value_packed, output_packed = value.to(torch.int64), output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        value, output = ctx.saved_tensors
 
-        grad_x = torch.where(output_packed == value_packed,
-                             LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(output == value, LNS_ZERO, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None, None
+        return grad_x, None, None
 
-@implements(torch.nn.functional.threshold, LNSThresholdFunction.forward, "default", default=True)
+@implements(torch.nn.functional.threshold, _threshold, "default", default=True)
 def threshold(x, threshold, value, inplace=False):
-
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
-    result = LNSThresholdFunction.apply(x, threshold, value, x.base)
+    result = LNSThresholdFunction.apply(x, threshold, value)
 
     if inplace:
         x._inplace_copy(result)
         return x
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-@implements(torch.nn.functional.threshold_, LNSThresholdFunction.forward, "default", default=True)
+@implements(torch.nn.functional.threshold_, _threshold, "default", default=True)
 def threshold_(x, threshold, value):
-
     x, threshold, value = format_lnstensor_operands(x, threshold, value)
-    result = LNSThresholdFunction.apply(x, threshold, value, x.base)
+    result = LNSThresholdFunction.apply(x, threshold, value)
 
     x._inplace_copy(result)
     return x
+
+def _tanh(ops, x):
+    x_fp = ops.from_lns(x)
+    result = torch.tanh(x_fp)
+    return ops.to_lns(result)
 
 class LNSTanhFunction(LNSFunction):
     """
@@ -180,33 +155,32 @@ class LNSTanhFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_fp = lnstensor(x, from_lns=True, b=base).value
-
-        result = torch.tanh(x_fp)
-        return lnstensor(result, b=base)._lns
+    def forward(ops, x):
+        return _tanh(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = lns_square(output_packed, base)
-        grad_x = lns_sub(LNS_ONE, grad_x, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.square(output)
+        grad_x = ops.sub(LNS_ONE, grad_x)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.tanh, LNSTanhFunction.forward, "default", default=True)
-@implements(torch.nn.functional.tanh, LNSTanhFunction.forward, "default", default=True)
+@implements(torch.tanh, _tanh, "default", default=True)
+@implements(torch.nn.functional.tanh, _tanh, "default", default=True)
 def tanh(x):
-    result = LNSTanhFunction.apply(x, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSTanhFunction.apply(x)
+
+def _sigmoid(ops, x):
+    x_fp = ops.from_lns(x)
+    result = torch.sigmoid(x_fp)
+    return ops.to_lns(result)
 
 class LNSSigmoidFunction(LNSFunction):
     """
@@ -219,33 +193,32 @@ class LNSSigmoidFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_fp = lnstensor(x, from_lns=True, b=base).value
-
-        result = torch.sigmoid(x_fp)
-        return lnstensor(result, b=base)._lns
+    def forward(ops, x):
+        return _sigmoid(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = lns_sub(LNS_ONE, output_packed, base)
-        grad_x = lns_mul(output_packed, grad_x, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.sub(LNS_ONE, output)
+        grad_x = ops.mul(output, grad_x)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
-@implements(torch.nn.functional.sigmoid, LNSSigmoidFunction.forward, "default", default=True)
+@implements(torch.sigmoid, _sigmoid, "default", default=True)
+@implements(torch.nn.functional.sigmoid, _sigmoid, "default", default=True)
 def sigmoid(x):
-    result = LNSSigmoidFunction.apply(x, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSigmoidFunction.apply(x)
+
+def _logsigmoid(ops, x):
+    x_fp = ops.from_lns(x)
+    result = torch.nn.functional.logsigmoid(x_fp)
+    return ops.to_lns(result)
 
 class LNSLogSigmoidFunction(LNSFunction):
     """
@@ -258,32 +231,35 @@ class LNSLogSigmoidFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_fp = lnstensor(x, from_lns=True, b=base).value
-
-        result = torch.nn.functional.logsigmoid(x_fp)
-        return lnstensor(result, b=base)._lns
+    def forward(ops, x):
+        return _logsigmoid(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, output, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x, output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, output = ctx.saved_tensors
 
-        grad_x = lns_sub(output, x, base)
-        grad_x = lns_exp(grad_x, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.sub(output, x)
+        grad_x = ops.exp(grad_x)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.logsigmoid, LNSLogSigmoidFunction.forward, "default", default=True)
+@implements(torch.nn.functional.logsigmoid, _logsigmoid, "default", default=True)
 def logsigmoid(x):
-    result = LNSLogSigmoidFunction.apply(x, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLogSigmoidFunction.apply(x)
+
+def _softmin(ops, x, dim=None):
+    neg_x = ops.neg(x)
+    exp_x = ops.exp(neg_x)
+    sum_exp_x = ops.sum(exp_x, dim=dim, keepdim=True)
+
+    result = ops.div(exp_x, sum_exp_x)
+    return result
 
 class LNSSoftminFunction(LNSFunction):
     """
@@ -296,35 +272,34 @@ class LNSSoftminFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base, dim=None):
-        x_packed = x.to(torch.int64)
-
-        neg_x = lns_neg(x_packed)
-        exp_x = lns_exp(neg_x, base)
-        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
-
-        result = lns_div(exp_x, sum_exp_x, base)
-        return result.to(torch.float64)
+    def forward(ops, x, dim=None):
+        return _softmin(ops, x, dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, dim = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, dim = inputs
+        ctx.save_for_backward(output)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        dot_product = lns_sum(lns_mul(grad_output, output, base), base, dim=ctx.dim, keepdim=True)
-        grad_x = lns_mul(output, lns_sub(grad_output, dot_product, base), base)
+        dot_product = ops.sum(ops.mul(grad_output, output), dim=ctx.dim, keepdim=True)
+        grad_x = ops.mul(output, ops.sub(grad_output, dot_product))
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.softmin, LNSSoftminFunction.forward, "default", default=True)
+@implements(torch.nn.functional.softmin, _softmin, "default", default=True)
 def softmin(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSSoftminFunction.apply(x, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftminFunction.apply(x, dim)
+
+def _softmax(ops, x, dim=None):
+    exp_x = ops.exp(x)
+    sum_exp_x = ops.sum(exp_x, dim=dim, keepdim=True)
+
+    result = ops.div(exp_x, sum_exp_x)
+    return result
 
 class LNSSoftmaxFunction(LNSFunction):
     """
@@ -337,34 +312,42 @@ class LNSSoftmaxFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base, dim=None):
-        x_packed = x.to(torch.int64)
-
-        exp_x = lns_exp(x_packed, base)
-        sum_exp_x = lns_sum(exp_x, base, dim=dim, keepdim=True)
-
-        result = lns_div(exp_x, sum_exp_x, base)
-        return result.to(torch.float64)
+    def forward(ops, x, dim=None):
+        return _softmax(ops, x, dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, dim = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, dim = inputs
+        ctx.save_for_backward(output)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        dot_product = lns_sum(lns_mul(grad_output, output, base), base, dim=ctx.dim, keepdim=True)
-        grad_x = lns_mul(output, lns_sub(grad_output, dot_product, base), base)
+        dot_product = ops.sum(ops.mul(grad_output, output), dim=ctx.dim, keepdim=True)
+        grad_x = ops.mul(output, ops.sub(grad_output, dot_product))
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.softmax, LNSSoftmaxFunction.forward, "default", default=True)
+@implements(torch.nn.functional.softmax, _softmax, "default", default=True)
 def softmax(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSSoftmaxFunction.apply(x, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftmaxFunction.apply(x, dim)
+
+def _log_softmax(ops, x, dim=None):
+    if dim is None:
+        m = ops.max(x)
+    else:
+        m = ops.max(x, dim=dim, keepdim=True)[0] # discard indices
+
+    # subtract the max to prevent overflow (logsumexp trick)
+    x_sub_m = ops.sub(x, m)
+    exp_x_sub_m = ops.exp(x_sub_m)
+    sum_exp_x_sub_m = ops.sum(exp_x_sub_m, dim=dim, keepdim=True)
+    log_sum_exp_x_sub_m = ops.log(sum_exp_x_sub_m)
+
+    result = ops.sub(x_sub_m, log_sum_exp_x_sub_m)
+    return result
 
 class LNSLogSoftmaxFunction(LNSFunction):
     """
@@ -377,40 +360,34 @@ class LNSLogSoftmaxFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base, dim=None):
-        x_packed = x.to(torch.int64)
-        m = lns_max(x_packed, base, dim=dim, keepdim=True)[0] # discard indices
-
-        # subtract the max to prevent overflow (logsumexp trick)
-        x_sub_m = lns_sub(x_packed, m, base)
-        exp_x_sub_m = lns_exp(x_sub_m, base)
-        sum_exp_x_sub_m = lns_sum(exp_x_sub_m, base, dim=dim, keepdim=True)
-        log_sum_exp_x_sub_m = lns_log(sum_exp_x_sub_m, base)
-
-        result = lns_sub(x_sub_m, log_sum_exp_x_sub_m, base)
-        return result.to(torch.float64)
+    def forward(ops, x, dim=None):
+        return _log_softmax(ops, x, dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base, dim = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, dim = inputs
+        ctx.save_for_backward(output)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        softmax = lns_exp(output, base)
-        sum_grad = lns_sum(grad_output, base, dim=ctx.dim, keepdim=True)
-        product = lns_mul(softmax, sum_grad, base)
-        grad_x = lns_sub(grad_output, product, base)
+        softmax = ops.exp(output)
+        sum_grad = ops.sum(grad_output, dim=ctx.dim, keepdim=True)
+        product = ops.mul(softmax, sum_grad)
+        grad_x = ops.sub(grad_output, product)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.log_softmax, LNSLogSoftmaxFunction.forward, "default", default=True)
+@implements(torch.nn.functional.log_softmax, _log_softmax, "default", default=True)
 def log_softmax(x, dim=None, _stacklevel=3, dtype=None):
-    result = LNSLogSoftmaxFunction.apply(x, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLogSoftmaxFunction.apply(x, dim)
+
+def _hardtanh(ops, x, min_val, max_val):
+    result = torch.where(ops.lt(x, min_val), min_val, x)
+    result = torch.where(ops.gt(result, max_val), max_val, result)
+    return result
 
 class LNSHardtanhFunction(LNSFunction):
     """
@@ -422,47 +399,47 @@ class LNSHardtanhFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, min_val, max_val, base):
-        x_packed = x.to(torch.int64)
-
-        result = torch.where(lns_lt(x_packed, min_val), min_val, x)
-        result = torch.where(lns_gt(result, max_val), max_val, result)
-        return result.to(torch.float64)
+    def forward(ops, x, min_val, max_val):
+        return _hardtanh(ops, x, min_val, max_val)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, min_val, max_val, base = inputs
-        ctx.save_for_backward(min_val, max_val, output, base)
+    def setup_context(ctx, ops, inputs, output):
+        _, min_val, max_val = inputs
+        ctx.save_for_backward(min_val, max_val, output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        min_val, max_val, output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        min_val, max_val, output = ctx.saved_tensors
 
-        grad_x = torch.where(lns_le(output_packed, min_val) | lns_ge(output_packed, max_val),
-                             LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.le(output, min_val) | ops.ge(output, max_val), LNS_ZERO, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None, None
+        return grad_x, None, None
 
-@implements(torch.nn.functional.hardtanh, LNSHardtanhFunction.forward, "default", default=True)
+@implements(torch.nn.functional.hardtanh, _hardtanh, "default", default=True)
 def hardtanh(x, min_val=-1.0, max_val=1.0, inplace=False):
-
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
-    result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
+    result = LNSHardtanhFunction.apply(x, min_val, max_val)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-@implements(torch.nn.functional.hardtanh_, LNSHardtanhFunction.forward, "default", default=True)
+@implements(torch.nn.functional.hardtanh_, _hardtanh, "default", default=True)
 def hardtanh_(x, min_val=-1.0, max_val=1.0):
-
     x, min_val, max_val = format_lnstensor_operands(x, min_val, max_val)
-    result = LNSHardtanhFunction.apply(x, min_val, max_val, x.base)
-
+    result = LNSHardtanhFunction.apply(x, min_val, max_val)
     return x._inplace_copy(result)
+
+def _hardswish(ops, x):
+    three = ops.to_lns(3.0)
+    swish = ops.div(ops.mul(x, ops.add(x, three)), ops.to_lns(6.0))
+
+    result = torch.where(ops.le(x, ops.neg(three)), LNS_ZERO,
+                            torch.where(ops.ge(x, three), x, swish))
+
+    return result
 
 class LNSHardswishFunction(LNSFunction):
     """
@@ -474,48 +451,44 @@ class LNSHardswishFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        three = LNSTensor.get_internal_tensor(3.0, base)
-        swish = lns_div(lns_mul(x_packed, lns_add(x_packed, three, base), base),
-                        LNSTensor.get_internal_tensor(6, base), base)
-
-        result = torch.where(lns_le(x_packed, LNSTensor.get_internal_tensor(-3, base)), LNS_ZERO,
-                             torch.where(lns_ge(x_packed, three), x_packed, swish))
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _hardswish(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-        grad_swish = lns_div(lns_add(lns_mul(x_packed, LNSTensor.get_internal_tensor(2, base), base),
-                                     LNSTensor.get_internal_tensor(3, base), base),
-                                     LNSTensor.get_internal_tensor(6, base), base)
+        three = ops.to_lns(3.0)
+        grad_swish = ops.div(ops.add(ops.mul(x, ops.to_lns(2.0)),
+                                     three),
+                                     ops.to_lns(6.0))
 
-        grad_x = torch.where(lns_le(x_packed, LNSTensor.get_internal_tensor(-3, base)), LNS_ZERO,
-                             torch.where(lns_ge(x_packed, LNSTensor.get_internal_tensor(3, base)),
+        grad_x = torch.where(ops.le(x, ops.neg(three)), LNS_ZERO,
+                             torch.where(ops.ge(x, three),
                                          LNS_ONE, grad_swish))
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.hardswish, LNSHardswishFunction.forward, "default", default=True)
+@implements(torch.nn.functional.hardswish, _hardswish, "default", default=True)
 def hardswish(x, inplace=False):
-
-    result = LNSHardswishFunction.apply(x, x.base)
+    result = LNSHardswishFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _relu6(ops, x):
+    six = ops.to_lns(6.0)
+    result = torch.where(ops.lt(x, LNS_ZERO), LNS_ZERO,
+                            torch.where(ops.gt(x, six), six, x))
+    return result
 
 class LNSReLU6Function(LNSFunction):
     """
@@ -527,40 +500,36 @@ class LNSReLU6Function(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        six = LNSTensor.get_internal_tensor(6, base)
-        result = torch.where(lns_lt(x_packed, LNS_ZERO), LNS_ZERO,
-                             torch.where(lns_gt(x_packed, six), six, x))
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _relu6(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = torch.where(lns_le(output_packed, LNS_ZERO) | lns_ge(output_packed, LNSTensor.get_internal_tensor(6, base)),
+        grad_x = torch.where(ops.le(output, LNS_ZERO) | ops.ge(output, ops.to_lns(6.0)),
                              LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.relu6, LNSReLU6Function.forward, "default", default=True)
+@implements(torch.nn.functional.relu6, _relu6, "default", default=True)
 def relu6(x, inplace=False):
-
-    result = LNSReLU6Function.apply(x, x.base)
+    result = LNSReLU6Function.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _elu(ops, x, alpha):
+    negative_part = ops.mul(alpha, ops.sub(ops.exp(x), LNS_ONE))
+    result = torch.where(ops.gt(x, LNS_ZERO), x, negative_part)
+    return result
 
 class LNSELUFunction(LNSFunction):
     """
@@ -572,50 +541,47 @@ class LNSELUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, alpha, base):
-        x_packed, alpha_packed = x.to(torch.int64), alpha.to(torch.int64)
-
-        negative_part = lns_mul(alpha_packed, lns_sub(lns_exp(x_packed, base),
-                                                      LNS_ONE, base), base)
-        result = torch.where(lns_gt(x_packed, LNS_ZERO), x_packed, negative_part)
-
-        return result.to(torch.float64)
+    def forward(ops, x, alpha):
+        return _elu(ops, x, alpha)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, alpha, base = inputs
-        ctx.save_for_backward(x, alpha, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, alpha = inputs
+        ctx.save_for_backward(x, alpha)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, alpha, base = ctx.saved_tensors
-        x_packed, alpha_packed = x.to(torch.int64), alpha.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, alpha = ctx.saved_tensors
 
-        grad_x = torch.where(lns_gt(x_packed, LNS_ZERO), LNS_ONE,
-                             lns_mul(alpha_packed, lns_exp(x_packed, base), base))
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.gt(x, LNS_ZERO), LNS_ONE, ops.mul(alpha, ops.exp(x)))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.elu, LNSELUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.elu, _elu, "default", default=True)
 def elu(x, alpha=1.0, inplace=False):
-
     x, alpha = format_lnstensor_operands(x, alpha)
-
-    result = LNSELUFunction.apply(x, alpha, x.base)
+    result = LNSELUFunction.apply(x, alpha)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
-@implements(torch.nn.functional.elu_, LNSELUFunction.forward, "default", default=True)
-def elu_(x, alpha=1.0):
-
+@implements(torch.nn.functional.elu_, _elu, "default", default=True)
+def elu_(ops, x, alpha=1.0):
     x, alpha = format_lnstensor_operands(x, alpha)
-    result = LNSELUFunction.apply(x, alpha, x.base)
-
+    result = LNSELUFunction.apply(x, alpha)
     return x._inplace_copy(result)
+
+def _selu(ops, x):
+    scale = ops.to_lns(1.6732632423543772848170429916717)
+    alpha = ops.to_lns(1.0507009873554804934193349852946)
+
+    negative_part = ops.mul(scale, ops.mul(alpha, ops.sub(ops.exp(x), LNS_ONE)))
+    result = torch.where(ops.gt(x, LNS_ZERO), ops.mul(scale, x), negative_part)
+
+    return result
 
 class LNSSELUFunction(LNSFunction):
     """
@@ -626,49 +592,42 @@ class LNSSELUFunction(LNSFunction):
     d/dx(SELU(x)) = scale if x > 0 else scale * alpha * exp(x) if x <= 0
     """
 
-    alpha = 1.6732632423543772848170429916717
-    scale = 1.0507009873554804934193349852946
+    @staticmethod
+    def forward(ops, x):
+        return _selu(ops, x)
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-        scale = LNSTensor.get_internal_tensor(LNSSELUFunction.scale, base)
-        alpha = LNSTensor.get_internal_tensor(LNSSELUFunction.alpha, base)
-
-        negative_part = lns_mul(scale, lns_mul(alpha, lns_sub(lns_exp(x_packed, base),
-                                                              LNS_ONE, base)), base)
-        result = torch.where(lns_gt(x_packed, LNS_ZERO), lns_mul(scale, x_packed, base), negative_part)
-
-        return result.to(torch.float64)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, base)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-    @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
-        scale = LNSTensor.get_internal_tensor(LNSSELUFunction.scale, base)
-        alpha = LNSTensor.get_internal_tensor(LNSSELUFunction.alpha, base)
+        scale = ops.to_lns(1.6732632423543772848170429916717)
+        alpha = ops.to_lns(1.0507009873554804934193349852946)
 
-        grad_x = torch.where(lns_gt(x_packed, LNS_ZERO),
-                             lns_mul(scale, LNS_ONE, base),
-                             lns_mul(scale, lns_mul(alpha, lns_exp(x_packed, base), base), base))
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.gt(x, LNS_ZERO),
+                             ops.mul(scale, LNS_ONE),
+                             ops.mul(scale, ops.mul(alpha, ops.exp(x))))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x
 
-@implements(torch.nn.functional.selu, LNSSELUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.selu, _selu, "default", default=True)
 def selu(x, inplace=False):
-
-    result = LNSSELUFunction.apply(x, x.base)
+    result = LNSSELUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _celu(ops, x, alpha):
+    negative_part = ops.mul(alpha, ops.sub(ops.exp(ops.div(x, alpha)), LNS_ONE))
+    result = torch.where(ops.gt(x, LNS_ZERO), x, negative_part)
+    return result
 
 class LNSCELUFunction(LNSFunction):
     """
@@ -680,41 +639,37 @@ class LNSCELUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, alpha, base):
-        x_packed, alpha_packed = x.to(torch.int64), alpha.to(torch.int64)
-
-        negative_part = lns_mul(alpha_packed, lns_sub(lns_exp(lns_div(x_packed, alpha_packed, base), base),
-                                                      LNS_ONE, base), base)
-        result = torch.where(lns_gt(x_packed, LNS_ZERO), x_packed, negative_part)
-
-        return result.to(torch.float64)
+    def forward(ops, x, alpha):
+        return _celu(ops, x, alpha)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, alpha, base = inputs
-        ctx.save_for_backward(x, alpha, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, alpha = inputs
+        ctx.save_for_backward(x, alpha)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, alpha, base = ctx.saved_tensors
-        x_packed, alpha_packed = x.to(torch.int64), alpha.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, alpha = ctx.saved_tensors
 
-        grad_x = torch.where(lns_gt(x_packed, LNS_ZERO), LNS_ONE,
-                             lns_exp(lns_div(x_packed, alpha_packed, base), base))
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.gt(x, LNS_ZERO), LNS_ONE, ops.exp(ops.div(x, alpha)))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.celu, LNSCELUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.celu, _celu, "default", default=True)
 def celu(x, alpha=1.0, inplace=False):
-
     x, alpha = format_lnstensor_operands(x, alpha)
-    result = LNSCELUFunction.apply(x, alpha, x.base)
+    result = LNSCELUFunction.apply(x, alpha)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _prelu(ops, x, a):
+    negative_part = ops.mul(x, a)
+    result = torch.where(ops.gt(x, LNS_ZERO), x, negative_part)
+    return result
 
 class LNSPReLUFunction(LNSFunction):
     """
@@ -727,53 +682,52 @@ class LNSPReLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, a, base):
-        x_packed, a_packed = x.to(torch.int64), a.to(torch.int64)
-
-        negative_part = lns_mul(x_packed, a, base)
-        result = torch.where(lns_gt(x_packed, LNS_ZERO), x_packed, negative_part)
-
-        return result.to(torch.float64)
+    def forward(ops, x, a):
+        return _prelu(ops, x, a)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, a, base = inputs
-        ctx.save_for_backward(x, a, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, a = inputs
+        ctx.save_for_backward(x, a)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, a, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, a = ctx.saved_tensors
 
-        negative_mask = lns_le(x_packed, LNS_ZERO)
+        negative_mask = ops.le(x, LNS_ZERO)
 
         grad_x = torch.where(negative_mask, a, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.mul(grad_output, grad_x)
 
         grad_a = torch.where(negative_mask, x, LNS_ZERO)
-        grad_a = lns_mul(grad_output, grad_a, base)
+        grad_a = ops.mul(grad_output, grad_a)
 
         while grad_a.dim() > a.dim():
-            grad_a = lns_sum(grad_a, base, dim=0)
+            grad_a = ops.sum(grad_a, dim=0)
 
         for i, dim in enumerate(a.shape):
             if dim == 1:
-                grad_a = lns_sum(grad_a, base, dim=i, keepdim=True)
+                grad_a = ops.sum(grad_a, dim=i, keepdim=True)
 
-        grad_a = lns_add(grad_a, LNS_ONE, base)
+        grad_a = ops.add(grad_a, LNS_ONE)
 
         return grad_x, grad_a, None
 
-@implements(torch.nn.functional.prelu, LNSPReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.prelu, _prelu, "default", default=True)
 def prelu(x, a, inplace=False):
-
     x, a = format_lnstensor_operands(x, a)
-    result = LNSPReLUFunction.apply(x, a, x.base)
+    result = LNSPReLUFunction.apply(x, a)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _rrelu(ops, x, a):
+    negative_part = ops.mul(x, a)
+    result = torch.where(ops.gt(x, LNS_ZERO), x, negative_part)
+
+    return result
 
 class LNSRReLUFunction(LNSFunction):
     """
@@ -788,56 +742,59 @@ class LNSRReLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, a, base):
-        x_packed, a_packed = x.to(torch.int64), a.to(torch.int64)
-
-        negative_part = lns_mul(x_packed, a_packed, base)
-        result = torch.where(lns_gt(x_packed, LNS_ZERO), x_packed, negative_part)
-
-        return result.to(torch.float64)
+    def forward(ops, x, a):
+        return _rrelu(ops, x, a)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, a, base = inputs
-        ctx.save_for_backward(x, a, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, a = inputs
+        ctx.save_for_backward(x, a)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, a, base = ctx.saved_tensors
-        x_packed, a_packed = x.to(torch.int64), a.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, a = ctx.saved_tensors
 
-        negative_mask = lns_lt(x_packed, LNS_ZERO)
+        negative_mask = ops.lt(x, LNS_ZERO)
 
-        grad_x = torch.where(negative_mask, a_packed, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(negative_mask, a, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.rrelu, LNSRReLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.rrelu, _rrelu, "default", default=True)
 def rrelu(x, lower=1/8, upper=1/3, training=False, inplace=False):
-
     if training:
         a = rand(*x.shape, b=x.base) * (upper - lower) + lower
     else:
         a = lnstensor((lower + upper) / 2, b=x.base)
 
-    result = LNSRReLUFunction.apply(x, a, x.base)
+    result = LNSRReLUFunction.apply(x, a)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 @implements(torch.nn.functional.rrelu_, LNSRReLUFunction.forward, "default", default=True)
 def rrelu_(x, lower=1/8, upper=1/3, training=False):
-
     if training:
         a = rand(x.shape, b=x.base) * (upper - lower) + lower
     else:
         a = lnstensor((lower + upper) / 2, b=x.base)
 
-    result = LNSRReLUFunction.apply(x, a, x.base)
+    result = LNSRReLUFunction.apply(x, a)
     return x._inplace_copy(result)
+
+def _glu(ops, x, dim=-1):
+    half_size = x.size(dim) // 2
+
+    a = x.narrow(dim, 0, half_size)
+    b = x.narrow(dim, half_size, half_size)
+
+    sigmoid_b = ops.sigmoid(b)
+    result = ops.mul(a, sigmoid_b)
+
+    return result
 
 class LNSGLUFunction(LNSFunction):
     """
@@ -851,46 +808,39 @@ class LNSGLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base, dim=-1):
-        x_packed = x.to(torch.int64)
-        half_size = x_packed.size(dim) // 2
-
-        a = x_packed.narrow(dim, 0, half_size)
-        b = x_packed.narrow(dim, half_size, half_size)
-
-        sigmoid_b = lns_sigmoid(b, base)
-        result = lns_mul(a, sigmoid_b, base)
-
-        return result.to(torch.float64)
+    def forward(ops, x, dim=-1):
+        return _glu(ops, x, dim)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base, dim = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, dim = inputs
+        ctx.save_for_backward(x)
         ctx.dim = dim
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-        half_size = x_packed.size(ctx.dim) // 2
-        a = x_packed.narrow(ctx.dim, 0, half_size)
-        b = x_packed.narrow(ctx.dim, half_size, half_size)
+        half_size = x.size(ctx.dim) // 2
+        a = x.narrow(ctx.dim, 0, half_size)
+        b = x.narrow(ctx.dim, half_size, half_size)
 
-        sigmoid_b = lns_sigmoid(b, base)
-        grad_a = lns_mul(grad_output, sigmoid_b, base)
-        grad_b = lns_sub(LNS_ONE, sigmoid_b, base)
-        grad_b = lns_mul(grad_output, lns_mul(a, lns_mul(sigmoid_b, grad_b, base), base), base)
+        sigmoid_b = ops.sigmoid(b)
+        grad_a = ops.mul(grad_output, sigmoid_b)
+        grad_b = ops.sub(LNS_ONE, sigmoid_b)
+        grad_b = ops.mul(grad_output, ops.mul(a, ops.mul(sigmoid_b, grad_b)))
 
         grad_x = torch.cat([grad_a, grad_b], dim=ctx.dim)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.glu, LNSGLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.glu, _glu, "default", default=True)
 def glu(x, dim=-1):
-    result = LNSGLUFunction.apply(x, x.base, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSGLUFunction.apply(x, dim)
+
+def _hardshrink(ops, x, lambd):
+    result = torch.where(ops.le(ops.abs(x), lambd), LNS_ZERO, x)
+    return result
 
 class LNSHardshrinkFunction(LNSFunction):
     """
@@ -902,34 +852,31 @@ class LNSHardshrinkFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, lambd, base):
-        x_packed, lambd_packed = x.to(torch.int64), lambd.to(torch.int64)
-
-        result = torch.where(lns_le(lns_abs(x_packed), lambd_packed), LNS_ZERO, x)
-        return result.to(torch.float64)
+    def forward(ops, x, lambd):
+        return _hardshrink(ops, x, lambd)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = torch.where(lns_eq(output_packed, LNS_ZERO), LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.eq(output, LNS_ZERO), LNS_ZERO, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.hardshrink, LNSHardshrinkFunction.forward, "default", default=True)
+@implements(torch.nn.functional.hardshrink, _hardshrink, "default", default=True)
 def hardshrink(x, lambd=0.5):
-
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSHardshrinkFunction.apply(x, lambd, x.base)
+    return LNSHardshrinkFunction.apply(x, lambd)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+def _tanhshrink(ops, x):
+    tanh_x = ops.tanh(x)
+    result = ops.sub(x, tanh_x)
+    return result
 
 class LNSTanhshrinkFunction(LNSFunction):
     """
@@ -941,34 +888,34 @@ class LNSTanhshrinkFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        tanh_x = lns_tanh(x_packed, base)
-        result = lns_sub(x_packed, tanh_x, base)
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _tanhshrink(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-        tanh_x = lns_tanh(x_packed, base)
-        grad_x = lns_mul(tanh_x, tanh_x, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        tanh_x = ops.tanh(x)
+        grad_x = ops.mul(tanh_x, tanh_x)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.tanhshrink, LNSTanhFunction.forward, "default", default=True)
+@implements(torch.nn.functional.tanhshrink, _tanhshrink, "default", default=True)
 def tanhshrink(x):
-    result = LNSTanhshrinkFunction.apply(x, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSTanhshrinkFunction.apply(x)
+
+def _softsign(ops, x):
+    abs_x = ops.abs(x)
+    denominator = ops.add(abs_x, LNS_ONE)
+    result = ops.div(x, denominator)
+
+    return result
 
 class LNSSoftsignFunction(LNSFunction):
     """
@@ -980,34 +927,32 @@ class LNSSoftsignFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        abs_x = lns_abs(x_packed)
-        denominator = lns_add(abs_x, LNS_ONE, base)
-        result = lns_div(x_packed, denominator, base)
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _softsign(ops, x)
 
     @staticmethod
     def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, output, base)
+        x, = inputs
+        ctx.save_for_backward(x, output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, output, base = ctx.saved_tensors
-        x_packed, output_packed = x.to(torch.int64), output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, output = ctx.saved_tensors
 
-        denominator = lns_div(output_packed, x_packed, base)
-        grad_x = lns_mul(grad_output, lns_mul(denominator, denominator, base), base)
+        denominator = ops.div(output, x)
+        grad_x = ops.mul(grad_output, ops.mul(denominator, denominator))
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.softsign, LNSSoftsignFunction.forward, "default", default=True)
+@implements(torch.nn.functional.softsign, _softsign, "default", default=True)
 def softsign(x):
-    result = LNSSoftsignFunction.apply(x, x.base)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSoftsignFunction.apply(x)
+
+def _softplus(ops, x, beta, threshold):
+    threshold_mask = ops.gt(ops.mul(x, beta), threshold)
+    result = torch.where(threshold_mask, x, ops.log(ops.add(ops.exp(x), LNS_ONE)))
+
+    return result
 
 class LNSSoftplusFunction(LNSFunction):
     """
@@ -1019,40 +964,36 @@ class LNSSoftplusFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, beta, threshold, base):
-        x_packed, beta_packed, threshold_packed = x.to(torch.int64), beta.to(torch.int64), threshold.to(torch.int64)
-
-        threshold_mask = lns_gt(lns_mul(x_packed, beta_packed, base), threshold_packed)
-        result = torch.where(threshold_mask, x, lns_log(lns_add(lns_exp(
-            x_packed,base), LNS_ONE, base), base))
-
-        return result.to(torch.float64)
+    def forward(ops, x, beta, threshold):
+        return _softplus(ops, x, beta, threshold)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, beta, threshold, base = inputs
-        ctx.save_for_backward(x, beta, threshold, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, beta, threshold = inputs
+        ctx.save_for_backward(x, beta, threshold)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, beta, threshold, base = ctx.saved_tensors
-        x_packed, beta_packed, threshold_packed = x.to(torch.int64), beta.to(torch.int64), threshold.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, beta, threshold = ctx.saved_tensors
 
-        threshold_mask = lns_gt(lns_mul(x_packed, beta_packed, base), threshold_packed)
+        threshold_mask = ops.gt(ops.mul(x, beta), threshold)
 
-        grad_x = lns_sigmoid(x_packed, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = ops.sigmoid(x)
+        grad_x = ops.mul(grad_output, grad_x)
         grad_x = torch.where(threshold_mask, LNS_ONE, grad_x)
 
-        return grad_x, None, None, None
+        return grad_x, None, None
 
-@implements(torch.nn.functional.softplus, LNSSoftplusFunction.forward, "default", default=True)
+@implements(torch.nn.functional.softplus, _softplus, "default", default=True)
 def softplus(x, beta=1.0, threshold=20.0):
-
     x, beta, threshold = format_lnstensor_operands(x, beta, threshold)
-    result = LNSSoftplusFunction.apply(x, beta, threshold, x.base)
+    return LNSSoftplusFunction.apply(x, beta, threshold)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+def _softshrink(ops, x, lambd):
+    result = torch.where(ops.gt(ops.abs(x), lambd),
+                         torch.where(ops.gt(x, LNS_ZERO), ops.sub(x, lambd),
+                                        ops.add(x, lambd)), LNS_ZERO)
+    return result
 
 class LNSSoftshrinkFunction(LNSFunction):
     """
@@ -1064,36 +1005,33 @@ class LNSSoftshrinkFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, lambd, base):
-        x_packed, lambd_packed = x.to(torch.int64), lambd.to(torch.int64)
-
-        result = torch.where(lns_gt(lns_abs(x_packed), lambd_packed),
-                             torch.where(lns_gt(x_packed, LNS_ZERO), lns_sub(x_packed, lambd_packed, base),
-                                         lns_add(x_packed, lambd_packed, base)), LNS_ZERO)
-        return result.to(torch.float64)
+    def forward(ops, x, lambd):
+        return _softshrink(ops, x, lambd)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        _, _, base = inputs
-        ctx.save_for_backward(output, base)
+    def setup_context(ctx, ops, inputs, output):
+        ctx.save_for_backward(output)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        output, base = ctx.saved_tensors
-        output_packed = output.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        output, = ctx.saved_tensors
 
-        grad_x = torch.where(lns_eq(output_packed, LNS_ZERO), LNS_ZERO, LNS_ONE)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.eq(output, LNS_ZERO), LNS_ZERO, LNS_ONE)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None, None
+        return grad_x, None
 
-@implements(torch.nn.functional.softshrink, LNSSoftshrinkFunction.forward, "default", default=True)
+@implements(torch.nn.functional.softshrink, _softshrink, "default", default=True)
 def softshrink(x, lambd=0.5):
-
     x, lambd = format_lnstensor_operands(x, lambd)
-    result = LNSSoftshrinkFunction.apply(x, lambd, x.base)
+    return LNSSoftshrinkFunction.apply(x, lambd)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+def _hardsigmoid(ops, x):
+    three = ops.to_lns(3.0)
+    result = torch.where(ops.lt(x, ops.neg(three)), LNS_ZERO,
+                         torch.where(ops.gt(x, three), LNS_ONE,
+                                     ops.div(ops.add(x, three), ops.to_lns(6.0))))
+    return result
 
 class LNSHardsigmoidFunction(LNSFunction):
     """
@@ -1105,41 +1043,37 @@ class LNSHardsigmoidFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        three = LNSTensor.get_internal_tensor(3, base)
-        result = torch.where(lns_lt(x_packed, LNSTensor.get_internal_tensor(-3, base)), LNS_ZERO,
-                             torch.where(lns_gt(x_packed, three), LNS_ONE,
-                                         lns_div(lns_add(x_packed, three, base), LNSTensor.get_internal_tensor(6, base), base)))
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _hardsigmoid(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-        grad_x = torch.where(lns_gt(lns_abs(x_packed), LNSTensor.get_internal_tensor(3, base)),
-                             LNS_ZERO, LNSTensor.get_internal_tensor(1/6, base))
-        grad_x = lns_mul(grad_output, grad_x, base)
+        grad_x = torch.where(ops.gt(ops.abs(x), ops.to_lns(3.0)),
+                             LNS_ZERO, ops.to_lns(1.0 / 6.0))
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.hardsigmoid, LNSHardsigmoidFunction.forward, "default", default=True)
+@implements(torch.nn.functional.hardsigmoid, _hardsigmoid, "default", default=True)
 def hardsigmoid(x, inplace=False):
-
-    result = LNSHardsigmoidFunction.apply(x, x.base)
+    result = LNSHardsigmoidFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
+
+def _silu(ops, x):
+    sigmoid_x = ops.sigmoid(x)
+    result = ops.mul(x, sigmoid_x)
+    return result
 
 class LNSSiLUFunction(LNSFunction):
     """
@@ -1151,38 +1085,31 @@ class LNSSiLUFunction(LNSFunction):
     """
 
     @staticmethod
-    def forward(x, base):
-        x_packed = x.to(torch.int64)
-
-        sigmoid_x = lns_sigmoid(x_packed, base)
-        result = lns_mul(x_packed, sigmoid_x, base)
-
-        return result.to(torch.float64)
+    def forward(ops, x):
+        return _silu(ops, x)
 
     @staticmethod
-    def setup_context(ctx, inputs, output):
-        x, base = inputs
-        ctx.save_for_backward(x, base)
+    def setup_context(ctx, ops, inputs, output):
+        x, = inputs
+        ctx.save_for_backward(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        x, base = ctx.saved_tensors
-        x_packed = x.to(torch.int64)
+    def backward(ctx, ops, grad_output):
+        x, = ctx.saved_tensors
 
-        sigmoid_x = lns_sigmoid(x_packed, base)
-        one_minus_sigmoid_x = lns_sub(LNS_ONE, sigmoid_x, base)
-        grad_x = lns_mul(x_packed, lns_mul(sigmoid_x, one_minus_sigmoid_x, base), base)
-        grad_x = lns_add(sigmoid_x, grad_x, base)
-        grad_x = lns_mul(grad_output, grad_x, base)
+        sigmoid_x = ops.sigmoid(x)
+        one_minus_sigmoid_x = ops.sub(LNS_ONE, sigmoid_x)
+        grad_x = ops.mul(x, ops.mul(sigmoid_x, one_minus_sigmoid_x))
+        grad_x = ops.add(sigmoid_x, grad_x)
+        grad_x = ops.mul(grad_output, grad_x)
 
-        return grad_x, None
+        return grad_x
 
-@implements(torch.nn.functional.silu, LNSSiLUFunction.forward, "default", default=True)
+@implements(torch.nn.functional.silu, _silu, "default", default=True)
 def silu(x, inplace=False):
-
-    result = LNSSiLUFunction.apply(x, x.base)
+    result = LNSSiLUFunction.apply(x)
 
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result

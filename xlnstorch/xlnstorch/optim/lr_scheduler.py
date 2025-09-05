@@ -4,20 +4,10 @@ from bisect import bisect_right
 import torch
 from xlnstorch import LNSTensor, lnstensor, LNS_ONE
 from . import LNSOptimizer
-from xlnstorch.operators import (
-    lns_mul,
-    lns_pow,
-    lns_div,
-    lns_add,
-    lns_sub,
-    lns_minimum,
-    lns_maximum,
-    lns_gt,
-)
 
 def _lns(value: Union[float, LNSTensor], base) -> LNSTensor:
     if isinstance(value, LNSTensor):
-        return lnstensor(value, b=base)._lns
+        return lnstensor(value, b=base).lns # .lns views to int64
     return LNSTensor.get_internal_tensor(value, base)
 
 def get_lr_bases(optimizer: LNSOptimizer) -> List[torch.Tensor]:
@@ -69,17 +59,18 @@ class LNSLambdaLR(torch.optim.lr_scheduler.LambdaLR):
             lr_lambda: Union[Callable[[int], Union[float, LNSTensor]], List[Callable[[int], Union[float, LNSTensor]]]],
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
         super().__init__(optimizer, lr_lambda, last_epoch)
 
     @override
     def get_lr(self) -> List[torch.Tensor]:
         torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
 
-        return [
-            lns_mul(base_lr, _lns(lmbda(self.last_epoch), base), base)
-            for lmbda, base_lr, base in zip(self.lr_lambdas, self.base_lrs, self.lns_lr_bases)
-        ]
+        new_lrs = []
+        for ops, lmbda, base_lr in zip(self.optimizer.lns_ops(), self.lr_lambdas, self.base_lrs):
+            lns_lmbda = _lns(lmbda(self.last_epoch), ops.base)
+            new_lrs.append(ops.mul(base_lr, lns_lmbda))
+
+        return new_lrs
 
 class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR):
     """
@@ -105,7 +96,6 @@ class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR):
             lr_lambda: Union[Callable[[int], Union[float, LNSTensor]], List[Callable[[int], Union[float, LNSTensor]]]],
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
         super().__init__(optimizer, lr_lambda, last_epoch)
 
     @override
@@ -113,10 +103,13 @@ class LNSMultiplicativeLR(torch.optim.lr_scheduler.MultiplicativeLR):
         torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
 
         if self.last_epoch > 0:
-            return [
-                lns_mul(group["lr"], _lns(lmbda(self.last_epoch), base), base)
-                for lmbda, group, base in zip(self.lr_lambdas, self.optimizer.param_groups, self.lns_lr_bases)
-            ]
+            new_lrs = []
+
+            for (group, ops), lmbda in zip(self.optimizer.lns_param_groups(), self.lr_lambdas):
+                lns_lmbda = _lns(lmbda(self.last_epoch), ops.base)
+                new_lrs.append(ops.mul(group["lr"], lns_lmbda))
+
+            return new_lrs
 
         return [group["lr"] for group in self.optimizer.param_groups]
 
@@ -146,9 +139,8 @@ class LNSStepLR(torch.optim.lr_scheduler.StepLR):
             gamma: Union[float, LNSTensor] = 0.1,
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
         super().__init__(optimizer, step_size, gamma, last_epoch)
+        self.gammas = [_lns(gamma, ops.base) for ops in self.optimizer.lns_ops()]
 
     @override
     def get_lr(self) -> List[torch.Tensor]:
@@ -157,16 +149,19 @@ class LNSStepLR(torch.optim.lr_scheduler.StepLR):
         if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_mul(group["lr"], gamma, base)
-            for group, gamma, base in zip(self.optimizer.param_groups, self.gammas, self.lns_lr_bases)
-        ]
+        new_lrs = []
+        for (group, ops), gamma in zip(self.optimizer.lns_param_groups(), self.gammas):
+            new_lrs.append(ops.mul(group["lr"], gamma))
+
+        return new_lrs
 
     def _get_closed_form_lr(self) -> List[torch.Tensor]:
-        return [
-            lns_mul(base_lr, lns_pow(gamma, torch.tensor(self.last_epoch // self.step_size), base), base)
-            for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
-        ]
+        cf_lrs = []
+        for ops, base_lr, gamma in zip(self.optimizer.lns_ops(), self.base_lrs, self.gammas):
+            pow = ops.pow(gamma, torch.tensor(self.last_epoch // self.step_size, dtype=torch.int64))
+            cf_lrs.append(ops.mul(base_lr, pow))
+
+        return cf_lrs
 
 class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR):
     """
@@ -194,8 +189,7 @@ class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR):
             gamma: Union[float, LNSTensor] = 0.1,
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
+        self.gammas = [_lns(gamma, ops.base) for ops in optimizer.lns_ops()]
         super().__init__(optimizer, milestones, gamma, last_epoch)
 
     @override
@@ -205,17 +199,22 @@ class LNSMultiStepLR(torch.optim.lr_scheduler.MultiStepLR):
         if self.last_epoch not in self.milestones:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_mul(group["lr"], lns_pow(gamma, torch.tensor(self.milestones[self.last_epoch]), base), base)
-            for group, gamma, base in zip(self.optimizer.param_groups, self.gammas, self.lns_lr_bases)
-        ]
+        new_lrs = []
+        for (group, ops), gamma in zip(self.optimizer.lns_param_groups(), self.gammas):
+            pow = ops.pow(gamma, torch.tensor(self.milestones[self.last_epoch], dtype=torch.int64))
+            new_lrs.append(ops.mul(group["lr"], pow))
+
+        return new_lrs
 
     def _get_closed_form_lr(self):
         milestones = sorted(self.milestones.elements())
-        return [
-            lns_mul(base_lr, lns_pow(gamma, torch.tensor(bisect_right(milestones, self.last_epoch)), base), base)
-            for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
-        ]
+        cf_lrs = []
+
+        for ops, base_lr, gamma in zip(self.optimizer.lns_ops(), self.base_lrs, self.gammas):
+            pow = ops.pow(gamma, torch.tensor(bisect_right(milestones, self.last_epoch), dtype=torch.int64))
+            cf_lrs.append(ops.mul(base_lr, pow))
+
+        return cf_lrs
 
 class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
     """
@@ -244,8 +243,7 @@ class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
             total_iters: int = 0,
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.factors = [_lns(factor, base) for base in self.lns_lr_bases]
+        self.factors = [_lns(factor, ops.base) for ops in optimizer.lns_ops()]
         super().__init__(optimizer, factor, total_iters, last_epoch)
 
     @override
@@ -253,18 +251,21 @@ class LNSConstantLR(torch.optim.lr_scheduler.ConstantLR):
         torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
 
         if self.last_epoch == 0:
-            return [
-                lns_mul(base_lr, factor, base)
-                for base_lr, factor, base in zip(self.base_lrs, self.factors, self.lns_lr_bases)
-            ]
+            new_lrs = []
+
+            for ops, base_lr, factor in zip(self.optimizer.lns_ops(), self.base_lrs, self.factors):
+                new_lrs.append(ops.mul(base_lr, factor))
+
+            return new_lrs
 
         if self.last_epoch != self.total_iters:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_div(group["lr"], factor, base)
-            for group, factor, base in zip(self.optimizer.param_groups, self.factors, self.lns_lr_bases)
-        ]
+        new_lrs = []
+        for (group, ops), factor in zip(self.optimizer.lns_param_groups(), self.factors):
+            new_lrs.append(ops.div(group["lr"], factor))
+
+        return new_lrs
 
 class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
     """
@@ -283,7 +284,7 @@ class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
         The final factor for the learning rate.
     total_iters : int, optional
         The number of iterations over which the learning rate will decay.
-        Default: 0.
+        Default: 5.
     last_epoch : int, optional
         The index of last epoch. Default: -1.
     """
@@ -293,13 +294,12 @@ class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
             optimizer: LNSOptimizer,
             start_factor: Union[float, LNSTensor] = 1.0 / 3,
             end_factor: Union[float, LNSTensor] = 1.0,
-            total_iters: int = 0,
+            total_iters: int = 5,
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.start_factor_lns = [_lns(start_factor, base) for base in self.lns_lr_bases]
-        self.end_factor_lns = [_lns(end_factor, base) for base in self.lns_lr_bases]
-        self.total_iters_lns = [_lns(total_iters, base) for base in self.lns_lr_bases]
+        self.start_factor_lns = [_lns(start_factor, ops.base) for ops in optimizer.lns_ops()]
+        self.end_factor_lns = [_lns(end_factor, ops.base) for ops in optimizer.lns_ops()]
+        self.total_iters_lns = [_lns(total_iters, ops.base) for ops in optimizer.lns_ops()]
         super().__init__(optimizer, start_factor, end_factor, total_iters, last_epoch)
 
     @override
@@ -307,48 +307,55 @@ class LNSLinearLR(torch.optim.lr_scheduler.LinearLR):
         torch.optim.lr_scheduler._warn_get_lr_called_within_step(self)
 
         if self.last_epoch == 0:
-            return [
-                lns_mul(group["lr"], start_factor, base)
-                for group, start_factor, base in zip(self.optimizer.param_groups, self.start_factor_lns, self.lns_lr_bases)
-            ]
+            new_lrs = []
+
+            for (group, ops), start_factor in zip(self.optimizer.lns_param_groups(), self.start_factor_lns):
+                new_lrs.append(ops.mul(group["lr"], start_factor))
+
+            return new_lrs
 
         if self.last_epoch > self.total_iters:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_mul(group["lr"],
-                    lns_add(LNS_ONE,
-                            lns_div(
-                                lns_sub(end_factor, start_factor, base),
-                                lns_add(
-                                    lns_mul(total_iters, start_factor, base),
-                                    lns_mul(
-                                        lns_sub(LNSTensor.get_internal_tensor(self.last_epoch, base),
-                                                LNS_ONE, base),
-                                        lns_sub(end_factor, start_factor, base),
-                                        base), base), base), base), base)
-            for group, start_factor, end_factor, total_iters, base in zip(
-                self.optimizer.param_groups, self.start_factor_lns, self.end_factor_lns,
-                self.total_iters_lns, self.lns_lr_bases)
-        ]
+        new_lrs = []
+
+        for (group, ops), start_factor, end_factor, total_iters in zip(
+            self.optimizer.lns_param_groups(), self.start_factor_lns,
+            self.end_factor_lns, self.total_iters_lns
+        ):
+
+            delta_factor = ops.sub(end_factor, start_factor)
+            epoch_minus_one = ops.sub(ops.to_lns(self.last_epoch), LNS_ONE)
+            denom = ops.add(
+                ops.mul(total_iters, start_factor),
+                ops.mul(epoch_minus_one, delta_factor)
+            )
+
+            division_result = ops.div(delta_factor, denom)
+            add_one_result = ops.add(LNS_ONE, division_result)
+
+            new_lrs.append(ops.mul(group["lr"], add_one_result))
+
+        return new_lrs
 
     def _get_closed_form_lr(self) -> List[torch.Tensor]:
-        return [
-            lns_mul(
-                base_lr,
-                lns_add(
-                    start_factor,
-                    lns_div(
-                        lns_mul(
-                            lns_sub(end_factor, start_factor, base),
-                            lns_minimum(
-                                total_iters, LNSTensor.get_internal_tensor(self.last_epoch, base), base),
-                            base), total_iters, base), base), base)
-            for base_lr, start_factor, end_factor, total_iters, base in zip(
-                self.base_lrs, self.start_factor_lns, self.end_factor_lns,
-                self.total_iters_lns, self.lns_lr_bases
-            )
-        ]
+        cf_lrs = []
+
+        for ops, base_lr, start_factor, end_factor, total_iters in zip(
+            self.optimizer.lns_ops(), self.base_lrs, self.start_factor_lns,
+            self.end_factor_lns, self.total_iters_lns
+        ):
+
+            factor_diff = ops.sub(end_factor, start_factor)
+            clamped_epoch = ops.minimum(total_iters, ops.to_lns(self.last_epoch))
+            numerator = ops.mul(factor_diff, clamped_epoch)
+
+            interpolation = ops.div(numerator, total_iters)
+            lr_factor = ops.add(start_factor, interpolation)
+
+            cf_lrs.append(ops.mul(base_lr, lr_factor))
+
+        return cf_lrs
 
 class LNSExponentialLR(torch.optim.lr_scheduler.ExponentialLR):
     """
@@ -373,8 +380,7 @@ class LNSExponentialLR(torch.optim.lr_scheduler.ExponentialLR):
             gamma: Union[float, LNSTensor],
             last_epoch: int = -1
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.gammas = [_lns(gamma, base) for base in self.lns_lr_bases]
+        self.gammas = [_lns(gamma, ops.base) for ops in optimizer.lns_ops()]
         super().__init__(optimizer, gamma, last_epoch)
 
     @override
@@ -384,17 +390,21 @@ class LNSExponentialLR(torch.optim.lr_scheduler.ExponentialLR):
         if self.last_epoch == 0:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_mul(group["lr"], gamma, base)
-            for group, gamma, base in zip(self.optimizer.param_groups, self.gammas, self.lns_lr_bases)
-        ]
+        new_lrs = []
+        for (group, ops), gamma in zip(self.optimizer.lns_param_groups(), self.gammas):
+            new_lrs.append(ops.mul(group["lr"], gamma))
+
+        return new_lrs
 
     @override
     def _get_closed_form_lr(self) -> List[torch.Tensor]:
-        return [
-            lns_mul(base_lr, lns_pow(gamma, torch.tensor(self.last_epoch), base), base)
-            for base_lr, gamma, base in zip(self.base_lrs, self.gammas, self.lns_lr_bases)
-        ]
+        cf_lrs = []
+
+        for ops, base_lr, gamma in zip(self.optimizer.lns_ops(), self.base_lrs, self.gammas):
+            pow = ops.pow(gamma, torch.tensor(self.last_epoch, dtype=torch.int64))
+            cf_lrs.append(ops.mul(base_lr, pow))
+
+        return cf_lrs
 
 class LNSPolynomialLR(torch.optim.lr_scheduler.PolynomialLR):
     """
@@ -422,8 +432,7 @@ class LNSPolynomialLR(torch.optim.lr_scheduler.PolynomialLR):
             power: Union[float, LNSTensor] = 0.9,
             last_epoch: int = -1,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.total_iters_lns = [_lns(total_iters, base) for base in self.lns_lr_bases]
+        self.total_iters_lns = [_lns(total_iters, ops.base) for ops in optimizer.lns_ops()]
         power = power.value.item() if isinstance(power, LNSTensor) else power
         super().__init__(optimizer, total_iters, power, last_epoch)
 
@@ -434,34 +443,38 @@ class LNSPolynomialLR(torch.optim.lr_scheduler.PolynomialLR):
         if self.last_epoch == 0 or self.last_epoch > self.total_iters:
             return [group["lr"] for group in self.optimizer.param_groups]
 
-        return [
-            lns_mul(
-                group["lr"],
-                lns_pow(
-                    lns_div(
-                        lns_sub(LNS_ONE, lns_div(
-                            LNSTensor.get_internal_tensor(self.last_epoch, base),
-                            total_iters, base), base),
-                        lns_sub(LNS_ONE, lns_div(
-                            lns_sub(LNSTensor.get_internal_tensor(self.last_epoch, base),
-                                    LNS_ONE, base), total_iters, base), base),
-                    base), torch.tensor(self.power), base), base)
-            for group, total_iters, base in zip(self.optimizer.param_groups, self.total_iters_lns, self.lns_lr_bases)
-        ]
+        new_lrs = []
+
+        for (group, ops), total_iters in zip(self.optimizer.lns_param_groups(), self.total_iters_lns):
+
+            last_epoch_lns = ops.to_lns(self.last_epoch)
+            last_epoch_sub_one = ops.sub(last_epoch_lns, LNS_ONE)
+            last_epoch_div_total_iters = ops.div(last_epoch_lns, total_iters)
+            last_epoch_sub_one_div_total_iters = ops.div(last_epoch_sub_one, total_iters)
+
+            numerator = ops.sub(LNS_ONE, last_epoch_div_total_iters)
+            denominator = ops.sub(LNS_ONE, last_epoch_sub_one_div_total_iters)
+            fraction = ops.div(numerator, denominator)
+
+            power_result = ops.pow(fraction, torch.tensor(self.power))
+            new_lrs.append(ops.mul(group["lr"], power_result))
+
+        return new_lrs
 
     @override
     def _get_closed_form_lr(self) -> List[torch.Tensor]:
-        return [
-            lns_mul(
-                base_lr,
-                lns_pow(
-                    lns_sub(LNS_ONE,
-                            lns_div(
-                                lns_minimum(total_iters, LNSTensor.get_internal_tensor(self.last_epoch, base), base),
-                                total_iters, base
-                            ), base), torch.tensor(self.power), base), base)
-            for base_lr, total_iters, base in zip(self.base_lrs, self.total_iters_lns, self.lns_lr_bases)
-        ]
+        cf_lrs = []
+
+        for ops, base_lr, total_iters in zip(self.optimizer.lns_ops(), self.base_lrs, self.total_iters_lns):
+
+            clamped_epoch = ops.minimum(total_iters, ops.to_lns(self.last_epoch))
+            epoch_fraction = ops.div(clamped_epoch, total_iters)
+            one_minus_fraction = ops.sub(LNS_ONE, epoch_fraction)
+
+            pow_result = ops.pow(one_minus_fraction, torch.tensor(self.power))
+            cf_lrs.append(ops.mul(base_lr, pow_result))
+
+        return cf_lrs
 
 class LNSReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
     """
@@ -512,31 +525,31 @@ class LNSReduceLROnPlateau(torch.optim.lr_scheduler.ReduceLROnPlateau):
             min_lr: Union[float, LNSTensor, List[float], List[LNSTensor]] = 0.0,
             eps: Union[float, LNSTensor] = 1e-8,
         ):
-        self.lns_lr_bases = get_lr_bases(optimizer)
-        self.factor_lns = [_lns(factor, base) for base in self.lns_lr_bases]
-        self.eps_lns = [_lns(eps, base) for base in self.lns_lr_bases]
+        self.factor_lns = [_lns(factor, ops.base) for ops in optimizer.lns_ops()]
+        self.eps_lns = [_lns(eps, ops.base) for ops in optimizer.lns_ops()]
         super().__init__(optimizer, mode, factor, patience, threshold, threshold_mode, cooldown, min_lr, eps)
 
         if isinstance(min_lr, (list, tuple)):
-            self.min_lrs = [_lns(lr, base) for lr, base in zip(min_lr, self.lns_lr_bases)]
+            self.min_lrs = [_lns(lr, ops.base) for lr, ops in zip(min_lr, optimizer.lns_ops())]
         else:
-            self.min_lrs = [_lns(min_lr, base) for base in self.lns_lr_bases]
+            self.min_lrs = [_lns(min_lr, ops.base) for ops in optimizer.lns_ops()]
 
     def _reduce_lr(self, epoch):
         if len(self.optimizer.param_groups) != len(self.min_lrs):
             if self.default_min_lr is None:
                 raise RuntimeError("The number of param groups in the optimizer must match the number of min_lrs.")
             else:
-                self.min_lrs = [_lns(self.default_min_lr, base) for base in self.lns_lr_bases]
+                self.min_lrs = [_lns(self.default_min_lr, ops.base) for ops in self.optimizer.lns_ops()]
 
-        for i, param_group in enumerate(self.optimizer.param_groups):
-            base = param_group["base"]
-            old_lr = param_group["lr"]
-            new_lr = lns_maximum(
-                lns_mul(old_lr, self.factor_lns[i], base),
-                self.min_lrs[i], self.lns_lr_bases[i])
-            if lns_gt(lns_sub(old_lr, new_lr, base), self.eps_lns[i]):
-                param_group["lr"] = new_lr
+        for (group, ops), factor, eps, min_lr in zip(
+            self.optimizer.lns_param_groups(), self.factor_lns, self.eps_lns, self.min_lrs
+        ):
+
+            old_lr = group["lr"]
+            new_lr = ops.maximum(ops.mul(old_lr, factor), min_lr)
+
+            if ops.gt(ops.sub(old_lr, new_lr), eps):
+                group["lr"] = new_lr
 
 class LNSChainedScheduler(torch.optim.lr_scheduler.ChainedScheduler):
     """

@@ -1,15 +1,5 @@
 import torch
-from xlnstorch import LNSTensor, lnstensor, LNS_ZERO, LNS_ONE
-from xlnstorch.operators import (
-    lns_mul,
-    lns_sign,
-    lns_eq,
-    lns_sqrt,
-    lns_div,
-    lns_sum,
-    lns_neg,
-    lns_clamp,
-)
+from xlnstorch import LNS_ZERO, LNS_ONE
 from . import LNSOptimizer
 
 class LNSSignMul(LNSOptimizer):
@@ -98,18 +88,17 @@ class LNSSignMul(LNSOptimizer):
         self.make_lnstensor_params("lr", "p_scale")
 
         # precompute 1 + lr and 1 / (1 + lr)
-        for group in self.param_groups:
-            base = group["base"]
-            lr_ = lnstensor(group["lr"], from_lns=True, b=base)
+        for group, ops in self.lns_param_groups():
+            lr_ = group["lr"]
             use_pow_ = group["use_pow"]
 
             if use_pow_:
-                mul_term = 2.0 ** lr_
+                mul_term = ops.pow(ops.to_lns(2.0), ops.from_lns(lr_))
             else:
-                mul_term = 1.0 + lr_
+                mul_term = ops.add(LNS_ONE, lr_)
 
-            group["mul_term"] = mul_term._lns
-            group["inv_mul_term"] = (1.0 / mul_term)._lns
+            group["mul_term"] = mul_term
+            group["inv_mul_term"] = ops.reciprocal(mul_term)
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -119,41 +108,39 @@ class LNSSignMul(LNSOptimizer):
         if closure is not None:
             loss = closure()
 
-        for group in self.param_groups:
-            lr = group["lr"]
+        for group, ops in self.lns_param_groups():
             p_scale = group["p_scale"]
             mul_term = group["mul_term"]
             inv_mul_term = group["inv_mul_term"]
             maximize = group["maximize"]
-            base = group["base"]
 
             for p in group["params"]:
 
                 if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.view(torch.int64) # g_t
+                data = p.data.view(torch.int64)
 
                 state = self.state[p]
                 if len(state) == 0:
                     # First time we see this parameter
-                    rms = lns_sqrt(lns_div(lns_sum(lns_mul(p, p, base), base),
-                                           LNSTensor.get_internal_tensor(p.numel(), base),
-                                           base), base)
-                    state['max'] = lns_mul(p_scale, rms, base)
+                    rms = ops.sqrt(ops.div(ops.sum(ops.mul(data, data)),
+                                           ops.to_lns(data.numel())))
+                    state['max'] = ops.mul(p_scale, rms)
 
                 # retrieve running stats
                 max = state['max']
 
-                grad_sign = lns_sign(grad, base)
-                p_sign = lns_sign(p, base)
+                grad_sign = ops.sign(grad)
+                p_sign = ops.sign(data)
 
                 mul_update = torch.where(
-                    lns_eq(grad, LNS_ZERO), LNS_ONE,
-                    torch.where(lns_eq(grad_sign, p_sign) ^ maximize,
+                    ops.eq(grad, LNS_ZERO), LNS_ONE,
+                    torch.where(ops.eq(grad_sign, p_sign) ^ maximize,
                     inv_mul_term, mul_term
                 ))
-                p.data = lns_mul(p.data, mul_update, base)
-                p.data = lns_clamp(p.data, lns_neg(max), max)
+                data = ops.mul(data, mul_update)
+                p.data = ops.clamp(data, ops.neg(max), max).view(torch.float64)
 
         return loss

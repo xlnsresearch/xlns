@@ -26,7 +26,7 @@ if args.table:
     if args.precision is None and args.base is None:
         raise ValueError("Must specify precision or base with --table option")
     xlt.set_default_sbdb_implementation("tab")
-    xlt.operators.implementations.tab.get_table("tmp", f=args.precision, b=args.base)
+    xlt.operators.tab.get_table("tmp", f=args.precision, b=args.base)
 
 DATASET_URL = "https://download.pytorch.org/tutorial/data.zip"
 ZIP_FILENAME = "data.zip"
