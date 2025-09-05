@@ -58,11 +58,8 @@ class LNSLinearFunction(LNSFunction):
 
 @implements(torch.nn.functional.linear, _linear, key='default', default=True)
 def linear(x, weight, bias=None):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSLinearFunction.apply(x, weight, bias)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLinearFunction.apply(x, weight, bias)
 
 def _bilinear(ops, x, y, A, bias=None):
     tmp = ops.matmul(A, y.unsqueeze(-1)).squeeze(-1)
@@ -120,11 +117,8 @@ class LNSBilinearFunction(LNSFunction):
 
 @implements(torch.nn.functional.bilinear, _bilinear, key='default', default=True)
 def bilinear(x, y, weight, bias=None):
-
     x, y, weight, bias = format_lnstensor_operands(x, y, weight, bias)
-    result = LNSBilinearFunction.apply(x, y, weight, bias)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSBilinearFunction.apply(x, y, weight, bias)
 
 def _dropout(ops, x, p=0.5):
     mask = ops.to_lns(torch.bernoulli(torch.full(x.shape, 1 - p)))
@@ -154,7 +148,6 @@ class LNSDropoutFunction(LNSFunction):
 
 @implements(torch.nn.functional.dropout, _dropout, "default", default=True)
 def dropout(x, p=0.5, training=True, inplace=False):
-
     if not training or p == 0.0:
         return x
 
@@ -166,7 +159,7 @@ def dropout(x, p=0.5, training=True, inplace=False):
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _dropout1d(ops, x, p=0.5):
     if x.dim() == 2:
@@ -205,13 +198,11 @@ class LNSDropout1dFunction(LNSFunction):
 
 @implements(torch.nn.functional.dropout1d, _dropout1d, "default", default=True)
 def dropout1d(x, p=0.5, training=True, inplace=False):
-
     if not training or p == 0.0:
         return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
-
     if x.dim() < 2 or x.dim() > 3:
         raise ValueError(f"Dropout1d expects a 2D or 3D tensor, but got a tensor with {x.dim()} dimensions.")
 
@@ -220,7 +211,7 @@ def dropout1d(x, p=0.5, training=True, inplace=False):
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _dropout2d(ops, x, p=0.5):
     if x.dim() == 3:
@@ -259,13 +250,11 @@ class LNSDropout2dFunction(LNSFunction):
 
 @implements(torch.nn.functional.dropout2d, _dropout2d, "default", default=True)
 def dropout2d(x, p=0.5, training=True, inplace=False):
-
     if not training or p == 0.0:
         return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
-
     if x.dim() < 3 or x.dim() > 4:
         raise ValueError(f"Dropout2d expects a 3D or 4D tensor, but got a tensor with {x.dim()} dimensions.")
     elif x.dim() == 3:
@@ -282,7 +271,7 @@ def dropout2d(x, p=0.5, training=True, inplace=False):
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _dropout3d(ops, x, p=0.5):
     if x.dim() == 4:
@@ -321,13 +310,11 @@ class LNSDropout3dFunction(LNSFunction):
 
 @implements(torch.nn.functional.dropout3d, _dropout3d, "default", default=True)
 def dropout3d(x, p=0.5, training=True, inplace=False):
-
     if not training or p == 0.0:
         return x
 
     if p < 0.0 or p > 1.0:
         raise ValueError(f"Dropout probability p must be in the range [0, 1], but got {p}.")
-
     if x.dim() < 4 or x.dim() > 5:
         raise ValueError(f"Dropout3d expects a 4D or 5D tensor, but got a tensor with {x.dim()} dimensions.")
 
@@ -336,7 +323,7 @@ def dropout3d(x, p=0.5, training=True, inplace=False):
     if inplace:
         return x._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _conv1d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # add batch dimension if needed
@@ -490,12 +477,9 @@ class LNSConv1dFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv1d, _conv1d, "default", default=not CSRC_AVAILABLE)
 def conv1d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv1dFunction.apply(x, weight, bias, stride,
-                                     padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv1dFunction.apply(x, weight, bias, stride,
+                                   padding, dilation, groups)
 
 def _conv2d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # Handle stride, padding, dilation as tuples
@@ -682,12 +666,9 @@ class LNSConv2dFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv2d, _conv2d, "default", default=not CSRC_AVAILABLE)
 def conv2d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv2dFunction.apply(x, weight, bias, stride,
-                                     padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv2dFunction.apply(x, weight, bias, stride,
+                                   padding, dilation, groups)
 
 def _conv3d(ops, x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
     # Standardize params to tuples
@@ -888,12 +869,9 @@ class LNSConv3dFunction(LNSFunction):
 
 @implements(torch.nn.functional.conv3d, _conv3d, "default", default=not CSRC_AVAILABLE)
 def conv3d(x, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
-
     x, weight, bias = format_lnstensor_operands(x, weight, bias)
-    result = LNSConv3dFunction.apply(x, weight, bias, stride,
-                                     padding, dilation, groups)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSConv3dFunction.apply(x, weight, bias, stride,
+                                   padding, dilation, groups)
 
 def _avg_pool1d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
     if stride is None:
@@ -1011,15 +989,12 @@ class LNSAvgPool1dFuncton(LNSFunction):
 
 @implements(torch.nn.functional.avg_pool1d, _avg_pool1d, "default", default=not CSRC_AVAILABLE)
 def avg_pool1d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True):
-
     kernel_size = kernel_size[0] if isinstance(kernel_size, (list, tuple)) else kernel_size
     stride = stride[0] if isinstance(stride, (list, tuple)) else stride
     padding = padding[0] if isinstance(padding, (list, tuple)) else padding
 
-    result = LNSAvgPool1dFuncton.apply(x, kernel_size, stride, padding,
-                                       ceil_mode, count_include_pad)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAvgPool1dFuncton.apply(x, kernel_size, stride, padding,
+                                     ceil_mode, count_include_pad)
 
 def _avg_pool2d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
     if stride is None:
@@ -1181,12 +1156,9 @@ class LNSAvgPool2dFuncton(LNSFunction):
 
 @implements(torch.nn.functional.avg_pool2d, _avg_pool2d, "default", default=True)
 def avg_pool2d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
-
     x, divisor_override = format_lnstensor_operands(x, divisor_override)
-    result = LNSAvgPool2dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
-                                       count_include_pad, divisor_override)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAvgPool2dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
+                                     count_include_pad, divisor_override)
 
 def _avg_pool3d(ops, x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
     if stride is None:
@@ -1364,12 +1336,9 @@ class LNSAvgPool3dFuncton(LNSFunction):
 
 @implements(torch.nn.functional.avg_pool3d, _avg_pool3d, "default", default=True)
 def avg_pool3d(x, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None):
-
     x, divisor_override = format_lnstensor_operands(x, divisor_override)
-    result = LNSAvgPool3dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
-                                       count_include_pad, divisor_override)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAvgPool3dFuncton.apply(x, kernel_size, stride, padding, ceil_mode,
+                                     count_include_pad, divisor_override)
 
 def _adaptive_avg_pool1d(ops, x, output_size):
     if isinstance(output_size, int):
@@ -1453,9 +1422,7 @@ class LNSAdaptiveAvgPool1dFunction(LNSFunction):
 
 @implements(torch.nn.functional.adaptive_avg_pool1d, _adaptive_avg_pool1d, "default", default=True)
 def adaptive_avg_pool1d(x, output_size):
-
-    result = LNSAdaptiveAvgPool1dFunction.apply(x, output_size)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAdaptiveAvgPool1dFunction.apply(x, output_size)
 
 def _adaptive_avg_pool2d(ops, x, output_size):
     if isinstance(output_size, int):
@@ -1547,9 +1514,7 @@ class LNSAdaptiveAvgPool2dFunction(LNSFunction):
 
 @implements(torch.nn.functional.adaptive_avg_pool2d, _adaptive_avg_pool2d, "default", default=True)
 def adaptive_avg_pool2d(x, output_size):
-
-    result = LNSAdaptiveAvgPool2dFunction.apply(x, output_size)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAdaptiveAvgPool2dFunction.apply(x, output_size)
 
 def _adaptive_avg_pool3d(ops, x, output_size):
     if isinstance(output_size, int):
@@ -1651,9 +1616,7 @@ class LNSAdaptiveAvgPool3dFunction(LNSFunction):
 
 @implements(torch.nn.functional.adaptive_avg_pool3d, _adaptive_avg_pool3d, "default", default=True)
 def adaptive_avg_pool3d(x, output_size):
-
-    result = LNSAdaptiveAvgPool3dFunction.apply(x, output_size)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSAdaptiveAvgPool3dFunction.apply(x, output_size)
 
 def _batch_norm(ops, x, running_mean, running_var, momentum, eps, weight=None, bias=None, training=False):
     red_dims = tuple(i for i in range(x.dim()) if i != 1)
@@ -1788,15 +1751,17 @@ class LNSBatchNormFunction(LNSFunction):
 
 @implements(torch.nn.functional.batch_norm, _batch_norm, "default", default=True)
 def batch_norm(x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
-
-    x, running_mean_cpy, running_var_cpy, weight, bias, momentum, eps = format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
-    result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy, momentum, eps, weight, bias, training)
+    x, running_mean_cpy, running_var_cpy, \
+    weight, bias, momentum, eps = \
+    format_lnstensor_operands(x, running_mean, running_var, weight, bias, momentum, eps)
+    result = LNSBatchNormFunction.apply(x, running_mean_cpy, running_var_cpy,
+                                        momentum, eps, weight, bias, training)
 
     if training:
         running_mean._inplace_copy(running_mean_cpy._lns)
         running_var._inplace_copy(running_var_cpy._lns)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _layer_norm(ops, x, eps, normalized_shape, weight=None, bias=None):
     reduce_dims = tuple(range(x.dim() - len(normalized_shape), x.dim()))
@@ -1904,11 +1869,8 @@ class LNSLayerNorm(LNSFunction):
 
 @implements(torch.nn.functional.layer_norm, _layer_norm, "default", default=True)
 def layer_norm(x, normalized_shape, weight=None, bias=None, eps=1e-5):
-
     x, weight, bias, eps = format_lnstensor_operands(x, weight, bias, eps)
-    result = LNSLayerNorm.apply(x, eps, normalized_shape, weight, bias)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSLayerNorm.apply(x, eps, normalized_shape, weight, bias)
 
 def _max_pool1d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
@@ -2077,13 +2039,7 @@ class LNSMaxPool1dFunction(LNSFunction):
 @implements(torch.nn.functional.max_pool1d_with_indices, _max_pool1d, "default", default=True)
 @implements(torch.nn.functional.max_pool1d, _max_pool1d, "default", default=True)
 def max_pool1d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
-
-    result = LNSMaxPool1dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
-
-    if return_indices:
-        return lnstensor(result[0], from_lns=True, b=x.base), result[1]
-    else:
-        return lnstensor(result, from_lns=True, b=x.base)
+    return LNSMaxPool1dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
 def _max_pool2d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
@@ -2290,13 +2246,7 @@ class LNSMaxPool2dFunction(LNSFunction):
 @implements(torch.nn.functional.max_pool2d_with_indices, _max_pool2d, "default", default=True)
 @implements(torch.nn.functional.max_pool2d, _max_pool2d, "default", default=True)
 def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
-
-    result = LNSMaxPool2dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
-
-    if return_indices:
-        return lnstensor(result[0], from_lns=True, b=x.base), result[1]
-    else:
-        return lnstensor(result, from_lns=True, b=x.base)
+    return LNSMaxPool2dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
 
 def _max_pool3d(ops, x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
     if stride is None:
@@ -2559,10 +2509,4 @@ class LNSMaxPool3dFunction(LNSFunction):
 @implements(torch.nn.functional.max_pool3d_with_indices, _max_pool3d, "default", default=True)
 @implements(torch.nn.functional.max_pool3d, _max_pool3d, "default", default=True)
 def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
-
-    result = LNSMaxPool3dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
-
-    if return_indices:
-        return lnstensor(result[0], from_lns=True, b=x.base), result[1]
-    else:
-        return lnstensor(result, from_lns=True, b=x.base)
+    return LNSMaxPool3dFunction.apply(x, kernel_size, stride, padding, dilation, ceil_mode, return_indices)
