@@ -5,6 +5,7 @@ warning instead of a hard error.
 import textwrap
 import warnings
 from pathlib import Path
+from subprocess import CalledProcessError # handle compiler errors
 
 from torch.utils.cpp_extension import CppExtension, BuildExtension, include_paths
 
@@ -44,7 +45,7 @@ class OptionalBuildExtension(BuildExtension):
     def run(self) -> None:
         try:
             super().run()
-        except (CompileError, LinkError, PlatformError) as exc:
+        except (CompileError, LinkError, PlatformError, CalledProcessError) as exc:
             # Format and emit a visible message
             msg = textwrap.dedent(self._BOX).format(reason=exc)
             self.announce(msg, level=3)      # level=3 == WARNING
