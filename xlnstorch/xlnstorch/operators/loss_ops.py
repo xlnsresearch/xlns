@@ -78,11 +78,8 @@ class LNSMSELossFunction(LNSFunction):
 
 @implements(torch.nn.functional.mse_loss, _mse_loss, key="default", default=True)
 def mse_loss(x, y, size_average=None, reduce=None, reduction='mean', weight=None):
-
     x, y, weight = format_lnstensor_operands(x, y, weight)
-    result = LNSMSELossFunction.apply(x, y, reduction, weight)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSMSELossFunction.apply(x, y, reduction, weight)
 
 def _l1_loss(ops, x, y, reduction='mean'):
     errors = ops.sub(x, y)
@@ -131,11 +128,8 @@ class LNSL1LossFunction(LNSFunction):
 
 @implements(torch.nn.functional.l1_loss, _l1_loss, key="default", default=True)
 def l1_loss(x, y, size_average=None, reduce=None, reduction='mean'):
-
     x, y = format_lnstensor_operands(x, y)
-    result = LNSL1LossFunction.apply(x, y, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSL1LossFunction.apply(x, y, reduction)
 
 def _bce_loss(ops, x, y, weight=None, reduction='mean'):
 
@@ -237,11 +231,8 @@ class LNSBCELossFunction(LNSFunction):
 
 @implements(torch.nn.functional.binary_cross_entropy, _bce_loss, key="default", default=True)
 def binary_cross_entropy(x, y, weight=None, size_average=None, reduce=None, reduction='mean'):
-
     x, y, weight = format_lnstensor_operands(x, y, weight)
-    result = LNSBCELossFunction.apply(x, y, weight, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSBCELossFunction.apply(x, y, weight, reduction)
 
 def _bce_with_logits_loss(ops, x, y, weight=None, reduction='mean'):
     sigmoid_x = ops.sigmoid(x)
@@ -332,14 +323,11 @@ class LNSBCEWithLogitsLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.binary_cross_entropy_with_logits, _bce_with_logits_loss, key="default", default=True)
 def binary_cross_entropy_with_logits(x, y, weight=None, size_average=None, reduce=None, reduction='mean', pos_weight=None):
-
     if pos_weight is not None:
         raise NotImplementedError("pos_weight is not implemented yet.")
 
     x, y, weight = format_lnstensor_operands(x, y, weight)
-    result = LNSBCEWithLogitsLossFunction.apply(x, y, weight, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSBCEWithLogitsLossFunction.apply(x, y, weight, reduction)
 
 def _nll_loss(ops, x, y, weight=None, reduction='mean'):
     if x.dim() == 1:
@@ -441,16 +429,12 @@ class LNSNLLLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.nll_loss, _nll_loss, key="default", default=True)
 def nll_loss(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
-
     assert isinstance(y, torch.Tensor), "y must be a torch.Tensor"
-
     if ignore_index != -100:
         raise NotImplementedError("ignore_index is not implemented yet.")
 
     x, weight = format_lnstensor_operands(x, weight)
-    result = LNSNLLLossFunction.apply(x, y, weight, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSNLLLossFunction.apply(x, y, weight, reduction)
 
 def _poisson_nll_loss(ops, x, y, eps, log_input=True, full=False, reduction='mean'):
     if log_input:
@@ -528,11 +512,8 @@ class PoissonNLLLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.poisson_nll_loss, _poisson_nll_loss, key="default", default=True)
 def poisson_nll_loss(x, y, log_input=True, full=False, size_average=None, eps=1e-08, reduce=None, reduction='mean'):
-
     x, y, eps = format_lnstensor_operands(x, y, eps)
-    result = PoissonNLLLossFunction.apply(x, y, eps, log_input, full, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return PoissonNLLLossFunction.apply(x, y, eps, log_input, full, reduction)
 
 def _hinge_embedding_loss(ops, x, y, margin, reduction='mean'):
     positive_mask = ops.eq(y, LNS_ONE)
@@ -582,11 +563,8 @@ class LNSHingeEmbeddingLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.hinge_embedding_loss, _hinge_embedding_loss, key="default", default=True)
 def hinge_embedding_loss(x, y, margin=1.0, size_average=None, reduce=None, reduction='mean'):
-
     x, y, margin = format_lnstensor_operands(x, y, margin)
-    result = LNSHingeEmbeddingLossFunction.apply(x, y, margin, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSHingeEmbeddingLossFunction.apply(x, y, margin, reduction)
 
 def _kl_div_loss(ops, x, y, reduction='mean', log_target=False):
     if log_target:
@@ -655,11 +633,8 @@ class LNSKLDivLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.kl_div, _kl_div_loss, key="default", default=True)
 def kl_div(x, y, size_average=None, reduce=None, reduction='mean', log_target=False):
-
     x, y = format_lnstensor_operands(x, y)
-    result = LNSKLDivLossFunction.apply(x, y, reduction, log_target)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSKLDivLossFunction.apply(x, y, reduction, log_target)
 
 def _margin_ranking_loss(ops, x1, x2, y, margin, reduction='mean'):
     loss = ops.sub(x1, x2)
@@ -719,11 +694,8 @@ class LNSMarginRankingLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.margin_ranking_loss, _margin_ranking_loss, key="default", default=True)
 def margin_ranking_loss(x1, x2, y, margin=0.0, size_average=None, reduce=None, reduction='mean'):
-
     x1, x2, y, margin = format_lnstensor_operands(x1, x2, y, margin)
-    result = LNSMarginRankingLossFunction.apply(x1, x2, y, margin, reduction)
-
-    return lnstensor(result, from_lns=True, b=x1.base)
+    return LNSMarginRankingLossFunction.apply(x1, x2, y, margin, reduction)
 
 def _gaussian_nll_loss(ops, x, y, var, eps, full=False, reduction='mean'):
     var_eps = ops.maximum(var, eps)
@@ -787,11 +759,8 @@ class LNSGaussianNLLLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.gaussian_nll_loss, _gaussian_nll_loss, key="default", default=True)
 def gaussian_nll_loss(x, y, var, full=False, eps=1e-6, reduction='mean'):
-
     x, y, var, eps = format_lnstensor_operands(x, y, var, eps)
-    result = LNSGaussianNLLLossFunction.apply(x, y, var, eps, full, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSGaussianNLLLossFunction.apply(x, y, var, eps, full, reduction)
 
 def _huber_loss(ops, x, y, delta, reduction='mean', weight=None):
     two = ops.to_lns(2.0)
@@ -887,11 +856,8 @@ class LNSHuberLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.huber_loss, _huber_loss, key="default", default=True)
 def huber_loss(x, y, delta=1.0, reduction='mean', weight=None):
-
     x, y, delta, weight = format_lnstensor_operands(x, y, delta, weight)
-    result = LNSHuberLossFunction.apply(x, y, delta, reduction, weight)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSHuberLossFunction.apply(x, y, delta, reduction, weight)
 
 def _smooth_l1_loss(ops, x, y, beta, reduction='mean'):
     two = ops.to_lns(2.0)
@@ -955,11 +921,8 @@ class LNSSmoothL1LossFunction(LNSFunction):
     
 @implements(torch.nn.functional.smooth_l1_loss, _smooth_l1_loss, key="default", default=True)
 def smooth_l1_loss(x, y, size_average=None, reduce=None, reduction='mean', beta=1.0):
-
     x, y, beta = format_lnstensor_operands(x, y, beta)
-    result = LNSSmoothL1LossFunction.apply(x, y, beta, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSmoothL1LossFunction.apply(x, y, beta, reduction)
 
 def _cross_entropy(ops, x, y, weight=None, reduction='mean'):
     dim = -1 if x.dim() > 1 else 0
@@ -1087,16 +1050,11 @@ class LNSCrossEntropyLossFunction(LNSFunction):
 
 @implements(torch.nn.functional.cross_entropy, _cross_entropy, key="default", default=True)
 def cross_entropy(x, y, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean', label_smoothing=0.0):
-
     assert isinstance(y, torch.Tensor), "y must be a torch.Tensor"
-
     if ignore_index != -100:
         raise NotImplementedError("ignore_index is not implemented yet.")
-
     if label_smoothing != 0.0:
         raise NotImplementedError("label_smoothing is not implemented yet.")
 
     x, weight = format_lnstensor_operands(x, weight)
-    result = LNSCrossEntropyLossFunction.apply(x, y, weight, reduction)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSCrossEntropyLossFunction.apply(x, y, weight, reduction)
