@@ -12,7 +12,6 @@ class LNSEqualFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.equal, LNSEqualFunction.forward, "default", default=True)
 def equal(x, y):
-
     x, y = format_lnstensor_operands(x, y)
     return LNSEqualFunction.apply(x, y)
 
@@ -45,7 +44,6 @@ class LNSNeFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.ne, LNSNeFunction.forward, "default", default=True)
 def ne(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSNeFunction.apply(x, y)
 
@@ -81,7 +79,6 @@ class LNSGeFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.ge, LNSGeFunction.forward, "default", default=True)
 def ge(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSGeFunction.apply(x, y)
 
@@ -117,7 +114,6 @@ class LNSGtFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.gt, LNSGtFunction.forward, "default", default=True)
 def gt(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSGtFunction.apply(x, y)
 
@@ -153,7 +149,6 @@ class LNSLeFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.le, LNSLeFunction.forward, "default", default=True)
 def le(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSLeFunction.apply(x, y)
 
@@ -189,7 +184,6 @@ class LNSLtFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.lt, LNSLtFunction.forward, "default", default=True)
 def lt(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSLtFunction.apply(x, y)
 
@@ -210,7 +204,6 @@ class LNSIscloseFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.isclose, LNSIscloseFunction.forward, "default", default=True)
 def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-
     x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
     return LNSIscloseFunction.apply(x, y, atol, rtol)
 
@@ -224,7 +217,6 @@ class LNSAllcloseFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.allclose, LNSAllcloseFunction.forward, "default", default=True)
 def allclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False): # equal_nan is not supported for now
-
     x, y, rtol, atol = format_lnstensor_operands(x, y, rtol, atol)
     return LNSAllcloseFunction.apply(x, y, atol, rtol)
 
@@ -238,7 +230,6 @@ class LNSAnyFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.any, LNSAnyFunction.forward, "default", default=True)
 def any(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSAnyFunction.apply(x, dim, keepdim)
 
     if out is not None:
@@ -256,7 +247,6 @@ class LNSAllFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.all, LNSAllFunction.forward, "default", default=True)
 def all(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSAllFunction.apply(x, dim, keepdim)
 
     if out is not None:
@@ -274,7 +264,6 @@ class LNSIsinFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.isin, LNSIsinFunction.forward, "default", default=True)
 def isin(x, y, *, assume_unique=False, invert=False):
-
     x, y = format_lnstensor_operands(x, y)
     return LNSIsinFunction.apply(x, y, assume_unique, invert)
 
@@ -315,9 +304,11 @@ def sort(x, dim=-1, descending=False, stable=False, *, out=None):
     result = LNSSortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
-        return out._inplace_copy(result)
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
 
 class LNSArgsortFunction(LNSNonDifferentiableFunction):
 
@@ -334,7 +325,6 @@ class LNSArgsortFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.argsort, LNSArgsortFunction.forward, "default", default=True)
 def argsort(x, dim=-1, descending=False, stable=False, *, out=None):
-
     result = LNSArgsortFunction.apply(x, dim, descending, stable)
 
     if out is not None:
@@ -394,9 +384,11 @@ def kthvalue(x, k, dim=-1, keepdim=False, *, out=None):
     result = LNSKthvalueFunction.apply(x, k, dim, keepdim)
 
     if out is not None:
-        return out._inplace_copy(result[0])
+        out[0]._inplace_copy(result[0])
+        out[1].copy_(result[1])
+        return out
 
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
 
 def _maximum(ops, x, y):
     x_greater = ops.gt(x, y)
@@ -440,7 +432,7 @@ def maximum(x, y, *, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _minimum(ops, x, y):
     x_smaller = ops.lt(x, y)
@@ -484,7 +476,7 @@ def minimum(x, y, *, out=None):
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _max(ops, x, dim=None, keepdim=False):
     x_log = x >> 1
@@ -558,11 +550,9 @@ class LNSMaxFunction(LNSFunction):
 
 @implements(torch.max, _max, "default", default=True)
 def max(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSMaxFunction.apply(x, dim, keepdim)
 
     if out is not None:
-
         if dim is None:
             return out._inplace_copy(result)
 
@@ -570,10 +560,7 @@ def max(x, dim=None, keepdim=False, *, out=None):
         out[1].copy_(result[1])
         return out
 
-    if dim is None:
-        return lnstensor(result, from_lns=True, b=x.base)
-
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
 
 class LNSArgmaxFunction(LNSNonDifferentiableFunction):
 
@@ -590,7 +577,6 @@ class LNSArgmaxFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.argmax, LNSArgmaxFunction.forward, "default", default=True)
 def argmax(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSArgmaxFunction.apply(x, dim, keepdim)
 
     if out is not None:
@@ -670,11 +656,9 @@ class LNSMinFunction(LNSFunction):
 
 @implements(torch.min, _min, "default", default=True)
 def min(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSMinFunction.apply(x, dim, keepdim)
 
     if out is not None:
-
         if dim is None:
             return out._inplace_copy(result)
 
@@ -682,10 +666,7 @@ def min(x, dim=None, keepdim=False, *, out=None):
         out[1].copy_(result[1])
         return out
 
-    if dim is None:
-        return lnstensor(result, from_lns=True, b=x.base)
-
-    return torch.return_types.sort((lnstensor(result[0], from_lns=True, b=x.base), result[1]))
+    return result
 
 class LNSArgminFunction(LNSNonDifferentiableFunction):
 
@@ -702,7 +683,6 @@ class LNSArgminFunction(LNSNonDifferentiableFunction):
 
 @implements(torch.argmin, LNSArgminFunction.forward, "default", default=True)
 def argmin(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSArgminFunction.apply(x, dim, keepdim)
 
     if out is not None:
@@ -751,7 +731,6 @@ class LNSClampFunction(LNSFunction):
 
 @implements(torch.clamp, _clamp, "default", default=True)
 def clamp(x, min=None, max=None, *, out=None):
-
     x, min, max = format_lnstensor_operands(x, min, max)
     result = LNSClampFunction.apply(x, min, max)
 
