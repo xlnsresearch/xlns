@@ -43,14 +43,13 @@ class LNSMulFunction(LNSFunction):
 
 @implements(torch.mul, _mul, key='default', default=True)
 def mul(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSMulFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _square(ops, x):
     return ops.mul(x, x)
@@ -83,13 +82,12 @@ class LNSSquareFunction(LNSFunction):
 
 @implements(torch.square, _square, key='default', default=True)
 def square(x, *, out=None):
-
     result = LNSSquareFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _sqrt(ops, x):
     result = ((x & (-2)) // 2) & (-2)
@@ -123,13 +121,12 @@ class LNSSqrtFunction(LNSFunction):
 
 @implements(torch.sqrt, _sqrt, key='default', default=True)
 def sqrt(x, *, out=None):
-
     result = LNSSqrtFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _pow(ops, x, n):
     if torch.is_floating_point(n):
@@ -169,28 +166,22 @@ class LNSPowFunction(LNSFunction):
 
 @implements(torch.pow, _pow, key='default', default=True)
 def pow(x, n, *, out=None):
-
     if isinstance(x, LNSTensor) and not isinstance(n, LNSTensor):
 
         if not isinstance(n, torch.Tensor):
             dtype = torch.int64 if (isinstance(n, int) or isinstance(n, float) and n.is_integer()) else torch.float64
             n = torch.tensor(n, dtype=dtype)
 
-        x._lns, n = torch.broadcast_tensors(x._lns, n)
-
         result = LNSPowFunction.apply(x, n)
 
     else:
-
         x, n = format_lnstensor_operands(x, n)
-        x._lns, n._lns = torch.broadcast_tensors(x._lns, n._lns)
-
         result = LNSPowFunction.apply(x, n.value)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _div(ops, x, y):
     result = (x - y + (y & 1)) ^ (y & 1)
@@ -234,15 +225,13 @@ class LNSDivFunction(LNSFunction):
 
 @implements(torch.div, _div, key='default', default=True)
 def div(x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
-
     result = LNSDivFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _reciprocal(ops, x):
     return ops.div(LNS_ONE, x)
@@ -277,13 +266,12 @@ class LNSReciprocalFunction(LNSFunction):
 
 @implements(torch.reciprocal, _reciprocal, key='default', default=True)
 def reciprocal(x, *, out=None):
-
     result = LNSReciprocalFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _exp(ops, x):
     e = ops.full_like(x, math.e)
@@ -317,13 +305,12 @@ class LNSExpFunction(LNSFunction):
 
 @implements(torch.exp, _exp, key='default', default=True)
 def exp(x, *, out=None):
-
     result = LNSExpFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _log(ops, x):
     log_x = torch.log(ops.from_lns(x))
@@ -358,13 +345,12 @@ class LNSLogFunction(LNSFunction):
 
 @implements(torch.log, _log, key='default', default=True)
 def log(x, *, out=None):
-
     result = LNSLogFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _prod(ops, x, dim=None, keepdim=False):
     if dim is None:
@@ -446,13 +432,12 @@ class LNSProdFunction(LNSFunction):
 
 @implements(torch.prod, _prod, "default", default=True)
 def prod(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSProdFunction.apply(x, dim, keepdim)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _mean(ops, x, dim=None, keepdim=False):
     if dim is None:
@@ -523,13 +508,12 @@ class LNSMeanFunction(LNSFunction):
 
 @implements(torch.mean, _mean, "default", default=True)
 def mean(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSMeanFunction.apply(x, dim, keepdim)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _var(ops, x, correction, dim=None, keepdim=False):
     if dim is None:
@@ -612,14 +596,13 @@ class LNSVarFunction(LNSFunction):
 
 @implements(torch.var, _var, "default", default=True)
 def var(x, dim=None, *, correction=1, keepdim=False, out=None):
-
     x, correction = format_lnstensor_operands(x, correction)
     result = LNSVarFunction.apply(x, correction, dim, keepdim)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _matmul(ops, A, B):
     # 1. (..., M, K)  @  (..., K, N)  -> (..., M, N)          (regular case)
@@ -772,14 +755,13 @@ class LNSMatmulFunction(LNSFunction):
 
 @implements(torch.matmul, _matmul, "default", default=not CSRC_AVAILABLE)
 def matmul(A, B, *, out=None):
-
     A, B = format_lnstensor_operands(A, B)
     result = LNSMatmulFunction.apply(A, B)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=A.base)
+    return result
 
 class LNSTransposeFunction(LNSFunction):
     """
@@ -808,6 +790,4 @@ class LNSTransposeFunction(LNSFunction):
 
 @implements(torch.transpose, LNSTransposeFunction.forward, "default", default=True)
 def transpose(A, dim0, dim1):
-
-    result = LNSTransposeFunction.apply(A, dim0, dim1)
-    return lnstensor(result, from_lns=True, b=A.base)
+    return LNSTransposeFunction.apply(A, dim0, dim1)

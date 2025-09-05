@@ -66,18 +66,16 @@ class LNSAddFunction(LNSFunction):
 
 @implements(torch.add, _add, key='default', default=not CSRC_AVAILABLE)
 def add(x, y, *, alpha=1, out=None):
-
     x, y = format_lnstensor_operands(x, y)
 
     if alpha != 1:
         y = torch.mul(y, alpha)
-
     result = LNSAddFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _sub(ops, x, y):
     neg_y = ops.neg(y)
@@ -114,18 +112,16 @@ class LNSSubFunction(LNSFunction):
 
 @implements(torch.sub, _sub, key="default", default=True)
 def sub(x, y, *, alpha=1, out=None):
-
     x, y = format_lnstensor_operands(x, y)
 
     if alpha != 1:
         y = torch.mul(y, alpha)
-
     result = LNSSubFunction.apply(x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _sum(ops, x, dim=None, keepdim=False):
     if dim is None:
@@ -200,10 +196,9 @@ class LNSSumFunction(LNSFunction):
 
 @implements(torch.sum, _sum, "default", default=not CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSSumFunction.apply(x, dim, keepdim)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result

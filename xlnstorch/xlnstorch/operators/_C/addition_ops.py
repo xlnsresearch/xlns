@@ -89,7 +89,6 @@ class LNSSumCPPFunction(LNSFunction):
 
 @implements(torch.sum, _sum_cpp, "default_cpp", default=CSRC_AVAILABLE)
 def sum(x, dim=None, keepdim=False, *, out=None):
-
     result = LNSSumCPPFunction.apply(x, dim, keepdim)
 
     if out is not None:

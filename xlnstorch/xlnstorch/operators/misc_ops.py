@@ -35,9 +35,7 @@ class LNSExpandFunction(LNSFunction):
 # note that torch.broadcast_to is equivalent to torch.Tensor.expand
 @implements(torch.broadcast_to, LNSExpandFunction.forward, "default", default=True)
 def broadcast_to(x, shape):
-
-    result = LNSExpandFunction.apply(x, shape)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSExpandFunction.apply(x, shape)
 
 class LNSCloneFunction(LNSFunction):
 
@@ -55,9 +53,7 @@ class LNSCloneFunction(LNSFunction):
 
 @implements(torch.clone, LNSCloneFunction.forward, "default", default=True)
 def clone(x, memory_format=torch.preserve_format):
-
-    result = LNSCloneFunction.apply(x, memory_format)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSCloneFunction.apply(x, memory_format)
 
 class LNSSqueezeFunction(LNSFunction):
 
@@ -80,9 +76,7 @@ class LNSSqueezeFunction(LNSFunction):
 
 @implements(torch.squeeze, LNSSqueezeFunction.forward, "default", default=True)
 def squeeze(x, dim=None):
-
-    result = LNSSqueezeFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSSqueezeFunction.apply(x, dim)
 
 class LNSUnsqueezeFunction(LNSFunction):
 
@@ -102,9 +96,7 @@ class LNSUnsqueezeFunction(LNSFunction):
 
 @implements(torch.unsqueeze, LNSUnsqueezeFunction.forward, "default", default=True)
 def unsqueeze(x, dim):
-
-    result = LNSUnsqueezeFunction.apply(x, dim)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSUnsqueezeFunction.apply(x, dim)
 
 class LNSIndexPutFunction(LNSFunction):
 
@@ -151,15 +143,11 @@ class LNSIndexPutFunction(LNSFunction):
 
 @implements(torch.index_put, LNSIndexPutFunction.forward, "default", default=True)
 def index_put(x, indices, values, accumulate=False):
-
     x, values = format_lnstensor_operands(x, values)
-    result = LNSIndexPutFunction.apply(x, indices, values, accumulate)
-
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSIndexPutFunction.apply(x, indices, values, accumulate)
 
 @implements(torch.index_put_, LNSIndexPutFunction.forward, "default", default=True)
 def index_put_(x, indices, values, accumulate=False):
-
     x, values = format_lnstensor_operands(x, values)
     result = LNSIndexPutFunction.apply(x, indices, values, accumulate)
 
@@ -184,11 +172,8 @@ class LNSStackFunction(LNSFunction):
 
 @implements(torch.stack, LNSStackFunction.forward, "default", default=True)
 def stack(tensors, dim=0):
-
     tensors = format_lnstensor_operands(*tensors)
-    result = LNSStackFunction.apply(dim, *tensors)
-
-    return lnstensor(result, from_lns=True, b=tensors[0].base)
+    return LNSStackFunction.apply(dim, *tensors)
 
 class LNSCatFunction(LNSFunction):
 
@@ -209,11 +194,8 @@ class LNSCatFunction(LNSFunction):
 
 @implements(torch.cat, LNSCatFunction.forward, "default", default=True)
 def cat(tensors, dim=0):
-
     tensors = format_lnstensor_operands(*tensors)
-    result = LNSCatFunction.apply(dim, *tensors)
-
-    return lnstensor(result, from_lns=True, b=tensors[0].base)
+    return LNSCatFunction.apply(dim, *tensors)
 
 class LNSChunkFunction(LNSFunction):
 
@@ -242,9 +224,7 @@ class LNSChunkFunction(LNSFunction):
 
 @implements(torch.chunk, LNSChunkFunction.forward, "default", default=True)
 def chunk(x, chunks, dim=0):
-
-    result = LNSChunkFunction.apply(x, chunks, dim)
-    return tuple(lnstensor(r, from_lns=True, b=x.base) for r in result)
+    return LNSChunkFunction.apply(x, chunks, dim)
 
 def _where(ops, condition, x, y):
     return torch.where(condition, x, y)
@@ -274,14 +254,13 @@ class LNSWhereFunction(LNSFunction):
 
 @implements(torch.where, _where, "default", default=True)
 def where(condition, x, y, *, out=None):
-
     x, y = format_lnstensor_operands(x, y)
     result = LNSWhereFunction.apply(condition, x, y)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _unpad_along_dim(ops, g, left, right, dim, mode):
 
@@ -372,9 +351,7 @@ class LNSPadFunction(LNSFunction):
 
 @implements(torch.nn.functional.pad, _pad, "default", default=True)
 def pad(x, pad, mode="constant", value=0):
-
     if mode == "constant":
         x, value = format_lnstensor_operands(x, value)
 
-    result = LNSPadFunction.apply(x, pad, mode, value)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSPadFunction.apply(x, pad, mode, value)

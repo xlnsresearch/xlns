@@ -28,13 +28,12 @@ class LNSNegFunction(LNSFunction):
 
 @implements(torch.neg, _neg, key="default", default=True)
 def neg(x, *, out=None):
-
     result = LNSNegFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _abs(ops, x):
     abs_x = x & (~1)
@@ -70,13 +69,12 @@ class LNSAbsFunction(LNSFunction):
 
 @implements(torch.abs, _abs, "default", default=True)
 def abs(x, *, out=None):
-
     result = LNSAbsFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
 
 def _positive(ops, x):
     return x
@@ -104,9 +102,7 @@ class LNSPositiveFunction(LNSFunction):
 
 @implements(torch.positive, _positive, "default", default=True)
 def positive(x):
-
-    result = LNSPositiveFunction.apply(x)
-    return lnstensor(result, from_lns=True, b=x.base)
+    return LNSPositiveFunction.apply(x)
 
 def _sign(ops, x):
     sign_x = x & 1
@@ -139,10 +135,9 @@ class LNSSignFunction(LNSFunction):
 
 @implements(torch.sign, _sign, "default", default=True)
 def sign(x, *, out=None):
-
     result = LNSSignFunction.apply(x)
 
     if out is not None:
         return out._inplace_copy(result)
 
-    return lnstensor(result, from_lns=True, b=x.base)
+    return result
