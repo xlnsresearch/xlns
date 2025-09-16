@@ -368,22 +368,19 @@ class LNSTensor:
         Returns a new tensor with the same data as this LNSTensor
         but with a different shape.
         """
-        result = tensor_utils.LNSViewFunction.apply(self, shape)
-        return lnstensor(result, from_lns=True, b=self.base)
+        return tensor_utils.LNSViewFunction.apply(self, shape)
 
     def contiguous(self, memory_format=torch.contiguous_format) -> LNSTensor:
         """
         Returns a contiguous copy of the LNSTensor in memory.
         """
-        result = tensor_utils.LNSContiguousFunction.apply(self, memory_format)
-        return lnstensor(result, from_lns=True, b=self.base)
+        return tensor_utils.LNSContiguousFunction.apply(self, memory_format)
 
     def repeat(self, *repeats: int) -> LNSTensor:
         """
         Repeats the tensor along the specified dimensions.
         """
-        result = tensor_utils.LNSRepeatFunction.apply(self, repeats)
-        return lnstensor(result, from_lns=True, b=self.base)
+        return tensor_utils.LNSRepeatFunction.apply(self, repeats)
 
     def item(self) -> float:
         """
@@ -450,8 +447,7 @@ class LNSTensor:
         LNSTensor
             A new LNSTensor on the specified device with the same data and base.
         """
-        result = tensor_utils.LNSToFunction.apply(self, device)
-        return lnstensor(result, from_lns=True, b=self.base)
+        return tensor_utils.LNSToFunction.apply(self, device)
 
     def broadcast_to(self, shape) -> LNSTensor:
         """
@@ -833,8 +829,7 @@ class LNSTensor:
         return torch.lt(self, other)
 
     def __getitem__(self, index):
-        result = tensor_utils.LNSGetItemFunction.apply(self, index)
-        return lnstensor(result, from_lns=True, b=self.base)
+        return tensor_utils.LNSGetItemFunction.apply(self, index)
 
     def __setitem__(self, index, value):
         # We must convert the indexing object to a suitable format for torch.index_put_.
