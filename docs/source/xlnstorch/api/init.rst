@@ -18,3 +18,5 @@ of layers in the ``xlnstorch.nn`` module. These functions modify the input
     eye_
     xavier_uniform_
     xavier_normal_
+    kaiming_uniform_
+    kaiming_normal_

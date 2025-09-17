@@ -11,6 +11,8 @@ __all__ = [
     "eye_",
     "xavier_uniform_",
     "xavier_normal_",
+    "kaiming_uniform_",
+    "kaiming_normal_",
 ]
 
 def uniform_(
@@ -234,5 +236,86 @@ def xavier_normal_(
     """
     fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
     std = gain * (2.0 / (fan_in + fan_out)) ** 0.5
+
+    return normal_(tensor, 0.0, std, generator)
+
+def kaiming_uniform_(
+        tensor: LNSTensor,
+        a: float = 0.0,
+        mode: str = 'fan_in',
+        nonlinearity: str = 'leaky_relu',
+        generator: Optional[torch.Generator] = None,
+    ):
+    """
+    Fills the input tensor with values according to the Kaiming uniform initialization.
+
+    Parameters
+    ----------
+    tensor : LNSTensor
+        The tensor to fill with values.
+    a : float, optional
+        The negative slope of the rectifier used after this layer (default is 0.0).
+    mode : str, optional
+        Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the variance of the weights
+        in the forward pass. Choosing 'fan_out' preserves the magnitudes in the backwards pass (default is 'fan_in').
+    nonlinearity : str, optional
+        The non-linear function (nn.functional name), recommended to use only with 'relu' or 'leaky_relu' (default is 'leaky_relu').
+    generator : torch.Generator, optional
+        A random number generator to use for reproducibility (default is None).
+
+    Returns
+    -------
+    LNSTensor
+        The input tensor filled with values from the Kaiming uniform distribution.
+    """
+    if mode not in ['fan_in', 'fan_out']:
+        raise ValueError("Mode must be either 'fan_in' or 'fan_out'")
+
+    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
+    fan = fan_in if mode == 'fan_in' else fan_out
+
+    gain = torch.nn.init.calculate_gain(nonlinearity, a)
+    std = gain / (fan ** 0.5)
+    bound = (3.0 ** 0.5) * std
+
+    return uniform_(tensor, -bound, bound, generator)
+
+def kaiming_normal_(
+        tensor: LNSTensor,
+        a: float = 0.0,
+        mode: str = 'fan_in',
+        nonlinearity: str = 'leaky_relu',
+        generator: Optional[torch.Generator] = None,
+    ):
+    """
+    Fills the input tensor with values according to the Kaiming normal initialization.
+
+    Parameters
+    ----------
+    tensor : LNSTensor
+        The tensor to fill with values.
+    a : float, optional
+        The negative slope of the rectifier used after this layer (default is 0.0).
+    mode : str, optional
+        Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the variance of the weights
+        in the forward pass. Choosing 'fan_out' preserves the magnitudes in the backwards pass (default is 'fan_in').
+    nonlinearity : str, optional
+        The non-linear function (nn.functional name), recommended to use only with 'relu' or 'leaky_relu' (default is 'leaky_relu').
+    generator : torch.Generator, optional
+        A random number generator to use for reproducibility (default is None).
+
+    Returns
+    -------
+    LNSTensor
+        The input tensor filled with values from the Kaiming normal distribution.
+    """
+    if mode not in ['fan_in', 'fan_out']:
+        raise ValueError("Mode must be either 'fan_in' or 'fan_out'")
+
+    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
+    fan = fan_in if mode == 'fan_in' else fan_out
+
+    gain = torch.nn.init.calculate_gain(nonlinearity, a)
+    std = gain / (fan ** 0.5)
 
     return normal_(tensor, 0.0, std, generator)
