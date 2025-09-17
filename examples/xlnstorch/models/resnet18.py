@@ -2,17 +2,25 @@ import xlnstorch as xlt
 from xlnstorch import nn
 import torch
 import xlns
+import argparse
 
 # Example precision and base settings (these are mutually exclusive)
-f = 23
-b = None
+parser = argparse.ArgumentParser(description='ResNet18 model with LNS')
+parser.add_argument('--precision', '-f', type=int, default=None, help='Precision for LNS computations')
+parser.add_argument('--base', '-b', type=float, default=None, help='Base for LNS computations')
+parser.add_argument('--table', '-t', type=bool, default=False, help='Whether to use table-based LNS computations')
+args = parser.parse_args()
 
-if f is None and b is None:
-    raise ValueError("Either precision (f) or base (b) must be specified.")
-elif f is None:
-    xlns.xlnsB = b
-elif b is None:
-    xlns.xlnssetF(f)
+if args.table:
+    if args.precision is None and args.base is None:
+        raise ValueError("Must specify precision or base with --table option")
+    xlt.set_default_sbdb_implementation("tab")
+    xlt.operators.tab.get_table("tmp", f=args.precision, b=args.base)
+
+elif args.precision is None and args.base is not None:
+    xlns.xlnsB = args.base
+elif args.base is None and args.precision is not None:
+    xlns.xlnssetF(args.precision)
 
 class BasicBlock(nn.LNSModule):
     def __init__(self, in_channels, out_channels, stride=1):
