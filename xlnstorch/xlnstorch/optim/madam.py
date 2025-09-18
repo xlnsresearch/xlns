@@ -92,16 +92,6 @@ class LNSMadam(LNSOptimizer):
             *,
             maximize=False
     ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if eps <= 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
-
-        if not (0.0 < beta < 1.0):
-            raise ValueError(f"Invalid beta value: {beta}")
-
         defaults = dict(
             lr=lr,
             beta=beta,
@@ -113,6 +103,10 @@ class LNSMadam(LNSOptimizer):
         )
         super(LNSMadam, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "beta", "eps", "p_scale", "g_bound")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("eps", lambda eps: eps > 0.0)
+        self.validate_param("beta",lambda beta: 0.0 < beta < 1.0)
 
     @torch.no_grad()
     def step(self, closure=None):

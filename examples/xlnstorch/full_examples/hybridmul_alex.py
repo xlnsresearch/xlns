@@ -51,15 +51,13 @@ class LNSHybridMulAlex(LNSOptimizer):
             params,
             lr=0.01,
     ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
         defaults = dict(
             lr=lr,
         )
         super(LNSHybridMulAlex, self).__init__(params, defaults)
         self.make_lnstensor_params("lr")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

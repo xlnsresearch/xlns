@@ -34,6 +34,20 @@ class LNSOptimizer(torch.optim.Optimizer):
                 if name in group:
                     group[name] = lnstensor(group[name], b=base).lns # .lns views to int64
 
+    def validate_param(self, param_name, condition):
+        """Validate a parameter in all parameter groups."""
+        for group in self.param_groups:
+
+            if param_name not in group:
+                continue
+
+            group_value = lnstensor(group[param_name], from_lns=True, b=group["base"])
+            valid = condition(group_value)
+
+            if not valid:
+                str_val = group_value.item() if group_value.numel() == 1 else group_value
+                raise ValueError(f"Invalid {param_name}: {str_val}")
+
     def lns_param_groups(self):
         for group in self.param_groups:
             yield group, LNSOps(group["base"])

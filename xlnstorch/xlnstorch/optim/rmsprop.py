@@ -46,22 +46,6 @@ class LNSRMSprop(LNSOptimizer):
             *,
             maximize=False,
         ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if not (0.0 <= alpha < 1.0):
-            raise ValueError(f"Invalid alpha value: {alpha}")
-
-        if eps < 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
-
-        if weight_decay < 0.0:
-            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
-
-        if momentum < 0.0:
-            raise ValueError(f"Invalid momentum value: {momentum}")
-
         defaults = dict(
             lr=lr,
             alpha=alpha,
@@ -73,6 +57,12 @@ class LNSRMSprop(LNSOptimizer):
         )
         super(LNSRMSprop, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "alpha", "eps", "weight_decay", "momentum")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("alpha", lambda alpha: 0.0 <= alpha < 1.0)
+        self.validate_param("eps", lambda eps: eps > 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
+        self.validate_param("momentum", lambda momentum: momentum >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

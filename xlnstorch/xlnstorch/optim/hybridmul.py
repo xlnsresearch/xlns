@@ -51,16 +51,14 @@ class LNSHybridMul(LNSOptimizer):
             params,
             lr=0.01,
     ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
         defaults = dict(
             lr=lr,
             signmul_term = 2.0 ** lr,
         )
         super(LNSHybridMul, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "signmul_term")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

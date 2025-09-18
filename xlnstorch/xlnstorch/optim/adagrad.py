@@ -45,22 +45,6 @@ class LNSAdagrad(LNSOptimizer):
             *,
             maximize=False
         ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if lr_decay < 0.0:
-            raise ValueError(f"Invalid learning rate decay: {lr_decay}")
-
-        if weight_decay < 0.0:
-            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
-
-        if initial_accumulator_value < 0.0:
-            raise ValueError(f"Invalid initial accumulator value: {initial_accumulator_value}")
-
-        if eps < 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
-
         defaults = dict(
             lr=lr,
             lr_decay=lr_decay,
@@ -71,6 +55,12 @@ class LNSAdagrad(LNSOptimizer):
         )
         super(LNSAdagrad, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "lr_decay", "weight_decay", "initial_accumulator_value", "eps")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("lr_decay", lambda lr_decay: lr_decay >= 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
+        self.validate_param("initial_accumulator_value", lambda init_acc_val: init_acc_val >= 0.0)
+        self.validate_param("eps", lambda eps: eps >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):
