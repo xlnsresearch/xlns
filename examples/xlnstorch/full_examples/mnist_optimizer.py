@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 import xlnstorch as xltorch
 from xlnstorch.transforms import ToLNSTensor
+from hybridmul_alex import LNSHybridMulAlex
 #from hybridmul_mark import LNSHybridMulMark
 #from hybridmul_new import LNSHybridMulNew
 #from hybridmul_fixed import LNSHybridMulFixed
@@ -74,10 +75,10 @@ elif args.optimizer=='mul':
 elif args.optimizer=='signmul':
     optimizer = xltorch.optim.LNSSignMul(model.lns_parameters(), lr=args.learnrate, use_pow=False)
 elif args.optimizer=='madam':
-    optimizer = xltorch.optim.LNSMadam(model.lns_parameters(), lr=args.learnrate, use_pow=False)
+    optimizer = xltorch.optim.LNSMadam(model.lns_parameters(), lr=args.learnrate, use_pow=False, beta=0.99)
 elif args.optimizer=='hybrid':
     optimizer = xltorch.optim.LNSHybridMul(model.lns_parameters(), lr=args.learnrate)
-#    optimizer = LNSHybridMulMark(model.lns_parameters(), lr=args.learnrate)
+#    optimizer = LNSHybridMulAlex(model.lns_parameters(), lr=args.learnrate)
 
 start = time.time()
 num_epochs = args.epochs 
