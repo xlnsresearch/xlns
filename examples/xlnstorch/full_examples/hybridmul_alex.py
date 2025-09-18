@@ -57,10 +57,9 @@ class LNSHybridMulAlex(LNSOptimizer):
 
         defaults = dict(
             lr=lr,
-            signmul_term = 2.0 ** lr,
         )
         super(LNSHybridMulAlex, self).__init__(params, defaults)
-        self.make_lnstensor_params("lr", "signmul_term")
+        self.make_lnstensor_params("lr")
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -72,7 +71,6 @@ class LNSHybridMulAlex(LNSOptimizer):
 
         for group, ops in self.lns_param_groups():
             lr = group["lr"]
-            signmul_term = group["signmul_term"]
 
             for p in group["params"]:
 
