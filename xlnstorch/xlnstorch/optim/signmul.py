@@ -74,10 +74,6 @@ class LNSSignMul(LNSOptimizer):
             *,
             maximize=False
         ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
         defaults = dict(
             lr=lr,
             p_scale=p_scale,
@@ -86,6 +82,8 @@ class LNSSignMul(LNSOptimizer):
         )
         super(LNSSignMul, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "p_scale")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
 
         # precompute 1 + lr and 1 / (1 + lr)
         for group, ops in self.lns_param_groups():

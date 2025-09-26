@@ -40,19 +40,6 @@ class LNSAdadelta(LNSOptimizer):
             *,
             maximize=False
         ):
-
-        if lr <= 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if not (0.0 < rho < 1.0):
-            raise ValueError(f"Invalid rho value: {rho}")
-
-        if eps < 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
-
-        if weight_decay < 0.0:
-            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
-
         defaults = dict(
             lr=lr,
             rho=rho,
@@ -62,6 +49,11 @@ class LNSAdadelta(LNSOptimizer):
         )
         super(LNSAdadelta, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "rho", "eps", "weight_decay")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("rho",lambda rho: 0.0 < rho < 1.0)
+        self.validate_param("eps", lambda eps: eps >= 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

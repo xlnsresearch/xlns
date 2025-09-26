@@ -36,20 +36,6 @@ class LNSRprop(LNSOptimizer):
             *,
             maximize=False,
         ):
-
-        if lr <= 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if (etas[0] <= 0 or etas[0] >= 1 or etas[1] <= 1):
-            raise ValueError(
-                f"Invalid etas tuple: η₋ must be in (0,1), η₊ must be > 1, got {etas}"
-            )
-
-        if step_sizes[0] <= 0 or step_sizes[0] >= step_sizes[1]:
-            raise ValueError(
-                f"Invalid step_sizes tuple: must satisfy 0 < Γ_min < Γ_max, got {step_sizes}"
-            )
-
         defaults = dict(
             lr=lr,
             eta_minus=etas[0],
@@ -60,6 +46,12 @@ class LNSRprop(LNSOptimizer):
         )
         super(LNSRprop, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "eta_minus", "eta_plus", "step_min", "step_max")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("eta_minus", lambda eta_minus: 0.0 < eta_minus < 1.0)
+        self.validate_param("eta_plus", lambda eta_plus: eta_plus > 1.0)
+        self.validate_param("step_min", lambda step_min: step_min > 0.0)
+        self.validate_param("step_max", lambda step_max: step_max > 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

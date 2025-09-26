@@ -60,10 +60,6 @@ class LNSMul(LNSOptimizer):
             *,
             maximize=False,
     ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
         defaults = dict(
             lr=lr,
             use_pow=use_pow,
@@ -71,6 +67,8 @@ class LNSMul(LNSOptimizer):
         )
         super(LNSMul, self).__init__(params, defaults)
         self.make_lnstensor_params("lr")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

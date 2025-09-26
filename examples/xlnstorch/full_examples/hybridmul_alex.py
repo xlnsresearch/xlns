@@ -1,8 +1,8 @@
 import torch
 from xlnstorch import LNS_ONE
-from . import LNSOptimizer
+from xlnstorch.optim import LNSOptimizer
 
-class LNSHybridMul(LNSOptimizer):
+class LNSHybridMulAlex(LNSOptimizer):
     r"""
     Implements a hybrid multiplication algorithm for LNSTensor
     parameters. This optimizer uses a heuristic to decide between
@@ -53,10 +53,9 @@ class LNSHybridMul(LNSOptimizer):
     ):
         defaults = dict(
             lr=lr,
-            signmul_term = 2.0 ** lr,
         )
-        super(LNSHybridMul, self).__init__(params, defaults)
-        self.make_lnstensor_params("lr", "signmul_term")
+        super(LNSHybridMulAlex, self).__init__(params, defaults)
+        self.make_lnstensor_params("lr")
 
         self.validate_param("lr", lambda lr: lr >= 0.0)
 
@@ -70,7 +69,6 @@ class LNSHybridMul(LNSOptimizer):
 
         for group, ops in self.lns_param_groups():
             lr = group["lr"]
-            signmul_term = group["signmul_term"]
 
             for p in group["params"]:
 
@@ -87,8 +85,7 @@ class LNSHybridMul(LNSOptimizer):
                 lr_mul_grad = ops.mul(lr, ops.abs(grad))
                 mul_update = ops.add(LNS_ONE, lr_mul_grad)
                 gd_update = ops.add(LNS_ONE, ops.div(lr_mul_grad, ops.abs(data)))
-                mul_term = torch.where(mul_mask, ops.reciprocal(mul_update),
-                                       ops.maximum(signmul_term, gd_update))
+                mul_term = torch.where(mul_mask, ops.reciprocal(mul_update), gd_update)
 
                 p.data = ops.mul(data, mul_term).view(torch.float64)
 

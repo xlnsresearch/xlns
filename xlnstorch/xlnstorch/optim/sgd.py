@@ -48,19 +48,6 @@ class LNSSGD(LNSOptimizer):
             *,
             maximize=False
         ):
-
-        if lr < 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if momentum < 0.0:
-            raise ValueError(f"Invalid momentum value: {momentum}")
-
-        if weight_decay < 0.0:
-            raise ValueError(f"Invalid weight_decay value: {dampening}")
-
-        if nesterov and (momentum <= 0 or dampening != 0):
-            raise ValueError("Nesterov momentum requires a momentum and zero dampening")
-
         defaults = dict(
             lr=lr,
             momentum=momentum,
@@ -71,6 +58,11 @@ class LNSSGD(LNSOptimizer):
         )
         super(LNSSGD, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "momentum", "dampening", "weight_decay")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("momentum", lambda momentum: momentum >= 0.0)
+        self.validate_param("dampening", lambda dampening: dampening >= 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):

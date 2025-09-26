@@ -200,7 +200,7 @@ class LNSChangeBaseFunction(LNSFunction):
 
     @staticmethod
     def forward(ops, tensor, old_base, new_base):
-        return change_base_forward(tensor, old_base, new_base)
+        return change_base_forward(tensor, old_base, new_base).view(torch.float64)
 
     @staticmethod
     def setup_context(ctx, ops, inputs, outputs):
@@ -210,8 +210,10 @@ class LNSChangeBaseFunction(LNSFunction):
     @staticmethod
     def backward(ctx, ops, grad_output):
         old_base, new_base = ctx.saved_tensors
+        grad_output = grad_output.view(torch.int64)
+
         result = change_base_backward(grad_output, old_base, new_base)
-        return result, None
+        return result, None, None
 
 
 class LNSGetItemFunction(LNSFunction):

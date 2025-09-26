@@ -75,6 +75,12 @@ class LNSASGD(LNSOptimizer):
         super(LNSASGD, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "lambd", "alpha", "t0", "weight_decay")
 
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("lambd", lambda lambd: lambd >= 0.0)
+        self.validate_param("alpha", lambda alpha: 0.0 < alpha <= 1.0)
+        self.validate_param("t0", lambda t0: t0 >= 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
+
     @torch.no_grad()
     def step(self, closure=None):
 

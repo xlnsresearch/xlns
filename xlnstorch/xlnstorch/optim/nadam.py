@@ -46,25 +46,6 @@ class LNSNAdam(LNSOptimizer):
             *,
             maximize=False
         ):
-
-        if lr <= 0.0:
-            raise ValueError(f"Invalid learning rate: {lr}")
-
-        if not (0.0 <= betas[0] < 1.0):
-            raise ValueError(f"Invalid beta1 value: {betas[0]}")
-
-        if not (0.0 <= betas[1] < 1.0):
-            raise ValueError(f"Invalid beta2 value: {betas[1]}")
-
-        if eps <= 0.0:
-            raise ValueError(f"Invalid epsilon value: {eps}")
-
-        if weight_decay < 0.0:
-            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
-
-        if momentum_decay < 0.0:
-            raise ValueError(f"Invalid momentum_decay value: {momentum_decay}")
-
         defaults = dict(
             lr=lr,
             beta1=betas[0],
@@ -77,6 +58,13 @@ class LNSNAdam(LNSOptimizer):
         )
         super(LNSNAdam, self).__init__(params, defaults)
         self.make_lnstensor_params("lr", "beta1", "beta2", "eps", "weight_decay", "momentum_decay")
+
+        self.validate_param("lr", lambda lr: lr >= 0.0)
+        self.validate_param("beta1", lambda beta1: 0.0 <= beta1 < 1.0)
+        self.validate_param("beta2", lambda beta2: 0.0 <= beta2 < 1.0)
+        self.validate_param("eps", lambda eps: eps > 0.0)
+        self.validate_param("weight_decay", lambda weight_decay: weight_decay >= 0.0)
+        self.validate_param("momentum_decay", lambda momentum_decay: momentum_decay >= 0.0)
 
     @torch.no_grad()
     def step(self, closure=None):
