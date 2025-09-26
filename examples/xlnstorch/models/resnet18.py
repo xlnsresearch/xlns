@@ -17,7 +17,7 @@ if args.table:
     xlt.set_default_sbdb_implementation("tab")
     xlt.operators.tab.get_table("tmp", f=args.precision, b=args.base)
 
-elif args.precision is None and args.base is not None:
+if args.precision is None and args.base is not None:
     xlns.xlnsB = args.base
 elif args.base is None and args.precision is not None:
     xlns.xlnssetF(args.precision)
